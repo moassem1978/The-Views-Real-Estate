@@ -102,12 +102,15 @@ export default function HeroCarousel() {
       onMouseEnter={pauseAutoplay}
       onMouseLeave={resumeAutoplay}
     >
-      <Carousel className="h-full" setApi={(api) => {
-        // When the carousel is mounted, we can add event listeners
-        api?.on('select', () => {
-          setActiveIndex(api.selectedScrollSnap());
-        });
-      }}>
+      <Carousel 
+        className="h-full" 
+        opts={{ loop: true }}
+        setApi={(api) => {
+          // When the carousel is mounted, we can add event listeners
+          api?.on('select', () => {
+            setActiveIndex(api.selectedScrollSnap());
+          });
+        }}>
         <CarouselContent className="h-full">
           {properties.map((property, index) => (
             <CarouselItem key={property.id} className="h-full">
