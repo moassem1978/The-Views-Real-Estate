@@ -16,11 +16,11 @@ export default function Header() {
           {/* Logo */}
           <div className="mr-8">
             <Link href="/" className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F5E5A3] to-[#D4AF37] flex items-center justify-center shadow-md">
-                <span className="font-serif font-bold text-white text-lg">LR</span>
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#A67C00] via-[#FFDC73] to-[#A67C00] flex items-center justify-center shadow-md">
+                <span className="font-serif font-bold text-white text-lg">TV</span>
               </div>
               <span className="ml-2 font-serif text-gray-800 text-xl font-semibold">
-                Luxury<span className="text-[#D4AF37]">Realty</span>
+                The <span className="text-[#A67C00]">Views</span>
               </span>
             </Link>
           </div>
@@ -29,13 +29,13 @@ export default function Header() {
           <nav className="hidden md:flex space-x-6">
             <Link 
               href="/" 
-              className={`py-2 font-medium ${location === "/" ? "text-[#D4AF37]" : "text-gray-800 hover:text-[#D4AF37]"} transition-colors`}
+              className={`py-2 font-medium ${location === "/" ? "text-[#A67C00]" : "text-gray-800 hover:text-[#A67C00]"} transition-colors`}
             >
               Home
             </Link>
             <Link 
               href="/properties" 
-              className={`py-2 font-medium ${location === "/properties" ? "text-[#D4AF37]" : "text-gray-800 hover:text-[#D4AF37]"} transition-colors`}
+              className={`py-2 font-medium ${location === "/properties" ? "text-[#A67C00]" : "text-gray-800 hover:text-[#A67C00]"} transition-colors`}
             >
               Properties
             </Link>
@@ -63,7 +63,7 @@ export default function Header() {
             </div>
             <Link 
               href="/about" 
-              className={`py-2 font-medium ${location === "/about" ? "text-[#D4AF37]" : "text-gray-800 hover:text-[#D4AF37]"} transition-colors`}
+              className={`py-2 font-medium ${location === "/about" ? "text-[#A67C00]" : "text-gray-800 hover:text-[#A67C00]"} transition-colors`}
             >
               About
             </Link>
