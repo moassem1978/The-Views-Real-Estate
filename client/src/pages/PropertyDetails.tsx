@@ -172,7 +172,11 @@ export default function PropertyDetails() {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                       </svg>
-                      {property.squareFeet.toLocaleString()} sq ft
+                      {property.builtUpArea 
+                        ? `${property.builtUpArea.toLocaleString()} BUA` 
+                        : property.squareFeet 
+                          ? `${property.squareFeet.toLocaleString()} sq ft` 
+                          : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -220,10 +224,26 @@ export default function PropertyDetails() {
                           <span className="font-medium text-gray-800">{property.views}</span>
                         </div>
                       )}
+                      {property.builtUpArea && (
+                        <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
+                          <span className="text-gray-600">Built-Up Area</span>
+                          <span className="font-medium text-gray-800">{property.builtUpArea.toLocaleString()} sq ft</span>
+                        </div>
+                      )}
+                      {property.plotSize && (
+                        <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
+                          <span className="text-gray-600">Plot Size</span>
+                          <span className="font-medium text-gray-800">{property.plotSize.toLocaleString()} sq ft</span>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
                         <span className="text-gray-600">Price per Sq Ft</span>
                         <span className="font-medium text-gray-800">
-                          {formatPrice(property.price / property.squareFeet, 0)}
+                          {property.builtUpArea 
+                            ? formatPrice(property.price / property.builtUpArea, 0)
+                            : property.squareFeet
+                              ? formatPrice(property.price / property.squareFeet, 0)
+                              : "N/A"}
                         </span>
                       </div>
                     </div>

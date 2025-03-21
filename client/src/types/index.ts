@@ -9,7 +9,9 @@ export interface Property {
   price: number;
   bedrooms: number;
   bathrooms: number;
-  squareFeet: number;
+  squareFeet?: number;
+  builtUpArea?: number;
+  plotSize?: number;
   propertyType: string;
   isFeatured: boolean;
   isNewListing: boolean;

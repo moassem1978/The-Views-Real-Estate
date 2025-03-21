@@ -129,7 +129,7 @@ export default function FeaturedProperty() {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-gray-600">Property Size</p>
-                    <p className="font-semibold text-gray-800">{featuredProperty.squareFeet.toLocaleString()} sq ft</p>
+                    <p className="font-semibold text-gray-800">{(featuredProperty.builtUpArea || featuredProperty.squareFeet || 0).toLocaleString()} sq ft</p>
                   </div>
                 </div>
               </div>

@@ -130,7 +130,8 @@ export default function Dashboard() {
     price: 0,
     bedrooms: 0,
     bathrooms: 0,
-    squareFeet: 0,
+    builtUpArea: 0,
+    plotSize: 0,
     propertyType: "House",
     isFeatured: false,
     isNewListing: true,
@@ -416,7 +417,8 @@ export default function Dashboard() {
       price: property.price,
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
-      squareFeet: property.squareFeet,
+      builtUpArea: property.builtUpArea || property.squareFeet || 0,
+      plotSize: property.plotSize || 0,
       propertyType: property.propertyType,
       isFeatured: property.isFeatured,
       isNewListing: property.isNewListing,
@@ -573,7 +575,8 @@ export default function Dashboard() {
       price: 0,
       bedrooms: 0,
       bathrooms: 0,
-      squareFeet: 0,
+      builtUpArea: 0,
+      plotSize: 0,
       propertyType: "House",
       isFeatured: false,
       isNewListing: true,
@@ -894,19 +897,35 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="space-y-2">
-                    <label htmlFor="squareFeet" className="text-sm font-medium flex items-center">
-                      Square Meters
+                    <label htmlFor="builtUpArea" className="text-sm font-medium flex items-center">
+                      Built-Up Area
                       <span className="text-red-500 ml-1">*</span>
                     </label>
                     <Input
-                      id="squareFeet"
-                      name="squareFeet"
+                      id="builtUpArea"
+                      name="builtUpArea"
                       type="number"
-                      value={formData.squareFeet.toString()}
+                      value={formData.builtUpArea?.toString() || ""}
                       onChange={handleInputChange}
                       required
                     />
-                    <span className="text-xs text-gray-500">Property size in m²</span>
+                    <span className="text-xs text-gray-500">Built-Up Area in sq ft</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="plotSize" className="text-sm font-medium flex items-center">
+                      Plot Size
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <Input
+                      id="plotSize"
+                      name="plotSize"
+                      type="number"
+                      value={formData.plotSize?.toString() || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <span className="text-xs text-gray-500">Plot Size in sq ft</span>
                   </div>
                   
                   <div className="space-y-2">
