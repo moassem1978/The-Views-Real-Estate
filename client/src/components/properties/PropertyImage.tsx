@@ -17,11 +17,26 @@ export default function PropertyImage({
 }: PropertyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [formattedSrc, setFormattedSrc] = useState('');
   
-  // Reset state when src changes
+  // Reset state and format URL when src changes
   useEffect(() => {
     setIsLoaded(false);
     setIsError(false);
+    
+    // Format the source URL
+    if (!src) {
+      setFormattedSrc('');
+      return;
+    }
+    
+    // Check if the path already starts with http, https, or a forward slash
+    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/')) {
+      setFormattedSrc(src);
+    } else {
+      // Otherwise, add a forward slash
+      setFormattedSrc('/' + src);
+    }
   }, [src]);
   
   const handleLoad = () => {
@@ -29,6 +44,7 @@ export default function PropertyImage({
   };
   
   const handleError = () => {
+    console.log('Image failed to load:', formattedSrc);
     setIsError(true);
   };
   
