@@ -239,32 +239,41 @@ export default function Dashboard() {
   const uploadLogo = useMutation({
     mutationFn: async (file: File) => {
       try {
-        // Create a simple FormData object
+        // Create a fresh FormData object
         const formData = new FormData();
-        formData.append('logo', file);
         
-        console.log('Starting direct logo upload with fetch API');
+        // Add the file with the exact name expected by the server
+        formData.append('logo', file, file.name);
+        
+        console.log('Starting improved logo upload with fetch API');
         console.log('File details:', file.name, file.type, `${(file.size / 1024).toFixed(2)}KB`);
         
-        // Use fetch API for simplicity
+        // Enhanced fetch request with improved error handling
         const response = await fetch('/api/upload/logo', {
           method: 'POST',
           body: formData,
           // Important: Do not set Content-Type header, browser will set it with boundary
+          // Add cache-busting parameter to prevent caching issues
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
         });
         
+        // Handle non-success responses
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Upload failed with status:', response.status);
-          console.error('Error response:', errorText);
-          throw new Error(`Server error: ${response.status}`);
+          console.error('Upload failed with status:', response.status, response.statusText);
+          console.error('Error response body:', errorText);
+          throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
         }
         
+        // Parse and return the response data
         const data = await response.json();
-        console.log('Logo upload successful:', data);
+        console.log('Logo upload successful with response:', data);
         return data;
       } catch (err) {
-        console.error('Logo upload error:', err);
+        console.error('Logo upload error (detailed):', err);
         throw err;
       }
     },
@@ -430,40 +439,45 @@ export default function Dashboard() {
     }
   };
 
-  // Property images upload mutation
+  // Property images upload mutation with improved reliability
   const uploadPropertyImages = useMutation({
     mutationFn: async (files: File[]) => {
       try {
-        // Create a simple FormData object
+        // Create a fresh FormData object
         const formData = new FormData();
         
-        // Add each file directly to the FormData
+        // Add each file to FormData with explicit filename
         files.forEach(file => {
-          formData.append('images', file);
-          console.log(`Adding file to upload: ${file.name} (${file.type})`);
+          formData.append('images', file, file.name);
+          console.log(`Adding file to upload: ${file.name} (${file.type}, ${(file.size / 1024).toFixed(2)}KB)`);
         });
         
         console.log('Uploading property images:', files.length, 'files');
         
-        // Use fetch API for simplicity
+        // Enhanced fetch request with improved error handling
         const response = await fetch('/api/upload/property-images', {
           method: 'POST',
           body: formData,
-          // Important: Do not set Content-Type header, browser will set it with boundary
+          // Add cache-busting headers to prevent caching issues
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
         });
         
+        // Better error handling
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Property images upload failed with status:', response.status);
-          console.error('Error response:', errorText);
-          throw new Error(`Server error: ${response.status}`);
+          console.error('Property images upload failed with status:', response.status, response.statusText);
+          console.error('Error response body:', errorText);
+          throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
         }
         
         const data = await response.json();
         console.log('Property images upload successful:', data);
         return data;
       } catch (err) {
-        console.error('Property images upload error:', err);
+        console.error('Property images upload error (detailed):', err);
         throw err;
       }
     },
