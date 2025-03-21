@@ -20,7 +20,7 @@ export default function Header() {
                 <span className="font-serif font-bold text-white text-lg">TV</span>
               </div>
               <span className="ml-2 font-serif text-gray-800 text-xl font-semibold">
-                The <span className="text-[#A67C00]">Views</span>
+                The <span className="text-[#A67C00]">Views</span> <span className="text-gray-800">Real Estate</span>
               </span>
             </Link>
           </div>
@@ -40,7 +40,7 @@ export default function Header() {
               Properties
             </Link>
             <div className="relative group">
-              <button className="py-2 font-medium text-gray-800 hover:text-[#D4AF37] transition-colors flex items-center">
+              <button className="py-2 font-medium text-gray-800 hover:text-[#A67C00] transition-colors flex items-center">
                 Services
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -69,7 +69,7 @@ export default function Header() {
             </Link>
             <Link 
               href="/contact" 
-              className={`py-2 font-medium ${location === "/contact" ? "text-[#D4AF37]" : "text-gray-800 hover:text-[#D4AF37]"} transition-colors`}
+              className={`py-2 font-medium ${location === "/contact" ? "text-[#A67C00]" : "text-gray-800 hover:text-[#A67C00]"} transition-colors`}
             >
               Contact
             </Link>
@@ -77,23 +77,23 @@ export default function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <button className="hidden md:flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#D4AF37] hover:bg-[#F5F0E6] transition-all">
+          <button className="hidden md:flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#A67C00] hover:bg-[#F9F3E8] transition-all">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
-          <button className="hidden md:flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#D4AF37] hover:bg-[#F5F0E6] transition-all">
+          <button className="hidden md:flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#A67C00] hover:bg-[#F9F3E8] transition-all">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </button>
-          <Link href="/signin" className="hidden md:inline-flex items-center px-4 py-2 rounded bg-[#D4AF37] text-white hover:bg-[#BF9B30] transition-colors shadow-sm">
+          <Link href="/signin" className="hidden md:inline-flex items-center px-4 py-2 rounded bg-[#A67C00] text-white hover:bg-[#8A6700] transition-colors shadow-sm">
             <span>Sign In</span>
           </Link>
           
           {/* Mobile menu button */}
           <button 
-            className="md:hidden flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#D4AF37] hover:bg-[#F5F0E6] transition-all" 
+            className="md:hidden flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#A67C00] hover:bg-[#F9F3E8] transition-all" 
             onClick={toggleMobileMenu}
           >
             {mobileMenuOpen ? (
@@ -132,7 +132,7 @@ export default function Header() {
             <Link href="/about" className="py-2 font-medium text-gray-800">About</Link>
             <Link href="/contact" className="py-2 font-medium text-gray-800">Contact</Link>
             <div className="flex space-x-4 py-2">
-              <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-[#D4AF37] text-white">
+              <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-[#A67C00] text-white">
                 <span>Sign In</span>
               </Link>
               <button className="flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#D4AF37] hover:bg-[#F5F0E6]">
