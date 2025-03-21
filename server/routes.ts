@@ -19,14 +19,28 @@ const searchFiltersSchema = z.object({
 });
 
 // Configure multer for file uploads
-// Create uploads directory if it doesn't exist (directly in root for better accessibility)
-const uploadsDir = path.join(process.cwd(), 'uploads');
+// Use public directory for better accessibility from the client
+const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
 
-// Ensure the uploads directory exists
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log(`Created uploads directory at: ${uploadsDir}`);
-}
+// Ensure the uploads directory and subdirectories exist
+const ensureDir = (dirPath: string) => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+    console.log(`Created directory: ${dirPath}`);
+  }
+};
+
+// Create main uploads directory and subdirectories
+ensureDir(uploadsDir);
+ensureDir(path.join(uploadsDir, 'logos'));
+ensureDir(path.join(uploadsDir, 'properties'));
+
+// Create a more permissive file filter
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  // Accept all file types for maximum compatibility
+  console.log(`Processing file: ${file.originalname} (${file.mimetype})`);
+  return cb(null, true);
+};
 
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -34,13 +48,7 @@ const multerStorage = multer.diskStorage({
     const purpose = req.path.includes('property-images') ? 'properties' : 'logos';
     const targetDir = path.join(uploadsDir, purpose);
     
-    // Create the target directory if it doesn't exist
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-      console.log(`Created directory: ${targetDir}`);
-    }
-    
-    console.log(`File destination set to: ${targetDir} for file: ${file.originalname}`);
+    console.log(`Storing file in: ${targetDir}`);
     cb(null, targetDir);
   },
   filename: (req, file, cb) => {
@@ -49,38 +57,33 @@ const multerStorage = multer.diskStorage({
     // Get original extension or use a default
     let ext = path.extname(file.originalname).toLowerCase();
     
-    // Special handling for Adobe Illustrator files - normalize to .ai extension
-    if (
-      file.mimetype === 'application/postscript' || 
-      file.mimetype === 'application/illustrator' || 
-      file.mimetype === 'application/pdf' ||
-      ext === '.ai'
-    ) {
+    // If AI file or no extension, handle appropriately
+    if (file.originalname.toLowerCase().endsWith('.ai') || 
+        file.mimetype === 'application/postscript' || 
+        file.mimetype === 'application/illustrator') {
       console.log(`Processing Adobe Illustrator file: ${file.originalname}`);
-      ext = '.ai'; // Always use .ai extension for these files
+      ext = '.ai';
     } else if (!ext) {
-      // Default to jpg if no extension for all other files
       ext = '.jpg';
       console.log(`No extension detected, defaulting to ${ext}`);
     }
     
-    // Determine prefix based on file type
+    // Create safe filename with appropriate prefix
     const prefix = req.path.includes('property-images') ? 'property-' : 'logo-';
-    
-    // Create safe filename
     const filename = prefix + uniqueSuffix + ext;
-    console.log(`Generated filename: ${filename} for original: ${file.originalname} (${file.mimetype})`);
     
+    console.log(`Generated filename: ${filename}`);
     cb(null, filename);
   }
 });
 
-// Create a simplified multer configuration with more relaxed settings
+// Create a more permissive multer configuration
 const upload = multer({
   storage: multerStorage,
+  fileFilter: fileFilter,
   limits: { 
-    fileSize: 20 * 1024 * 1024, // Increased to 20MB max file size
-    files: 10              // Maximum number of files allowed
+    fileSize: 30 * 1024 * 1024, // 30MB max file size
+    files: 20                    // Up to 20 files at once
   }
 });
 
@@ -348,12 +351,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Serve static files from uploads directory
+  // Serve static files from public/uploads directory
   app.use('/uploads', (req, res, next) => {
     // Set cache headers
     res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
     next();
-  }, express.static(finalUploadsDir));
+  }, express.static(path.join(process.cwd(), 'public', 'uploads')));
 
   // Create HTTP server
   const httpServer = createServer(app);
