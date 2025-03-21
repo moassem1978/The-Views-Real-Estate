@@ -89,20 +89,19 @@ export default function Dashboard() {
   const { data: properties, isLoading } = useQuery({
     queryKey: ['/api/properties'],
     queryFn: async () => {
-      const response = await apiRequest('/api/properties');
-      return response;
+      const response = await fetch('/api/properties');
+      if (!response.ok) {
+        throw new Error('Failed to fetch properties');
+      }
+      return response.json();
     }
   });
 
   // Create property mutation
   const createProperty = useMutation({
     mutationFn: async (newProperty: any) => {
-      const response = await apiRequest('/api/properties', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProperty)
-      });
-      return response;
+      const response = await apiRequest('POST', '/api/properties', newProperty);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
@@ -126,12 +125,8 @@ export default function Dashboard() {
   // Update property mutation
   const updateProperty = useMutation({
     mutationFn: async ({ id, property }: { id: number; property: any }) => {
-      const response = await apiRequest(`/api/properties/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(property)
-      });
-      return response;
+      const response = await apiRequest('PUT', `/api/properties/${id}`, property);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
@@ -155,10 +150,8 @@ export default function Dashboard() {
   // Delete property mutation
   const deleteProperty = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest(`/api/properties/${id}`, {
-        method: 'DELETE',
-      });
-      return response;
+      const response = await apiRequest('DELETE', `/api/properties/${id}`);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
