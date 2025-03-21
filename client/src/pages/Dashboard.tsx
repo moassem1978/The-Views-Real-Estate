@@ -238,79 +238,33 @@ export default function Dashboard() {
   // Upload logo mutation
   const uploadLogo = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      
       try {
-        // First step: Create a blob with the correct MIME type for AI files
-        let fileToUpload = file;
+        // Create a simple FormData object
+        const formData = new FormData();
+        formData.append('logo', file);
         
-        // Special handling for AI files
-        if (file.name.toLowerCase().endsWith('.ai') || 
-            file.type === 'application/postscript' || 
-            file.type === 'application/illustrator') {
-          console.log('Processing Adobe Illustrator file for upload');
-          
-          // Preserve original filename but force MIME type to be application/postscript
-          const blob = file.slice(0, file.size, 'application/postscript');
-          fileToUpload = new File([blob], file.name, { 
-            type: 'application/postscript',
-            lastModified: file.lastModified
-          });
-          
-          console.log('Created specialized blob for AI file upload:', 
-            fileToUpload.name, 'Size:', (fileToUpload.size / 1024).toFixed(2) + 'KB', 
-            'Type:', fileToUpload.type);
+        console.log('Starting direct logo upload with fetch API');
+        console.log('File details:', file.name, file.type, `${(file.size / 1024).toFixed(2)}KB`);
+        
+        // Use fetch API for simplicity
+        const response = await fetch('/api/upload/logo', {
+          method: 'POST',
+          body: formData,
+          // Important: Do not set Content-Type header, browser will set it with boundary
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Upload failed with status:', response.status);
+          console.error('Error response:', errorText);
+          throw new Error(`Server error: ${response.status}`);
         }
         
-        // Add the file to the form
-        formData.append('logo', fileToUpload);
-        
-        console.log('Uploading file:', fileToUpload.name, 
-          'Size:', (fileToUpload.size / 1024).toFixed(2) + 'KB', 
-          'Type:', fileToUpload.type);
-          
-        // Debug form data content
-        console.log('Form data entries:', Array.from(formData.keys()));
-        
-        // Use XMLHttpRequest for better control and debugging
-        return new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          
-          xhr.open('POST', '/api/upload/logo', true);
-          
-          xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                const data = JSON.parse(xhr.responseText);
-                console.log('Upload successful:', data);
-                resolve(data);
-              } catch (e) {
-                console.error('Error parsing response:', e);
-                reject(new Error('Invalid response format'));
-              }
-            } else {
-              console.error('Upload failed:', xhr.status, xhr.statusText);
-              console.error('Response:', xhr.responseText);
-              reject(new Error('Upload failed: ' + xhr.statusText));
-            }
-          };
-          
-          xhr.onerror = function() {
-            console.error('XHR error during upload');
-            reject(new Error('Network error'));
-          };
-          
-          xhr.upload.onprogress = function(e) {
-            if (e.lengthComputable) {
-              const percentComplete = Math.round((e.loaded / e.total) * 100);
-              console.log(`Upload progress: ${percentComplete}%`);
-            }
-          };
-          
-          xhr.send(formData);
-        });
+        const data = await response.json();
+        console.log('Logo upload successful:', data);
+        return data;
       } catch (err) {
-        console.error('Upload preparation error:', err);
+        console.error('Logo upload error:', err);
         throw err;
       }
     },
@@ -363,10 +317,23 @@ export default function Dashboard() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Make sure the form data is complete
+    const currentDate = new Date().toISOString();
+    
+    // Ensure amenities and images are arrays
+    const propertyData = {
+      ...formData,
+      amenities: Array.isArray(formData.amenities) ? formData.amenities : [],
+      images: Array.isArray(formData.images) ? formData.images : [],
+      createdAt: currentDate
+    };
+    
+    console.log('Submitting property data:', propertyData);
+    
     if (isEditing && currentPropertyId) {
-      updateProperty.mutate({ id: currentPropertyId, property: formData });
+      updateProperty.mutate({ id: currentPropertyId, property: propertyData });
     } else {
-      createProperty.mutate(formData);
+      createProperty.mutate(propertyData);
     }
   };
 
@@ -443,76 +410,37 @@ export default function Dashboard() {
   // Property images upload mutation
   const uploadPropertyImages = useMutation({
     mutationFn: async (files: File[]) => {
-      const formData = new FormData();
-      
       try {
-        // Process each file to ensure proper handling of Adobe Illustrator files
+        // Create a simple FormData object
+        const formData = new FormData();
+        
+        // Add each file directly to the FormData
         files.forEach(file => {
-          let fileToUpload = file;
-          
-          // Special handling for AI files
-          if (file.name.toLowerCase().endsWith('.ai') || 
-              file.type === 'application/postscript' || 
-              file.type === 'application/illustrator') {
-            console.log('Processing Adobe Illustrator property image for upload:', file.name);
-            
-            // Create a new blob with the correct MIME type
-            const blob = file.slice(0, file.size, 'application/postscript');
-            fileToUpload = new File([blob], file.name, { 
-              type: 'application/postscript',
-              lastModified: file.lastModified
-            });
-            
-            console.log('Created specialized blob for AI property image:', 
-              fileToUpload.name, 'Size:', (fileToUpload.size / 1024).toFixed(2) + 'KB', 
-              'Type:', fileToUpload.type);
-          }
-          
-          formData.append('images', fileToUpload);
+          formData.append('images', file);
+          console.log(`Adding file to upload: ${file.name} (${file.type})`);
         });
         
         console.log('Uploading property images:', files.length, 'files');
-        console.log('Form data entries:', Array.from(formData.keys()));
         
-        // Use XMLHttpRequest for better control and debugging
-        return new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          
-          xhr.open('POST', '/api/upload/property-images', true);
-          
-          xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                const data = JSON.parse(xhr.responseText);
-                console.log('Property images upload successful:', data);
-                resolve(data);
-              } catch (e) {
-                console.error('Error parsing response:', e);
-                reject(new Error('Invalid response format'));
-              }
-            } else {
-              console.error('Upload failed:', xhr.status, xhr.statusText);
-              console.error('Response:', xhr.responseText);
-              reject(new Error('Upload failed: ' + xhr.statusText));
-            }
-          };
-          
-          xhr.onerror = function() {
-            console.error('XHR error during property images upload');
-            reject(new Error('Network error'));
-          };
-          
-          xhr.upload.onprogress = function(e) {
-            if (e.lengthComputable) {
-              const percentComplete = Math.round((e.loaded / e.total) * 100);
-              console.log(`Property images upload progress: ${percentComplete}%`);
-            }
-          };
-          
-          xhr.send(formData);
+        // Use fetch API for simplicity
+        const response = await fetch('/api/upload/property-images', {
+          method: 'POST',
+          body: formData,
+          // Important: Do not set Content-Type header, browser will set it with boundary
         });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Property images upload failed with status:', response.status);
+          console.error('Error response:', errorText);
+          throw new Error(`Server error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Property images upload successful:', data);
+        return data;
       } catch (err) {
-        console.error('Property images upload preparation error:', err);
+        console.error('Property images upload error:', err);
         throw err;
       }
     },

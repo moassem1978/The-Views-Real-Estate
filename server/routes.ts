@@ -75,35 +75,12 @@ const multerStorage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+// Create a simplified multer configuration with more relaxed settings
+const upload = multer({
   storage: multerStorage,
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB max file size
-  fileFilter: (req, file, cb) => {
-    // Extended logging for debugging
-    console.log('------- File Upload Request -------');
-    console.log(`API Path: ${req.path}`);
-    console.log(`File details: name=${file.originalname}, mimetype=${file.mimetype}, size=${file.size || 'unknown'}`);
-    
-    // Check if it's an AI file by extension
-    if (file.originalname.toLowerCase().endsWith('.ai')) {
-      console.log('Adobe Illustrator file detected by extension');
-      // Override mimetype for .ai files for consistent handling
-      file.mimetype = 'application/postscript';
-    }
-    
-    // Support for Adobe Illustrator files - they may come with various MIME types
-    if (
-      file.originalname.toLowerCase().endsWith('.ai') ||
-      file.mimetype === 'application/postscript' ||
-      file.mimetype === 'application/illustrator' ||
-      file.mimetype === 'application/pdf' ||
-      file.mimetype === 'application/octet-stream' // Generic binary type
-    ) {
-      console.log('Adobe Illustrator file format confirmed, allowing upload');
-    } 
-    
-    // Accept all files
-    cb(null, true);
+  limits: { 
+    fileSize: 20 * 1024 * 1024, // Increased to 20MB max file size
+    files: 10              // Maximum number of files allowed
   }
 });
 
