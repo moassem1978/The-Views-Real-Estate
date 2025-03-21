@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { z } from "zod";
@@ -50,7 +50,10 @@ const upload = multer({
   }
 });
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express, customUpload?: any, customUploadsDir?: string): Promise<Server> {
+  // Use either the provided upload and uploads directory or the defaults
+  const finalUpload = customUpload || upload;
+  const finalUploadsDir = customUploadsDir || uploadsDir;
   // API routes for properties
   app.get("/api/properties", async (req: Request, res: Response) => {
     try {
@@ -64,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/properties/featured", async (req: Request, res: Response) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
-      const properties = await storage.getFeaturedProperties(limit);
+      const properties = await dbStorage.getFeaturedProperties(limit);
       res.json(properties);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch featured properties" });
@@ -74,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/properties/new", async (req: Request, res: Response) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
-      const properties = await storage.getNewListings(limit);
+      const properties = await dbStorage.getNewListings(limit);
       res.json(properties);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch new listings" });
@@ -88,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid property ID" });
       }
 
-      const property = await storage.getPropertyById(id);
+      const property = await dbStorage.getPropertyById(id);
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
       }
@@ -102,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/properties", async (req: Request, res: Response) => {
     try {
       const propertyData = insertPropertySchema.parse(req.body);
-      const property = await storage.createProperty(propertyData);
+      const property = await dbStorage.createProperty(propertyData);
       res.status(201).json(property);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -122,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const propertyData = req.body;
-      const property = await storage.updateProperty(id, propertyData);
+      const property = await dbStorage.updateProperty(id, propertyData);
       
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
@@ -141,7 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid property ID" });
       }
 
-      const success = await storage.deleteProperty(id);
+      const success = await dbStorage.deleteProperty(id);
       if (!success) {
         return res.status(404).json({ message: "Property not found" });
       }
@@ -155,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/properties/search", async (req: Request, res: Response) => {
     try {
       const filters = searchFiltersSchema.parse(req.query);
-      const properties = await storage.searchProperties(filters);
+      const properties = await dbStorage.searchProperties(filters);
       res.json(properties);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -170,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for testimonials
   app.get("/api/testimonials", async (_req: Request, res: Response) => {
     try {
-      const testimonials = await storage.getAllTestimonials();
+      const testimonials = await dbStorage.getAllTestimonials();
       res.json(testimonials);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch testimonials" });
@@ -184,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid testimonial ID" });
       }
 
-      const testimonial = await storage.getTestimonialById(id);
+      const testimonial = await dbStorage.getTestimonialById(id);
       if (!testimonial) {
         return res.status(404).json({ message: "Testimonial not found" });
       }
@@ -198,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/testimonials", async (req: Request, res: Response) => {
     try {
       const testimonialData = insertTestimonialSchema.parse(req.body);
-      const testimonial = await storage.createTestimonial(testimonialData);
+      const testimonial = await dbStorage.createTestimonial(testimonialData);
       res.status(201).json(testimonial);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -213,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for site settings
   app.get("/api/site-settings", async (_req: Request, res: Response) => {
     try {
-      const settings = await storage.getSiteSettings();
+      const settings = await dbStorage.getSiteSettings();
       res.json(settings);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch site settings" });
@@ -222,12 +225,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/site-settings", async (req: Request, res: Response) => {
     try {
-      const updatedSettings = await storage.updateSiteSettings(req.body);
+      const updatedSettings = await dbStorage.updateSiteSettings(req.body);
       res.json(updatedSettings);
     } catch (error) {
       res.status(500).json({ message: "Failed to update site settings" });
     }
   });
+
+  // Logo upload endpoint
+  app.post("/api/upload/logo", finalUpload.single('logo'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Create the file URL relative to the server
+      const fileUrl = `/uploads/${req.file.filename}`;
+      
+      // Update site settings with the new logo URL
+      const updatedSettings = await dbStorage.updateSiteSettings({
+        companyLogo: fileUrl
+      });
+      
+      res.json({ 
+        message: "Logo uploaded successfully", 
+        logoUrl: fileUrl,
+        settings: updatedSettings
+      });
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      res.status(500).json({ message: "Failed to upload logo" });
+    }
+  });
+
+  // Serve static files from uploads directory
+  app.use('/uploads', (req, res, next) => {
+    // Set cache headers
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
+    next();
+  }, express.static(finalUploadsDir));
 
   // Create HTTP server
   const httpServer = createServer(app);

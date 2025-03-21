@@ -1,6 +1,41 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(process.cwd(), "uploads");
+fs.mkdirSync(uploadsDir, { recursive: true });
+
+// Configure multer for file storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// Create multer instance with file size limits
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    // Accept images only
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif|svg)$/)) {
+      // Create an error instance but pass false to reject the file
+      const err = new Error('Only image files are allowed!');
+      return cb(null, false);
+    }
+    cb(null, true);
+  }
+});
 
 const app = express();
 app.use(express.json());
@@ -37,7 +72,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  const server = await registerRoutes(app, upload, uploadsDir);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
