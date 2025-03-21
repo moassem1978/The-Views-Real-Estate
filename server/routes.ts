@@ -1,10 +1,13 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage as dbStorage } from "./storage";
 import { z } from "zod";
 import { insertPropertySchema, insertTestimonialSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
@@ -15,11 +18,43 @@ const searchFiltersSchema = z.object({
   minBathrooms: z.coerce.number().optional(),
 });
 
+// Configure multer for file uploads
+const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+
+// Ensure the uploads directory exists
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const multerStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'logo-' + uniqueSuffix + ext);
+  }
+});
+
+const upload = multer({ 
+  storage: multerStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max file size
+  fileFilter: (_req, file, cb) => {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for properties
   app.get("/api/properties", async (req: Request, res: Response) => {
     try {
-      const properties = await storage.getAllProperties();
+      const properties = await dbStorage.getAllProperties();
       res.json(properties);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch properties" });
@@ -172,6 +207,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to create testimonial" });
       }
+    }
+  });
+
+  // API routes for site settings
+  app.get("/api/site-settings", async (_req: Request, res: Response) => {
+    try {
+      const settings = await storage.getSiteSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch site settings" });
+    }
+  });
+
+  app.patch("/api/site-settings", async (req: Request, res: Response) => {
+    try {
+      const updatedSettings = await storage.updateSiteSettings(req.body);
+      res.json(updatedSettings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update site settings" });
     }
   });
 

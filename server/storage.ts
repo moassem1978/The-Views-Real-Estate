@@ -187,6 +187,30 @@ export class MemStorage implements IStorage {
     this.testimonials.set(id, testimonial);
     return testimonial;
   }
+  
+  // Site settings operations
+  async getSiteSettings(): Promise<SiteSettings> {
+    return { ...this.siteSettings };
+  }
+  
+  async updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
+    // Update social links if they exist in the settings
+    if (settings.socialLinks) {
+      this.siteSettings.socialLinks = {
+        ...this.siteSettings.socialLinks,
+        ...settings.socialLinks
+      };
+      
+      // Remove socialLinks from settings to avoid overwriting the merged object
+      const { socialLinks, ...restSettings } = settings;
+      this.siteSettings = { ...this.siteSettings, ...restSettings };
+    } else {
+      // Just update the rest of the settings
+      this.siteSettings = { ...this.siteSettings, ...settings };
+    }
+    
+    return { ...this.siteSettings };
+  }
 
   // Seed initial data
   private seedData() {
