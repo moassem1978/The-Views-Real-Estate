@@ -1,0 +1,167 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 33% 98%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 42 65% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 32 59% 85%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 32 20% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 32 59% 85%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 350 77% 42%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 32 30% 90%;
+    --input: 32 30% 90%;
+    --ring: 42 65% 52%;
+    --radius: 0.5rem;
+    --chart-1: 42 65% 52%;
+    --chart-2: 0 60% 32%;
+    --chart-3: 88 29% 35%;
+    --chart-4: 195 48% 38%;
+    --chart-5: 222.2 47.4% 11.2%;
+    --sidebar-background: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 42 65% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 32 59% 85%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 42 65% 52%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 42 65% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 42 65% 52%;
+    --chart-1: 42 65% 52%;
+    --chart-2: 0 60% 50%;
+    --chart-3: 88 40% 50%;
+    --chart-4: 195 60% 50%;
+    --chart-5: 210 40% 90%;
+    --sidebar-background: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 42 65% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 32 59% 85%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 42 65% 52%;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom styles for the luxury real estate site */
+@layer utilities {
+  .font-serif {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .font-sans {
+    font-family: 'Montserrat', sans-serif;
+  }
+  
+  .gold-gradient {
+    background: linear-gradient(135deg, #D4AF37 0%, #F5E5A3 50%, #D4AF37 100%);
+  }
+  
+  .property-card:hover .property-overlay {
+    opacity: 1;
+  }
+  
+  .animate-in {
+    animation: fade-in 0.5s ease-in-out forwards;
+  }
+  
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+}
+
+/* Image gallery styles */
+.property-image-gallery {
+  max-height: 500px;
+  overflow: hidden;
+}
+
+.property-image-gallery .image-thumbnail {
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.property-image-gallery .image-thumbnail:hover,
+.property-image-gallery .image-thumbnail.active {
+  opacity: 1;
+  border-color: #D4AF37;
+}
+
+.lazy-load-image-background {
+  width: 100%;
+  height: 100%;
+}
+
+.image-gallery-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.image-gallery-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+}
+
+.image-gallery-control {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.image-gallery-control:hover {
+  background-color: #D4AF37;
+  color: white;
+}
