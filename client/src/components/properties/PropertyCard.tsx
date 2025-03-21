@@ -15,7 +15,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     // Set the main image when the property data loads
     const images = getImages();
     const firstImage = images.length > 0 ? images[0] : '';
-    setMainImage(firstImage);
+    setMainImage(getFullImageUrl(firstImage));
   }, [property]);
   
   const toggleFavorite = (e: React.MouseEvent) => {
@@ -38,6 +38,17 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       // Return empty array if parsing fails
       return [];
     }
+  };
+  
+  // Add a proper URL prefix to image paths if needed
+  const getFullImageUrl = (imagePath: string) => {
+    // Check if the path already starts with http, https, or a forward slash
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('/')) {
+      return imagePath;
+    }
+    // Otherwise, add a forward slash
+    return '/' + imagePath;
   };
   
   // Handle image load error
