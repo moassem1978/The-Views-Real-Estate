@@ -93,7 +93,7 @@ export default function Header() {
           
           {/* Mobile menu button */}
           <button 
-            className="md:hidden flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#A67C00] hover:bg-[#F9F3E8] transition-all" 
+            className="md:hidden flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#B87333] hover:bg-[#F9F3E8] transition-all" 
             onClick={toggleMobileMenu}
           >
             {mobileMenuOpen ? (
@@ -132,10 +132,10 @@ export default function Header() {
             <Link href="/about" className="py-2 font-medium text-gray-800">About</Link>
             <Link href="/contact" className="py-2 font-medium text-gray-800">Contact</Link>
             <div className="flex space-x-4 py-2">
-              <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-[#A67C00] text-white">
+              <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-[#B87333] text-white">
                 <span>Sign In</span>
               </Link>
-              <button className="flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#D4AF37] hover:bg-[#F5F0E6]">
+              <button className="flex items-center justify-center h-10 w-10 rounded-full text-gray-800 hover:text-[#B87333] hover:bg-[#F9F3E8]">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
