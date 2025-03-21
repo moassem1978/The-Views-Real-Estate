@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { SearchFilters, FormattedPriceRange } from "@/types";
+import VoiceSearch from "./VoiceSearch";
+import { Separator } from "@/components/ui/separator";
 
 interface PropertyFilterProps {
   currentFilters: SearchFilters;
