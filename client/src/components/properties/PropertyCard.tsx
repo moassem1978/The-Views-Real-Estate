@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Property } from "@/types";
 
@@ -8,6 +8,15 @@ interface PropertyCardProps {
 
 export default function PropertyCard({ property }: PropertyCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [mainImage, setMainImage] = useState<string>('');
+  const [imageError, setImageError] = useState(false);
+  
+  useEffect(() => {
+    // Set the main image when the property data loads
+    const images = getImages();
+    const firstImage = images.length > 0 ? images[0] : '';
+    setMainImage(firstImage);
+  }, [property]);
   
   const toggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -17,18 +26,25 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   
   // Parse images from JSON string if necessary
   const getImages = () => {
+    // If it's an array, use it directly
     if (Array.isArray(property.images)) {
       return property.images;
     }
+    
+    // Try to parse as JSON if it's a string
     try {
       return JSON.parse(property.images as unknown as string);
     } catch {
+      // Return empty array if parsing fails
       return [];
     }
   };
   
-  const images = getImages();
-  const mainImage = images.length > 0 ? images[0] : '';
+  // Handle image load error
+  const handleImageError = () => {
+    console.log('Image failed to load:', mainImage);
+    setImageError(true);
+  };
   
   // Format price to USD
   const formattedPrice = new Intl.NumberFormat('en-US', {
@@ -42,12 +58,19 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     <div className="property-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">
       <Link href={`/properties/${property.id}`} className="block relative overflow-hidden">
         <div className="aspect-w-16 aspect-h-10 relative overflow-hidden">
-          <img 
-            src={mainImage} 
-            alt={property.title} 
-            className="w-full h-60 object-cover transform transition-transform duration-700 group-hover:scale-105"
-            loading="lazy"
-          />
+          {imageError ? (
+            <div className="w-full h-60 bg-gray-200 flex items-center justify-center">
+              <span className="text-gray-500">No image available</span>
+            </div>
+          ) : (
+            <img 
+              src={mainImage} 
+              alt={property.title} 
+              className="w-full h-60 object-cover transform transition-transform duration-700 group-hover:scale-105"
+              loading="lazy"
+              onError={handleImageError}
+            />
+          )}
         </div>
         {property.isFeatured && (
           <span className="absolute top-4 left-4 px-3 py-1 bg-[#D4AF37] text-white text-sm font-medium rounded">Featured</span>

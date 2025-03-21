@@ -366,10 +366,33 @@ export default function Dashboard() {
     }
   };
 
-  const handleLogoSubmit = (e: React.FormEvent) => {
+  const handleLogoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (logoFile) {
-      uploadLogo.mutate(logoFile);
+      try {
+        console.log("Submitting logo file directly from form...");
+        
+        // Create the form data
+        const formData = new FormData();
+        formData.append('logo', logoFile);
+        
+        // Show upload in progress
+        toast({
+          title: "Uploading logo...",
+          description: "Please wait while your logo is being uploaded.",
+        });
+        
+        // Trigger the upload mutation
+        uploadLogo.mutate(logoFile);
+      } catch (error) {
+        console.error("Error in form submission:", error);
+        toast({
+          title: "Error",
+          description: "Failed to process logo upload. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -1143,7 +1166,8 @@ export default function Dashboard() {
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleLogoSubmit} className="space-y-6">
+          {/* Use encType="multipart/form-data" to properly handle file uploads */}
+          <form onSubmit={handleLogoSubmit} className="space-y-6" encType="multipart/form-data">
             <div className="space-y-4">
               <div className="grid gap-2">
                 <label htmlFor="logo" className="text-sm font-medium">
@@ -1151,6 +1175,7 @@ export default function Dashboard() {
                 </label>
                 <Input
                   id="logo"
+                  name="logo" 
                   type="file"
                   accept="image/*,.ai,application/postscript,application/illustrator"
                   onChange={handleLogoChange}
@@ -1158,8 +1183,8 @@ export default function Dashboard() {
                   className="cursor-pointer"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Supported formats: JPG, PNG, GIF, SVG, WebP, Adobe Illustrator (.ai) and other image types.
-                  File size limit: 15MB.
+                  Supported formats: JPG, PNG, GIF, SVG, WebP, and other image types.
+                  Max file size: 10MB.
                 </p>
               </div>
               
