@@ -445,45 +445,80 @@ export default function Dashboard() {
     mutationFn: async (files: File[]) => {
       const formData = new FormData();
       
-      files.forEach(file => {
-        // Special handling for AI files
-        if (file.name.toLowerCase().endsWith('.ai') || 
-            file.type === 'application/postscript' || 
-            file.type === 'application/illustrator') {
-          console.log('Adding AI property image to form data with explicit name');
-          formData.append('images', file, file.name);
-        } else {
-          formData.append('images', file);
-        }
-      });
-      
       try {
+        // Process each file to ensure proper handling of Adobe Illustrator files
+        files.forEach(file => {
+          let fileToUpload = file;
+          
+          // Special handling for AI files
+          if (file.name.toLowerCase().endsWith('.ai') || 
+              file.type === 'application/postscript' || 
+              file.type === 'application/illustrator') {
+            console.log('Processing Adobe Illustrator property image for upload:', file.name);
+            
+            // Create a new blob with the correct MIME type
+            const blob = file.slice(0, file.size, 'application/postscript');
+            fileToUpload = new File([blob], file.name, { 
+              type: 'application/postscript',
+              lastModified: file.lastModified
+            });
+            
+            console.log('Created specialized blob for AI property image:', 
+              fileToUpload.name, 'Size:', (fileToUpload.size / 1024).toFixed(2) + 'KB', 
+              'Type:', fileToUpload.type);
+          }
+          
+          formData.append('images', fileToUpload);
+        });
+        
         console.log('Uploading property images:', files.length, 'files');
         console.log('Form data entries:', Array.from(formData.keys()));
         
-        const response = await fetch('/api/upload/property-images', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          console.log('Upload failed with status:', response.status);
-          const errorText = await response.text();
-          console.log('Error response text:', errorText);
+        // Use XMLHttpRequest for better control and debugging
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
           
-          const errorData = JSON.parse(errorText || '{"message": "Unknown error occurred"}');
-          throw new Error(errorData.message || `Server error: ${response.status}`);
-        }
-        
-        return response.json();
+          xhr.open('POST', '/api/upload/property-images', true);
+          
+          xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const data = JSON.parse(xhr.responseText);
+                console.log('Property images upload successful:', data);
+                resolve(data);
+              } catch (e) {
+                console.error('Error parsing response:', e);
+                reject(new Error('Invalid response format'));
+              }
+            } else {
+              console.error('Upload failed:', xhr.status, xhr.statusText);
+              console.error('Response:', xhr.responseText);
+              reject(new Error('Upload failed: ' + xhr.statusText));
+            }
+          };
+          
+          xhr.onerror = function() {
+            console.error('XHR error during property images upload');
+            reject(new Error('Network error'));
+          };
+          
+          xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+              const percentComplete = Math.round((e.loaded / e.total) * 100);
+              console.log(`Property images upload progress: ${percentComplete}%`);
+            }
+          };
+          
+          xhr.send(formData);
+        });
       } catch (err) {
-        console.error('Image upload error:', err);
+        console.error('Property images upload preparation error:', err);
         throw err;
       }
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       // Add the uploaded image URLs to form data
-      const newImageUrls = data.urls || [];
+      const newImageUrls = data.imageUrls || [];
       if (newImageUrls.length > 0) {
         setFormData(prev => ({
           ...prev,
@@ -512,21 +547,42 @@ export default function Dashboard() {
   const handlePropertyImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newImages: PropertyImage[] = [];
+      const totalFiles = e.target.files.length;
+      let processedFiles = 0;
       
       Array.from(e.target.files).forEach(file => {
-        // Create preview for each image
-        const reader = new FileReader();
-        reader.onloadend = () => {
+        // Check if it's an Adobe Illustrator file
+        if (file.name.toLowerCase().endsWith('.ai') || 
+            file.type === 'application/postscript' || 
+            file.type === 'application/illustrator') {
+          console.log('AI file detected for property image, using placeholder');
+          
+          // Use placeholder for AI files
           newImages.push({
             file,
-            preview: reader.result as string
+            preview: '/uploads/ai-placeholder.svg'
           });
           
-          if (newImages.length === e.target.files!.length) {
+          processedFiles++;
+          if (processedFiles === totalFiles) {
             setPropertyImages(prev => [...prev, ...newImages]);
           }
-        };
-        reader.readAsDataURL(file);
+        } else {
+          // Create preview for regular image files
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            newImages.push({
+              file,
+              preview: reader.result as string
+            });
+            
+            processedFiles++;
+            if (processedFiles === totalFiles) {
+              setPropertyImages(prev => [...prev, ...newImages]);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
       });
     }
   };
