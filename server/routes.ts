@@ -77,13 +77,23 @@ const multerStorage = multer.diskStorage({
   }
 });
 
-// Create a more permissive multer configuration
+// Create multer configuration with size restrictions for better performance
 const upload = multer({
   storage: multerStorage,
   fileFilter: fileFilter,
   limits: { 
-    fileSize: 30 * 1024 * 1024, // 30MB max file size
-    files: 20                    // Up to 20 files at once
+    fileSize: 10 * 1024 * 1024, // 10MB max file size for better performance
+    files: 10                    // Up to 10 files at once
+  }
+});
+
+// Separate configuration for logo uploads (smaller size limit)
+const logoUpload = multer({
+  storage: multerStorage,
+  fileFilter: fileFilter,
+  limits: { 
+    fileSize: 2 * 1024 * 1024,  // 2MB max for logos
+    files: 1                     // Only one logo at a time
   }
 });
 
@@ -274,8 +284,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     try {
       console.log("Received logo upload request");
       
-      // Use single file upload but catch any errors
-      finalUpload.single('logo')(req, res, async (err: any) => {
+      // Use the logo-specific upload configuration with smaller file size limit
+      logoUpload.single('logo')(req, res, async (err: any) => {
         if (err) {
           console.error("Multer error during logo upload:", err);
           return res.status(400).json({ message: "File upload error: " + err.message });
