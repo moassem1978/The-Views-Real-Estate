@@ -3,7 +3,6 @@ import Footer from "@/components/layout/Footer";
 import HeroCarousel from "@/components/home/HeroCarousel";
 import NewsCarousel from "@/components/home/NewsCarousel";
 import PropertySearch from "@/components/home/PropertySearch";
-import PropertyCarousel from "@/components/home/PropertyCarousel";
 import FeaturedProperty from "@/components/home/FeaturedProperty";
 import Services from "@/components/home/Services";
 import Testimonials from "@/components/home/Testimonials";
@@ -21,11 +20,7 @@ export default function Home() {
         </Suspense>
         <NewsCarousel />
         <PropertySearch />
-        
-        <Suspense fallback={<PropertyLoadingSkeleton />}>
-          <PropertyCarousel />
-        </Suspense>
-        
+                
         <Suspense fallback={<FeaturedPropertySkeleton />}>
           <FeaturedProperty />
         </Suspense>
