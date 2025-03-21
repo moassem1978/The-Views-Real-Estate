@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import HeroSection from "@/components/home/HeroSection";
+import HeroCarousel from "@/components/home/HeroCarousel";
+import NewsCarousel from "@/components/home/NewsCarousel";
 import PropertySearch from "@/components/home/PropertySearch";
 import FeaturedProperties from "@/components/home/FeaturedProperties";
 import FeaturedProperty from "@/components/home/FeaturedProperty";
@@ -15,7 +16,10 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow">
-        <HeroSection />
+        <Suspense fallback={<HeroLoadingSkeleton />}>
+          <HeroCarousel />
+        </Suspense>
+        <NewsCarousel />
         <PropertySearch />
         
         <Suspense fallback={<PropertyLoadingSkeleton />}>
@@ -40,6 +44,25 @@ export default function Home() {
 }
 
 // Loading skeletons for lazy-loaded components
+function HeroLoadingSkeleton() {
+  return (
+    <section className="relative bg-gray-800 h-[70vh] overflow-hidden">
+      <Skeleton className="absolute inset-0" />
+      <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
+        <div className="max-w-2xl">
+          <Skeleton className="h-12 w-3/4 mb-4" />
+          <Skeleton className="h-12 w-1/2 mb-6" />
+          <Skeleton className="h-6 w-full max-w-xl mb-8" />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Skeleton className="h-12 w-40" />
+            <Skeleton className="h-12 w-40" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function PropertyLoadingSkeleton() {
   return (
     <section className="py-16 bg-[#F9F6F2]">
