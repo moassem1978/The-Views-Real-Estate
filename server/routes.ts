@@ -29,7 +29,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 const multerStorage = multer.diskStorage({
-  destination: (req, _file, cb) => {
+  destination: (req, file, cb) => {
     // Determine which folder to use based on the file purpose
     const purpose = req.path.includes('property-images') ? 'properties' : 'logos';
     const targetDir = path.join(uploadsDir, purpose);
@@ -37,29 +37,31 @@ const multerStorage = multer.diskStorage({
     // Create the target directory if it doesn't exist
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
+      console.log(`Created directory: ${targetDir}`);
     }
     
+    console.log(`File destination set to: ${targetDir} for file: ${file.originalname}`);
     cb(null, targetDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     
     // Get original extension or use a default
-    let ext = path.extname(file.originalname);
+    let ext = path.extname(file.originalname).toLowerCase();
     
-    // Special handling for Adobe Illustrator files
+    // Special handling for Adobe Illustrator files - normalize to .ai extension
     if (
       file.mimetype === 'application/postscript' || 
       file.mimetype === 'application/illustrator' || 
-      ext.toLowerCase() === '.ai'
+      file.mimetype === 'application/pdf' ||
+      ext === '.ai'
     ) {
-      // Keep the AI extension for the file but store it properly
-      console.log('Processing Adobe Illustrator file, preserving extension');
-      // If no extension, add .ai as default for Illustrator files
-      if (!ext) ext = '.ai';
+      console.log(`Processing Adobe Illustrator file: ${file.originalname}`);
+      ext = '.ai'; // Always use .ai extension for these files
     } else if (!ext) {
       // Default to jpg if no extension for all other files
       ext = '.jpg';
+      console.log(`No extension detected, defaulting to ${ext}`);
     }
     
     // Determine prefix based on file type
@@ -67,7 +69,7 @@ const multerStorage = multer.diskStorage({
     
     // Create safe filename
     const filename = prefix + uniqueSuffix + ext;
-    console.log(`Generated filename: ${filename} for original: ${file.originalname}`);
+    console.log(`Generated filename: ${filename} for original: ${file.originalname} (${file.mimetype})`);
     
     cb(null, filename);
   }
@@ -76,21 +78,31 @@ const multerStorage = multer.diskStorage({
 const upload = multer({ 
   storage: multerStorage,
   limits: { fileSize: 15 * 1024 * 1024 }, // 15MB max file size
-  fileFilter: (_req, file, cb) => {
-    // Accept all file types but log for debugging
-    console.log(`Received file: ${file.originalname}, mimetype: ${file.mimetype}`);
+  fileFilter: (req, file, cb) => {
+    // Extended logging for debugging
+    console.log('------- File Upload Request -------');
+    console.log(`API Path: ${req.path}`);
+    console.log(`File details: name=${file.originalname}, mimetype=${file.mimetype}, size=${file.size || 'unknown'}`);
+    
+    // Check if it's an AI file by extension
+    if (file.originalname.toLowerCase().endsWith('.ai')) {
+      console.log('Adobe Illustrator file detected by extension');
+      // Override mimetype for .ai files for consistent handling
+      file.mimetype = 'application/postscript';
+    }
     
     // Support for Adobe Illustrator files - they may come with various MIME types
-    // Common AI file MIME types: application/postscript, application/illustrator, application/pdf
     if (
       file.originalname.toLowerCase().endsWith('.ai') ||
       file.mimetype === 'application/postscript' ||
       file.mimetype === 'application/illustrator' ||
-      file.mimetype === 'application/pdf'
+      file.mimetype === 'application/pdf' ||
+      file.mimetype === 'application/octet-stream' // Generic binary type
     ) {
-      console.log('Adobe Illustrator file detected, allowing upload');
-    }
+      console.log('Adobe Illustrator file format confirmed, allowing upload');
+    } 
     
+    // Accept all files
     cb(null, true);
   }
 });
@@ -278,32 +290,40 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // Logo upload endpoint
-  app.post("/api/upload/logo", finalUpload.single('logo'), async (req: Request, res: Response) => {
+  app.post("/api/upload/logo", async (req: Request, res: Response) => {
     try {
       console.log("Received logo upload request");
-      console.log("Request body:", Object.keys(req.body || {}));
-      console.log("Request file:", req.file ? "File present" : "No file present");
-      console.log("Request files:", req.files ? "Files present" : "No files present");
       
-      if (!req.file) {
-        console.log("File upload failed - No file received");
-        return res.status(400).json({ message: "No file uploaded" });
-      }
+      // Use single file upload but catch any errors
+      finalUpload.single('logo')(req, res, async (err: any) => {
+        if (err) {
+          console.error("Multer error during logo upload:", err);
+          return res.status(400).json({ message: "File upload error: " + err.message });
+        }
+        
+        console.log("Request body:", Object.keys(req.body || {}));
+        console.log("Request file:", req.file ? `File present: ${req.file.originalname}` : "No file present");
+        
+        if (!req.file) {
+          console.log("File upload failed - No file received");
+          return res.status(400).json({ message: "No file uploaded" });
+        }
 
-      console.log(`Logo file uploaded: ${req.file.filename} (${req.file.mimetype})`);
-      
-      // Create the file URL relative to the server
-      const fileUrl = `/uploads/logos/${req.file.filename}`;
-      
-      // Update site settings with the new logo URL
-      const updatedSettings = await dbStorage.updateSiteSettings({
-        companyLogo: fileUrl
-      });
-      
-      res.json({ 
-        message: "Logo uploaded successfully", 
-        logoUrl: fileUrl,
-        settings: updatedSettings
+        console.log(`Logo file uploaded: ${req.file.filename} (${req.file.mimetype}), original: ${req.file.originalname}`);
+        
+        // Create the file URL relative to the server
+        const fileUrl = `/uploads/logos/${req.file.filename}`;
+        
+        // Update site settings with the new logo URL
+        const updatedSettings = await dbStorage.updateSiteSettings({
+          companyLogo: fileUrl
+        });
+        
+        res.json({ 
+          message: "Logo uploaded successfully", 
+          logoUrl: fileUrl,
+          settings: updatedSettings
+        });
       });
     } catch (error) {
       console.error('Error uploading logo:', error);
@@ -312,22 +332,38 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
   
   // Property image upload endpoint - for multiple files
-  app.post("/api/upload/property-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+  app.post("/api/upload/property-images", async (req: Request, res: Response) => {
     try {
-      if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
-        return res.status(400).json({ message: "No files uploaded" });
-      }
+      console.log("Received property images upload request");
       
-      const files = Array.isArray(req.files) ? req.files : [req.files];
-      console.log(`Uploaded ${files.length} property images`);
-      
-      // Create file URLs for all uploaded images
-      const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
-      
-      res.json({ 
-        message: "Property images uploaded successfully", 
-        imageUrls: fileUrls,
-        count: fileUrls.length
+      // Use array upload but catch any errors
+      finalUpload.array('images', 10)(req, res, async (err: any) => {
+        if (err) {
+          console.error("Multer error during property images upload:", err);
+          return res.status(400).json({ message: "File upload error: " + err.message });
+        }
+        
+        if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+          console.log("No property image files received");
+          return res.status(400).json({ message: "No files uploaded" });
+        }
+        
+        const files = Array.isArray(req.files) ? req.files : [req.files];
+        console.log(`Uploaded ${files.length} property images`);
+        
+        // Log detailed file information
+        files.forEach((file, index) => {
+          console.log(`File ${index + 1}: ${file.originalname} (${file.mimetype}) -> ${file.filename}`);
+        });
+        
+        // Create file URLs for all uploaded images
+        const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
+        
+        res.json({ 
+          message: "Property images uploaded successfully", 
+          imageUrls: fileUrls,
+          count: fileUrls.length
+        });
       });
     } catch (error) {
       console.error('Error uploading property images:', error);

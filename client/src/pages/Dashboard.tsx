@@ -240,39 +240,77 @@ export default function Dashboard() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       
-      // Add the file with explicit ContentType for Adobe Illustrator files
-      if (file.name.toLowerCase().endsWith('.ai') || 
-          file.type === 'application/postscript' || 
-          file.type === 'application/illustrator') {
-        console.log('Adding AI file to form data with explicit content type');
-        formData.append('logo', file, file.name);
-      } else {
-        formData.append('logo', file);
-      }
-      
       try {
-        console.log('Uploading file:', file.name, 'Size:', (file.size / 1024).toFixed(2) + 'KB', 'Type:', file.type);
+        // First step: Create a blob with the correct MIME type for AI files
+        let fileToUpload = file;
+        
+        // Special handling for AI files
+        if (file.name.toLowerCase().endsWith('.ai') || 
+            file.type === 'application/postscript' || 
+            file.type === 'application/illustrator') {
+          console.log('Processing Adobe Illustrator file for upload');
+          
+          // Preserve original filename but force MIME type to be application/postscript
+          const blob = file.slice(0, file.size, 'application/postscript');
+          fileToUpload = new File([blob], file.name, { 
+            type: 'application/postscript',
+            lastModified: file.lastModified
+          });
+          
+          console.log('Created specialized blob for AI file upload:', 
+            fileToUpload.name, 'Size:', (fileToUpload.size / 1024).toFixed(2) + 'KB', 
+            'Type:', fileToUpload.type);
+        }
+        
+        // Add the file to the form
+        formData.append('logo', fileToUpload);
+        
+        console.log('Uploading file:', fileToUpload.name, 
+          'Size:', (fileToUpload.size / 1024).toFixed(2) + 'KB', 
+          'Type:', fileToUpload.type);
+          
         // Debug form data content
         console.log('Form data entries:', Array.from(formData.keys()));
         
-        const response = await fetch('/api/upload/logo', {
-          method: 'POST',
-          body: formData,
-          // Don't set Content-Type header - browser will set it with boundary
-        });
-        
-        if (!response.ok) {
-          console.log('Upload failed with status:', response.status);
-          const errorText = await response.text();
-          console.log('Error response text:', errorText);
+        // Use XMLHttpRequest for better control and debugging
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
           
-          const errorData = JSON.parse(errorText || '{"message": "Unknown error occurred"}');
-          throw new Error(errorData.message || `Server error: ${response.status}`);
-        }
-        
-        return response.json();
+          xhr.open('POST', '/api/upload/logo', true);
+          
+          xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const data = JSON.parse(xhr.responseText);
+                console.log('Upload successful:', data);
+                resolve(data);
+              } catch (e) {
+                console.error('Error parsing response:', e);
+                reject(new Error('Invalid response format'));
+              }
+            } else {
+              console.error('Upload failed:', xhr.status, xhr.statusText);
+              console.error('Response:', xhr.responseText);
+              reject(new Error('Upload failed: ' + xhr.statusText));
+            }
+          };
+          
+          xhr.onerror = function() {
+            console.error('XHR error during upload');
+            reject(new Error('Network error'));
+          };
+          
+          xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+              const percentComplete = Math.round((e.loaded / e.total) * 100);
+              console.log(`Upload progress: ${percentComplete}%`);
+            }
+          };
+          
+          xhr.send(formData);
+        });
       } catch (err) {
-        console.error('Upload error details:', err);
+        console.error('Upload preparation error:', err);
         throw err;
       }
     },
