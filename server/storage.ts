@@ -1,7 +1,8 @@
 import { 
   users, properties, testimonials, 
   type User, type Property, type Testimonial,
-  type InsertUser, type InsertProperty, type InsertTestimonial 
+  type InsertUser, type InsertProperty, type InsertTestimonial,
+  type SiteSettings
 } from "@shared/schema";
 import { faker } from '@faker-js/faker';
 import { formatISO } from 'date-fns';
@@ -27,6 +28,10 @@ export interface IStorage {
   getAllTestimonials(): Promise<Testimonial[]>;
   getTestimonialById(id: number): Promise<Testimonial | undefined>;
   createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
+  
+  // Site settings operations
+  getSiteSettings(): Promise<SiteSettings>;
+  updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings>;
 }
 
 export interface PropertySearchFilters {
@@ -42,6 +47,7 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private properties: Map<number, Property>;
   private testimonials: Map<number, Testimonial>;
+  private siteSettings: SiteSettings;
   userCurrentId: number;
   propertyCurrentId: number;
   testimonialCurrentId: number;
@@ -53,6 +59,18 @@ export class MemStorage implements IStorage {
     this.userCurrentId = 1;
     this.propertyCurrentId = 1;
     this.testimonialCurrentId = 1;
+    this.siteSettings = {
+      companyName: "The Views Real Estate",
+      primaryColor: "#B87333",
+      contactEmail: "info@theviewsrealestate.com",
+      contactPhone: "1-800-555-VIEWS",
+      socialLinks: {
+        facebook: "https://facebook.com/theviewsrealestate",
+        instagram: "https://instagram.com/theviewsrealestate",
+        twitter: "https://twitter.com/theviewsrealestate",
+        linkedin: "https://linkedin.com/company/theviewsrealestate"
+      }
+    };
     
     this.seedData();
   }

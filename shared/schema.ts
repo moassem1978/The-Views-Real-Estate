@@ -67,3 +67,18 @@ export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
 export type User = typeof users.$inferSelect;
 export type Property = typeof properties.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
+
+// Site settings type
+export interface SiteSettings {
+  companyLogo?: string;
+  companyName: string;
+  primaryColor?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  socialLinks?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+}
