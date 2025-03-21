@@ -547,12 +547,12 @@ export default function Dashboard() {
               {isEditing ? "Edit Property" : "Add New Property"}
             </DialogTitle>
             <DialogDescription>
-              Fill in the property details below. Click save when you're done.
+              Fill in the property details below. Fields marked with * are required.
             </DialogDescription>
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label htmlFor="title" className="text-sm font-medium">Title</label>
                 <Input
@@ -565,21 +565,27 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="propertyType" className="text-sm font-medium">Property Type</label>
+                <label htmlFor="propertyType" className="text-sm font-medium flex items-center">
+                  Property Type
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
                 <Select
                   value={formData.propertyType}
                   onValueChange={(value) => handleSelectChange("propertyType", value)}
+                  required
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select property type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="House">House</SelectItem>
                     <SelectItem value="Apartment">Apartment</SelectItem>
-                    <SelectItem value="Condo">Condo</SelectItem>
                     <SelectItem value="Villa">Villa</SelectItem>
                     <SelectItem value="Penthouse">Penthouse</SelectItem>
-                    <SelectItem value="Mansion">Mansion</SelectItem>
+                    <SelectItem value="Duplex">Duplex</SelectItem>
+                    <SelectItem value="Townhouse">Townhouse</SelectItem>
+                    <SelectItem value="Chalet">Chalet</SelectItem>
+                    <SelectItem value="Studio">Studio</SelectItem>
+                    <SelectItem value="Commercial">Commercial</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -596,118 +602,177 @@ export default function Dashboard() {
                 />
               </div>
               
-              <div className="space-y-2">
-                <label htmlFor="address" className="text-sm font-medium">Address</label>
-                <Input
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  required
-                />
+              <div className="md:col-span-2 bg-amber-50 p-4 rounded-lg border border-amber-200">
+                <h3 className="font-medium mb-3 text-amber-800">Location Information (Egypt)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label htmlFor="city" className="text-sm font-medium flex items-center">
+                      City
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <Select
+                      value={formData.city}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, city: value }))}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select city" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Cairo">Cairo</SelectItem>
+                        <SelectItem value="Alexandria">Alexandria</SelectItem>
+                        <SelectItem value="Giza">Giza</SelectItem>
+                        <SelectItem value="Sharm El Sheikh">Sharm El Sheikh</SelectItem>
+                        <SelectItem value="Hurghada">Hurghada</SelectItem>
+                        <SelectItem value="El Gouna">El Gouna</SelectItem>
+                        <SelectItem value="New Cairo">New Cairo</SelectItem>
+                        <SelectItem value="6th of October">6th of October</SelectItem>
+                        <SelectItem value="Maadi">Maadi</SelectItem>
+                        <SelectItem value="Zamalek">Zamalek</SelectItem>
+                        <SelectItem value="North Coast">North Coast</SelectItem>
+                        <SelectItem value="Luxor">Luxor</SelectItem>
+                        <SelectItem value="Aswan">Aswan</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="state" className="text-sm font-medium">District/Governorate</label>
+                    <Input
+                      id="state"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="address" className="text-sm font-medium flex items-center">
+                      Address/Location
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <Input
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="zipCode" className="text-sm font-medium">Postal Code</label>
+                    <Input
+                      id="zipCode"
+                      name="zipCode"
+                      value={formData.zipCode}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
               </div>
               
-              <div className="space-y-2">
-                <label htmlFor="city" className="text-sm font-medium">City</label>
-                <Input
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="state" className="text-sm font-medium">State</label>
-                <Input
-                  id="state"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="zipCode" className="text-sm font-medium">Zip Code</label>
-                <Input
-                  id="zipCode"
-                  name="zipCode"
-                  value={formData.zipCode}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="price" className="text-sm font-medium">Price ($)</label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={formData.price.toString()}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="squareFeet" className="text-sm font-medium">Square Feet</label>
-                <Input
-                  id="squareFeet"
-                  name="squareFeet"
-                  type="number"
-                  value={formData.squareFeet.toString()}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="bedrooms" className="text-sm font-medium">Bedrooms</label>
-                <Input
-                  id="bedrooms"
-                  name="bedrooms"
-                  type="number"
-                  value={formData.bedrooms.toString()}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="bathrooms" className="text-sm font-medium">Bathrooms</label>
-                <Input
-                  id="bathrooms"
-                  name="bathrooms"
-                  type="number"
-                  value={formData.bathrooms.toString()}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="yearBuilt" className="text-sm font-medium">Year Built</label>
-                <Input
-                  id="yearBuilt"
-                  name="yearBuilt"
-                  type="number"
-                  value={formData.yearBuilt.toString()}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="views" className="text-sm font-medium">Views</label>
-                <Input
-                  id="views"
-                  name="views"
-                  value={formData.views}
-                  onChange={handleInputChange}
-                  placeholder="e.g. Ocean, Mountain, City"
-                />
+              <div className="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-medium mb-3 text-blue-800">Property Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label htmlFor="price" className="text-sm font-medium flex items-center">
+                      Price (EGP)
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      value={formData.price.toString()}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="squareFeet" className="text-sm font-medium flex items-center">
+                      Square Meters
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <Input
+                      id="squareFeet"
+                      name="squareFeet"
+                      type="number"
+                      value={formData.squareFeet.toString()}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <span className="text-xs text-gray-500">Property size in m²</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="yearBuilt" className="text-sm font-medium">Year Built</label>
+                    <Input
+                      id="yearBuilt"
+                      name="yearBuilt"
+                      type="number"
+                      value={formData.yearBuilt?.toString() || ""}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="bedrooms" className="text-sm font-medium flex items-center">
+                      Bedrooms
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <Input
+                      id="bedrooms"
+                      name="bedrooms"
+                      type="number"
+                      value={formData.bedrooms.toString()}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="bathrooms" className="text-sm font-medium flex items-center">
+                      Bathrooms
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <Input
+                      id="bathrooms"
+                      name="bathrooms"
+                      type="number"
+                      value={formData.bathrooms.toString()}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="views" className="text-sm font-medium">Property View</label>
+                    <Select
+                      value={formData.views || ""}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, views: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select view type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Garden View">Garden View</SelectItem>
+                        <SelectItem value="Sea View">Sea View</SelectItem>
+                        <SelectItem value="Nile View">Nile View</SelectItem>
+                        <SelectItem value="City View">City View</SelectItem>
+                        <SelectItem value="Pool View">Pool View</SelectItem>
+                        <SelectItem value="Landmark View">Landmark View</SelectItem>
+                        <SelectItem value="Mountain View">Mountain View</SelectItem>
+                        <SelectItem value="Desert View">Desert View</SelectItem>
+                        <SelectItem value="Golf View">Golf View</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -742,32 +807,85 @@ export default function Dashboard() {
                 </Select>
               </div>
               
-              <div className="space-y-2 md:col-span-2">
-                <label htmlFor="amenities" className="text-sm font-medium">
-                  Amenities (comma separated)
-                </label>
-                <Input
-                  id="amenities"
-                  name="amenities"
-                  value={formData.amenities.join(", ")}
-                  onChange={handleInputChange}
-                  placeholder="Pool, Garage, Garden, etc."
-                />
+              <div className="md:col-span-2">
+                <div className="space-y-2">
+                  <label htmlFor="amenities" className="text-sm font-medium">
+                    Amenities (comma separated)
+                  </label>
+                  <Textarea
+                    id="amenities"
+                    name="amenities"
+                    value={formData.amenities.join(", ")}
+                    onChange={handleInputChange}
+                    placeholder="Swimming Pool, Security, Parking, Gym, etc."
+                    className="min-h-[80px]"
+                  />
+                </div>
               </div>
               
-              <div className="space-y-2 md:col-span-2">
-                <label htmlFor="images" className="text-sm font-medium">
-                  Images (comma separated URLs)
-                </label>
-                <Textarea
-                  id="images"
-                  name="images"
-                  value={formData.images.join(", ")}
-                  onChange={handleInputChange}
-                  rows={3}
-                  placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-                  required
-                />
+              <div className="md:col-span-2 mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-medium">
+                    Property Images
+                  </label>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => document.getElementById('propertyImagesUpload')?.click()}
+                  >
+                    Upload New Images
+                  </Button>
+                  
+                  <input 
+                    type="file"
+                    id="propertyImagesUpload"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      // Will implement upload function later
+                      console.log('Files selected:', e.target.files);
+                    }}
+                  />
+                </div>
+                
+                <div className="border rounded-md p-3">
+                  <div className="space-y-2">
+                    <label htmlFor="images" className="text-sm font-medium">
+                      Image URLs (comma separated)
+                    </label>
+                    <Input
+                      id="images"
+                      name="images"
+                      value={formData.images.join(", ")}
+                      onChange={handleInputChange}
+                    />
+                    <p className="text-xs text-gray-500">Enter URLs for property images or use the upload button above</p>
+                  </div>
+                  
+                  {formData.images.length > 0 && (
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {formData.images.map((img, idx) => (
+                        <div key={idx} className="relative h-20 rounded overflow-hidden border">
+                          <img 
+                            src={img} 
+                            alt={`Property ${idx+1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/300x200?text=Image+Not+Found';
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="md:col-span-2 mt-2">
+                <p className="text-sm text-red-500">* Required fields</p>
               </div>
             </div>
             
