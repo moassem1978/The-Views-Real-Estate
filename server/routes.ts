@@ -29,22 +29,44 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 const multerStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadsDir);
+  destination: (req, _file, cb) => {
+    // Determine which folder to use based on the file purpose
+    const purpose = req.path.includes('property-images') ? 'properties' : 'logos';
+    const targetDir = path.join(uploadsDir, purpose);
+    
+    // Create the target directory if it doesn't exist
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    
+    cb(null, targetDir);
   },
-  filename: (_req, file, cb) => {
+  filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    // Get original extension or default to .jpg
-    const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, 'logo-' + uniqueSuffix + ext);
+    
+    // Get original extension or use a default
+    let ext = path.extname(file.originalname);
+    
+    // Handle special case for AI files by converting them to PNG
+    if (file.mimetype === 'application/postscript' || ext.toLowerCase() === '.ai') {
+      ext = '.png';  // Convert to PNG format for compatibility
+    } else if (!ext) {
+      ext = '.jpg';  // Default to jpg if no extension
+    }
+    
+    // Determine prefix based on file type
+    const prefix = req.path.includes('property-images') ? 'property-' : 'logo-';
+    
+    cb(null, prefix + uniqueSuffix + ext);
   }
 });
 
 const upload = multer({ 
   storage: multerStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max file size
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB max file size
   fileFilter: (_req, file, cb) => {
-    // Accept any file type for more flexibility
+    // Accept all file types but log for debugging
+    console.log(`Received file: ${file.originalname}, mimetype: ${file.mimetype}`);
     cb(null, true);
   }
 });
@@ -238,8 +260,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(400).json({ message: "No file uploaded" });
       }
 
+      console.log(`Logo file uploaded: ${req.file.filename} (${req.file.mimetype})`);
+      
       // Create the file URL relative to the server
-      const fileUrl = `/uploads/${req.file.filename}`;
+      const fileUrl = `/uploads/logos/${req.file.filename}`;
       
       // Update site settings with the new logo URL
       const updatedSettings = await dbStorage.updateSiteSettings({
@@ -254,6 +278,30 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     } catch (error) {
       console.error('Error uploading logo:', error);
       res.status(500).json({ message: "Failed to upload logo" });
+    }
+  });
+  
+  // Property image upload endpoint - for multiple files
+  app.post("/api/upload/property-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+    try {
+      if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+      
+      const files = Array.isArray(req.files) ? req.files : [req.files];
+      console.log(`Uploaded ${files.length} property images`);
+      
+      // Create file URLs for all uploaded images
+      const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
+      
+      res.json({ 
+        message: "Property images uploaded successfully", 
+        imageUrls: fileUrls,
+        count: fileUrls.length
+      });
+    } catch (error) {
+      console.error('Error uploading property images:', error);
+      res.status(500).json({ message: "Failed to upload property images" });
     }
   });
 
