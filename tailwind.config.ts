@@ -4,6 +4,11 @@ export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
+    fontFamily: {
+      sans: ['Tahoma', 'Geneva', 'sans-serif'],
+      serif: ['Playfair Display', 'serif'],
+      display: ['Cormorant Garamond', 'serif'],
+    },
     extend: {
       borderRadius: {
         lg: "var(--radius)",
