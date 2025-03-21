@@ -25,6 +25,7 @@ const Contact = lazy(() => import("@/pages/Contact"));
 const About = lazy(() => import("@/pages/About"));
 const Services = lazy(() => import("@/pages/Services"));
 const SignIn = lazy(() => import("@/pages/SignIn"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
 
 function Router() {
   return (
@@ -53,6 +54,12 @@ function Router() {
       <Route path="/signin">
         <Suspense fallback={<LoadingFallback />}>
           <SignIn />
+        </Suspense>
+      </Route>
+
+      <Route path="/dashboard">
+        <Suspense fallback={<LoadingFallback />}>
+          <Dashboard />
         </Suspense>
       </Route>
       
