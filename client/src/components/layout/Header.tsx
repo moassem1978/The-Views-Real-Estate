@@ -1,9 +1,30 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+// Define SiteSettings interface 
+interface SiteSettings {
+  companyName: string;
+  companyLogo?: string;
+  primaryColor?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  socialLinks?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+}
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
+  
+  // Fetch site settings including logo
+  const { data: settings } = useQuery<SiteSettings>({
+    queryKey: ['/api/site-settings'],
+  });
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -16,9 +37,19 @@ export default function Header() {
           {/* Logo */}
           <div className="mr-8">
             <Link href="/" className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-[#B87333] flex items-center justify-center shadow-md">
-                <span className="font-serif font-bold text-white text-lg">TV</span>
-              </div>
+              {settings?.companyLogo ? (
+                <div className="h-10 w-10 overflow-hidden mr-2">
+                  <img 
+                    src={settings.companyLogo} 
+                    alt={settings.companyName}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-[#B87333] flex items-center justify-center shadow-md">
+                  <span className="font-serif font-bold text-white text-lg">TV</span>
+                </div>
+              )}
               <span className="ml-2 font-serif text-gray-800 text-xl font-semibold">
                 The <span className="text-[#B87333]">Views</span> <span className="text-gray-800">Real Estate</span>
               </span>

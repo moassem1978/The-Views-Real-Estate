@@ -48,6 +48,62 @@ import {
 import { formatPrice } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Define the SiteSettings interface
+interface SiteSettings {
+  companyName: string;
+  companyLogo?: string;
+  primaryColor?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  socialLinks?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+}
+
+// CompanyLogo component to display the current logo or a placeholder
+function CompanyLogo() {
+  const { data: settings, isLoading } = useQuery<SiteSettings>({
+    queryKey: ['/api/site-settings'],
+  });
+  
+  if (isLoading) {
+    return <Skeleton className="w-32 h-32" />;
+  }
+  
+  if (settings?.companyLogo) {
+    return (
+      <img 
+        src={settings.companyLogo} 
+        alt={`${settings.companyName} logo`} 
+        className="max-w-full max-h-full object-contain"
+      />
+    );
+  }
+  
+  return (
+    <div className="flex flex-col items-center justify-center text-center p-4 text-gray-400">
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        className="h-10 w-10 mb-2"
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+      >
+        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+        <circle cx="9" cy="9" r="2" />
+        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+      </svg>
+      <span className="text-sm">No logo uploaded</span>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -173,23 +229,37 @@ export default function Dashboard() {
   // Upload logo mutation
   const uploadLogo = useMutation({
     mutationFn: async (file: File) => {
-      // In a real application, this would upload to a server or cloud storage
-      // For this demo, we'll just return a success message
-      return { success: true, message: "Logo uploaded successfully" };
+      const formData = new FormData();
+      formData.append('logo', file);
+      
+      const response = await fetch('/api/upload/logo', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload logo');
+      }
+      
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/site-settings'] });
       toast({
         title: "Success",
         description: "Logo uploaded successfully",
       });
       setLogoFormOpen(false);
+      setLogoFile(null);
+      setLogoPreview(null);
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to upload logo. Please try again.",
         variant: "destructive",
       });
+      console.error("Error uploading logo:", error);
     }
   });
 
@@ -408,37 +478,53 @@ export default function Dashboard() {
         <TabsContent value="settings">
           <Card>
             <CardHeader>
-              <CardTitle>Dashboard Settings</CardTitle>
+              <CardTitle>Company Settings</CardTitle>
               <CardDescription>
-                Manage your dashboard preferences and account settings
+                Manage your company information and branding
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-medium">Account Information</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Update your account details and preferences
-                  </p>
+              <div className="space-y-6">
+                {/* Company Logo */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium">Company Logo</h3>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-40 h-40 border rounded-md flex items-center justify-center overflow-hidden bg-gray-50">
+                      {/* Logo Preview */}
+                      <CompanyLogo />
+                    </div>
+                    <Button onClick={() => setLogoFormOpen(true)}>
+                      Change Logo
+                    </Button>
+                  </div>
                 </div>
                 
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <label htmlFor="name">Account Name</label>
-                    <Input id="name" value="Admin" readOnly />
-                  </div>
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-medium mb-4">Account Information</h3>
                   
-                  <div className="grid gap-2">
-                    <label htmlFor="email">Email Address</label>
-                    <Input id="email" value="admin@theviewsrealestate.com" readOnly />
+                  <div className="grid gap-4">
+                    <div className="grid gap-2">
+                      <label htmlFor="companyName">Company Name</label>
+                      <Input id="companyName" value="The Views Real Estate" readOnly />
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <label htmlFor="email">Contact Email</label>
+                      <Input id="email" value="info@theviewsrealestate.com" readOnly />
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <label htmlFor="phone">Contact Phone</label>
+                      <Input id="phone" value="1-800-555-VIEWS" readOnly />
+                    </div>
                   </div>
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Button className="ml-auto" disabled>
-                Save Changes
-              </Button>
+            <CardFooter className="border-t">
+              <p className="text-sm text-muted-foreground mr-auto">
+                Note: Additional settings can be configured by your system administrator.
+              </p>
             </CardFooter>
           </Card>
         </TabsContent>
