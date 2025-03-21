@@ -19,11 +19,13 @@ const searchFiltersSchema = z.object({
 });
 
 // Configure multer for file uploads
-const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+// Create uploads directory if it doesn't exist (directly in root for better accessibility)
+const uploadsDir = path.join(process.cwd(), 'uploads');
 
 // Ensure the uploads directory exists
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log(`Created uploads directory at: ${uploadsDir}`);
 }
 
 const multerStorage = multer.diskStorage({
@@ -32,21 +34,18 @@ const multerStorage = multer.diskStorage({
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
+    // Get original extension or default to .jpg
+    const ext = path.extname(file.originalname) || '.jpg';
     cb(null, 'logo-' + uniqueSuffix + ext);
   }
 });
 
 const upload = multer({ 
   storage: multerStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max file size
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max file size
   fileFilter: (_req, file, cb) => {
-    // Accept only image files
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
+    // Accept any file type for more flexibility
+    cb(null, true);
   }
 });
 

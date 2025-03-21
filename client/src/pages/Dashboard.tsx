@@ -232,16 +232,24 @@ export default function Dashboard() {
       const formData = new FormData();
       formData.append('logo', file);
       
-      const response = await fetch('/api/upload/logo', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to upload logo');
+      try {
+        console.log('Uploading file:', file.name, 'Size:', (file.size / 1024).toFixed(2) + 'KB', 'Type:', file.type);
+        
+        const response = await fetch('/api/upload/logo', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
+          throw new Error(errorData.message || `Server error: ${response.status}`);
+        }
+        
+        return response.json();
+      } catch (err) {
+        console.error('Upload error details:', err);
+        throw err;
       }
-      
-      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/site-settings'] });
@@ -249,6 +257,7 @@ export default function Dashboard() {
         title: "Success",
         description: "Logo uploaded successfully",
       });
+      console.log('Logo upload successful:', data);
       setLogoFormOpen(false);
       setLogoFile(null);
       setLogoPreview(null);
@@ -256,7 +265,7 @@ export default function Dashboard() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to upload logo. Please try again.",
+        description: "Failed to upload logo. Please try again with a smaller file or different format.",
         variant: "destructive",
       });
       console.error("Error uploading logo:", error);
@@ -792,7 +801,7 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="grid gap-2">
                 <label htmlFor="logo" className="text-sm font-medium">
-                  Select Logo
+                  Select Logo (Any Image Format)
                 </label>
                 <Input
                   id="logo"
@@ -800,7 +809,12 @@ export default function Dashboard() {
                   accept="image/*"
                   onChange={handleLogoChange}
                   required
+                  className="cursor-pointer"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Supported formats: JPG, PNG, GIF, SVG, WebP and other image types.
+                  File size limit: 10MB.
+                </p>
               </div>
               
               {logoPreview && (
