@@ -118,6 +118,9 @@ export default function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </button>
+          <Link href="/dashboard" className="hidden md:inline-flex items-center px-4 py-2 rounded bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mr-2">
+            <span>Dashboard</span>
+          </Link>
           <Link href="/signin" className="hidden md:inline-flex items-center px-4 py-2 rounded bg-[#B87333] text-white hover:bg-[#955A28] transition-colors shadow-sm">
             <span>Sign In</span>
           </Link>
@@ -162,6 +165,7 @@ export default function Header() {
             </div>
             <Link href="/about" className="py-2 font-medium text-gray-800">About</Link>
             <Link href="/contact" className="py-2 font-medium text-gray-800">Contact</Link>
+            <Link href="/dashboard" className="py-2 font-medium text-gray-800">Dashboard</Link>
             <div className="flex space-x-4 py-2">
               <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-[#B87333] text-white">
                 <span>Sign In</span>
