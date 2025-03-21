@@ -280,7 +280,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // Logo upload endpoint
   app.post("/api/upload/logo", finalUpload.single('logo'), async (req: Request, res: Response) => {
     try {
+      console.log("Received logo upload request");
+      console.log("Request body:", Object.keys(req.body || {}));
+      console.log("Request file:", req.file ? "File present" : "No file present");
+      console.log("Request files:", req.files ? "Files present" : "No files present");
+      
       if (!req.file) {
+        console.log("File upload failed - No file received");
         return res.status(400).json({ message: "No file uploaded" });
       }
 
