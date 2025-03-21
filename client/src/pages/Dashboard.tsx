@@ -239,18 +239,34 @@ export default function Dashboard() {
   const uploadLogo = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
-      formData.append('logo', file);
+      
+      // Add the file with explicit ContentType for Adobe Illustrator files
+      if (file.name.toLowerCase().endsWith('.ai') || 
+          file.type === 'application/postscript' || 
+          file.type === 'application/illustrator') {
+        console.log('Adding AI file to form data with explicit content type');
+        formData.append('logo', file, file.name);
+      } else {
+        formData.append('logo', file);
+      }
       
       try {
         console.log('Uploading file:', file.name, 'Size:', (file.size / 1024).toFixed(2) + 'KB', 'Type:', file.type);
+        // Debug form data content
+        console.log('Form data entries:', Array.from(formData.keys()));
         
         const response = await fetch('/api/upload/logo', {
           method: 'POST',
           body: formData,
+          // Don't set Content-Type header - browser will set it with boundary
         });
         
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
+          console.log('Upload failed with status:', response.status);
+          const errorText = await response.text();
+          console.log('Error response text:', errorText);
+          
+          const errorData = JSON.parse(errorText || '{"message": "Unknown error occurred"}');
           throw new Error(errorData.message || `Server error: ${response.status}`);
         }
         
@@ -390,12 +406,22 @@ export default function Dashboard() {
   const uploadPropertyImages = useMutation({
     mutationFn: async (files: File[]) => {
       const formData = new FormData();
+      
       files.forEach(file => {
-        formData.append('images', file);
+        // Special handling for AI files
+        if (file.name.toLowerCase().endsWith('.ai') || 
+            file.type === 'application/postscript' || 
+            file.type === 'application/illustrator') {
+          console.log('Adding AI property image to form data with explicit name');
+          formData.append('images', file, file.name);
+        } else {
+          formData.append('images', file);
+        }
       });
       
       try {
         console.log('Uploading property images:', files.length, 'files');
+        console.log('Form data entries:', Array.from(formData.keys()));
         
         const response = await fetch('/api/upload/property-images', {
           method: 'POST',
@@ -403,7 +429,11 @@ export default function Dashboard() {
         });
         
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
+          console.log('Upload failed with status:', response.status);
+          const errorText = await response.text();
+          console.log('Error response text:', errorText);
+          
+          const errorData = JSON.parse(errorText || '{"message": "Unknown error occurred"}');
           throw new Error(errorData.message || `Server error: ${response.status}`);
         }
         

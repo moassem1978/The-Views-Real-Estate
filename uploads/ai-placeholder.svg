@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Adobe Illustrator File</title>
+    <defs>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="linearGradient">
+            <stop stop-color="#B87333" offset="0%"></stop>
+            <stop stop-color="#B87333" stop-opacity="0.6" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="#F5F5F5" x="0" y="0" width="200" height="200"></rect>
+        <rect fill="url(#linearGradient)" x="25" y="25" width="150" height="150" rx="10"></rect>
+        <text font-family="Tahoma, sans-serif" font-size="70" font-weight="bold" fill="#FFFFFF" text-anchor="middle" x="100" y="110">
+            .AI
+        </text>
+        <text font-family="Tahoma, sans-serif" font-size="14" font-weight="normal" fill="#FFFFFF" text-anchor="middle" x="100" y="140">
+            Adobe Illustrator File
+        </text>
+    </g>
+</svg>
