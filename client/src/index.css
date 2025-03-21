@@ -6,74 +6,74 @@
 
 @layer base {
   :root {
-    --background: 39 30% 97%;
-    --foreground: 30 25% 15%;
-    --card: 0 0% 100%;
-    --card-foreground: 30 25% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 30 25% 15%;
-    --primary: 45 76% 40%;
+    --background: 30 30% 97%;
+    --foreground: 28 25% 15%;
+    --card: 30 20% 98%;
+    --card-foreground: 28 25% 15%;
+    --popover: 30 20% 98%;
+    --popover-foreground: 28 25% 15%;
+    --primary: 30 80% 40%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 35 65% 95%;
-    --secondary-foreground: 30 25% 15%;
-    --muted: 35 30% 96%;
-    --muted-foreground: 30 10% 40%;
-    --accent: 45 76% 40%;
+    --secondary: 28 65% 95%;
+    --secondary-foreground: 28 25% 15%;
+    --muted: 28 30% 96%;
+    --muted-foreground: 28 10% 40%;
+    --accent: 30 80% 40%;
     --accent-foreground: 0 0% 100%;
     --destructive: 350 77% 42%;
     --destructive-foreground: 210 40% 98%;
-    --border: 35 30% 90%;
-    --input: 35 30% 90%;
-    --ring: 45 76% 40%;
+    --border: 28 30% 90%;
+    --input: 28 30% 90%;
+    --ring: 30 80% 40%;
     --radius: 0.75rem;
-    --chart-1: 45 76% 40%;
+    --chart-1: 30 80% 40%;
     --chart-2: 0 60% 32%;
     --chart-3: 88 29% 35%;
     --chart-4: 195 48% 38%;
     --chart-5: 222.2 47.4% 11.2%;
-    --sidebar-background: 30 25% 15%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 45 76% 40%;
+    --sidebar-background: 28 25% 15%;
+    --sidebar-foreground: 28 40% 98%;
+    --sidebar-primary: 30 80% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 35 65% 95%;
-    --sidebar-accent-foreground: 30 25% 15%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 45 76% 40%;
+    --sidebar-accent: 28 65% 95%;
+    --sidebar-accent-foreground: 28 25% 15%;
+    --sidebar-border: 28 25% 20%;
+    --sidebar-ring: 30 80% 40%;
   }
 
   .dark {
-    --background: 30 25% 10%;
-    --foreground: 35 30% 96%;
-    --card: 30 25% 15%;
-    --card-foreground: 35 30% 96%;
-    --popover: 30 25% 15%;
-    --popover-foreground: 35 30% 96%;
-    --primary: 45 76% 40%;
+    --background: 28 25% 10%;
+    --foreground: 30 30% 96%;
+    --card: 28 25% 15%;
+    --card-foreground: 30 30% 96%;
+    --popover: 28 25% 15%;
+    --popover-foreground: 30 30% 96%;
+    --primary: 30 80% 40%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 30 15% 20%;
-    --secondary-foreground: 35 30% 96%;
-    --muted: 30 15% 20%;
-    --muted-foreground: 35 10% 75%;
-    --accent: 30 15% 20%;
-    --accent-foreground: 35 30% 96%;
+    --secondary: 28 15% 20%;
+    --secondary-foreground: 30 30% 96%;
+    --muted: 28 15% 20%;
+    --muted-foreground: 30 10% 75%;
+    --accent: 30 80% 40%;
+    --accent-foreground: 30 30% 96%;
     --destructive: 350 70% 50%;
     --destructive-foreground: 210 40% 98%;
-    --border: 30 15% 25%;
-    --input: 30 15% 25%;
-    --ring: 45 76% 40%;
-    --chart-1: 45 76% 40%;
+    --border: 28 15% 25%;
+    --input: 28 15% 25%;
+    --ring: 30 80% 40%;
+    --chart-1: 30 80% 40%;
     --chart-2: 0 60% 50%;
     --chart-3: 88 40% 50%;
     --chart-4: 195 60% 50%;
     --chart-5: 210 40% 90%;
-    --sidebar-background: 30 25% 15%;
-    --sidebar-foreground: 35 30% 96%;
-    --sidebar-primary: 45 76% 40%;
+    --sidebar-background: 28 25% 15%;
+    --sidebar-foreground: 30 30% 96%;
+    --sidebar-primary: 30 80% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 35 65% 95%;
-    --sidebar-accent-foreground: 30 25% 15%;
-    --sidebar-border: 30 15% 25%;
-    --sidebar-ring: 45 76% 40%;
+    --sidebar-accent: 28 65% 95%;
+    --sidebar-accent-foreground: 28 25% 15%;
+    --sidebar-border: 28 15% 25%;
+    --sidebar-ring: 30 80% 40%;
   }
   
   * {
@@ -96,7 +96,15 @@
   }
   
   .gold-gradient {
-    background: linear-gradient(135deg, #D4AF37 0%, #F5E5A3 50%, #D4AF37 100%);
+    background: linear-gradient(135deg, #B87333 0%, #DAAF61 50%, #B87333 100%);
+  }
+  
+  .warm-gold {
+    color: #C49B48;
+  }
+  
+  .warm-gradient {
+    background: linear-gradient(135deg, #8B4513 0%, #CD853F 50%, #8B4513 100%);
   }
   
   .property-card:hover .property-overlay {
@@ -128,7 +136,7 @@
 .property-image-gallery .image-thumbnail:hover,
 .property-image-gallery .image-thumbnail.active {
   opacity: 1;
-  border-color: #D4AF37;
+  border-color: #B87333;
 }
 
 .lazy-load-image-background {
@@ -162,6 +170,104 @@
 }
 
 .image-gallery-control:hover {
-  background-color: #D4AF37;
+  background-color: #B87333;
   color: white;
+}
+
+/* News Carousel Styles */
+.news-carousel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.news-carousel-slides {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.news-carousel-slide {
+  flex: 0 0 100%;
+  position: relative;
+  cursor: pointer;
+}
+
+.news-carousel-slide img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+}
+
+.news-carousel-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1.5rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
+  color: white;
+}
+
+.news-carousel-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.news-carousel-description {
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  opacity: 0.9;
+}
+
+.news-carousel-controls {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.news-carousel-control {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: rgba(255,255,255,0.3);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.news-carousel-control:hover {
+  background-color: #B87333;
+}
+
+.news-carousel-indicators {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.news-carousel-indicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.news-carousel-indicator.active {
+  background-color: #B87333;
+  transform: scale(1.2);
 }
