@@ -4,6 +4,7 @@ import { SearchFilters } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import VoiceVisualizer from './VoiceVisualizer';
 
 interface VoiceSearchProps {
   onFilterChange: (filters: SearchFilters) => void;
@@ -214,10 +215,16 @@ export default function VoiceSearch({ onFilterChange }: VoiceSearchProps) {
         )}
       </div>
       
-      {isListening && recognizedText && (
-        <div className="mt-2 p-2 rounded-md bg-gray-50 text-sm text-gray-700">
-          <p className="font-medium mb-1">I heard:</p>
-          <p className="italic">{recognizedText}</p>
+      {isListening && (
+        <div className="mt-2">
+          <VoiceVisualizer isListening={isListening} />
+          
+          {recognizedText && (
+            <div className="mt-2 p-2 rounded-md bg-gray-50 text-sm text-gray-700">
+              <p className="font-medium mb-1">I heard:</p>
+              <p className="italic">{recognizedText}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

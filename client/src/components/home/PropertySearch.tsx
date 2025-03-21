@@ -1,6 +1,7 @@
 import { useState, FormEvent } from "react";
 import { useLocation } from "wouter";
 import { SearchFilters } from "@/types";
+import VoiceSearch from "../properties/VoiceSearch";
 
 export default function PropertySearch() {
   const [location, setLocation] = useState("");
@@ -9,6 +10,55 @@ export default function PropertySearch() {
   const [bedrooms, setBedrooms] = useState("");
   const [, navigate] = useLocation();
 
+  const handleFilterChange = (filters: SearchFilters) => {
+    // Update form state based on filters
+    setLocation(filters.location || "");
+    setPropertyType(filters.propertyType || "");
+    
+    if (filters.minBedrooms) {
+      setBedrooms(filters.minBedrooms.toString());
+    } else {
+      setBedrooms("");
+    }
+    
+    // Set price range based on min/max values
+    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+      const min = filters.minPrice;
+      const max = filters.maxPrice;
+      
+      // Find the matching price range option or leave empty
+      const ranges = [
+        { min: 500000, max: 1000000 },
+        { min: 1000000, max: 2000000 },
+        { min: 2000000, max: 5000000 },
+        { min: 5000000, max: 10000000 },
+        { min: 10000000, max: null }
+      ];
+      
+      let matchingRange = "";
+      for (const range of ranges) {
+        if (min === range.min && (max === range.max || (range.max === null && max === undefined))) {
+          matchingRange = `${range.min}-${range.max || 100000000}`;
+          break;
+        }
+      }
+      
+      setPriceRange(matchingRange);
+    } else {
+      setPriceRange("");
+    }
+    
+    // Directly navigate to properties page with these filters
+    const queryString = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryString.append(key, value.toString());
+      }
+    });
+    
+    navigate(`/properties?${queryString.toString()}`);
+  };
+  
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
@@ -27,15 +77,7 @@ export default function PropertySearch() {
       filters.minBedrooms = parseInt(bedrooms);
     }
     
-    // Convert filters to query string
-    const queryString = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined) {
-        queryString.append(key, value.toString());
-      }
-    });
-    
-    navigate(`/properties?${queryString.toString()}`);
+    handleFilterChange(filters);
   };
 
   return (
@@ -128,7 +170,11 @@ export default function PropertySearch() {
             </div>
           </form>
           
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="self-start">
+              <VoiceSearch onFilterChange={handleFilterChange} />
+            </div>
+            
             <button className="text-[#D4AF37] hover:text-[#BF9B30] text-sm font-medium flex items-center transition-colors">
               Advanced Search Options
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">

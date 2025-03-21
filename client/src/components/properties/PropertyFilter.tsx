@@ -211,7 +211,9 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
         )}
       </form>
       
-      <div className="mt-4 flex justify-center">
+      <div className="mt-4 flex justify-between items-center">
+        <VoiceSearch onFilterChange={onFilterChange} />
+        
         <button 
           onClick={toggleAdvanced}
           className="text-[#D4AF37] hover:text-[#BF9B30] text-sm font-medium flex items-center transition-colors"
