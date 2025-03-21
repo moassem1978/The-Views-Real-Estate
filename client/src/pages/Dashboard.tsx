@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Property } from "../types";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -23,6 +24,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+interface PropertyImage {
+  file: File;
+  preview: string;
+}
 import {
   Tabs,
   TabsContent,
@@ -140,6 +146,9 @@ export default function Dashboard() {
   // Logo state
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  
+  // Property images state
+  const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
   
   // Fetch properties
   const { data: properties, isLoading } = useQuery({
@@ -362,6 +371,93 @@ export default function Dashboard() {
     }
   };
 
+  // Property images upload mutation
+  const uploadPropertyImages = useMutation({
+    mutationFn: async (files: File[]) => {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append('images', file);
+      });
+      
+      try {
+        console.log('Uploading property images:', files.length, 'files');
+        
+        const response = await fetch('/api/upload/property-images', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
+          throw new Error(errorData.message || `Server error: ${response.status}`);
+        }
+        
+        return response.json();
+      } catch (err) {
+        console.error('Image upload error:', err);
+        throw err;
+      }
+    },
+    onSuccess: (data) => {
+      // Add the uploaded image URLs to form data
+      const newImageUrls = data.urls || [];
+      if (newImageUrls.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, ...newImageUrls]
+        }));
+        
+        toast({
+          title: "Success",
+          description: `${newImageUrls.length} image(s) uploaded successfully`,
+        });
+        
+        // Clear the property images state
+        setPropertyImages([]);
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to upload images. Please try again with smaller files or different formats.",
+        variant: "destructive",
+      });
+      console.error("Error uploading property images:", error);
+    }
+  });
+  
+  const handlePropertyImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newImages: PropertyImage[] = [];
+      
+      Array.from(e.target.files).forEach(file => {
+        // Create preview for each image
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newImages.push({
+            file,
+            preview: reader.result as string
+          });
+          
+          if (newImages.length === e.target.files!.length) {
+            setPropertyImages(prev => [...prev, ...newImages]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+  
+  const handleUploadPropertyImages = () => {
+    if (propertyImages.length > 0) {
+      uploadPropertyImages.mutate(propertyImages.map(img => img.file));
+    }
+  };
+  
+  const removePropertyImage = (index: number) => {
+    setPropertyImages(prev => prev.filter((_, i) => i !== index));
+  };
+  
   const resetForm = () => {
     setFormData({
       title: "",
@@ -387,6 +483,7 @@ export default function Dashboard() {
     });
     setIsEditing(false);
     setCurrentPropertyId(null);
+    setPropertyImages([]);
   };
 
   const openPropertyForm = () => {
@@ -844,14 +941,62 @@ export default function Dashboard() {
                     multiple
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => {
-                      // Will implement upload function later
-                      console.log('Files selected:', e.target.files);
-                    }}
+                    onChange={handlePropertyImagesChange}
                   />
                 </div>
                 
                 <div className="border rounded-md p-3">
+                  {/* Selected images pending upload */}
+                  {propertyImages.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-blue-700">Selected Images</h4>
+                        <div className="flex gap-2">
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => setPropertyImages([])}
+                          >
+                            Clear All
+                          </Button>
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            onClick={handleUploadPropertyImages}
+                            disabled={uploadPropertyImages.isPending}
+                          >
+                            {uploadPropertyImages.isPending ? 'Uploading...' : 'Upload Selected'}
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {propertyImages.map((img, idx) => (
+                          <div key={idx} className="relative group">
+                            <div className="h-24 rounded overflow-hidden border border-gray-200">
+                              <img 
+                                src={img.preview} 
+                                alt={`Preview ${idx+1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removePropertyImage(idx)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-80 hover:opacity-100"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                            <p className="text-xs text-gray-500 truncate mt-1">
+                              {img.file.name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                
                   <div className="space-y-2">
                     <label htmlFor="images" className="text-sm font-medium">
                       Image URLs (comma separated)
@@ -866,19 +1011,35 @@ export default function Dashboard() {
                   </div>
                   
                   {formData.images.length > 0 && (
-                    <div className="mt-4 grid grid-cols-3 gap-2">
-                      {formData.images.map((img, idx) => (
-                        <div key={idx} className="relative h-20 rounded overflow-hidden border">
-                          <img 
-                            src={img} 
-                            alt={`Property ${idx+1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://placehold.co/300x200?text=Image+Not+Found';
-                            }}
-                          />
-                        </div>
-                      ))}
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-blue-700 mb-2">Current Property Images</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                        {formData.images.map((img, idx) => (
+                          <div key={idx} className="relative group h-24 rounded overflow-hidden border">
+                            <img 
+                              src={img} 
+                              alt={`Property ${idx+1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://placehold.co/300x200?text=Image+Not+Found';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newImages = [...formData.images];
+                                  newImages.splice(idx, 1);
+                                  setFormData(prev => ({ ...prev, images: newImages }));
+                                }}
+                                className="bg-red-500 text-white rounded-full p-1"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
