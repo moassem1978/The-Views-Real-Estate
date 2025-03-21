@@ -319,14 +319,29 @@ export default function Dashboard() {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      console.log(`Selected logo file: ${file.name}, type: ${file.type}, size: ${(file.size / 1024).toFixed(2)}KB`);
+      
       setLogoFile(file);
       
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // For Adobe Illustrator files, show a placeholder preview
+      if (file.name.toLowerCase().endsWith('.ai') || 
+          file.type === 'application/postscript' || 
+          file.type === 'application/illustrator') {
+        console.log('Adobe Illustrator file detected, using placeholder preview');
+        // Use a placeholder image for AI files since browsers can't preview them
+        setLogoPreview('/uploads/ai-placeholder.svg');
+        toast({
+          title: "Adobe Illustrator file selected",
+          description: "Preview not available, but file will upload correctly.",
+        });
+      } else {
+        // Create preview for regular image files
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setLogoPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -1085,14 +1100,14 @@ export default function Dashboard() {
                 <Input
                   id="logo"
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.ai,application/postscript,application/illustrator"
                   onChange={handleLogoChange}
                   required
                   className="cursor-pointer"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Supported formats: JPG, PNG, GIF, SVG, WebP and other image types.
-                  File size limit: 10MB.
+                  Supported formats: JPG, PNG, GIF, SVG, WebP, Adobe Illustrator (.ai) and other image types.
+                  File size limit: 15MB.
                 </p>
               </div>
               

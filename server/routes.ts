@@ -47,17 +47,29 @@ const multerStorage = multer.diskStorage({
     // Get original extension or use a default
     let ext = path.extname(file.originalname);
     
-    // Handle special case for AI files by converting them to PNG
-    if (file.mimetype === 'application/postscript' || ext.toLowerCase() === '.ai') {
-      ext = '.png';  // Convert to PNG format for compatibility
+    // Special handling for Adobe Illustrator files
+    if (
+      file.mimetype === 'application/postscript' || 
+      file.mimetype === 'application/illustrator' || 
+      ext.toLowerCase() === '.ai'
+    ) {
+      // Keep the AI extension for the file but store it properly
+      console.log('Processing Adobe Illustrator file, preserving extension');
+      // If no extension, add .ai as default for Illustrator files
+      if (!ext) ext = '.ai';
     } else if (!ext) {
-      ext = '.jpg';  // Default to jpg if no extension
+      // Default to jpg if no extension for all other files
+      ext = '.jpg';
     }
     
     // Determine prefix based on file type
     const prefix = req.path.includes('property-images') ? 'property-' : 'logo-';
     
-    cb(null, prefix + uniqueSuffix + ext);
+    // Create safe filename
+    const filename = prefix + uniqueSuffix + ext;
+    console.log(`Generated filename: ${filename} for original: ${file.originalname}`);
+    
+    cb(null, filename);
   }
 });
 
@@ -67,6 +79,18 @@ const upload = multer({
   fileFilter: (_req, file, cb) => {
     // Accept all file types but log for debugging
     console.log(`Received file: ${file.originalname}, mimetype: ${file.mimetype}`);
+    
+    // Support for Adobe Illustrator files - they may come with various MIME types
+    // Common AI file MIME types: application/postscript, application/illustrator, application/pdf
+    if (
+      file.originalname.toLowerCase().endsWith('.ai') ||
+      file.mimetype === 'application/postscript' ||
+      file.mimetype === 'application/illustrator' ||
+      file.mimetype === 'application/pdf'
+    ) {
+      console.log('Adobe Illustrator file detected, allowing upload');
+    }
+    
     cb(null, true);
   }
 });
