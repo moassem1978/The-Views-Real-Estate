@@ -159,7 +159,7 @@ export default function PropertySearch() {
               <label className="block text-sm font-medium text-gray-600 mb-1">Search</label>
               <button 
                 type="submit" 
-                className="w-full p-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow flex items-center justify-center"
+                className="w-full p-3 bg-[#B87333] hover:bg-[#A66323] text-white font-medium rounded-md transition-colors shadow flex items-center justify-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -170,7 +170,7 @@ export default function PropertySearch() {
           </form>
           
           <div className="mt-6 flex justify-end">
-            <button className="text-[#D4AF37] hover:text-[#BF9B30] text-sm font-medium flex items-center transition-colors">
+            <button className="text-[#B87333] hover:text-[#A66323] text-sm font-medium flex items-center transition-colors">
               Advanced Search Options
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />

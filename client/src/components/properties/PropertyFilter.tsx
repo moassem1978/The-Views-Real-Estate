@@ -238,7 +238,7 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
             <div className="flex gap-2">
               <button 
                 type="submit" 
-                className="flex-grow p-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow flex items-center justify-center"
+                className="flex-grow p-3 bg-[#B87333] hover:bg-[#A66323] text-white font-medium rounded-md transition-colors shadow flex items-center justify-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -353,7 +353,7 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
       <div className="mt-4 flex justify-end">
         <button 
           onClick={toggleAdvanced}
-          className="text-[#D4AF37] hover:text-[#BF9B30] text-sm font-medium flex items-center transition-colors"
+          className="text-[#B87333] hover:text-[#A66323] text-sm font-medium flex items-center transition-colors"
         >
           {showAdvanced ? 'Hide Advanced Options' : 'Advanced Search Options'}
           <svg 
