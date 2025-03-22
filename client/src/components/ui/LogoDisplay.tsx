@@ -51,7 +51,6 @@ export default function LogoDisplay({
   // Check if the logo is an Adobe Illustrator or other unsupported file
   const isUnsupportedFile = logoUrl?.toLowerCase().endsWith('.ai') || 
                           logoUrl?.toLowerCase().endsWith('.eps') ||
-                          logoUrl?.toLowerCase().endsWith('.svg') ||
                           logoUrl?.includes('ai-placeholder');
   
   // If no logo or error occurred, show fallback with company name initials
