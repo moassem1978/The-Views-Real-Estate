@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Property } from "@/types";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, parseJsonArray } from "@/lib/utils";
 import PropertyImage from "@/components/properties/PropertyImage";
 
 interface PropertyCardProps {
@@ -29,41 +29,12 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   
   // Parse images from JSON string if necessary
   const getImages = () => {
-    // If it's an array, use it directly
-    if (Array.isArray(property.images)) {
-      return property.images;
-    }
-    
-    // Try to parse as JSON if it's a string
-    try {
-      return JSON.parse(property.images as unknown as string);
-    } catch {
-      // Return empty array if parsing fails
-      return [];
-    }
+    // Use our utility function to safely parse the images array
+    return parseJsonArray(property.images);
   };
   
-  // Add a proper URL prefix to image paths if needed
-  const getFullImageUrl = (imagePath: string) => {
-    // Check if the path is empty
-    if (!imagePath) return '';
-    
-    // Check if the path already starts with http, https
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
-    }
-    
-    // Check if the path already starts with a forward slash
-    if (imagePath.startsWith('/')) {
-      return imagePath;
-    }
-    
-    // Otherwise, add a forward slash
-    return '/' + imagePath;
-  };
-  
-  // We no longer need this function as PropertyImage handles errors internally
-  // Keeping state for backward compatibility
+  // We no longer need these functions as we now use utilities from lib/utils.ts
+  // Keeping imageError state for backward compatibility
 
   return (
     <div className="property-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getImageUrl } from "@/lib/utils";
 
 interface PropertyImageProps {
   src: string;
@@ -31,8 +32,8 @@ export default function PropertyImage({
       return;
     }
     
-    // Always pass through the path exactly as provided
-    setFormattedSrc(src);
+    // Use our utility function to get the correct image URL
+    setFormattedSrc(getImageUrl(src));
   }, [src]);
   
   const handleLoad = () => {

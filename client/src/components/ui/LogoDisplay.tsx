@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getImageUrl } from "@/lib/utils";
 
 interface LogoDisplayProps {
   logoUrl: string | undefined;
@@ -41,8 +42,8 @@ export default function LogoDisplay({
       return;
     }
     
-    // Pass through the URL as is
-    setFormattedUrl(logoUrl);
+    // Use our utility function to get the correct URL
+    setFormattedUrl(getImageUrl(logoUrl));
     
   }, [logoUrl]);
   
