@@ -14,7 +14,45 @@
       }
     ]
   ],
-  "properties": [],
+  "properties": [
+    [
+      1,
+      {
+        "id": 1,
+        "title": "Gutter ",
+        "description": "Amazing villa for sale",
+        "address": "Marassi",
+        "city": "North Coast",
+        "state": "Huygens",
+        "zipCode": "",
+        "price": 5030000,
+        "downPayment": 0,
+        "installmentAmount": 0,
+        "installmentPeriod": 0,
+        "isFullCash": false,
+        "listingType": "Primary",
+        "projectName": "",
+        "developerName": "",
+        "bedrooms": 5,
+        "bathrooms": 6,
+        "builtUpArea": 1200,
+        "plotSize": 2500,
+        "propertyType": "Villa",
+        "isFeatured": true,
+        "isNewListing": true,
+        "yearBuilt": 0,
+        "views": "Sea View",
+        "amenities": [],
+        "images": [
+          "/uploads/properties/images-1742668737799-68857820.jpeg"
+        ],
+        "latitude": 0,
+        "longitude": 0,
+        "createdAt": "2025-03-22T18:39:01.178Z",
+        "agentId": 1
+      }
+    ]
+  ],
   "testimonials": [],
   "siteSettings": {
     "companyName": "The Views Real Estate",
@@ -29,6 +67,6 @@
     }
   },
   "userCurrentId": 2,
-  "propertyCurrentId": 1,
+  "propertyCurrentId": 2,
   "testimonialCurrentId": 1
 }
