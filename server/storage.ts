@@ -87,12 +87,19 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
+    
+    // Create a complete user object with all required fields
     const user: User = { 
-      ...insertUser, 
       id,
-      phone: insertUser.phone || null,
-      isAgent: insertUser.isAgent || false
+      username: insertUser.username,
+      password: insertUser.password,
+      email: insertUser.email,
+      fullName: insertUser.fullName,
+      phone: insertUser.phone ?? null,
+      isAgent: insertUser.isAgent ?? false,
+      createdAt: insertUser.createdAt
     };
+    
     this.users.set(id, user);
     return user;
   }
@@ -119,18 +126,34 @@ export class MemStorage implements IStorage {
 
   async createProperty(insertProperty: InsertProperty): Promise<Property> {
     const id = this.propertyCurrentId++;
-    const property: Property = { 
-      ...insertProperty, 
+    
+    // Create a complete property object with all required fields
+    const property: Property = {
       id,
-      isFeatured: insertProperty.isFeatured || false,
-      isNewListing: insertProperty.isNewListing || false,
-      amenities: insertProperty.amenities || JSON.stringify([]),
-      images: insertProperty.images || JSON.stringify([]),
-      yearBuilt: insertProperty.yearBuilt || null,
-      views: insertProperty.views || null,
-      latitude: insertProperty.latitude || null,
-      longitude: insertProperty.longitude || null
+      title: insertProperty.title,
+      description: insertProperty.description,
+      address: insertProperty.address,
+      city: insertProperty.city,
+      state: insertProperty.state,
+      zipCode: insertProperty.zipCode,
+      price: insertProperty.price,
+      bedrooms: insertProperty.bedrooms,
+      bathrooms: insertProperty.bathrooms,
+      builtUpArea: insertProperty.builtUpArea,
+      plotSize: insertProperty.plotSize,
+      propertyType: insertProperty.propertyType,
+      isFeatured: insertProperty.isFeatured ?? false,
+      isNewListing: insertProperty.isNewListing ?? false,
+      yearBuilt: insertProperty.yearBuilt ?? null,
+      views: insertProperty.views ?? null,
+      amenities: insertProperty.amenities ?? JSON.stringify([]),
+      images: insertProperty.images ?? JSON.stringify([]),
+      latitude: insertProperty.latitude ?? null,
+      longitude: insertProperty.longitude ?? null,
+      createdAt: insertProperty.createdAt,
+      agentId: insertProperty.agentId
     };
+    
     this.properties.set(id, property);
     return property;
   }
@@ -199,7 +222,18 @@ export class MemStorage implements IStorage {
 
   async createTestimonial(insertTestimonial: InsertTestimonial): Promise<Testimonial> {
     const id = this.testimonialCurrentId++;
-    const testimonial: Testimonial = { ...insertTestimonial, id };
+    
+    // Create a complete testimonial object with all required fields
+    const testimonial: Testimonial = {
+      id,
+      clientName: insertTestimonial.clientName,
+      clientLocation: insertTestimonial.clientLocation,
+      rating: insertTestimonial.rating,
+      testimonial: insertTestimonial.testimonial,
+      initials: insertTestimonial.initials,
+      createdAt: insertTestimonial.createdAt
+    };
+    
     this.testimonials.set(id, testimonial);
     return testimonial;
   }
