@@ -216,8 +216,9 @@ export default function Dashboard() {
   // Delete property mutation
   const deleteProperty = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest('DELETE', `/api/properties/${id}`);
-      return response.json();
+      // For DELETE requests, we don't need to parse JSON as the server returns 204 No Content
+      await apiRequest('DELETE', `/api/properties/${id}`);
+      return true; // Just return true for success
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });

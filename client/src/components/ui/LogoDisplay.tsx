@@ -48,17 +48,50 @@ export default function LogoDisplay({
     console.log(`Logo Display: Original URL=${logoUrl}, Formatted URL=${formattedUrl}`);
   }, [logoUrl, formattedUrl]);
   
-  // Check if the logo is an Adobe Illustrator file
-  const isAiFile = logoUrl?.toLowerCase().endsWith('.ai');
+  // Check if the logo is an Adobe Illustrator or other unsupported file
+  const isUnsupportedFile = logoUrl?.toLowerCase().endsWith('.ai') || 
+                          logoUrl?.toLowerCase().endsWith('.eps') ||
+                          logoUrl?.toLowerCase().endsWith('.svg') ||
+                          logoUrl?.includes('ai-placeholder');
   
-  // If no logo or error occurred, show fallback
-  if (!formattedUrl || isError || isAiFile) {
-    // For AI files or error cases, show a branded fallback
+  // If no logo or error occurred, show fallback with company name initials
+  if (!formattedUrl || isError) {
     return (
       <div className={fallbackClassName}>
         <span className="font-serif font-bold text-white text-lg">{fallbackInitials}</span>
       </div>
     );
+  }
+  
+  // For AI files, we'll try to display the image but have a fallback ready
+  if (isUnsupportedFile) {
+    try {
+      // First attempt to display the image directly
+      return (
+        <div className={`overflow-hidden ${className}`}>
+          <img 
+            src={formattedUrl} 
+            alt={companyName}
+            className="h-full w-full object-contain"
+            onError={() => {
+              console.log('Logo (unsupported format) failed to load:', formattedUrl);
+              setIsError(true);
+            }}
+          />
+          <div className={`absolute inset-0 opacity-0 ${fallbackClassName}`} style={{zIndex: -1}}>
+            <span className="font-serif font-bold text-white text-lg">{fallbackInitials}</span>
+          </div>
+        </div>
+      );
+    } catch (e) {
+      // If there's any error, show the fallback
+      console.log('Error displaying unsupported logo format:', e);
+      return (
+        <div className={fallbackClassName}>
+          <span className="font-serif font-bold text-white text-lg">{fallbackInitials}</span>
+        </div>
+      );
+    }
   }
   
   // Show the logo
