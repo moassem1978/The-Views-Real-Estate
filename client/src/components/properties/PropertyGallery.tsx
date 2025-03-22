@@ -32,10 +32,14 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
       <div className="image-gallery-wrapper bg-[#F5F0E6] property-image-gallery">
         <div className="container mx-auto px-4 py-8 flex items-center justify-center h-full">
           <div className="text-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <p className="text-gray-500">No images available for this property</p>
+            <div className="h-16 w-16 bg-[#B87333] rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+            <h3 className="text-[#B87333] font-serif text-xl mb-2">The Views Real Estate</h3>
+            <p className="text-gray-600">Images for this property are coming soon</p>
+            <p className="text-gray-500 text-sm mt-1">Please check back later or contact us for more information</p>
           </div>
         </div>
       </div>

@@ -38,19 +38,11 @@ export default function Header() {
           {/* Logo */}
           <div className="mr-8">
             <Link href="/" className="flex items-center">
-              {settings?.companyLogo ? (
-                <div className="h-10 w-10 overflow-hidden mr-2">
-                  <img 
-                    src={settings.companyLogo} 
-                    alt={settings.companyName}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-[#B87333] flex items-center justify-center shadow-md">
-                  <span className="font-serif font-bold text-white text-lg">TV</span>
-                </div>
-              )}
+              <LogoDisplay 
+                logoUrl={settings?.companyLogo} 
+                companyName={settings?.companyName || "The Views Real Estate"}
+                className="h-10 w-10 mr-2"
+              />
               <span className="ml-2 font-serif text-gray-800 text-xl font-semibold">
                 The <span className="text-[#B87333]">Views</span> <span className="text-gray-800">Real Estate</span>
               </span>

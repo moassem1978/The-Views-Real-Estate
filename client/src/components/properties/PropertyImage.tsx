@@ -70,14 +70,16 @@ export default function PropertyImage({
         </div>
       )}
       
-      <img
-        src={src}
-        alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-        loading={priority ? "eager" : "lazy"}
-        onLoad={handleLoad}
-        onError={handleError}
-      />
+      {formattedSrc && (
+        <img
+          src={formattedSrc}
+          alt={alt}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          loading={priority ? "eager" : "lazy"}
+          onLoad={handleLoad}
+          onError={handleError}
+        />
+      )}
     </div>
   );
 }
