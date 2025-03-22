@@ -38,10 +38,15 @@ export interface IStorage {
 export interface PropertySearchFilters {
   location?: string;
   propertyType?: string;
+  listingType?: string; // "Primary" or "Resale"
+  projectName?: string;
+  developerName?: string;
   minPrice?: number;
   maxPrice?: number;
   minBedrooms?: number;
   minBathrooms?: number;
+  isFullCash?: boolean;
+  hasInstallments?: boolean;
 }
 
 export class MemStorage implements IStorage {
@@ -216,6 +221,13 @@ export class MemStorage implements IStorage {
       state: insertProperty.state,
       zipCode: insertProperty.zipCode,
       price: insertProperty.price,
+      downPayment: insertProperty.downPayment ?? null,
+      installmentAmount: insertProperty.installmentAmount ?? null,
+      installmentPeriod: insertProperty.installmentPeriod ?? null,
+      isFullCash: insertProperty.isFullCash ?? false,
+      listingType: insertProperty.listingType ?? "Resale", // Default to Resale if not specified
+      projectName: insertProperty.projectName ?? null,
+      developerName: insertProperty.developerName ?? null,
       bedrooms: insertProperty.bedrooms,
       bathrooms: insertProperty.bathrooms,
       builtUpArea: insertProperty.builtUpArea,
@@ -286,6 +298,29 @@ export class MemStorage implements IStorage {
       );
     }
     
+    // Filter by listing type (Primary or Resale)
+    if (filters.listingType && filters.listingType !== "all") {
+      results = results.filter(property => 
+        property.listingType === filters.listingType
+      );
+    }
+    
+    // Filter by project name
+    if (filters.projectName) {
+      const projectName = filters.projectName.toLowerCase();
+      results = results.filter(property => 
+        property.projectName?.toLowerCase().includes(projectName)
+      );
+    }
+    
+    // Filter by developer name
+    if (filters.developerName) {
+      const developerName = filters.developerName.toLowerCase();
+      results = results.filter(property => 
+        property.developerName?.toLowerCase().includes(developerName)
+      );
+    }
+    
     if (filters.minPrice !== undefined) {
       results = results.filter(property => property.price >= filters.minPrice!);
     }
@@ -300,6 +335,20 @@ export class MemStorage implements IStorage {
     
     if (filters.minBathrooms !== undefined) {
       results = results.filter(property => property.bathrooms >= filters.minBathrooms!);
+    }
+    
+    // Filter by full cash option
+    if (filters.isFullCash !== undefined) {
+      results = results.filter(property => property.isFullCash === filters.isFullCash);
+    }
+    
+    // Filter by installments availability
+    if (filters.hasInstallments !== undefined) {
+      results = results.filter(property => 
+        filters.hasInstallments 
+          ? property.installmentAmount !== null && property.installmentPeriod !== null
+          : property.installmentAmount === null || property.installmentPeriod === null
+      );
     }
     
     return results;
@@ -398,6 +447,13 @@ export class MemStorage implements IStorage {
         state: "Alexandria Governorate",
         zipCode: "21599",
         price: 2500000,
+        downPayment: 500000,
+        installmentAmount: 16667,
+        installmentPeriod: 120, // 10 years in months
+        isFullCash: false,
+        listingType: "Primary",
+        projectName: "Mediterranean Heights",
+        developerName: "Azure Developments",
         bedrooms: 5,
         bathrooms: 4,
         builtUpArea: 450,
@@ -420,10 +476,14 @@ export class MemStorage implements IStorage {
         state: "Cairo Governorate",
         zipCode: "11511",
         price: 1800000,
+        isFullCash: true,
+        listingType: "Resale",
+        projectName: "Cairo Towers",
+        developerName: "Urban Living",
         bedrooms: 3,
         bathrooms: 3,
         builtUpArea: 320,
-        plotSize: 450, // Added plotSize
+        plotSize: 450,
         propertyType: "Apartment",
         isFeatured: true,
         isNewListing: false,
@@ -442,6 +502,10 @@ export class MemStorage implements IStorage {
         state: "Matrouh Governorate",
         zipCode: "33716",
         price: 3200000,
+        downPayment: 960000, // 30% down payment
+        listingType: "Resale",
+        projectName: "Coastal Elegance",
+        developerName: "Beach Luxury Homes",
         bedrooms: 4,
         bathrooms: 5,
         builtUpArea: 380,
@@ -469,6 +533,13 @@ export class MemStorage implements IStorage {
         state: property.state,
         zipCode: property.zipCode,
         price: property.price,
+        downPayment: property.downPayment ?? null,
+        installmentAmount: property.installmentAmount ?? null,
+        installmentPeriod: property.installmentPeriod ?? null,
+        isFullCash: property.isFullCash ?? false,
+        listingType: property.listingType ?? "Resale", // Default to Resale
+        projectName: property.projectName ?? null,
+        developerName: property.developerName ?? null,
         bedrooms: property.bedrooms,
         bathrooms: property.bathrooms,
         builtUpArea: property.builtUpArea ?? null,
@@ -578,6 +649,13 @@ export class MemStorage implements IStorage {
           state: "Alexandria Governorate",
           zipCode: "21599",
           price: 2500000,
+          downPayment: 500000,
+          installmentAmount: 16667,
+          installmentPeriod: 120, // 10 years
+          isFullCash: false,
+          listingType: "Primary",
+          projectName: "Mediterranean Heights",
+          developerName: "Azure Developments",
           bedrooms: 5,
           bathrooms: 4,
           builtUpArea: 450,
@@ -600,10 +678,14 @@ export class MemStorage implements IStorage {
           state: "Cairo Governorate",
           zipCode: "11511",
           price: 1800000,
+          isFullCash: true,
+          listingType: "Resale",
+          projectName: "Cairo Towers",
+          developerName: "Urban Living",
           bedrooms: 3,
           bathrooms: 3,
           builtUpArea: 320,
-          plotSize: 450, // Added plotSize
+          plotSize: 450,
           propertyType: "Apartment",
           isFeatured: true,
           isNewListing: false,
@@ -622,6 +704,10 @@ export class MemStorage implements IStorage {
           state: "Matrouh Governorate",
           zipCode: "33716",
           price: 3200000,
+          downPayment: 960000, // 30% down payment
+          listingType: "Resale",
+          projectName: "Coastal Elegance",
+          developerName: "Beach Luxury Homes",
           bedrooms: 4,
           bathrooms: 5,
           builtUpArea: 380,
@@ -649,6 +735,13 @@ export class MemStorage implements IStorage {
           state: property.state,
           zipCode: property.zipCode,
           price: property.price,
+          downPayment: property.downPayment ?? null,
+          installmentAmount: property.installmentAmount ?? null,
+          installmentPeriod: property.installmentPeriod ?? null,
+          isFullCash: property.isFullCash ?? false,
+          listingType: property.listingType ?? "Resale", // Default to Resale
+          projectName: property.projectName ?? null,
+          developerName: property.developerName ?? null,
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,
           builtUpArea: property.builtUpArea,

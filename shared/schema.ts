@@ -22,6 +22,13 @@ export const properties = pgTable("properties", {
   state: text("state").notNull(),
   zipCode: text("zip_code").notNull(),
   price: doublePrecision("price").notNull(),
+  downPayment: doublePrecision("down_payment"),
+  installmentAmount: doublePrecision("installment_amount"),
+  installmentPeriod: integer("installment_period"), // In months
+  isFullCash: boolean("is_full_cash").default(false),
+  listingType: text("listing_type").notNull(), // "Primary" or "Resale"
+  projectName: text("project_name"),
+  developerName: text("developer_name"),
   bedrooms: integer("bedrooms").notNull(),
   bathrooms: doublePrecision("bathrooms").notNull(),
   builtUpArea: integer("built_up_area").notNull(),
