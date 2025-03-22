@@ -301,6 +301,23 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
         console.log(`Logo file uploaded: ${req.file.filename} (${req.file.mimetype}), original: ${req.file.originalname}`);
         
+        // Ensure the logo file is also copied to the public/uploads directory for web access
+        try {
+          const sourcePath = req.file.path;
+          const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'logos');
+          
+          // Create the destination directory if it doesn't exist
+          fs.mkdirSync(publicUploadsDir, { recursive: true });
+          
+          const destPath = path.join(publicUploadsDir, req.file.filename);
+          
+          // Copy the file to public/uploads/logos
+          fs.copyFileSync(sourcePath, destPath);
+          console.log(`Copied logo file to ${destPath} for web access`);
+        } catch (err) {
+          console.error(`Error copying logo file to public directory: ${err}`);
+        }
+        
         // Create the file URL relative to the server
         const fileUrl = `/uploads/logos/${req.file.filename}`;
         
@@ -338,13 +355,36 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           return res.status(400).json({ message: "No files uploaded" });
         }
         
-        const files = Array.isArray(req.files) ? req.files : [req.files];
+        // Use the Express.Multer.File type to correctly handle files
+        const files = Array.isArray(req.files) 
+          ? req.files as Express.Multer.File[]
+          : [req.files as unknown as Express.Multer.File];
+          
         console.log(`Uploaded ${files.length} property images`);
         
         // Log detailed file information
         files.forEach((file, index) => {
           console.log(`File ${index + 1}: ${file.originalname} (${file.mimetype}) -> ${file.filename}`);
         });
+        
+        // Ensure files are copied to the public directory for web access
+        for (const file of files) {
+          const sourcePath = file.path;
+          const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+          
+          // Create the destination directory if it doesn't exist
+          fs.mkdirSync(publicUploadsDir, { recursive: true });
+          
+          const destPath = path.join(publicUploadsDir, file.filename);
+          
+          try {
+            // Copy the file to public/uploads/properties
+            fs.copyFileSync(sourcePath, destPath);
+            console.log(`Copied file to ${destPath} for web access`);
+          } catch (copyError) {
+            console.error(`Error copying file to public directory: ${copyError}`);
+          }
+        }
         
         // Create file URLs for all uploaded images
         const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
