@@ -8,6 +8,7 @@ export default {
       sans: ['Tahoma', 'Geneva', 'sans-serif'],
       serif: ['Playfair Display', 'serif'],
       display: ['Cormorant Garamond', 'serif'],
+      luxury: ['Cinzel', 'serif'],
     },
     extend: {
       borderRadius: {
@@ -45,6 +46,23 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        "gold-accent": {
+          DEFAULT: "hsl(var(--gold-accent))",
+          dark: "hsl(var(--gold-accent-dark))",
+        },
+        copper: {
+          DEFAULT: "#B87333",
+          light: "#D6A76E",
+          dark: "#8C5E2A",
+        },
+        cream: {
+          DEFAULT: "#F5F0E5",
+          dark: "#E8E0D0",
+        },
+        "rich-black": {
+          DEFAULT: "#0D0D0D",
+          light: "#2C2C2C",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
