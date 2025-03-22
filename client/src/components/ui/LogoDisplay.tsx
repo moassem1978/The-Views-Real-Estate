@@ -41,9 +41,12 @@ export default function LogoDisplay({
       // For any other format, add a forward slash
       setFormattedUrl('/' + logoUrl);
     }
-    
-    console.log(`Logo URL: Original=${logoUrl}, Formatted=${formattedUrl}`);
   }, [logoUrl]);
+  
+  // Debug logging when formatted URL changes
+  useEffect(() => {
+    console.log(`Logo Display: Original URL=${logoUrl}, Formatted URL=${formattedUrl}`);
+  }, [logoUrl, formattedUrl]);
   
   // Check if the logo is an Adobe Illustrator file
   const isAiFile = logoUrl?.toLowerCase().endsWith('.ai');
