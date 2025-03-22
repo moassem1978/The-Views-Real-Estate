@@ -41,6 +41,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(uploadsDir));
+
+// Serve static files from public/uploads directory for newer uploads
+const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads');
+if (fs.existsSync(publicUploadsDir)) {
+  app.use('/uploads', express.static(publicUploadsDir));
+  console.log('Serving static files from:', publicUploadsDir);
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
