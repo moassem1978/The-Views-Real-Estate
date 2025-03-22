@@ -7,6 +7,7 @@ import {
 import { faker } from '@faker-js/faker';
 import { formatISO } from 'date-fns';
 import * as fs from 'fs';
+import * as path from 'path';
 
 // Storage interface for CRUD operations
 export interface IStorage {
@@ -109,6 +110,9 @@ export class MemStorage implements IStorage {
   // Save data to disk
   private saveToDisk() {
     try {
+      // Check and enforce size limits before saving
+      this.enforceSizeLimits();
+      
       const data = {
         users: Array.from(this.users.entries()),
         properties: Array.from(this.properties.entries()),
@@ -123,6 +127,107 @@ export class MemStorage implements IStorage {
       console.log('Data saved to disk');
     } catch (error) {
       console.error('Failed to save data to disk:', error);
+    }
+  }
+  
+  /**
+   * Enforces size limits on the data store to keep app size under control.
+   * This ensures we don't exceed maximum listings, and limits image data.
+   * Part of our optimization strategy to keep total app size under 150MB.
+   */
+  private enforceSizeLimits() {
+    const MAX_PROPERTIES = 100; // Maximum number of properties to store
+    const MAX_TESTIMONIALS = 50; // Maximum number of testimonials
+    const MAX_IMAGES_PER_PROPERTY = 8; // Limit number of images per property
+    
+    // If we have too many properties, remove the oldest non-featured ones first
+    if (this.properties.size > MAX_PROPERTIES) {
+      console.log(`Enforcing property limit: ${this.properties.size} -> ${MAX_PROPERTIES}`);
+      
+      // Sort properties by creation date (oldest first) and featured status
+      const sortedProperties = Array.from(this.properties.values())
+        .sort((a, b) => {
+          // First sort by featured status (keep featured properties)
+          if (a.isFeatured && !b.isFeatured) return 1;
+          if (!a.isFeatured && b.isFeatured) return -1;
+          
+          // Then sort by creation date (oldest first)
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        });
+      
+      // Remove oldest properties until we're under the limit
+      const propertiesToRemove = sortedProperties.slice(0, sortedProperties.length - MAX_PROPERTIES);
+      
+      for (const property of propertiesToRemove) {
+        // Clean up any image files associated with this property
+        this.removePropertyImages(property.images);
+        // Remove the property
+        this.properties.delete(property.id);
+      }
+    }
+    
+    // Limit the number of images per property
+    for (const property of this.properties.values()) {
+      if (property.images && property.images.length > MAX_IMAGES_PER_PROPERTY) {
+        console.log(`Property ${property.id}: Reducing images from ${property.images.length} to ${MAX_IMAGES_PER_PROPERTY}`);
+        
+        // Remove excess images, keeping the first MAX_IMAGES_PER_PROPERTY
+        const imagesToRemove = property.images.slice(MAX_IMAGES_PER_PROPERTY);
+        property.images = property.images.slice(0, MAX_IMAGES_PER_PROPERTY);
+        
+        // Clean up removed image files
+        this.removePropertyImages(imagesToRemove);
+      }
+    }
+    
+    // Similar limit for testimonials
+    if (this.testimonials.size > MAX_TESTIMONIALS) {
+      console.log(`Enforcing testimonial limit: ${this.testimonials.size} -> ${MAX_TESTIMONIALS}`);
+      
+      const sortedTestimonials = Array.from(this.testimonials.values())
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      
+      const testimonialsToRemove = sortedTestimonials.slice(0, sortedTestimonials.length - MAX_TESTIMONIALS);
+      
+      for (const testimonial of testimonialsToRemove) {
+        this.testimonials.delete(testimonial.id);
+      }
+    }
+  }
+  
+  /**
+   * Removes image files from the filesystem to free up space
+   * @param imagePaths Array of image paths to remove
+   */
+  private removePropertyImages(imagePaths: string[]) {
+    if (!imagePaths || !Array.isArray(imagePaths)) return;
+    
+    for (const imagePath of imagePaths) {
+      try {
+        // Get the base filename without size suffix or extension
+        const parts = imagePath.split('/');
+        const filename = parts[parts.length - 1];
+        const basePath = path.join(process.cwd(), 'public', 'uploads', 'properties');
+        
+        // Try to remove all size variants
+        const baseFilename = filename.split('-')[0];
+        const possibleVariants = [
+          `${baseFilename}-original.webp`,
+          `${baseFilename}-thumbnail.webp`,
+          `${baseFilename}-medium.webp`,
+          `${baseFilename}-large.webp`
+        ];
+        
+        possibleVariants.forEach(variant => {
+          const fullPath = path.join(basePath, variant);
+          if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+            console.log(`Removed image: ${variant}`);
+          }
+        });
+      } catch (error) {
+        console.error(`Failed to remove image ${imagePath}:`, error);
+      }
     }
   }
   
