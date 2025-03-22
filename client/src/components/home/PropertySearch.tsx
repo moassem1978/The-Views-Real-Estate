@@ -1,7 +1,6 @@
 import { useState, FormEvent } from "react";
 import { useLocation } from "wouter";
 import { SearchFilters } from "@/types";
-import VoiceSearch from "../properties/VoiceSearch";
 
 export default function PropertySearch() {
   const [location, setLocation] = useState("");
@@ -170,11 +169,7 @@ export default function PropertySearch() {
             </div>
           </form>
           
-          <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="self-start">
-              <VoiceSearch onFilterChange={handleFilterChange} />
-            </div>
-            
+          <div className="mt-6 flex justify-end">
             <button className="text-[#D4AF37] hover:text-[#BF9B30] text-sm font-medium flex items-center transition-colors">
               Advanced Search Options
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">

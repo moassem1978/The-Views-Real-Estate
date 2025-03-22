@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { SearchFilters, FormattedPriceRange } from "@/types";
-import VoiceSearch from "./VoiceSearch";
 import { Separator } from "@/components/ui/separator";
-import { apiRequest } from "@/lib/queryClient";
 
 interface PropertyFilterProps {
   currentFilters: SearchFilters;
@@ -32,7 +30,8 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
     // In a real app, you would fetch this data from the server
     const fetchProjectsAndDevelopers = async () => {
       try {
-        const properties = await apiRequest('/api/properties');
+        const response = await fetch('/api/properties');
+        const properties = await response.json();
         if (Array.isArray(properties)) {
           // Extract unique project names
           const projects = Array.from(new Set(
@@ -351,9 +350,7 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
         )}
       </form>
       
-      <div className="mt-4 flex justify-between items-center">
-        <VoiceSearch onFilterChange={onFilterChange} />
-        
+      <div className="mt-4 flex justify-end">
         <button 
           onClick={toggleAdvanced}
           className="text-[#D4AF37] hover:text-[#BF9B30] text-sm font-medium flex items-center transition-colors"
