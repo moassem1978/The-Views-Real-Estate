@@ -2,13 +2,10 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import NotFound from "@/pages/not-found";
-import Home from "@/pages/Home";
-import Properties from "@/pages/Properties";
-import PropertyDetails from "@/pages/PropertyDetails";
 import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Using optimized loading pattern for all routes to reduce bundle size
 const LoadingFallback = () => (
   <div className="container mx-auto px-4 py-8">
     <Skeleton className="h-12 w-48 mb-4" />
@@ -20,51 +17,46 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Lazy load less critical routes for better performance
+// Using optimized code splitting for all routes
+const Home = lazy(() => import("@/pages/Home"));
+const Properties = lazy(() => import("@/pages/Properties"));
+const PropertyDetails = lazy(() => import("@/pages/PropertyDetails"));
 const Contact = lazy(() => import("@/pages/Contact"));
 const About = lazy(() => import("@/pages/About"));
 const Services = lazy(() => import("@/pages/Services"));
 const SignIn = lazy(() => import("@/pages/SignIn"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
+// Routes configuration 
+const routes = [
+  { path: "/", Component: Home },
+  { path: "/properties", Component: Properties },
+  { path: "/properties/:id", Component: PropertyDetails },
+  { path: "/contact", Component: Contact },
+  { path: "/about", Component: About },
+  { path: "/services", Component: Services },
+  { path: "/signin", Component: SignIn },
+  { path: "/dashboard", Component: Dashboard }
+];
 
 function Router() {
   return (
     <Switch>
-      {/* Main routes */}
-      <Route path="/" component={Home} />
-      <Route path="/properties" component={Properties} />
-      <Route path="/properties/:id" component={PropertyDetails} />
-      
-      {/* Lazy-loaded routes */}
-      <Route path="/contact">
-        <Suspense fallback={<LoadingFallback />}>
-          <Contact />
-        </Suspense>
-      </Route>
-      <Route path="/about">
-        <Suspense fallback={<LoadingFallback />}>
-          <About />
-        </Suspense>
-      </Route>
-      <Route path="/services">
-        <Suspense fallback={<LoadingFallback />}>
-          <Services />
-        </Suspense>
-      </Route>
-      <Route path="/signin">
-        <Suspense fallback={<LoadingFallback />}>
-          <SignIn />
-        </Suspense>
-      </Route>
-
-      <Route path="/dashboard">
-        <Suspense fallback={<LoadingFallback />}>
-          <Dashboard />
-        </Suspense>
-      </Route>
+      {routes.map(({ path, Component }) => (
+        <Route key={path} path={path}>
+          <Suspense fallback={<LoadingFallback />}>
+            <Component />
+          </Suspense>
+        </Route>
+      ))}
       
       {/* Fallback to 404 */}
-      <Route component={NotFound} />
+      <Route>
+        <Suspense fallback={<LoadingFallback />}>
+          <NotFound />
+        </Suspense>
+      </Route>
     </Switch>
   );
 }
