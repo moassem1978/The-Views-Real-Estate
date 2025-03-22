@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { IconsProvider } from "@/components/ui/IconsProvider";
 
 // Using optimized loading pattern for all routes to reduce bundle size
 const LoadingFallback = () => (

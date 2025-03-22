@@ -44,14 +44,14 @@
         "views": "Sea View",
         "amenities": [],
         "images": [
-          "/uploads/properties/images-1742670589360-317726825.jpeg",
-          "/uploads/properties/images-1742670589740-361531739.jpeg",
-          "/uploads/properties/images-1742670589888-860211589.jpeg",
-          "/uploads/properties/images-1742670590035-990188061.jpeg"
+          "/uploads/properties/images-1742670822283-22675892.jpeg",
+          "/uploads/properties/images-1742670822284-262047242.jpeg",
+          "/uploads/properties/images-1742670822287-676523676.jpeg",
+          "/uploads/properties/images-1742670822306-979443440.jpeg"
         ],
         "latitude": 0,
         "longitude": 0,
-        "createdAt": "2025-03-22T19:09:54.101Z",
+        "createdAt": "2025-03-22T19:14:00.373Z",
         "agentId": 1
       }
     ]
@@ -67,7 +67,8 @@
       "instagram": "https://instagram.com/theviewsrealestate",
       "twitter": "https://twitter.com/theviewsrealestate",
       "linkedin": "https://linkedin.com/company/theviewsrealestate"
-    }
+    },
+    "companyLogo": "/uploads/logos/logo-1742670779266-818455919.ai"
   },
   "userCurrentId": 2,
   "propertyCurrentId": 2,

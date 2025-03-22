@@ -16,8 +16,9 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   useEffect(() => {
     // Set the main image when the property data loads
     const images = getImages();
+    console.log("Property images array:", images);
     const firstImage = images.length > 0 ? images[0] : '';
-    setMainImage(getFullImageUrl(firstImage));
+    setMainImage(firstImage);
   }, [property]);
   
   const toggleFavorite = (e: React.MouseEvent) => {

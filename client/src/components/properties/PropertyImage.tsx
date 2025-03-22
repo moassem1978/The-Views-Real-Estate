@@ -47,7 +47,7 @@ export default function PropertyImage({
     }
     
     // Log the formatted source for debugging
-    console.log(`PropertyImage: Original src: ${src}, Formatted src: ${formattedSrc}`);
+    console.log(`PropertyImage: Processing image path: ${src}`);
   }, [src]);
   
   const handleLoad = () => {

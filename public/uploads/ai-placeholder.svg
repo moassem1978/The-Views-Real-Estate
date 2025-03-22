@@ -1,20 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <title>Adobe Illustrator File</title>
+<svg width="800px" height="600px" viewBox="0 0 800 600" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Real Estate Placeholder</title>
     <defs>
-        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="linearGradient">
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="backgroundGradient">
+            <stop stop-color="#F5F5F5" offset="0%"></stop>
+            <stop stop-color="#E0E0E0" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="houseGradient">
             <stop stop-color="#B87333" offset="0%"></stop>
-            <stop stop-color="#B87333" stop-opacity="0.6" offset="100%"></stop>
+            <stop stop-color="#A05A2C" offset="100%"></stop>
         </linearGradient>
     </defs>
     <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <rect fill="#F5F5F5" x="0" y="0" width="200" height="200"></rect>
-        <rect fill="url(#linearGradient)" x="25" y="25" width="150" height="150" rx="10"></rect>
-        <text font-family="Tahoma, sans-serif" font-size="70" font-weight="bold" fill="#FFFFFF" text-anchor="middle" x="100" y="110">
-            .AI
+        <rect fill="url(#backgroundGradient)" x="0" y="0" width="800" height="600"></rect>
+        
+        <!-- House Icon -->
+        <g transform="translate(250.000000, 150.000000)">
+            <!-- House Roof -->
+            <path d="M150,0 L300,100 L0,100 Z" fill="url(#houseGradient)"></path>
+            
+            <!-- House Body -->
+            <rect fill="#FFFFFF" x="50" y="100" width="200" height="150" rx="2"></rect>
+            
+            <!-- Door -->
+            <rect fill="#333333" x="130" y="170" width="40" height="80" rx="2"></rect>
+            <circle fill="#B87333" cx="160" cy="210" r="3"></circle>
+            
+            <!-- Windows -->
+            <rect fill="#E8F4FF" stroke="#B87333" stroke-width="2" x="70" y="130" width="40" height="40"></rect>
+            <rect fill="#E8F4FF" stroke="#B87333" stroke-width="2" x="190" y="130" width="40" height="40"></rect>
+        </g>
+        
+        <!-- Text -->
+        <text font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#333333" text-anchor="middle" x="400" y="360">
+            The Views Real Estate
         </text>
-        <text font-family="Tahoma, sans-serif" font-size="14" font-weight="normal" fill="#FFFFFF" text-anchor="middle" x="100" y="140">
-            Adobe Illustrator File
+        <text font-family="Arial, sans-serif" font-size="18" fill="#666666" text-anchor="middle" x="400" y="390">
+            Property Image Coming Soon
         </text>
     </g>
 </svg>
