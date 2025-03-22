@@ -6,6 +6,7 @@ import {
 } from "@shared/schema";
 import { faker } from '@faker-js/faker';
 import { formatISO } from 'date-fns';
+import * as fs from 'fs';
 
 // Storage interface for CRUD operations
 export interface IStorage {
@@ -51,28 +52,39 @@ export class MemStorage implements IStorage {
   userCurrentId: number;
   propertyCurrentId: number;
   testimonialCurrentId: number;
+  private persistencePath = './data-store.json';
 
   constructor() {
+    // Initialize with empty collections
     this.users = new Map();
     this.properties = new Map();
     this.testimonials = new Map();
     this.userCurrentId = 1;
     this.propertyCurrentId = 1;
     this.testimonialCurrentId = 1;
-    this.siteSettings = {
-      companyName: "The Views Real Estate",
-      primaryColor: "#B87333",
-      contactEmail: "info@theviewsrealestate.com",
-      contactPhone: "1-800-555-VIEWS",
-      socialLinks: {
-        facebook: "https://facebook.com/theviewsrealestate",
-        instagram: "https://instagram.com/theviewsrealestate",
-        twitter: "https://twitter.com/theviewsrealestate",
-        linkedin: "https://linkedin.com/company/theviewsrealestate"
-      }
-    };
     
-    this.seedData();
+    // Try to load data from disk
+    this.loadFromDisk();
+    
+    // Initialize with default settings if no data loaded
+    if (this.properties.size === 0 && this.users.size === 0) {
+      // Default site settings if nothing was loaded
+      this.siteSettings = {
+        companyName: "The Views Real Estate",
+        primaryColor: "#B87333",
+        contactEmail: "info@theviewsrealestate.com",
+        contactPhone: "1-800-555-VIEWS",
+        socialLinks: {
+          facebook: "https://facebook.com/theviewsrealestate",
+          instagram: "https://instagram.com/theviewsrealestate",
+          twitter: "https://twitter.com/theviewsrealestate",
+          linkedin: "https://linkedin.com/company/theviewsrealestate"
+        }
+      };
+      
+      // Seed default data (admin user)
+      this.seedData();
+    }
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -83,6 +95,52 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(
       (user) => user.username === username,
     );
+  }
+
+  // Save data to disk
+  private saveToDisk() {
+    try {
+      const data = {
+        users: Array.from(this.users.entries()),
+        properties: Array.from(this.properties.entries()),
+        testimonials: Array.from(this.testimonials.entries()),
+        siteSettings: this.siteSettings,
+        userCurrentId: this.userCurrentId,
+        propertyCurrentId: this.propertyCurrentId,
+        testimonialCurrentId: this.testimonialCurrentId
+      };
+      
+      fs.writeFileSync(this.persistencePath, JSON.stringify(data, null, 2));
+      console.log('Data saved to disk');
+    } catch (error) {
+      console.error('Failed to save data to disk:', error);
+    }
+  }
+  
+  // Load data from disk
+  private loadFromDisk() {
+    try {
+      if (fs.existsSync(this.persistencePath)) {
+        const data = JSON.parse(fs.readFileSync(this.persistencePath, 'utf8'));
+        
+        // Restore collections
+        this.users = new Map(data.users);
+        this.properties = new Map(data.properties);
+        this.testimonials = new Map(data.testimonials);
+        
+        // Restore settings and counters
+        this.siteSettings = data.siteSettings;
+        this.userCurrentId = data.userCurrentId;
+        this.propertyCurrentId = data.propertyCurrentId;
+        this.testimonialCurrentId = data.testimonialCurrentId;
+        
+        console.log('Data loaded from disk successfully');
+      } else {
+        console.log('No saved data found, initializing with defaults');
+      }
+    } catch (error) {
+      console.error('Failed to load data from disk:', error);
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -101,6 +159,7 @@ export class MemStorage implements IStorage {
     };
     
     this.users.set(id, user);
+    this.saveToDisk(); // Save after changes
     return user;
   }
 
@@ -163,6 +222,7 @@ export class MemStorage implements IStorage {
     };
     
     this.properties.set(id, property);
+    this.saveToDisk(); // Save after changes
     return property;
   }
 
@@ -175,12 +235,17 @@ export class MemStorage implements IStorage {
     
     const updatedProperty = { ...property, ...updates };
     this.properties.set(id, updatedProperty);
+    this.saveToDisk(); // Save after changes
     
     return updatedProperty;
   }
 
   async deleteProperty(id: number): Promise<boolean> {
-    return this.properties.delete(id);
+    const result = this.properties.delete(id);
+    if (result) {
+      this.saveToDisk(); // Save after successful deletion
+    }
+    return result;
   }
 
   async searchProperties(filters: Partial<PropertySearchFilters>): Promise<Property[]> {
@@ -243,6 +308,7 @@ export class MemStorage implements IStorage {
     };
     
     this.testimonials.set(id, testimonial);
+    this.saveToDisk(); // Save after changes
     return testimonial;
   }
   
@@ -267,6 +333,7 @@ export class MemStorage implements IStorage {
       this.siteSettings = { ...this.siteSettings, ...settings };
     }
     
+    this.saveToDisk(); // Save after changes
     return { ...this.siteSettings };
   }
 
@@ -282,21 +349,21 @@ export class MemStorage implements IStorage {
       isAgent: true,
       createdAt: formatISO(new Date()),
     };
-    this.createUser(adminUser);
     
-    // Initialize site settings with brand colors
-    this.siteSettings = {
-      companyName: "The Views Real Estate",
-      primaryColor: "#B87333", // Copper/bronze tone
-      contactEmail: "info@theviewsrealestate.com",
-      contactPhone: "1-800-555-VIEWS",
-      socialLinks: {
-        facebook: "https://facebook.com/theviewsrealestate",
-        instagram: "https://instagram.com/theviewsrealestate",
-        twitter: "https://twitter.com/theviewsrealestate",
-        linkedin: "https://linkedin.com/company/theviewsrealestate"
-      }
-    };
+    // Note: This will call createUser which automatically saves to disk
+    this.users.set(1, {
+      id: 1,
+      username: adminUser.username,
+      password: adminUser.password,
+      email: adminUser.email,
+      fullName: adminUser.fullName,
+      phone: adminUser.phone ?? null,
+      isAgent: adminUser.isAgent ?? false,
+      createdAt: adminUser.createdAt
+    });
+    
+    // Save the initial data
+    this.saveToDisk();
     
     // No pre-seeded listings or testimonials per request
   }
