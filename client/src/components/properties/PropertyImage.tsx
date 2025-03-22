@@ -26,7 +26,8 @@ export default function PropertyImage({
     
     // Format the source URL
     if (!src) {
-      setFormattedSrc('');
+      // Use a default placeholder image for missing sources
+      setFormattedSrc('/uploads/ai-placeholder.svg');
       return;
     }
     
@@ -46,7 +47,7 @@ export default function PropertyImage({
     }
     
     // Log the formatted source for debugging
-    console.log(`Original src: ${src}, Formatted src: ${src.startsWith('/uploads/') ? src : (src.startsWith('/') ? src : '/' + src)}`);
+    console.log(`PropertyImage: Original src: ${src}, Formatted src: ${formattedSrc}`);
   }, [src]);
   
   const handleLoad = () => {
@@ -54,8 +55,13 @@ export default function PropertyImage({
   };
   
   const handleError = () => {
-    console.log('Image failed to load:', formattedSrc);
+    console.log('Property image failed to load:', formattedSrc);
     setIsError(true);
+    
+    // Fall back to placeholder on error
+    if (formattedSrc !== '/uploads/ai-placeholder.svg') {
+      setFormattedSrc('/uploads/ai-placeholder.svg');
+    }
   };
   
   return (
@@ -71,7 +77,7 @@ export default function PropertyImage({
         </div>
       )}
       
-      {isError && (
+      {isError && formattedSrc !== '/uploads/ai-placeholder.svg' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
           <svg className="h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

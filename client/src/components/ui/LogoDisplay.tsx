@@ -23,7 +23,8 @@ export default function LogoDisplay({
     setIsError(false);
     
     if (!logoUrl) {
-      setFormattedUrl(undefined);
+      // Use default placeholder in public folder
+      setFormattedUrl('/uploads/ai-placeholder.svg');
       return;
     }
     
@@ -53,8 +54,8 @@ export default function LogoDisplay({
                           logoUrl?.toLowerCase().endsWith('.eps') ||
                           logoUrl?.includes('ai-placeholder');
   
-  // If no logo or error occurred, show fallback with company name initials
-  if (!formattedUrl || isError) {
+  // If error occurred, show fallback with company name initials
+  if (isError) {
     return (
       <div className={fallbackClassName}>
         <span className="font-serif font-bold text-white text-lg">{fallbackInitials}</span>

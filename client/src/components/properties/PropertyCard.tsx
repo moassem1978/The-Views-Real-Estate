@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Property } from "@/types";
 import { formatPrice } from "@/lib/utils";
+import PropertyImage from "@/components/properties/PropertyImage";
 
 interface PropertyCardProps {
   property: Property;
@@ -60,29 +61,18 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     return '/' + imagePath;
   };
   
-  // Handle image load error
-  const handleImageError = () => {
-    console.log('Image failed to load:', mainImage);
-    setImageError(true);
-  };
+  // We no longer need this function as PropertyImage handles errors internally
+  // Keeping state for backward compatibility
 
   return (
     <div className="property-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">
       <Link href={`/properties/${property.id}`} className="block relative overflow-hidden">
         <div className="aspect-w-16 aspect-h-10 relative overflow-hidden">
-          {imageError ? (
-            <div className="w-full h-60 bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-500">No image available</span>
-            </div>
-          ) : (
-            <img 
-              src={mainImage} 
-              alt={property.title} 
-              className="w-full h-60 object-cover transform transition-transform duration-700 group-hover:scale-105"
-              loading="lazy"
-              onError={handleImageError}
-            />
-          )}
+          <PropertyImage 
+            src={mainImage} 
+            alt={property.title} 
+            className="w-full h-60 object-cover transform transition-transform duration-700 group-hover:scale-105"
+          />
         </div>
         {property.isFeatured && (
           <span className="absolute top-4 left-4 px-3 py-1 bg-[#D4AF37] text-white text-sm font-medium rounded">Featured</span>
