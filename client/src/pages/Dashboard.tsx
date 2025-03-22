@@ -437,6 +437,9 @@ export default function Dashboard() {
       bathrooms: property.bathrooms,
       builtUpArea: property.builtUpArea || property.squareFeet || 0,
       plotSize: property.plotSize || 0,
+      gardenSize: property.gardenSize || 0,
+      floor: property.floor || 0,
+      isGroundUnit: property.isGroundUnit || false,
       propertyType: property.propertyType,
       isFeatured: property.isFeatured,
       isNewListing: property.isNewListing,
@@ -602,6 +605,9 @@ export default function Dashboard() {
       bathrooms: 0,
       builtUpArea: 0,
       plotSize: 0,
+      gardenSize: 0,
+      floor: 0,
+      isGroundUnit: false,
       propertyType: "House",
       isFeatured: false,
       isNewListing: true,
@@ -1012,23 +1018,82 @@ export default function Dashboard() {
                     <span className="text-xs text-gray-500">Built-Up Area in square meters</span>
                   </div>
                   
+                  {/* Is Ground Unit Toggle */}
                   <div className="space-y-2">
-                    <label htmlFor="plotSize" className="text-sm font-medium flex items-center">
-                      Plot Size (m²)
-                      {!['Apartment', 'Studio', 'Chalet'].includes(formData.propertyType) && (
-                        <span className="text-red-500 ml-1">*</span>
-                      )}
-                    </label>
-                    <Input
-                      id="plotSize"
-                      name="plotSize"
-                      type="number"
-                      value={formData.plotSize?.toString() || ""}
-                      onChange={handleInputChange}
-                      required={!['Apartment', 'Studio', 'Chalet'].includes(formData.propertyType)}
-                    />
-                    <span className="text-xs text-gray-500">Plot Size in square meters</span>
+                    <label htmlFor="isGroundUnit" className="text-sm font-medium">Ground Unit</label>
+                    <Select
+                      value={formData.isGroundUnit ? "true" : "false"}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, isGroundUnit: value === "true" }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Is this a ground unit?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">Yes</SelectItem>
+                        <SelectItem value="false">No</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-gray-500">Ground units typically have gardens instead of plot sizes</span>
                   </div>
+
+                  {/* Floor field - only for vertical building units */}
+                  {['Apartment', 'Studio', 'Penthouse', 'Chalet'].includes(formData.propertyType) && !formData.isGroundUnit && (
+                    <div className="space-y-2">
+                      <label htmlFor="floor" className="text-sm font-medium flex items-center">
+                        Floor
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <Input
+                        id="floor"
+                        name="floor"
+                        type="number"
+                        value={formData.floor?.toString() || ""}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <span className="text-xs text-gray-500">Floor number (1, 2, etc.)</span>
+                    </div>
+                  )}
+                  
+                  {/* Plot Size - for non-ground units */}
+                  {!formData.isGroundUnit && (
+                    <div className="space-y-2">
+                      <label htmlFor="plotSize" className="text-sm font-medium flex items-center">
+                        Plot Size (m²)
+                        {!['Apartment', 'Studio', 'Chalet', 'Penthouse'].includes(formData.propertyType) && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </label>
+                      <Input
+                        id="plotSize"
+                        name="plotSize"
+                        type="number"
+                        value={formData.plotSize?.toString() || ""}
+                        onChange={handleInputChange}
+                        required={!['Apartment', 'Studio', 'Chalet', 'Penthouse'].includes(formData.propertyType) && !formData.isGroundUnit}
+                      />
+                      <span className="text-xs text-gray-500">Plot Size in square meters</span>
+                    </div>
+                  )}
+                  
+                  {/* Garden Size - only for ground units */}
+                  {formData.isGroundUnit && (
+                    <div className="space-y-2">
+                      <label htmlFor="gardenSize" className="text-sm font-medium flex items-center">
+                        Garden Size (m²)
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <Input
+                        id="gardenSize"
+                        name="gardenSize"
+                        type="number"
+                        value={formData.gardenSize?.toString() || ""}
+                        onChange={handleInputChange}
+                        required={formData.isGroundUnit}
+                      />
+                      <span className="text-xs text-gray-500">Garden Size in square meters</span>
+                    </div>
+                  )}
                   
                   <div className="space-y-2">
                     <label htmlFor="yearBuilt" className="text-sm font-medium">Year Built</label>

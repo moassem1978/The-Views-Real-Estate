@@ -19,6 +19,9 @@ export interface Property {
   squareFeet?: number;
   builtUpArea?: number;
   plotSize?: number;
+  gardenSize?: number;
+  floor?: number;
+  isGroundUnit?: boolean;
   propertyType: string;
   isFeatured: boolean;
   isNewListing: boolean;

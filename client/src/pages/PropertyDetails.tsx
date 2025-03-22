@@ -227,13 +227,32 @@ export default function PropertyDetails() {
                       {property.builtUpArea && (
                         <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
                           <span className="text-gray-600">Built-Up Area</span>
-                          <span className="font-medium text-gray-800">{property.builtUpArea.toLocaleString()} sq ft</span>
+                          <span className="font-medium text-gray-800">{property.builtUpArea.toLocaleString()} m²</span>
                         </div>
                       )}
-                      {property.plotSize && (
+
+                      {/* Only show floor for vertical building units */}
+                      {['Apartment', 'Studio', 'Penthouse', 'Chalet'].includes(property.propertyType) && 
+                       property.floor !== undefined && property.floor > 0 && (
+                        <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
+                          <span className="text-gray-600">Floor</span>
+                          <span className="font-medium text-gray-800">{property.floor}</span>
+                        </div>
+                      )}
+
+                      {/* Show Garden Size for ground units */}
+                      {property.isGroundUnit && property.gardenSize && (
+                        <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
+                          <span className="text-gray-600">Garden Size</span>
+                          <span className="font-medium text-gray-800">{property.gardenSize.toLocaleString()} m²</span>
+                        </div>
+                      )}
+                      
+                      {/* Show Plot Size for non-ground units */}
+                      {!property.isGroundUnit && property.plotSize && (
                         <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
                           <span className="text-gray-600">Plot Size</span>
-                          <span className="font-medium text-gray-800">{property.plotSize.toLocaleString()} sq ft</span>
+                          <span className="font-medium text-gray-800">{property.plotSize.toLocaleString()} m²</span>
                         </div>
                       )}
                       <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
