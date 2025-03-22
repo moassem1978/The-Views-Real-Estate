@@ -122,7 +122,7 @@ export function getImageUrl(path: string): string {
   
   // For relative paths from our API, add the base URL
   if (path.startsWith('/uploads/')) {
-    return `http://localhost:5000${path}`;
+    return `${window.location.origin}${path}`;
   }
   
   // For all other cases, return the path as is

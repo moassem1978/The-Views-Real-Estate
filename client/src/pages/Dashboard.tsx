@@ -902,25 +902,100 @@ export default function Dashboard() {
               
               <div className="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h3 className="font-medium mb-3 text-blue-800">Property Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                {/* Listing Type - Mandatory field */}
+                <div className="mb-4">
                   <div className="space-y-2">
-                    <label htmlFor="price" className="text-sm font-medium flex items-center">
-                      Price (EGP)
+                    <label htmlFor="listingType" className="text-sm font-medium flex items-center">
+                      Listing Type
                       <span className="text-red-500 ml-1">*</span>
                     </label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      value={formData.price.toString()}
-                      onChange={handleInputChange}
+                    <Select
+                      value={formData.listingType}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, listingType: value }))}
                       required
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select listing type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Primary">Primary</SelectItem>
+                        <SelectItem value="Resale">Resale</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Primary Market - Two price fields */}
+                  {formData.listingType === "Primary" && (
+                    <>
+                      <div className="space-y-2">
+                        <label htmlFor="price" className="text-sm font-medium flex items-center">
+                          Total Price (EGP)
+                          <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <Input
+                          id="price"
+                          name="price"
+                          type="number"
+                          value={formData.price.toString()}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label htmlFor="downPayment" className="text-sm font-medium flex items-center">
+                          Down Payment (EGP)
+                          <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <Input
+                          id="downPayment"
+                          name="downPayment"
+                          type="number"
+                          value={formData.downPayment?.toString() || ""}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label htmlFor="installmentAmount" className="text-sm font-medium">
+                          Monthly Installment (EGP)
+                        </label>
+                        <Input
+                          id="installmentAmount"
+                          name="installmentAmount"
+                          type="number"
+                          value={formData.installmentAmount?.toString() || ""}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    </>
+                  )}
+                  
+                  {/* Resale Market - Single price field */}
+                  {formData.listingType === "Resale" && (
+                    <div className="space-y-2">
+                      <label htmlFor="price" className="text-sm font-medium flex items-center">
+                        Price (EGP)
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <Input
+                        id="price"
+                        name="price"
+                        type="number"
+                        value={formData.price.toString()}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  )}
                   
                   <div className="space-y-2">
                     <label htmlFor="builtUpArea" className="text-sm font-medium flex items-center">
-                      Built-Up Area
+                      Built-Up Area (m²)
                       <span className="text-red-500 ml-1">*</span>
                     </label>
                     <Input
@@ -931,13 +1006,15 @@ export default function Dashboard() {
                       onChange={handleInputChange}
                       required
                     />
-                    <span className="text-xs text-gray-500">Built-Up Area in sq ft</span>
+                    <span className="text-xs text-gray-500">Built-Up Area in square meters</span>
                   </div>
                   
                   <div className="space-y-2">
                     <label htmlFor="plotSize" className="text-sm font-medium flex items-center">
-                      Plot Size
-                      <span className="text-red-500 ml-1">*</span>
+                      Plot Size (m²)
+                      {!['Apartment', 'Studio', 'Chalet'].includes(formData.propertyType) && (
+                        <span className="text-red-500 ml-1">*</span>
+                      )}
                     </label>
                     <Input
                       id="plotSize"
@@ -945,9 +1022,9 @@ export default function Dashboard() {
                       type="number"
                       value={formData.plotSize?.toString() || ""}
                       onChange={handleInputChange}
-                      required
+                      required={!['Apartment', 'Studio', 'Chalet'].includes(formData.propertyType)}
                     />
-                    <span className="text-xs text-gray-500">Plot Size in sq ft</span>
+                    <span className="text-xs text-gray-500">Plot Size in square meters</span>
                   </div>
                   
                   <div className="space-y-2">

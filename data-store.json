@@ -56,6 +56,47 @@
         "createdAt": "2025-03-22T19:56:19.116Z",
         "agentId": 1
       }
+    ],
+    [
+      2,
+      {
+        "id": 2,
+        "title": "Number 2",
+        "description": "Fascinating luins Sherie\n Shekels\n\nDndjdnnele\nIndian\nDiffer\nKindness fishes. Didn’t diene to ty t t t t. a man to do that for you and keep him in your life \n",
+        "address": "Mivida",
+        "city": "New Cairo",
+        "state": "Mivida",
+        "zipCode": "",
+        "price": 5204940,
+        "downPayment": 0,
+        "installmentAmount": 0,
+        "installmentPeriod": 0,
+        "isFullCash": false,
+        "listingType": "Primary",
+        "projectName": "",
+        "developerName": "",
+        "bedrooms": 3,
+        "bathrooms": 3,
+        "builtUpArea": 120,
+        "plotSize": 0,
+        "propertyType": "Chalet",
+        "isFeatured": true,
+        "isNewListing": true,
+        "yearBuilt": 0,
+        "views": "Other",
+        "amenities": [],
+        "images": [
+          "/uploads/properties/images-1742683567809-103298631.jpeg",
+          "/uploads/properties/images-1742683568274-915448205.jpeg",
+          "/uploads/properties/images-1742683568428-444623292.jpeg",
+          "/uploads/properties/images-1742683568440-30636979.jpeg",
+          "/uploads/properties/images-1742683568593-14811094.jpeg"
+        ],
+        "latitude": 0,
+        "longitude": 0,
+        "createdAt": "2025-03-22T22:46:18.910Z",
+        "agentId": 1
+      }
     ]
   ],
   "testimonials": [],
@@ -73,6 +114,6 @@
     "companyLogo": "/uploads/logos/logo-1742677490208-285368626.png"
   },
   "userCurrentId": 2,
-  "propertyCurrentId": 2,
+  "propertyCurrentId": 3,
   "testimonialCurrentId": 1
 }
