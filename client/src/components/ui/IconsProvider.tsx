@@ -1,12 +1,14 @@
-import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useEffect, ComponentType } from 'react';
 import * as LucideIcons from 'lucide-react';
+import { LucideProps } from 'lucide-react';
 
-// Define the type for the Lucide icons more specifically
-type LucideIconsType = typeof LucideIcons;
+// Define the type for Lucide icon components
+type LucideIconComponent = ComponentType<LucideProps>;
+type IconsMap = Record<string, LucideIconComponent>;
 
 // Create a context to provide the loaded icons
 type IconsContextType = {
-  icons: LucideIconsType | null;
+  icons: IconsMap | null;
   loading: boolean;
 };
 
@@ -26,9 +28,22 @@ export function IconsProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    // Load icons only when needed
+    // Create a safe map of icon components
+    const iconMap: IconsMap = {};
+    
+    // Add each Lucide icon to our map, filtering out non-component exports
+    Object.entries(LucideIcons).forEach(([key, value]) => {
+      // Make sure it's a valid component before adding to our map
+      if (
+        typeof value === 'function' || 
+        (typeof value === 'object' && value !== null && 'render' in value)
+      ) {
+        iconMap[key] = value as LucideIconComponent;
+      }
+    });
+    
     setState({
-      icons: LucideIcons,
+      icons: iconMap,
       loading: false,
     });
     
@@ -79,12 +94,14 @@ export function OptimizedIcon({
     );
   }
   
-  const IconComponent = icons[name];
+  const IconComponent = icons[name] as LucideIconComponent;
   
   if (!IconComponent) {
     console.warn(`Icon "${name}" not found`);
     return null;
   }
   
-  return <IconComponent size={size} {...props} />;
+  // Cast to any to avoid TypeScript complaints about component type
+  const Icon = IconComponent as any;
+  return <Icon size={size} {...props} />;
 }

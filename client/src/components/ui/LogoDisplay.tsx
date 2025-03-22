@@ -18,80 +18,62 @@ export default function LogoDisplay({
   const [isError, setIsError] = useState(false);
   const [formattedUrl, setFormattedUrl] = useState<string | undefined>(undefined);
   
+  // Check if the logo is an unsupported file format
+  const isUnsupportedFormat = (url?: string): boolean => {
+    if (!url) return false;
+    const lowerUrl = url.toLowerCase();
+    const unsupportedExtensions = ['.ai', '.eps', '.psd', '.indd'];
+    return unsupportedExtensions.some(ext => lowerUrl.endsWith(ext));
+  };
+  
   // Format URL and reset error state when logo URL changes
   useEffect(() => {
     setIsError(false);
     
-    if (!logoUrl) {
-      // Use default placeholder in public folder
-      setFormattedUrl('/uploads/ai-placeholder.svg');
+    // Handle unsupported formats immediately
+    if (logoUrl && isUnsupportedFormat(logoUrl)) {
+      setIsError(true);
       return;
     }
     
-    // Format the URL properly
-    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
-      // External URLs remain unchanged
-      setFormattedUrl(logoUrl);
-    } else if (logoUrl.startsWith('/uploads/')) {
-      // Uploads directory paths are kept as is
-      setFormattedUrl(logoUrl);
-    } else if (logoUrl.startsWith('/')) {
-      // Other paths starting with / are kept as is
-      setFormattedUrl(logoUrl);
-    } else {
-      // For any other format, add a forward slash
-      setFormattedUrl('/' + logoUrl);
+    if (!logoUrl) {
+      setFormattedUrl(undefined);
+      return;
     }
+    
+    // Pass through the URL as is
+    setFormattedUrl(logoUrl);
+    
   }, [logoUrl]);
   
-  // Debug logging when formatted URL changes
-  useEffect(() => {
-    console.log(`Logo Display: Original URL=${logoUrl}, Formatted URL=${formattedUrl}`);
-  }, [logoUrl, formattedUrl]);
+  // Create initials from company name
+  const getInitials = (): string => {
+    if (!companyName) return fallbackInitials;
+    
+    const words = companyName.split(' ');
+    if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    
+    return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+  };
   
-  // Check if the logo is an Adobe Illustrator or other unsupported file
-  const isUnsupportedFile = logoUrl?.toLowerCase().endsWith('.ai') || 
-                          logoUrl?.toLowerCase().endsWith('.eps') ||
-                          logoUrl?.includes('ai-placeholder');
-  
-  // If error occurred, show fallback with company name initials
-  if (isError) {
+  // When we detect an error or unsupported format, show initials
+  if (isError || isUnsupportedFormat(logoUrl)) {
     return (
       <div className={fallbackClassName}>
-        <span className="font-serif font-bold text-white text-lg">{fallbackInitials}</span>
+        <span className="font-serif font-bold text-white text-lg">{getInitials()}</span>
       </div>
     );
   }
   
-  // For AI files, we'll try to display the image but have a fallback ready
-  if (isUnsupportedFile) {
-    try {
-      // First attempt to display the image directly
-      return (
-        <div className={`overflow-hidden ${className}`}>
-          <img 
-            src={formattedUrl} 
-            alt={companyName}
-            className="h-full w-full object-contain"
-            onError={() => {
-              console.log('Logo (unsupported format) failed to load:', formattedUrl);
-              setIsError(true);
-            }}
-          />
-          <div className={`absolute inset-0 opacity-0 ${fallbackClassName}`} style={{zIndex: -1}}>
-            <span className="font-serif font-bold text-white text-lg">{fallbackInitials}</span>
-          </div>
-        </div>
-      );
-    } catch (e) {
-      // If there's any error, show the fallback
-      console.log('Error displaying unsupported logo format:', e);
-      return (
-        <div className={fallbackClassName}>
-          <span className="font-serif font-bold text-white text-lg">{fallbackInitials}</span>
-        </div>
-      );
-    }
+  // When we have no URL, show initials
+  if (!formattedUrl) {
+    return (
+      <div className={fallbackClassName}>
+        <span className="font-serif font-bold text-white text-lg">{getInitials()}</span>
+      </div>
+    );
   }
   
   // Show the logo
