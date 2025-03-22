@@ -6,15 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Formats a price value to a string with appropriate currency symbol and formatting
+ * Formats a price value to a string with appropriate currency symbol and formatting for Egyptian pounds
  * @param price - The price value to format
  * @param maximumFractionDigits - Maximum number of fraction digits to display (default: 0)
  * @returns Formatted price string
  */
 export function formatPrice(price: number, maximumFractionDigits = 0): string {
   const formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+    style: 'decimal',
     minimumFractionDigits: 0,
     maximumFractionDigits,
   });
@@ -25,10 +24,12 @@ export function formatPrice(price: number, maximumFractionDigits = 0): string {
   // For prices over 1 million, show in millions
   if (price >= 1000000) {
     const inMillions = price / 1000000;
-    formattedPrice = `$${inMillions.toFixed(inMillions % 1 === 0 ? 0 : 1)}M`;
+    formattedPrice = `${inMillions.toFixed(inMillions % 1 === 0 ? 0 : 1)}M`;
+    return `£ ${formattedPrice} L.E`;
   }
   
-  return formattedPrice;
+  // Return with Egyptian Pound symbol (£) and L.E suffix
+  return `£ ${formattedPrice} L.E`;
 }
 
 /**

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Property } from "@/types";
+import { formatPrice } from "@/lib/utils";
 
 interface PropertyCardProps {
   property: Property;
@@ -56,14 +57,6 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     console.log('Image failed to load:', mainImage);
     setImageError(true);
   };
-  
-  // Format price to USD
-  const formattedPrice = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(property.price);
 
   return (
     <div className="property-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">
@@ -107,7 +100,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       <div className="p-6">
         <div className="flex justify-between items-start">
           <div>
-            <span className="text-[#D4AF37] font-medium">{formattedPrice}</span>
+            <span className="text-[#D4AF37] font-medium">{formatPrice(property.price)}</span>
             <h3 className="mt-1 font-serif text-xl font-semibold text-gray-800 leading-tight">{property.title}</h3>
             <p className="mt-1 text-gray-600 flex items-center text-sm">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
