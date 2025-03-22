@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Property } from "@/types";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getImageUrl } from "@/lib/utils";
 import {
   Carousel,
   CarouselContent,
@@ -131,9 +131,15 @@ export default function HeroCarousel() {
                 {/* Background Image */}
                 <div className="absolute inset-0">
                   <img 
-                    src={property.images[0]} 
+                    src={property.images && property.images.length > 0 ? getImageUrl(property.images[0]) : "https://placehold.co/1200x800/222222/FFFFFF?text=The+Views+Real+Estate"} 
                     alt={property.title}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      console.error("Image failed to load:", target.src);
+                      // Fallback to a placeholder if image fails to load
+                      target.src = "https://placehold.co/1200x800/222222/FFFFFF?text=The+Views+Real+Estate";
+                    }}
                   />
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />

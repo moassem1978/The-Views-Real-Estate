@@ -116,7 +116,7 @@
 
 /* Custom styles for the luxury real estate site */
 @layer utilities {
-  /* Typography styles */
+  /* Typography styles - Using Playfair Display as the primary serif font across the app */
   .font-serif {
     font-family: 'Playfair Display', serif;
   }
@@ -125,8 +125,9 @@
     font-family: 'Tahoma', 'Geneva', sans-serif;
   }
   
+  /* Use the same font for luxury elements for consistency */
   .font-luxury {
-    font-family: 'Cinzel', serif;
+    font-family: 'Playfair Display', serif;
   }
   
   /* Luxury gradients and colors */

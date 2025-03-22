@@ -108,3 +108,23 @@ export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
 }
+
+/**
+ * Returns a proper URL for an image path, handling both relative and absolute paths
+ * @param path - The image path from the API
+ * @returns Full URL to the image
+ */
+export function getImageUrl(path: string): string {
+  if (!path) return "https://placehold.co/600x400/222222/FFFFFF?text=No+Image";
+  
+  // If it's already a full URL, return as is
+  if (path.startsWith('http')) return path;
+  
+  // For relative paths from our API, add the base URL
+  if (path.startsWith('/uploads/')) {
+    return `http://localhost:5000${path}`;
+  }
+  
+  // For all other cases, return the path as is
+  return path;
+}
