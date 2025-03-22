@@ -31,23 +31,11 @@ export default function PropertyImage({
       return;
     }
     
-    // Check if the path already starts with http, https, or a forward slash
-    if (src.startsWith('http://') || src.startsWith('https://')) {
-      // External URLs remain unchanged
-      setFormattedSrc(src);
-    } else if (src.startsWith('/uploads/')) {
-      // Uploads directory paths are kept as is
-      setFormattedSrc(src);
-    } else if (src.startsWith('/')) {
-      // Other paths starting with / are kept as is
-      setFormattedSrc(src);
-    } else {
-      // For any other format, add a forward slash
-      setFormattedSrc('/' + src);
-    }
+    // Always pass through the path exactly as provided
+    setFormattedSrc(src);
     
-    // Log the formatted source for debugging
-    console.log(`PropertyImage: Processing image path: ${src}`);
+    // Log the image path for debugging
+    console.log(`PropertyImage: Loading image from path: ${src}`);
   }, [src]);
   
   const handleLoad = () => {

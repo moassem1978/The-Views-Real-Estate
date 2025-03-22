@@ -47,9 +47,22 @@ app.use('/uploads', express.static(uploadsDir));
 // Serve static files from public/uploads directory for newer uploads
 const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads');
 if (fs.existsSync(publicUploadsDir)) {
-  app.use('/uploads', express.static(publicUploadsDir));
-  console.log('Serving static files from:', publicUploadsDir);
+  // Use a different path for public uploads to avoid conflicts
+  app.use(express.static('public'));
+  console.log('Serving public static files from:', publicUploadsDir);
 }
+
+// Debug endpoint to check image paths
+app.get('/api/debug/images', (req, res) => {
+  const images = fs.readdirSync(path.join(publicUploadsDir, 'properties'))
+    .filter(file => file.endsWith('.jpeg') || file.endsWith('.jpg') || file.endsWith('.png'));
+  
+  res.json({
+    uploadsDir,
+    publicUploadsDir,
+    images: images.map(img => `/uploads/properties/${img}`),
+  });
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
