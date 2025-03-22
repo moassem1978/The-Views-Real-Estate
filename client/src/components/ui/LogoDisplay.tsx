@@ -16,17 +16,40 @@ export default function LogoDisplay({
   fallbackInitials = "TV"
 }: LogoDisplayProps) {
   const [isError, setIsError] = useState(false);
+  const [formattedUrl, setFormattedUrl] = useState<string | undefined>(undefined);
   
-  // Reset error state when logo URL changes
+  // Format URL and reset error state when logo URL changes
   useEffect(() => {
     setIsError(false);
+    
+    if (!logoUrl) {
+      setFormattedUrl(undefined);
+      return;
+    }
+    
+    // Format the URL properly
+    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
+      // External URLs remain unchanged
+      setFormattedUrl(logoUrl);
+    } else if (logoUrl.startsWith('/uploads/')) {
+      // Uploads directory paths are kept as is
+      setFormattedUrl(logoUrl);
+    } else if (logoUrl.startsWith('/')) {
+      // Other paths starting with / are kept as is
+      setFormattedUrl(logoUrl);
+    } else {
+      // For any other format, add a forward slash
+      setFormattedUrl('/' + logoUrl);
+    }
+    
+    console.log(`Logo URL: Original=${logoUrl}, Formatted=${formattedUrl}`);
   }, [logoUrl]);
   
   // Check if the logo is an Adobe Illustrator file
   const isAiFile = logoUrl?.toLowerCase().endsWith('.ai');
   
   // If no logo or error occurred, show fallback
-  if (!logoUrl || isError || isAiFile) {
+  if (!formattedUrl || isError || isAiFile) {
     // For AI files or error cases, show a branded fallback
     return (
       <div className={fallbackClassName}>
@@ -39,10 +62,13 @@ export default function LogoDisplay({
   return (
     <div className={`overflow-hidden ${className}`}>
       <img 
-        src={logoUrl} 
+        src={formattedUrl} 
         alt={companyName}
         className="h-full w-full object-contain"
-        onError={() => setIsError(true)}
+        onError={() => {
+          console.log('Logo failed to load:', formattedUrl);
+          setIsError(true);
+        }}
       />
     </div>
   );

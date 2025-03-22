@@ -146,8 +146,16 @@ export class MemStorage implements IStorage {
       isNewListing: insertProperty.isNewListing ?? false,
       yearBuilt: insertProperty.yearBuilt ?? null,
       views: insertProperty.views ?? null,
-      amenities: insertProperty.amenities ?? JSON.stringify([]),
-      images: insertProperty.images ?? JSON.stringify([]),
+      amenities: Array.isArray(insertProperty.amenities) 
+        ? insertProperty.amenities
+        : typeof insertProperty.amenities === 'string'
+          ? JSON.parse(insertProperty.amenities)
+          : [],
+      images: Array.isArray(insertProperty.images)
+        ? insertProperty.images
+        : typeof insertProperty.images === 'string'
+          ? JSON.parse(insertProperty.images)
+          : [],
       latitude: insertProperty.latitude ?? null,
       longitude: insertProperty.longitude ?? null,
       createdAt: insertProperty.createdAt,
