@@ -108,8 +108,50 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       <div className="p-6">
         <div className="flex justify-between items-start">
           <div>
+            {/* Property Type Badge */}
+            <div className="flex gap-2 mb-1">
+              <span className={`inline-block px-2 py-1 text-xs rounded ${property.listingType === 'Primary' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
+                {property.listingType}
+              </span>
+              {property.propertyType && (
+                <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
+                  {property.propertyType}
+                </span>
+              )}
+            </div>
+            
+            {/* Price Info */}
             <span className="text-[#D4AF37] font-medium">{formatPrice(property.price)}</span>
+            
+            {/* Payment Details */}
+            {property.listingType === 'Primary' && property.installmentAmount && (
+              <div className="text-xs text-gray-600 mt-1">
+                <span className="font-medium">Installments:</span> {formatPrice(property.installmentAmount)}/month
+                {property.installmentPeriod && (
+                  <span className="ml-1">({Math.floor(property.installmentPeriod/12)} years)</span>
+                )}
+              </div>
+            )}
+            {property.downPayment && (
+              <div className="text-xs text-gray-600">
+                <span className="font-medium">Down Payment:</span> {formatPrice(property.downPayment)}
+              </div>
+            )}
+            {property.isFullCash && (
+              <div className="text-xs font-medium text-emerald-700">Full Cash Payment</div>
+            )}
+            
             <h3 className="mt-1 font-serif text-xl font-semibold text-gray-800 leading-tight">{property.title}</h3>
+            
+            {/* Project & Developer Info */}
+            {(property.projectName || property.developerName) && (
+              <div className="mt-1 text-xs text-gray-700">
+                {property.projectName && <span className="font-medium">Project: {property.projectName}</span>}
+                {property.projectName && property.developerName && <span className="mx-1">•</span>}
+                {property.developerName && <span>By {property.developerName}</span>}
+              </div>
+            )}
+            
             <p className="mt-1 text-gray-600 flex items-center text-sm">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

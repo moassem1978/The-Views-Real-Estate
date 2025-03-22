@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { SearchFilters, FormattedPriceRange } from "@/types";
 import VoiceSearch from "./VoiceSearch";
 import { Separator } from "@/components/ui/separator";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PropertyFilterProps {
   currentFilters: SearchFilters;
@@ -11,17 +12,64 @@ interface PropertyFilterProps {
 export default function PropertyFilter({ currentFilters, onFilterChange }: PropertyFilterProps) {
   const [location, setLocation] = useState(currentFilters.location || "");
   const [propertyType, setPropertyType] = useState(currentFilters.propertyType || "");
+  const [listingType, setListingType] = useState(currentFilters.listingType || "");
+  const [projectName, setProjectName] = useState(currentFilters.projectName || "");
+  const [developerName, setDeveloperName] = useState(currentFilters.developerName || "");
   const [priceRange, setPriceRange] = useState("");
   const [bedrooms, setBedrooms] = useState(currentFilters.minBedrooms?.toString() || "");
   const [bathrooms, setBathrooms] = useState(currentFilters.minBathrooms?.toString() || "");
+  const [isFullCash, setIsFullCash] = useState<boolean | undefined>(currentFilters.isFullCash);
+  const [hasInstallments, setHasInstallments] = useState<boolean | undefined>(currentFilters.hasInstallments);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  // List of available projects and developers
+  const [availableProjects, setAvailableProjects] = useState<string[]>([]);
+  const [availableDevelopers, setAvailableDevelopers] = useState<string[]>([]);
+  
+  // Fetch available projects and developers
+  useEffect(() => {
+    // This would be better coming from an API endpoint, but for now we'll simulate it
+    // In a real app, you would fetch this data from the server
+    const fetchProjectsAndDevelopers = async () => {
+      try {
+        const properties = await apiRequest('/api/properties');
+        if (Array.isArray(properties)) {
+          // Extract unique project names
+          const projects = Array.from(new Set(
+            properties
+              .filter(p => p.projectName)
+              .map(p => p.projectName)
+          ));
+          
+          // Extract unique developer names
+          const developers = Array.from(new Set(
+            properties
+              .filter(p => p.developerName)
+              .map(p => p.developerName)
+          ));
+          
+          setAvailableProjects(projects);
+          setAvailableDevelopers(developers);
+        }
+      } catch (error) {
+        console.error('Failed to fetch projects and developers:', error);
+      }
+    };
+    
+    fetchProjectsAndDevelopers();
+  }, []);
   
   // Update form state when filters prop changes
   useEffect(() => {
     setLocation(currentFilters.location || "");
     setPropertyType(currentFilters.propertyType || "");
+    setListingType(currentFilters.listingType || "");
+    setProjectName(currentFilters.projectName || "");
+    setDeveloperName(currentFilters.developerName || "");
     setBedrooms(currentFilters.minBedrooms?.toString() || "");
     setBathrooms(currentFilters.minBathrooms?.toString() || "");
+    setIsFullCash(currentFilters.isFullCash);
+    setHasInstallments(currentFilters.hasInstallments);
     
     // Set price range based on min/max values
     if (currentFilters.minPrice !== undefined || currentFilters.maxPrice !== undefined) {
@@ -47,6 +95,9 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
     
     if (location) filters.location = location;
     if (propertyType) filters.propertyType = propertyType;
+    if (listingType) filters.listingType = listingType;
+    if (projectName) filters.projectName = projectName;
+    if (developerName) filters.developerName = developerName;
     
     if (priceRange) {
       const [min, max] = priceRange.split('-');
@@ -62,15 +113,28 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
       filters.minBathrooms = parseFloat(bathrooms);
     }
     
+    if (isFullCash !== undefined) {
+      filters.isFullCash = isFullCash;
+    }
+    
+    if (hasInstallments !== undefined) {
+      filters.hasInstallments = hasInstallments;
+    }
+    
     onFilterChange(filters);
   };
   
   const handleReset = () => {
     setLocation("");
     setPropertyType("");
+    setListingType("");
+    setProjectName("");
+    setDeveloperName("");
     setPriceRange("");
     setBedrooms("");
     setBathrooms("");
+    setIsFullCash(undefined);
+    setHasInstallments(undefined);
     onFilterChange({});
   };
   
@@ -78,14 +142,14 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
     setShowAdvanced(!showAdvanced);
   };
   
-  // Price range options
+  // Price range options (in Egyptian Pounds, L.E.)
   const priceRanges: FormattedPriceRange[] = [
     { value: "", label: "Any Price" },
-    { value: "500000-1000000", label: "$500k - $1M", min: 500000, max: 1000000 },
-    { value: "1000000-2000000", label: "$1M - $2M", min: 1000000, max: 2000000 },
-    { value: "2000000-5000000", label: "$2M - $5M", min: 2000000, max: 5000000 },
-    { value: "5000000-10000000", label: "$5M - $10M", min: 5000000, max: 10000000 },
-    { value: "10000000-any", label: "$10M+", min: 10000000 }
+    { value: "500000-1000000", label: "L.E. 500k - 1M", min: 500000, max: 1000000 },
+    { value: "1000000-2000000", label: "L.E. 1M - 2M", min: 1000000, max: 2000000 },
+    { value: "2000000-5000000", label: "L.E. 2M - 5M", min: 2000000, max: 5000000 },
+    { value: "5000000-10000000", label: "L.E. 5M - 10M", min: 5000000, max: 10000000 },
+    { value: "10000000-any", label: "L.E. 10M+", min: 10000000 }
   ];
   
   // Property types
@@ -97,6 +161,13 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
     { value: "Villa", label: "Villa" },
     { value: "Estate", label: "Estate" },
     { value: "Penthouse", label: "Penthouse" }
+  ];
+  
+  // Listing types
+  const listingTypes = [
+    { value: "", label: "All Listings" },
+    { value: "Primary", label: "Primary" },
+    { value: "Resale", label: "Resale" }
   ];
   
   return (
@@ -190,6 +261,51 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
         
         {showAdvanced && (
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#E8DACB]">
+            {/* Listing Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Listing Type</label>
+              <select 
+                className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+                value={listingType}
+                onChange={(e) => setListingType(e.target.value)}
+              >
+                {listingTypes.map((type) => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Project */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Project</label>
+              <select 
+                className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+              >
+                <option value="">Any Project</option>
+                {availableProjects.map((project) => (
+                  <option key={project} value={project}>{project}</option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Developer */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Developer</label>
+              <select 
+                className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+                value={developerName}
+                onChange={(e) => setDeveloperName(e.target.value)}
+              >
+                <option value="">Any Developer</option>
+                {availableDevelopers.map((developer) => (
+                  <option key={developer} value={developer}>{developer}</option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Bathrooms */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Bathrooms</label>
               <select 
@@ -206,7 +322,31 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
               </select>
             </div>
             
-            {/* Additional filters could go here */}
+            {/* Payment Options */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Payment Options</label>
+              <div className="flex flex-col gap-2 mt-2">
+                <label className="inline-flex items-center">
+                  <input 
+                    type="checkbox" 
+                    className="form-checkbox h-5 w-5 text-[#D4AF37] rounded border-[#E8DACB]"
+                    checked={isFullCash === true}
+                    onChange={() => setIsFullCash(prev => prev === true ? undefined : true)}
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Full Cash</span>
+                </label>
+                
+                <label className="inline-flex items-center">
+                  <input 
+                    type="checkbox" 
+                    className="form-checkbox h-5 w-5 text-[#D4AF37] rounded border-[#E8DACB]"
+                    checked={hasInstallments === true}
+                    onChange={() => setHasInstallments(prev => prev === true ? undefined : true)}
+                  />
+                  <span className="ml-2 text-sm text-gray-700">With Installments</span>
+                </label>
+              </div>
+            </div>
           </div>
         )}
       </form>

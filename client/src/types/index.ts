@@ -7,6 +7,13 @@ export interface Property {
   state: string;
   zipCode: string;
   price: number;
+  downPayment?: number;
+  installmentAmount?: number;
+  installmentPeriod?: number; // In months
+  isFullCash?: boolean;
+  listingType: string; // "Primary" or "Resale"
+  projectName?: string;
+  developerName?: string;
   bedrooms: number;
   bathrooms: number;
   squareFeet?: number;
@@ -38,10 +45,15 @@ export interface Testimonial {
 export interface SearchFilters {
   location?: string;
   propertyType?: string;
+  listingType?: string; // "Primary" or "Resale" 
+  projectName?: string;
+  developerName?: string;
   minPrice?: number;
   maxPrice?: number;
   minBedrooms?: number;
   minBathrooms?: number;
+  isFullCash?: boolean;
+  hasInstallments?: boolean;
 }
 
 export interface FormattedPriceRange {
