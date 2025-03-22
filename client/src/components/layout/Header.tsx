@@ -38,12 +38,16 @@ export default function Header() {
           {/* Logo */}
           <div className="mr-8">
             <Link href="/" className="flex items-center">
-              <LogoDisplay 
-                logoUrl={settings?.companyLogo} 
-                companyName={settings?.companyName || "The Views Real Estate"}
-                className="h-10 w-10 mr-2"
-              />
-              <span className="ml-2 font-serif text-gray-800 text-xl font-semibold">
+              <div className="flex-shrink-0">
+                <LogoDisplay 
+                  logoUrl={settings?.companyLogo} 
+                  companyName={settings?.companyName || "The Views Real Estate"}
+                  className="h-12 w-12 shadow-sm"
+                  fallbackClassName="h-12 w-12 rounded-full bg-[#B87333] flex items-center justify-center shadow-sm border-2 border-[#E8DACB]"
+                  fallbackInitials="TV"
+                />
+              </div>
+              <span className="ml-3 font-serif text-gray-800 text-xl font-semibold">
                 The <span className="text-[#B87333]">Views</span> <span className="text-gray-800">Real Estate</span>
               </span>
             </Link>
