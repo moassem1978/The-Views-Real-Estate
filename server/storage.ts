@@ -408,7 +408,7 @@ export class MemStorage implements IStorage {
         yearBuilt: 2023,
         views: "Sea",
         amenities: ["Swimming Pool", "Garden", "Terrace", "Smart Home", "Security System", "Private Parking"],
-        images: ["/uploads/properties/villa1.jpg", "/uploads/properties/villa2.jpg"],
+        images: ["uploads/properties/villa1.jpg", "uploads/properties/villa2.jpg"],
         createdAt: formatISO(new Date()),
         agentId: 1
       },
