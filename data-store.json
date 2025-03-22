@@ -97,6 +97,46 @@
         "createdAt": "2025-03-22T22:46:18.910Z",
         "agentId": 1
       }
+    ],
+    [
+      3,
+      {
+        "id": 3,
+        "title": "Villa in the garden",
+        "description": "Best in town\n",
+        "address": "Eastown",
+        "city": "Cairo",
+        "state": "New Cairo",
+        "zipCode": "",
+        "price": 5999300,
+        "downPayment": 0,
+        "installmentAmount": 0,
+        "installmentPeriod": 0,
+        "isFullCash": false,
+        "listingType": "Resale",
+        "projectName": "",
+        "developerName": "",
+        "bedrooms": 3,
+        "bathrooms": 3,
+        "builtUpArea": 0,
+        "plotSize": 0,
+        "propertyType": "Apartment",
+        "isFeatured": true,
+        "isNewListing": true,
+        "yearBuilt": 0,
+        "views": "Pool View",
+        "amenities": [],
+        "images": [
+          "/uploads/properties/images-1742686665886-434120438.jpeg",
+          "/uploads/properties/images-1742686666787-876060121.jpeg",
+          "/uploads/properties/images-1742686667608-75163080.jpeg",
+          "/uploads/properties/images-1742686667609-623904040.jpeg"
+        ],
+        "latitude": 0,
+        "longitude": 0,
+        "createdAt": "2025-03-22T23:38:03.618Z",
+        "agentId": 1
+      }
     ]
   ],
   "testimonials": [],
@@ -114,6 +154,6 @@
     "companyLogo": "/uploads/logos/logo-1742677490208-285368626.png"
   },
   "userCurrentId": 2,
-  "propertyCurrentId": 3,
+  "propertyCurrentId": 4,
   "testimonialCurrentId": 1
 }

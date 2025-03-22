@@ -132,13 +132,16 @@ export default function Dashboard() {
     installmentAmount: 0,
     installmentPeriod: 0,
     isFullCash: false,
-    listingType: "Primary", // Add required field "Primary" or "Resale"
+    listingType: "Primary", // Required field "Primary" or "Resale"
     projectName: "",
     developerName: "",
     bedrooms: 0,
     bathrooms: 0,
     builtUpArea: 0,
     plotSize: 0,
+    gardenSize: 0,
+    floor: 0,
+    isGroundUnit: false,
     propertyType: "House",
     isFeatured: false,
     isNewListing: true,
