@@ -43,11 +43,19 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   
   // Add a proper URL prefix to image paths if needed
   const getFullImageUrl = (imagePath: string) => {
-    // Check if the path already starts with http, https, or a forward slash
+    // Check if the path is empty
     if (!imagePath) return '';
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('/')) {
+    
+    // Check if the path already starts with http, https
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
+    
+    // Check if the path already starts with a forward slash
+    if (imagePath.startsWith('/')) {
+      return imagePath;
+    }
+    
     // Otherwise, add a forward slash
     return '/' + imagePath;
   };

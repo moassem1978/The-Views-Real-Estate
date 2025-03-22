@@ -430,7 +430,7 @@ export class MemStorage implements IStorage {
         yearBuilt: 2022,
         views: "City",
         amenities: ["Rooftop Terrace", "Concierge", "Fitness Center", "Smart Home", "Private Elevator"],
-        images: ["/uploads/properties/penthouse1.jpg", "/uploads/properties/penthouse2.jpg"],
+        images: ["uploads/properties/penthouse1.jpg", "uploads/properties/penthouse2.jpg"],
         createdAt: formatISO(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)), // 30 days ago
         agentId: 1
       },
@@ -451,7 +451,7 @@ export class MemStorage implements IStorage {
         isNewListing: true,
         views: "Sea",
         amenities: ["Private Beach Access", "Swimming Pool", "Garden", "Compound Amenities", "Security"],
-        images: ["/uploads/properties/beach1.jpg", "/uploads/properties/beach2.jpg"],
+        images: ["uploads/properties/beach1.jpg", "uploads/properties/beach2.jpg"],
         createdAt: formatISO(new Date()),
         agentId: 1
       }
@@ -588,7 +588,7 @@ export class MemStorage implements IStorage {
           yearBuilt: 2023,
           views: "Sea",
           amenities: ["Swimming Pool", "Garden", "Terrace", "Smart Home", "Security System", "Private Parking"],
-          images: ["/uploads/properties/villa1.jpg", "/uploads/properties/villa2.jpg"],
+          images: ["uploads/properties/villa1.jpg", "uploads/properties/villa2.jpg"],
           createdAt: formatISO(new Date()),
           agentId: 1
         },
@@ -610,7 +610,7 @@ export class MemStorage implements IStorage {
           yearBuilt: 2022,
           views: "City",
           amenities: ["Rooftop Terrace", "Concierge", "Fitness Center", "Smart Home", "Private Elevator"],
-          images: ["/uploads/properties/penthouse1.jpg", "/uploads/properties/penthouse2.jpg"],
+          images: ["uploads/properties/penthouse1.jpg", "uploads/properties/penthouse2.jpg"],
           createdAt: formatISO(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)), // 30 days ago
           agentId: 1
         },
@@ -631,7 +631,7 @@ export class MemStorage implements IStorage {
           isNewListing: true,
           views: "Sea",
           amenities: ["Private Beach Access", "Swimming Pool", "Garden", "Compound Amenities", "Security"],
-          images: ["/uploads/properties/beach1.jpg", "/uploads/properties/beach2.jpg"],
+          images: ["uploads/properties/beach1.jpg", "uploads/properties/beach2.jpg"],
           createdAt: formatISO(new Date()),
           agentId: 1
         }
@@ -654,8 +654,8 @@ export class MemStorage implements IStorage {
           builtUpArea: property.builtUpArea,
           plotSize: property.plotSize,
           propertyType: property.propertyType,
-          isFeatured: property.isFeatured,
-          isNewListing: property.isNewListing,
+          isFeatured: property.isFeatured ?? false,
+          isNewListing: property.isNewListing ?? false,
           yearBuilt: property.yearBuilt ?? null,
           views: property.views ?? null,
           amenities: Array.isArray(property.amenities) ? property.amenities : [],
