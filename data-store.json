@@ -44,14 +44,16 @@
         "views": "Sea View",
         "amenities": [],
         "images": [
-          "/uploads/properties/images-1742670822283-22675892.jpeg",
-          "/uploads/properties/images-1742670822284-262047242.jpeg",
-          "/uploads/properties/images-1742670822287-676523676.jpeg",
-          "/uploads/properties/images-1742670822306-979443440.jpeg"
+          "/uploads/properties/images-1742673370835-142136444.jpeg",
+          "/uploads/properties/images-1742673371262-10601988.jpeg",
+          "/uploads/properties/images-1742673371418-80651784.jpeg",
+          "/uploads/properties/images-1742673371552-503085922.jpeg",
+          "/uploads/properties/images-1742673371571-467122542.jpeg",
+          "/uploads/properties/images-1742673371603-625602048.jpeg"
         ],
         "latitude": 0,
         "longitude": 0,
-        "createdAt": "2025-03-22T19:14:00.373Z",
+        "createdAt": "2025-03-22T19:56:19.116Z",
         "agentId": 1
       }
     ]
