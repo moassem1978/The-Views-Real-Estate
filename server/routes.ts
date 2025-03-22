@@ -47,16 +47,16 @@ const multerStorage = multer.diskStorage({
     // Determine which folder to use based on the file purpose
     const purpose = req.path.includes('property-images') ? 'properties' : 'logos';
     const targetDir = path.join(uploadsDir, purpose);
-    
+
     console.log(`Storing file in: ${targetDir}`);
     cb(null, targetDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    
+
     // Get original extension or use a default
     let ext = path.extname(file.originalname).toLowerCase();
-    
+
     // If AI file or no extension, handle appropriately
     if (file.originalname.toLowerCase().endsWith('.ai') || 
         file.mimetype === 'application/postscript' || 
@@ -67,11 +67,11 @@ const multerStorage = multer.diskStorage({
       ext = '.jpg';
       console.log(`No extension detected, defaulting to ${ext}`);
     }
-    
+
     // Create safe filename with appropriate prefix
     const prefix = req.path.includes('property-images') ? 'property-' : 'logo-';
     const filename = prefix + uniqueSuffix + ext;
-    
+
     console.log(`Generated filename: ${filename}`);
     cb(null, filename);
   }
@@ -173,7 +173,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       const propertyData = req.body;
       const property = await dbStorage.updateProperty(id, propertyData);
-      
+
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
       }
@@ -279,125 +279,109 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Logo upload endpoint
-  app.post("/api/upload/logo", async (req: Request, res: Response) => {
+  // Logo upload endpoint with improved error handling and logging
+  app.post("/api/upload/logo", logoUpload.single('logo'), async (req: Request, res: Response) => {
     try {
       console.log("Received logo upload request");
-      
-      // Use the logo-specific upload configuration with smaller file size limit
-      logoUpload.single('logo')(req, res, async (err: any) => {
-        if (err) {
-          console.error("Multer error during logo upload:", err);
-          return res.status(400).json({ message: "File upload error: " + err.message });
-        }
-        
-        console.log("Request body:", Object.keys(req.body || {}));
-        console.log("Request file:", req.file ? `File present: ${req.file.originalname}` : "No file present");
-        
-        if (!req.file) {
-          console.log("File upload failed - No file received");
-          return res.status(400).json({ message: "No file uploaded" });
-        }
+      console.log("Request file:", req.file ? `File present: ${req.file.originalname}, mimetype: ${req.file.mimetype}, size: ${req.file.size}` : "No file present");
 
-        console.log(`Logo file uploaded: ${req.file.filename} (${req.file.mimetype}), original: ${req.file.originalname}`);
-        
-        // Ensure the logo file is also copied to the public/uploads directory for web access
-        try {
-          const sourcePath = req.file.path;
-          const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'logos');
-          
-          // Create the destination directory if it doesn't exist
-          fs.mkdirSync(publicUploadsDir, { recursive: true });
-          
-          const destPath = path.join(publicUploadsDir, req.file.filename);
-          
-          // Copy the file to public/uploads/logos
-          fs.copyFileSync(sourcePath, destPath);
-          console.log(`Copied logo file to ${destPath} for web access`);
-        } catch (err) {
-          console.error(`Error copying logo file to public directory: ${err}`);
-        }
-        
-        // Create the file URL relative to the server
-        const fileUrl = `/uploads/logos/${req.file.filename}`;
-        
-        // Update site settings with the new logo URL
-        const updatedSettings = await dbStorage.updateSiteSettings({
-          companyLogo: fileUrl
-        });
-        
-        res.json({ 
-          message: "Logo uploaded successfully", 
-          logoUrl: fileUrl,
-          settings: updatedSettings
-        });
+      if (!req.file) {
+        console.error("File upload failed - No file received");
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      console.log(`Logo file uploaded: ${req.file.filename} (${req.file.mimetype}), original: ${req.file.originalname}, size: ${req.file.size}`);
+
+      // Ensure the logo file is also copied to the public/uploads directory for web access
+      try {
+        const sourcePath = req.file.path;
+        const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'logos');
+
+        // Create the destination directory if it doesn't exist
+        fs.mkdirSync(publicUploadsDir, { recursive: true });
+
+        const destPath = path.join(publicUploadsDir, req.file.filename);
+
+        // Copy the file to public/uploads/logos
+        fs.copyFileSync(sourcePath, destPath);
+        console.log(`Copied logo file to ${destPath} for web access`);
+      } catch (err) {
+        console.error(`Error copying logo file to public directory: ${err}`);
+        return res.status(500).json({ message: `Error copying logo file: ${err.message}` });
+      }
+
+      // Create the file URL relative to the server
+      const fileUrl = `/uploads/logos/${req.file.filename}`;
+
+      // Update site settings with the new logo URL
+      const updatedSettings = await dbStorage.updateSiteSettings({
+        companyLogo: fileUrl
+      });
+
+      res.json({ 
+        message: "Logo uploaded successfully", 
+        logoUrl: fileUrl,
+        settings: updatedSettings
       });
     } catch (error) {
       console.error('Error uploading logo:', error);
-      res.status(500).json({ message: "Failed to upload logo" });
+      res.status(500).json({ message: `Failed to upload logo: ${error.message}` });
     }
   });
-  
+
   // Property image upload endpoint - for multiple files
-  app.post("/api/upload/property-images", async (req: Request, res: Response) => {
+  app.post("/api/upload/property-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
       console.log("Received property images upload request");
-      
-      // Use array upload but catch any errors
-      finalUpload.array('images', 10)(req, res, async (err: any) => {
-        if (err) {
-          console.error("Multer error during property images upload:", err);
-          return res.status(400).json({ message: "File upload error: " + err.message });
+
+      if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+        console.log("No property image files received");
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      // Use the Express.Multer.File type to correctly handle files
+      const files = Array.isArray(req.files) 
+        ? req.files as Express.Multer.File[]
+        : [req.files as unknown as Express.Multer.File];
+
+      console.log(`Uploaded ${files.length} property images`);
+
+      // Log detailed file information
+      files.forEach((file, index) => {
+        console.log(`File ${index + 1}: ${file.originalname} (${file.mimetype}) -> ${file.filename}, size: ${file.size}`);
+      });
+
+      // Ensure files are copied to the public directory for web access
+      for (const file of files) {
+        const sourcePath = file.path;
+        const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+
+        // Create the destination directory if it doesn't exist
+        fs.mkdirSync(publicUploadsDir, { recursive: true });
+
+        const destPath = path.join(publicUploadsDir, file.filename);
+
+        try {
+          // Copy the file to public/uploads/properties
+          fs.copyFileSync(sourcePath, destPath);
+          console.log(`Copied file to ${destPath} for web access`);
+        } catch (copyError) {
+          console.error(`Error copying file to public directory: ${copyError}`);
+          return res.status(500).json({ message: `Error copying file: ${copyError.message}` });
         }
-        
-        if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
-          console.log("No property image files received");
-          return res.status(400).json({ message: "No files uploaded" });
-        }
-        
-        // Use the Express.Multer.File type to correctly handle files
-        const files = Array.isArray(req.files) 
-          ? req.files as Express.Multer.File[]
-          : [req.files as unknown as Express.Multer.File];
-          
-        console.log(`Uploaded ${files.length} property images`);
-        
-        // Log detailed file information
-        files.forEach((file, index) => {
-          console.log(`File ${index + 1}: ${file.originalname} (${file.mimetype}) -> ${file.filename}`);
-        });
-        
-        // Ensure files are copied to the public directory for web access
-        for (const file of files) {
-          const sourcePath = file.path;
-          const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-          
-          // Create the destination directory if it doesn't exist
-          fs.mkdirSync(publicUploadsDir, { recursive: true });
-          
-          const destPath = path.join(publicUploadsDir, file.filename);
-          
-          try {
-            // Copy the file to public/uploads/properties
-            fs.copyFileSync(sourcePath, destPath);
-            console.log(`Copied file to ${destPath} for web access`);
-          } catch (copyError) {
-            console.error(`Error copying file to public directory: ${copyError}`);
-          }
-        }
-        
-        // Create file URLs for all uploaded images
-        const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
-        
-        res.json({ 
-          message: "Property images uploaded successfully", 
-          imageUrls: fileUrls,
-          count: fileUrls.length
-        });
+      }
+
+      // Create file URLs for all uploaded images
+      const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
+
+      res.json({ 
+        message: "Property images uploaded successfully", 
+        imageUrls: fileUrls,
+        count: fileUrls.length
       });
     } catch (error) {
       console.error('Error uploading property images:', error);
-      res.status(500).json({ message: "Failed to upload property images" });
+      res.status(500).json({ message: `Failed to upload property images: ${error.message}` });
     }
   });
 
