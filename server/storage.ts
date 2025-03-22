@@ -218,136 +218,29 @@ export class MemStorage implements IStorage {
     const adminUser: InsertUser = {
       username: "admin",
       password: "password", // In a real app, this would be hashed
-      email: "admin@luxuryrealty.com",
+      email: "admin@theviewsrealestate.com",
       fullName: "Admin User",
-      phone: "310-555-1234",
+      phone: "1-800-555-VIEWS",
       isAgent: true,
       createdAt: formatISO(new Date()),
     };
     this.createUser(adminUser);
-
-    // Seed properties
-    const propertyTypes = ['House', 'Condominium', 'Villa', 'Estate', 'Penthouse'];
-    const cities = ['Beverly Hills', 'Miami Beach', 'New York', 'Aspen', 'The Hamptons'];
-    const states = ['CA', 'FL', 'NY', 'CO', 'NY'];
     
-    const propertyImages = [
-      [
-        "https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2075&q=80"
-      ],
-      [
-        "https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&auto=format&fit=crop&w=2071&q=80",
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", 
-        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-      ],
-      [
-        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2075&q=80", 
-        "https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&auto=format&fit=crop&w=2071&q=80"
-      ],
-      [
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", 
-        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2075&q=80"
-      ],
-      [
-        "https://images.unsplash.com/photo-1600585154526-990dced4db0d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-      ],
-      [
-        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2075&q=80",
-        "https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&auto=format&fit=crop&w=2071&q=80"
-      ]
-    ];
-
-    const propertyTitles = [
-      "Oceanfront Villa Paradise",
-      "Modern Architectural Masterpiece",
-      "Classic Colonial Estate",
-      "The Bellevue Estate",
-      "Hillside Mansion Retreat",
-      "Downtown Luxury Penthouse"
-    ];
-
-    for (let i = 0; i < 12; i++) {
-      const isFeatured = i < 3; // First 3 are featured
-      const isNewListing = i >= 3 && i < 6; // Next 3 are new listings
-      const randomPrice = Math.round(faker.number.float({ min: 1.5, max: 12.5 }) * 1000000);
-      const randomIndex = i % propertyTitles.length;
-      const randomCityIndex = i % cities.length;
-      const randomType = propertyTypes[i % propertyTypes.length];
-      
-      const property: InsertProperty = {
-        title: propertyTitles[randomIndex],
-        description: faker.lorem.paragraphs(3),
-        address: faker.location.streetAddress(),
-        city: cities[randomCityIndex],
-        state: states[randomCityIndex],
-        zipCode: faker.location.zipCode(),
-        price: randomPrice,
-        bedrooms: faker.number.int({ min: 3, max: 8 }),
-        bathrooms: faker.number.int({ min: 2, max: 10 }) + (Math.random() > 0.5 ? 0.5 : 0),
-        builtUpArea: faker.number.int({ min: 3000, max: 8000 }),
-        plotSize: faker.number.int({ min: 5000, max: 15000 }),
-        propertyType: randomType,
-        isFeatured,
-        isNewListing,
-        yearBuilt: faker.number.int({ min: 1990, max: 2023 }),
-        views: faker.helpers.arrayElement(['Ocean', 'Mountain', 'City', 'Garden', 'Lake']),
-        amenities: JSON.stringify([
-          faker.helpers.arrayElements([
-            "Infinity Pool", "Wine Cellar", "Home Theater", "Smart Home", 
-            "Spa", "Gym", "Tennis Court", "Gourmet Kitchen", 
-            "Fireplace", "Elevator", "Private Dock", "Rooftop Terrace"
-          ], { min: 3, max: 6 })
-        ]),
-        images: JSON.stringify(propertyImages[i % propertyImages.length]),
-        latitude: parseFloat(faker.location.latitude()),
-        longitude: parseFloat(faker.location.longitude()),
-        createdAt: formatISO(faker.date.recent()),
-        agentId: 1
-      };
-      
-      this.createProperty(property);
-    }
-
-    // Seed testimonials
-    const testimonialData = [
-      {
-        clientName: "James & Margaret R.",
-        clientLocation: "Beverly Hills, CA",
-        rating: 5,
-        testimonial: "The team's expertise in luxury real estate is unmatched. They understood exactly what we were looking for and found us our dream home without wasting any time on properties that didn't meet our standards.",
-        initials: "JM"
-      },
-      {
-        clientName: "Sophia C.",
-        clientLocation: "Miami, FL",
-        rating: 5,
-        testimonial: "Their marketing strategy for our waterfront property was exceptional. Professional photography, targeted advertising, and their global network of buyers resulted in multiple offers above asking price.",
-        initials: "SC"
-      },
-      {
-        clientName: "Alexander & Maria K.",
-        clientLocation: "London, UK",
-        rating: 5,
-        testimonial: "As international buyers, we appreciated their comprehensive knowledge of local markets and regulations. Their concierge service made our relocation seamless, handling everything from legal matters to interior design recommendations.",
-        initials: "AM"
+    // Initialize site settings with brand colors
+    this.siteSettings = {
+      companyName: "The Views Real Estate",
+      primaryColor: "#B87333", // Copper/bronze tone
+      contactEmail: "info@theviewsrealestate.com",
+      contactPhone: "1-800-555-VIEWS",
+      socialLinks: {
+        facebook: "https://facebook.com/theviewsrealestate",
+        instagram: "https://instagram.com/theviewsrealestate",
+        twitter: "https://twitter.com/theviewsrealestate",
+        linkedin: "https://linkedin.com/company/theviewsrealestate"
       }
-    ];
-
-    testimonialData.forEach(data => {
-      const testimonial: InsertTestimonial = {
-        ...data,
-        createdAt: formatISO(faker.date.recent())
-      };
-      
-      this.createTestimonial(testimonial);
-    });
+    };
+    
+    // No pre-seeded listings or testimonials per request
   }
 }
 

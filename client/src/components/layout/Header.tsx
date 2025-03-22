@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import LogoDisplay from "@/components/ui/LogoDisplay";
 
 // Define SiteSettings interface 
 interface SiteSettings {
