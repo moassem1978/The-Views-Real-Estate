@@ -85,30 +85,14 @@ export class MemStorage implements IStorage {
     // Try to load data from disk
     this.loadFromDisk();
     
-    // Check if we need to seed data
+    // Only seed the admin user if needed
     const needsUserSeed = this.users.size === 0;
-    const needsPropertySeed = this.properties.size === 0;
-    const needsTestimonialSeed = this.testimonials.size === 0;
     
-    // Only seed the specific data that's missing
-    if (needsUserSeed || needsPropertySeed || needsTestimonialSeed) {
-      console.log('Seeding missing data:', 
-                 (needsUserSeed ? 'users ' : '') + 
-                 (needsPropertySeed ? 'properties ' : '') +
-                 (needsTestimonialSeed ? 'testimonials' : ''));
-      
-      // Seed the required data types
-      if (needsUserSeed && needsPropertySeed && needsTestimonialSeed) {
-        this.seedData(true, true, true);
-      } else {
-        // Only seed what's missing
-        if (needsUserSeed) this.seedUser();
-        if (needsPropertySeed) this.seedProperties();
-        if (needsTestimonialSeed) this.seedTestimonials();
-        
-        // Save changes to disk
-        this.saveToDisk();
-      }
+    // Only seed user data if missing
+    if (needsUserSeed) {
+      console.log('Seeding admin user data');
+      this.seedUser();
+      this.saveToDisk();
     }
   }
 

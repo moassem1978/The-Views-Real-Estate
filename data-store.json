@@ -10,87 +10,12 @@
         "fullName": "Admin User",
         "phone": "1-800-555-VIEWS",
         "isAgent": true,
-        "createdAt": "2025-03-22T01:05:19Z"
+        "createdAt": "2025-03-22T11:14:10Z"
       }
     ]
   ],
-  "properties": [
-    [
-      3,
-      {
-        "title": "Beachfront Compound Villa",
-        "description": "Exclusive beachfront villa in a prestigious gated compound with direct beach access. Features elegant design, generous living spaces, and premium amenities.",
-        "address": "32 Coastal Compound",
-        "city": "El Alamein",
-        "state": "Matrouh Governorate",
-        "zipCode": "33716",
-        "price": 3200000,
-        "bedrooms": 4,
-        "bathrooms": 5,
-        "builtUpArea": 380,
-        "plotSize": 950,
-        "propertyType": "Villa",
-        "isFeatured": true,
-        "isNewListing": true,
-        "views": "Sea",
-        "amenities": [
-          "Private Beach Access",
-          "Swimming Pool",
-          "Garden",
-          "Compound Amenities",
-          "Security"
-        ],
-        "images": [
-          "/uploads/properties/beach1.jpg",
-          "/uploads/properties/beach2.jpg"
-        ],
-        "createdAt": "2025-03-22T01:05:19Z",
-        "agentId": 1,
-        "id": 3,
-        "yearBuilt": null,
-        "latitude": null,
-        "longitude": null
-      }
-    ]
-  ],
-  "testimonials": [
-    [
-      1,
-      {
-        "clientName": "Ahmed Ibrahim",
-        "clientLocation": "Cairo",
-        "rating": 5,
-        "testimonial": "The Views Real Estate helped me find my dream home in record time. Their attention to detail and understanding of my needs was exceptional.",
-        "initials": "AI",
-        "createdAt": "2025-02-05T01:05:19Z",
-        "id": 1
-      }
-    ],
-    [
-      2,
-      {
-        "clientName": "Layla Hassan",
-        "clientLocation": "Alexandria",
-        "rating": 5,
-        "testimonial": "I was impressed by the professionalism and expertise of The Views team. They made selling my property a smooth and profitable experience.",
-        "initials": "LH",
-        "createdAt": "2025-01-21T01:05:19Z",
-        "id": 2
-      }
-    ],
-    [
-      3,
-      {
-        "clientName": "Omar Farid",
-        "clientLocation": "El Gouna",
-        "rating": 4,
-        "testimonial": "Great selection of premium properties. The Views Real Estate understood exactly what I was looking for in a vacation home.",
-        "initials": "OF",
-        "createdAt": "2025-02-20T01:05:19Z",
-        "id": 3
-      }
-    ]
-  ],
+  "properties": [],
+  "testimonials": [],
   "siteSettings": {
     "companyName": "The Views Real Estate",
     "primaryColor": "#B87333",
@@ -101,10 +26,9 @@
       "instagram": "https://instagram.com/theviewsrealestate",
       "twitter": "https://twitter.com/theviewsrealestate",
       "linkedin": "https://linkedin.com/company/theviewsrealestate"
-    },
-    "companyLogo": "/uploads/logos/logo-1742606346959-440437058.ai"
+    }
   },
-  "userCurrentId": 1,
-  "propertyCurrentId": 4,
-  "testimonialCurrentId": 4
+  "userCurrentId": 2,
+  "propertyCurrentId": 1,
+  "testimonialCurrentId": 1
 }
