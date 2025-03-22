@@ -43,7 +43,7 @@ export default function Footer() {
                 />
               </div>
               <div className="ml-3 flex flex-col">
-                <span className="font-luxury text-white text-xl tracking-wider">
+                <span className="font-serif text-white text-xl font-semibold">
                   The <span className="text-copper">Views</span>
                 </span>
                 <span className="text-xs text-white/70 font-sans tracking-widest">
@@ -107,7 +107,7 @@ export default function Footer() {
           </div>
           
           <div className="mt-10 md:mt-0">
-            <h3 className="font-luxury text-lg text-copper mb-8 relative accent-underline">Quick Links</h3>
+            <h3 className="font-serif text-lg text-copper mb-8 relative accent-underline font-semibold">Quick Links</h3>
             <ul className="space-y-4">
               <li>
                 <Link href="/" className="text-white/80 hover:text-copper transition-colors flex items-center">
@@ -161,7 +161,7 @@ export default function Footer() {
           </div>
           
           <div className="mt-10 lg:mt-0">
-            <h3 className="font-luxury text-lg text-copper mb-8 relative accent-underline">Property Types</h3>
+            <h3 className="font-serif text-lg text-copper mb-8 relative accent-underline font-semibold">Property Types</h3>
             <ul className="space-y-4">
               <li>
                 <Link href="/properties?propertyType=Apartment" className="text-white/80 hover:text-copper transition-colors flex items-center">
@@ -215,7 +215,7 @@ export default function Footer() {
           </div>
           
           <div className="mt-10 lg:mt-0">
-            <h3 className="font-luxury text-lg text-copper mb-8 relative accent-underline">Contact</h3>
+            <h3 className="font-serif text-lg text-copper mb-8 relative accent-underline font-semibold">Contact</h3>
             <ul className="space-y-6">
               <li className="flex">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-1 text-copper" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -250,7 +250,7 @@ export default function Footer() {
             </ul>
             
             <div className="mt-8">
-              <h4 className="font-luxury text-base mb-4">Subscribe to Our Newsletter</h4>
+              <h4 className="font-serif text-base mb-4 font-semibold">Subscribe to Our Newsletter</h4>
               <div className="flex">
                 <input 
                   type="email" 
