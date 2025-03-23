@@ -2,7 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Streamlined loading fallback
@@ -17,7 +17,7 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Optimized dynamic imports with explicit chunk names
+// Optimized dynamic imports with explicit chunk names and preloading hints
 const Home = lazy(() => import(/* webpackChunkName: "home" */ "@/pages/Home"));
 const Properties = lazy(() => import(/* webpackChunkName: "properties" */ "@/pages/Properties"));
 const PropertyDetails = lazy(() => import(/* webpackChunkName: "property-details" */ "@/pages/PropertyDetails"));
@@ -26,9 +26,11 @@ const About = lazy(() => import(/* webpackChunkName: "about" */ "@/pages/About")
 const Services = lazy(() => import(/* webpackChunkName: "services" */ "@/pages/Services"));
 const SignIn = lazy(() => import(/* webpackChunkName: "signin" */ "@/pages/SignIn"));
 const Dashboard = lazy(() => import(/* webpackChunkName: "dashboard" */ "@/pages/Dashboard"));
+const Announcements = lazy(() => import(/* webpackChunkName: "announcements" */ "@/pages/Announcements"));
+const AnnouncementDetails = lazy(() => import(/* webpackChunkName: "announcement-details" */ "@/pages/AnnouncementDetails"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
-// Simplified routes configuration
+// Simplified routes configuration with optimized route matching
 const routes = [
   { path: "/", Component: Home },
   { path: "/properties", Component: Properties },
@@ -37,10 +39,33 @@ const routes = [
   { path: "/about", Component: About },
   { path: "/services", Component: Services },
   { path: "/signin", Component: SignIn },
-  { path: "/dashboard", Component: Dashboard }
+  { path: "/dashboard", Component: Dashboard },
+  { path: "/announcements", Component: Announcements },
+  { path: "/announcements/:id", Component: AnnouncementDetails }
 ];
 
 function Router() {
+  // Preload critical routes to improve perceived performance
+  const preloadCriticalRoutes = () => {
+    const routesToPreload = ['Home', 'PropertyDetails', 'AnnouncementDetails'];
+    routesToPreload.forEach(route => {
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => {
+          try {
+            import(`@/pages/${route}`);
+          } catch (e) {
+            // Silent fail on preload is acceptable
+          }
+        });
+      }
+    });
+  };
+
+  // Trigger preload on idle
+  useEffect(() => {
+    preloadCriticalRoutes();
+  }, []);
+
   return (
     <Switch>
       {routes.map(({ path, Component }) => (
