@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Property } from "../types";
+import { Property, Announcement } from "../types";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -161,6 +161,21 @@ export default function Dashboard() {
   // Property images state
   const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
   
+  // Announcement state
+  const [announcementFormOpen, setAnnouncementFormOpen] = useState(false);
+  const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
+  const [announcementImagePreview, setAnnouncementImagePreview] = useState<string | null>(null);
+  const [editingAnnouncement, setEditingAnnouncement] = useState(false);
+  const [currentAnnouncementId, setCurrentAnnouncementId] = useState<number | null>(null);
+  const [announcementForm, setAnnouncementForm] = useState({
+    title: "",
+    content: "",
+    imageUrl: "",
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: "",
+    isActive: true
+  });
+  
   // Fetch properties
   const { data: properties, isLoading } = useQuery({
     queryKey: ['/api/properties'],
@@ -168,6 +183,18 @@ export default function Dashboard() {
       const response = await fetch('/api/properties');
       if (!response.ok) {
         throw new Error('Failed to fetch properties');
+      }
+      return response.json();
+    }
+  });
+  
+  // Fetch announcements
+  const { data: announcements, isLoading: isLoadingAnnouncements } = useQuery({
+    queryKey: ['/api/announcements'],
+    queryFn: async () => {
+      const response = await fetch('/api/announcements');
+      if (!response.ok) {
+        throw new Error('Failed to fetch announcements');
       }
       return response.json();
     }

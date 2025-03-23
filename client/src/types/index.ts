@@ -78,3 +78,14 @@ export interface Service {
   title: string;
   description: string;
 }
+
+export interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  startDate: string;
+  endDate?: string;
+  isActive: boolean;
+  createdAt: string;
+}
