@@ -303,7 +303,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   
   app.post("/api/announcements", async (req: Request, res: Response) => {
     try {
-      const announcementData = insertAnnouncementSchema.parse(req.body);
+      // Create a modified schema that accepts string dates
+      const modifiedAnnouncementSchema = insertAnnouncementSchema
+        .extend({
+          startDate: z.string().transform(val => new Date(val)),
+          endDate: z.string().optional().transform(val => val ? new Date(val) : null),
+        });
+        
+      // Parse with our modified schema
+      const announcementData = modifiedAnnouncementSchema.parse(req.body);
       const announcement = await dbStorage.createAnnouncement(announcementData);
       res.status(201).json(announcement);
     } catch (error) {
@@ -330,8 +338,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(404).json({ message: "Announcement not found" });
       }
       
+      // Handle date strings in the request body
+      const updatedData = { ...req.body };
+      if (typeof updatedData.startDate === 'string') {
+        updatedData.startDate = new Date(updatedData.startDate);
+      }
+      if (typeof updatedData.endDate === 'string') {
+        updatedData.endDate = updatedData.endDate ? new Date(updatedData.endDate) : null;
+      }
+      
       // Update the announcement
-      const updatedAnnouncement = await dbStorage.updateAnnouncement(id, req.body);
+      const updatedAnnouncement = await dbStorage.updateAnnouncement(id, updatedData);
       res.json(updatedAnnouncement);
     } catch (error) {
       console.error("Error updating announcement:", error);

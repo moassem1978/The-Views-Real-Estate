@@ -181,6 +181,34 @@
     ]
   ],
   "testimonials": [],
+  "announcements": [
+    [
+      1,
+      {
+        "id": 1,
+        "title": "Extended Offer on Beachfront Properties",
+        "content": "Due to high demand, our discount has been extended for an additional week.",
+        "imageUrl": null,
+        "startDate": "2025-03-23T00:00:00.000Z",
+        "endDate": "2025-04-22T00:00:00.000Z",
+        "isActive": true,
+        "createdAt": "2025-03-23T03:18:55.370Z"
+      }
+    ],
+    [
+      2,
+      {
+        "id": 2,
+        "title": "New Property Showcase",
+        "content": "Join us for an exclusive showcase of our newest luxury properties this weekend. RSVP required.",
+        "imageUrl": "/uploads/default-announcement.svg",
+        "startDate": "2025-03-25T00:00:00.000Z",
+        "endDate": "2025-03-28T00:00:00.000Z",
+        "isActive": true,
+        "createdAt": "2025-03-23T03:19:38.128Z"
+      }
+    ]
+  ],
   "siteSettings": {
     "companyName": "The Views Real Estate",
     "primaryColor": "#B87333",
@@ -196,5 +224,6 @@
   },
   "userCurrentId": 2,
   "propertyCurrentId": 5,
-  "testimonialCurrentId": 1
+  "testimonialCurrentId": 1,
+  "announcementCurrentId": 3
 }
