@@ -1743,6 +1743,156 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
+      {/* Announcement Form Dialog */}
+      <Dialog open={announcementFormOpen} onOpenChange={setAnnouncementFormOpen}>
+        <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingAnnouncement ? "Edit Announcement" : "Add New Announcement"}
+            </DialogTitle>
+            <DialogDescription>
+              Create announcements to display important information to your customers.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleAnnouncementSubmit} className="space-y-4">
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <label htmlFor="title" className="text-sm font-medium">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  id="title"
+                  name="title"
+                  value={announcementForm.title}
+                  onChange={handleAnnouncementInputChange}
+                  placeholder="Enter announcement title"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="content" className="text-sm font-medium">
+                  Content <span className="text-red-500">*</span>
+                </label>
+                <Textarea
+                  id="content"
+                  name="content"
+                  value={announcementForm.content}
+                  onChange={handleAnnouncementInputChange}
+                  placeholder="Enter announcement content"
+                  rows={5}
+                  required
+                />
+              </div>
+              
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <div className="space-y-2 flex-1">
+                  <label htmlFor="startDate" className="text-sm font-medium">
+                    Start Date <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="startDate"
+                    name="startDate"
+                    type="date"
+                    value={announcementForm.startDate}
+                    onChange={handleAnnouncementInputChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2 flex-1">
+                  <label htmlFor="endDate" className="text-sm font-medium">
+                    End Date <span className="text-muted-foreground text-xs">(Optional)</span>
+                  </label>
+                  <Input
+                    id="endDate"
+                    name="endDate"
+                    type="date"
+                    value={announcementForm.endDate}
+                    onChange={handleAnnouncementInputChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2 py-2">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  name="isActive"
+                  checked={announcementForm.isActive}
+                  onChange={(e) => setAnnouncementForm(prev => ({
+                    ...prev,
+                    isActive: e.target.checked
+                  }))}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <label htmlFor="isActive" className="text-sm font-medium">
+                  Active (visible to users)
+                </label>
+              </div>
+              
+              <div className="space-y-2 mt-4">
+                <label className="text-sm font-medium">
+                  Announcement Image <span className="text-muted-foreground text-xs">(Optional)</span>
+                </label>
+                
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <Input
+                      id="announcementImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAnnouncementImageChange}
+                    />
+                    {announcementImage && (
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={handleUploadAnnouncementImage}
+                      >
+                        Upload Image
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="flex justify-center">
+                    {/* Image preview */}
+                    {(announcementImagePreview || announcementForm.imageUrl) && (
+                      <div className="relative rounded border overflow-hidden w-full max-h-[150px] flex items-center justify-center bg-gray-50">
+                        <img 
+                          src={announcementImagePreview || announcementForm.imageUrl} 
+                          alt="Announcement image preview" 
+                          className="max-h-[150px] max-w-full object-contain" 
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAnnouncementFormOpen(false);
+                  resetAnnouncementForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">
+                {editingAnnouncement ? "Update" : "Create"} Announcement
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Logo Upload Dialog */}
       <Dialog open={logoFormOpen} onOpenChange={setLogoFormOpen}>
         <DialogContent>
