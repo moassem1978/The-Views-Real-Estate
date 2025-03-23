@@ -1,7 +1,7 @@
 import { 
-  users, properties, testimonials, 
-  type User, type Property, type Testimonial,
-  type InsertUser, type InsertProperty, type InsertTestimonial,
+  users, properties, testimonials, announcements,
+  type User, type Property, type Testimonial, type Announcement,
+  type InsertUser, type InsertProperty, type InsertTestimonial, type InsertAnnouncement,
   type SiteSettings
 } from "@shared/schema";
 import { faker } from '@faker-js/faker';
