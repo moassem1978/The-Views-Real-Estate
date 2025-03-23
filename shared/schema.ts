@@ -39,6 +39,7 @@ export const properties = pgTable("properties", {
   propertyType: text("property_type").notNull(),
   isFeatured: boolean("is_featured").default(false).notNull(),
   isNewListing: boolean("is_new_listing").default(false).notNull(),
+  isHighlighted: boolean("is_highlighted").default(false).notNull(), // Added highlight flag for main carousel
   yearBuilt: integer("year_built"),
   views: text("views"),
   amenities: jsonb("amenities").notNull(),
@@ -88,7 +89,8 @@ export const announcements = pgTable("announcements", {
   startDate: timestamp("start_date").defaultNow().notNull(), // Changed from date to startDate
   endDate: timestamp("end_date"), // Added endDate
   isActive: boolean("is_active").default(true).notNull(), // Added isActive
-  isFeatured: boolean("is_featured").default(false).notNull(), // Add isFeatured flag to display in main carousel
+  isFeatured: boolean("is_featured").default(false).notNull(), // Add isFeatured flag for featured section
+  isHighlighted: boolean("is_highlighted").default(false).notNull(), // Added highlight flag for main carousel
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

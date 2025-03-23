@@ -228,31 +228,17 @@
   "testimonials": [],
   "announcements": [
     [
-      2,
+      4,
       {
-        "id": 2,
-        "title": "New Property Showcase",
-        "content": "Join us for an exclusive showcase of our newest luxury properties this weekend. RSVP required.",
-        "imageUrl": "/uploads/default-announcement.svg",
-        "startDate": "2025-03-25T00:00:00.000Z",
-        "endDate": "2025-03-28T00:00:00.000Z",
-        "isActive": true,
-        "createdAt": "2025-03-23T03:19:38.128Z",
-        "isFeatured": true
-      }
-    ],
-    [
-      3,
-      {
-        "id": 3,
-        "title": "New launch in badya",
-        "content": "For more knfo, leave your details",
-        "imageUrl": "/uploads/default-announcement.svg",
+        "id": 4,
+        "title": "New amazing launch ",
+        "content": "Management don do this for you o but I no get sense again o ",
+        "imageUrl": "/uploads/announcements/image-1742762322401-632104661.jpeg",
         "startDate": "2025-03-23T00:00:00.000Z",
         "endDate": "2025-03-31T00:00:00.000Z",
         "isActive": true,
-        "createdAt": "2025-03-23T20:02:58.645Z",
-        "isFeatured": true
+        "isFeatured": false,
+        "createdAt": "2025-03-23T20:40:00.630Z"
       }
     ]
   ],
@@ -272,5 +258,5 @@
   "userCurrentId": 2,
   "propertyCurrentId": 6,
   "testimonialCurrentId": 1,
-  "announcementCurrentId": 4
+  "announcementCurrentId": 5
 }

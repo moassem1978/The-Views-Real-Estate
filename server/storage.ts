@@ -19,6 +19,7 @@ export interface IStorage {
   // Property operations
   getAllProperties(): Promise<Property[]>;
   getFeaturedProperties(limit?: number): Promise<Property[]>;
+  getHighlightedProperties(limit?: number): Promise<Property[]>;
   getNewListings(limit?: number): Promise<Property[]>;
   getPropertyById(id: number): Promise<Property | undefined>;
   createProperty(property: InsertProperty): Promise<Property>;
@@ -34,6 +35,7 @@ export interface IStorage {
   // Announcement operations
   getAllAnnouncements(): Promise<Announcement[]>;
   getFeaturedAnnouncements(limit?: number): Promise<Announcement[]>;
+  getHighlightedAnnouncements(limit?: number): Promise<Announcement[]>;
   getAnnouncementById(id: number): Promise<Announcement | undefined>;
   createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
   updateAnnouncement(id: number, announcement: Partial<Announcement>): Promise<Announcement | undefined>;
@@ -302,6 +304,12 @@ export class MemStorage implements IStorage {
       .filter(property => property.isFeatured)
       .slice(0, limit);
   }
+  
+  async getHighlightedProperties(limit = 3): Promise<Property[]> {
+    return Array.from(this.properties.values())
+      .filter(property => property.isHighlighted)
+      .slice(0, limit);
+  }
 
   async getNewListings(limit = 3): Promise<Property[]> {
     return Array.from(this.properties.values())
@@ -343,6 +351,7 @@ export class MemStorage implements IStorage {
       propertyType: insertProperty.propertyType,
       isFeatured: insertProperty.isFeatured ?? false,
       isNewListing: insertProperty.isNewListing ?? false,
+      isHighlighted: insertProperty.isHighlighted ?? false,
       yearBuilt: insertProperty.yearBuilt ?? null,
       views: insertProperty.views ?? null,
       amenities: Array.isArray(insertProperty.amenities) 
@@ -497,6 +506,14 @@ export class MemStorage implements IStorage {
   async getFeaturedAnnouncements(limit?: number): Promise<Announcement[]> {
     const announcements = Array.from(this.announcements.values())
       .filter(announcement => announcement.isActive && announcement.isFeatured)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+    return limit ? announcements.slice(0, limit) : announcements;
+  }
+  
+  async getHighlightedAnnouncements(limit?: number): Promise<Announcement[]> {
+    const announcements = Array.from(this.announcements.values())
+      .filter(announcement => announcement.isActive && announcement.isHighlighted)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
     return limit ? announcements.slice(0, limit) : announcements;
