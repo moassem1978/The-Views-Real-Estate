@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, memo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/Header";
@@ -7,9 +7,56 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Calendar, Filter } from "lucide-react";
-import { formatDate, getImageUrl } from "@/lib/utils";
+import { ArrowRight, Calendar } from "lucide-react";
+import { formatDate, getImageUrl, preloadImage, truncateText } from "@/lib/utils";
 import { Announcement } from "../types";
+
+// Memoized announcement card component for better rendering performance
+const AnnouncementCard = memo(({ announcement }: { announcement: Announcement }) => {
+  return (
+    <Card className="overflow-hidden transition-shadow hover:shadow-lg">
+      <div className="h-48 overflow-hidden relative">
+        <img
+          src={getImageUrl(announcement.imageUrl) || '/uploads/default-announcement.svg'}
+          alt={announcement.title}
+          className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+        />
+        {announcement.isFeatured && (
+          <Badge className="absolute top-3 right-3 bg-[#B87333] text-white">
+            Featured
+          </Badge>
+        )}
+      </div>
+      
+      <CardHeader className="pb-2">
+        <div className="flex items-center text-sm text-gray-500 mb-2">
+          <Calendar size={14} className="mr-1" />
+          <span>{formatDate(announcement.startDate)}</span>
+        </div>
+        <CardTitle className="text-xl font-serif">{truncateText(announcement.title, 60)}</CardTitle>
+      </CardHeader>
+      
+      <CardContent>
+        <p className="text-gray-600 line-clamp-3">
+          {announcement.content}
+        </p>
+      </CardContent>
+      
+      <CardFooter>
+        <Button
+          asChild
+          variant="ghost"
+          className="text-[#B87333] hover:text-[#B87333]/80 hover:bg-[#B87333]/10 p-0 flex items-center gap-1"
+        >
+          <Link href={`/announcements/${announcement.id}`}>
+            Read more <ArrowRight size={14} />
+          </Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+});
 
 export default function Announcements() {
   // Fetch all announcements, optimized for performance
@@ -19,8 +66,20 @@ export default function Announcements() {
   });
 
   // Filter active announcements and sort by newest
-  const activeAnnouncements = React.useMemo(() => {
+  const activeAnnouncements = useMemo(() => {
     if (!announcements || !Array.isArray(announcements)) return [];
+    
+    // Preload the first 3 announcement images for better user experience
+    if (announcements.length > 0) {
+      // Use setTimeout to offset image preloading after main content loads
+      setTimeout(() => {
+        announcements.slice(0, 3).forEach((announcement: Announcement) => {
+          if (announcement.imageUrl) {
+            preloadImage(announcement.imageUrl);
+          }
+        });
+      }, 1000);
+    }
     
     return announcements
       .filter((announcement: Announcement) => announcement.isActive)
@@ -73,47 +132,7 @@ export default function Announcements() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {activeAnnouncements.map((announcement: Announcement) => (
-                <Card key={announcement.id} className="overflow-hidden transition-shadow hover:shadow-lg">
-                  <div className="h-48 overflow-hidden relative">
-                    <img
-                      src={getImageUrl(announcement.imageUrl) || '/uploads/default-announcement.svg'}
-                      alt={announcement.title}
-                      className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                    {announcement.isFeatured && (
-                      <Badge className="absolute top-3 right-3 bg-[#B87333] text-white">
-                        Featured
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center text-sm text-gray-500 mb-2">
-                      <Calendar size={14} className="mr-1" />
-                      <span>{formatDate(announcement.startDate)}</span>
-                    </div>
-                    <CardTitle className="text-xl font-serif">{announcement.title}</CardTitle>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <p className="text-gray-600 line-clamp-3">
-                      {announcement.content}
-                    </p>
-                  </CardContent>
-                  
-                  <CardFooter>
-                    <Button
-                      asChild
-                      variant="ghost"
-                      className="text-[#B87333] hover:text-[#B87333]/80 hover:bg-[#B87333]/10 p-0 flex items-center gap-1"
-                    >
-                      <Link href={`/announcements/${announcement.id}`}>
-                        Read more <ArrowRight size={14} />
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                <AnnouncementCard key={announcement.id} announcement={announcement} />
               ))}
             </div>
           )}

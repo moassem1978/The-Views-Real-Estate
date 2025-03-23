@@ -47,18 +47,16 @@ const routes = [
 function Router() {
   // Preload critical routes to improve perceived performance
   const preloadCriticalRoutes = () => {
-    const routesToPreload = ['Home', 'PropertyDetails', 'AnnouncementDetails'];
-    routesToPreload.forEach(route => {
-      if (window.requestIdleCallback) {
-        window.requestIdleCallback(() => {
-          try {
-            import(`@/pages/${route}`);
-          } catch (e) {
-            // Silent fail on preload is acceptable
-          }
-        });
-      }
-    });
+    // Use specific imports instead of dynamic route variables to avoid Vite warnings
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => {
+        // Using /* @vite-ignore */ to suppress warnings for dynamic imports
+        // These are just preloads, so it's fine if they don't all succeed
+        import(/* @vite-ignore */ '@/pages/Home');
+        import(/* @vite-ignore */ '@/pages/PropertyDetails');
+        import(/* @vite-ignore */ '@/pages/AnnouncementDetails');
+      });
+    }
   };
 
   // Trigger preload on idle

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useRoute, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/Header";
@@ -6,8 +6,8 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, getImageUrl } from "@/lib/utils";
-import { Calendar, ArrowLeft, Clock } from "lucide-react";
+import { formatDate, getImageUrl, preloadImage } from "@/lib/utils";
+import { Calendar, ArrowLeft, Clock, PhoneCall, Home } from "lucide-react";
 import { Announcement } from "../types";
 
 export default function AnnouncementDetails() {
@@ -90,6 +90,34 @@ export default function AnnouncementDetails() {
 
   const announcementData = announcement as Announcement;
   
+  // Preload image when announcement data is available
+  useEffect(() => {
+    if (announcementData?.imageUrl) {
+      // Preload the main announcement image for better user experience
+      preloadImage(announcementData.imageUrl);
+      
+      // Fetch other announcements to prepare for user navigation
+      fetch('/api/announcements/featured')
+        .then(res => res.json())
+        .then(data => {
+          // Preload featured announcement images in the background
+          if (Array.isArray(data)) {
+            // Use a delay to prioritize the current image first
+            setTimeout(() => {
+              data.slice(0, 2).forEach((item: Announcement) => {
+                if (item.id !== announcementData.id && item.imageUrl) {
+                  preloadImage(item.imageUrl);
+                }
+              });
+            }, 2000);
+          }
+        })
+        .catch(() => {
+          // Silent fail on preload is acceptable
+        });
+    }
+  }, [announcementData]);
+  
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -155,22 +183,22 @@ export default function AnnouncementDetails() {
             </div>
             
             <div className="lg:col-span-1">
-              <div className="bg-[#F9F6F2] p-6 rounded-lg mb-6">
+              <div className="bg-[#F9F6F2] p-6 rounded-lg mb-6 shadow-sm">
                 <h3 className="text-xl font-serif font-semibold mb-4">Contact Us</h3>
                 <p className="text-gray-700 mb-6">
                   Interested in this announcement? Get in touch with our team for more information.
                 </p>
                 <Button 
                   asChild
-                  className="w-full bg-[#B87333] hover:bg-[#B87333]/90 text-white"
+                  className="w-full bg-[#B87333] hover:bg-[#B87333]/90 text-white flex items-center justify-center"
                 >
                   <Link href="/contact">
-                    Contact Our Team
+                    <PhoneCall className="mr-2 h-4 w-4" /> Contact Our Team
                   </Link>
                 </Button>
               </div>
               
-              <div className="bg-[#F9F6F2] p-6 rounded-lg">
+              <div className="bg-[#F9F6F2] p-6 rounded-lg shadow-sm mb-6">
                 <h3 className="text-xl font-serif font-semibold mb-4">View Properties</h3>
                 <p className="text-gray-700 mb-6">
                   Explore our exclusive collection of luxury properties.
@@ -178,10 +206,26 @@ export default function AnnouncementDetails() {
                 <Button 
                   asChild
                   variant="outline"
-                  className="w-full border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white"
+                  className="w-full border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white flex items-center justify-center"
                 >
                   <Link href="/properties">
-                    Browse Properties
+                    <Home className="mr-2 h-4 w-4" /> Browse Properties
+                  </Link>
+                </Button>
+              </div>
+              
+              <div className="bg-[#F9F6F2]/60 p-6 rounded-lg shadow-sm border border-[#B87333]/10">
+                <h3 className="text-xl font-serif font-semibold mb-4">More Announcements</h3>
+                <p className="text-gray-700 mb-6">
+                  Stay updated with our latest news and special offers.
+                </p>
+                <Button 
+                  asChild
+                  variant="ghost"
+                  className="w-full text-[#B87333] hover:bg-[#B87333]/10 flex items-center justify-center"
+                >
+                  <Link href="/announcements">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> All Announcements
                   </Link>
                 </Button>
               </div>
