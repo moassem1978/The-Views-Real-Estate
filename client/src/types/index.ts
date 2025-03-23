@@ -87,5 +87,6 @@ export interface Announcement {
   startDate: string;
   endDate?: string;
   isActive: boolean;
+  isFeatured: boolean;
   createdAt: string;
 }

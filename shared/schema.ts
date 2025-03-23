@@ -88,6 +88,7 @@ export const announcements = pgTable("announcements", {
   startDate: timestamp("start_date").defaultNow().notNull(), // Changed from date to startDate
   endDate: timestamp("end_date"), // Added endDate
   isActive: boolean("is_active").default(true).notNull(), // Added isActive
+  isFeatured: boolean("is_featured").default(false).notNull(), // Add isFeatured flag to display in main carousel
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

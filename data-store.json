@@ -178,23 +178,55 @@
         "createdAt": "2025-03-23T02:07:29.321Z",
         "agentId": 1
       }
+    ],
+    [
+      5,
+      {
+        "id": 5,
+        "title": "Beautiful twin house ",
+        "description": "Delivery 2029",
+        "address": "Jeera",
+        "city": "New Cairo",
+        "state": "Twin",
+        "zipCode": "",
+        "price": 47000000,
+        "downPayment": 4700000,
+        "installmentAmount": 400000,
+        "installmentPeriod": 0,
+        "isFullCash": false,
+        "listingType": "Primary",
+        "projectName": "",
+        "developerName": "",
+        "bedrooms": 3,
+        "bathrooms": 5,
+        "builtUpArea": 245,
+        "plotSize": 304,
+        "gardenSize": 0,
+        "floor": 0,
+        "isGroundUnit": false,
+        "propertyType": "Villa",
+        "isFeatured": false,
+        "isNewListing": true,
+        "yearBuilt": 0,
+        "views": "City View",
+        "amenities": [],
+        "images": [
+          "/uploads/properties/images-1742729937651-918608010.jpeg",
+          "/uploads/properties/images-1742729940817-160683969.jpeg",
+          "/uploads/properties/images-1742729941355-993075756.jpeg",
+          "/uploads/properties/images-1742729941557-829927208.jpeg",
+          "/uploads/properties/images-1742729941722-214379562.jpeg",
+          "/uploads/properties/images-1742729942179-730089825.jpeg"
+        ],
+        "latitude": 0,
+        "longitude": 0,
+        "createdAt": "2025-03-23T11:39:05.285Z",
+        "agentId": 1
+      }
     ]
   ],
   "testimonials": [],
   "announcements": [
-    [
-      1,
-      {
-        "id": 1,
-        "title": "Extended Offer on Beachfront Properties",
-        "content": "Due to high demand, our discount has been extended for an additional week.",
-        "imageUrl": null,
-        "startDate": "2025-03-23T00:00:00.000Z",
-        "endDate": "2025-04-22T00:00:00.000Z",
-        "isActive": true,
-        "createdAt": "2025-03-23T03:18:55.370Z"
-      }
-    ],
     [
       2,
       {
@@ -206,6 +238,19 @@
         "endDate": "2025-03-28T00:00:00.000Z",
         "isActive": true,
         "createdAt": "2025-03-23T03:19:38.128Z"
+      }
+    ],
+    [
+      3,
+      {
+        "id": 3,
+        "title": "New launch in badya",
+        "content": "For more knfo, leave your details",
+        "imageUrl": "",
+        "startDate": "2025-03-23T00:00:00.000Z",
+        "endDate": null,
+        "isActive": true,
+        "createdAt": "2025-03-23T11:40:35.781Z"
       }
     ]
   ],
@@ -223,7 +268,7 @@
     "companyLogo": "/uploads/logos/logo-1742677490208-285368626.png"
   },
   "userCurrentId": 2,
-  "propertyCurrentId": 5,
+  "propertyCurrentId": 6,
   "testimonialCurrentId": 1,
-  "announcementCurrentId": 3
+  "announcementCurrentId": 4
 }

@@ -509,6 +509,7 @@ export class MemStorage implements IStorage {
       startDate: new Date(insertAnnouncement.startDate || new Date()).toISOString(),
       endDate: insertAnnouncement.endDate ? new Date(insertAnnouncement.endDate).toISOString() : null,
       isActive: insertAnnouncement.isActive ?? true,
+      isFeatured: insertAnnouncement.isFeatured ?? false,
       createdAt: new Date().toISOString()
     };
     
