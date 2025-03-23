@@ -151,9 +151,15 @@ export default function AnnouncementDetails() {
             <div className="lg:col-span-2">
               <div className="mb-8 rounded-lg overflow-hidden">
                 <img 
-                  src={getImageUrl(announcementData.imageUrl) || '/uploads/default-announcement.svg'} 
+                  src={getImageUrl(announcementData.imageUrl)} 
                   alt={announcementData.title}
                   className="w-full h-auto max-h-[500px] object-cover"
+                  onError={(e) => {
+                    // Fallback to default image if the image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null; // Prevent infinite error loop
+                    target.src = '/uploads/default-announcement.svg';
+                  }}
                 />
               </div>
               

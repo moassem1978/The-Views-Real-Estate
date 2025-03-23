@@ -152,7 +152,7 @@ export function truncateText(text: string, maxLength: number): string {
  * @returns Full URL to the image
  */
 export function getImageUrl(path: string | undefined): string {
-  // Handle common default case
+  // Handle missing path
   if (!path) return "/uploads/default-announcement.svg";
   
   // Check cache first
@@ -162,12 +162,22 @@ export function getImageUrl(path: string | undefined): string {
   
   let result: string;
   
-  // Optimize path checking with early returns
-  if (path.startsWith('http')) {
+  // Handle default images directly
+  if (path === '/uploads/default-announcement.svg' || 
+      path === '/uploads/default-property.svg') {
     result = path;
-  } else if (path.startsWith('/uploads/')) {
-    result = `${window.location.origin}${path}`;
-  } else {
+  }
+  // Handle external URLs
+  else if (path.startsWith('http')) {
+    result = path;
+  } 
+  // Handle uploaded images
+  else if (path.startsWith('/uploads/')) {
+    // For uploads, don't add the origin as they are served directly from static folder
+    result = path;
+  } 
+  // Fallback for any other path format
+  else {
     result = path;
   }
   

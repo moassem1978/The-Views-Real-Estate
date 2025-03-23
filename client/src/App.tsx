@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import React, { lazy, Suspense, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { clearImageCache } from "./lib/utils";
 
 // Streamlined loading fallback
 const LoadingFallback = () => (
@@ -59,8 +60,10 @@ function Router() {
     }
   };
 
-  // Trigger preload on idle
+  // Trigger preload on idle and clear image cache to ensure fresh images
   useEffect(() => {
+    // Clear image cache on app mount to ensure fresh images
+    clearImageCache();
     preloadCriticalRoutes();
   }, []);
 
