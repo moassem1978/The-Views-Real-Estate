@@ -24,7 +24,17 @@ export default function AnnouncementDetails() {
       if (!response.ok) {
         throw new Error('Failed to load announcement');
       }
-      return response.json();
+      
+      const data = await response.json();
+      
+      // Safe image preloading without hooks
+      if (data && data.imageUrl) {
+        // Create an Image object to preload it into browser cache
+        const img = new Image();
+        img.src = getImageUrl(data.imageUrl);
+      }
+      
+      return data;
     },
     enabled: !!id,
     staleTime: 300000, // 5 minutes
@@ -89,34 +99,6 @@ export default function AnnouncementDetails() {
   }
 
   const announcementData = announcement as Announcement;
-  
-  // Preload image when announcement data is available
-  useEffect(() => {
-    if (announcementData?.imageUrl) {
-      // Preload the main announcement image for better user experience
-      preloadImage(announcementData.imageUrl);
-      
-      // Fetch other announcements to prepare for user navigation
-      fetch('/api/announcements/featured')
-        .then(res => res.json())
-        .then(data => {
-          // Preload featured announcement images in the background
-          if (Array.isArray(data)) {
-            // Use a delay to prioritize the current image first
-            setTimeout(() => {
-              data.slice(0, 2).forEach((item: Announcement) => {
-                if (item.id !== announcementData.id && item.imageUrl) {
-                  preloadImage(item.imageUrl);
-                }
-              });
-            }, 2000);
-          }
-        })
-        .catch(() => {
-          // Silent fail on preload is acceptable
-        });
-    }
-  }, [announcementData]);
   
   return (
     <div className="flex flex-col min-h-screen">
