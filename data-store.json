@@ -54,7 +54,8 @@
         "latitude": 0,
         "longitude": 0,
         "createdAt": "2025-03-22T19:56:19.116Z",
-        "agentId": 1
+        "agentId": 1,
+        "isHighlighted": true
       }
     ],
     [
@@ -138,7 +139,8 @@
         "agentId": 1,
         "gardenSize": 50,
         "floor": 0,
-        "isGroundUnit": true
+        "isGroundUnit": true,
+        "isHighlighted": true
       }
     ],
     [
@@ -221,7 +223,8 @@
         "latitude": 0,
         "longitude": 0,
         "createdAt": "2025-03-23T11:39:05.285Z",
-        "agentId": 1
+        "agentId": 1,
+        "isHighlighted": true
       }
     ]
   ],
@@ -238,7 +241,8 @@
         "endDate": "2025-03-31T00:00:00.000Z",
         "isActive": true,
         "isFeatured": false,
-        "createdAt": "2025-03-23T20:40:00.630Z"
+        "createdAt": "2025-03-23T20:40:00.630Z",
+        "isHighlighted": true
       }
     ]
   ],
