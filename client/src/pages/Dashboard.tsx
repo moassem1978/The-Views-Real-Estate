@@ -119,6 +119,21 @@ export default function Dashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [currentPropertyId, setCurrentPropertyId] = useState<number | null>(null);
   
+  // Announcement-related state
+  const [announcementFormOpen, setAnnouncementFormOpen] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState(false);
+  const [currentAnnouncementId, setCurrentAnnouncementId] = useState<number | null>(null);
+  const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
+  const [announcementImagePreview, setAnnouncementImagePreview] = useState<string | null>(null);
+  const [announcementForm, setAnnouncementForm] = useState({
+    title: "",
+    content: "",
+    imageUrl: "",
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: "",
+    isActive: true
+  });
+  
   // Form state
   const [formData, setFormData] = useState({
     title: "",
@@ -160,21 +175,6 @@ export default function Dashboard() {
   
   // Property images state
   const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
-  
-  // Announcement state
-  const [announcementFormOpen, setAnnouncementFormOpen] = useState(false);
-  const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
-  const [announcementImagePreview, setAnnouncementImagePreview] = useState<string | null>(null);
-  const [editingAnnouncement, setEditingAnnouncement] = useState(false);
-  const [currentAnnouncementId, setCurrentAnnouncementId] = useState<number | null>(null);
-  const [announcementForm, setAnnouncementForm] = useState({
-    title: "",
-    content: "",
-    imageUrl: "",
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: "",
-    isActive: true
-  });
   
   // Fetch properties
   const { data: properties, isLoading } = useQuery({
@@ -271,6 +271,143 @@ export default function Dashboard() {
         variant: "destructive",
       });
       console.error("Error deleting property:", error);
+    }
+  });
+  
+  // Create announcement mutation
+  const createAnnouncement = useMutation({
+    mutationFn: async (newAnnouncement: any) => {
+      const response = await apiRequest('POST', '/api/announcements', newAnnouncement);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/announcements'] });
+      toast({
+        title: "Success",
+        description: "Announcement created successfully",
+      });
+      setAnnouncementFormOpen(false);
+      resetAnnouncementForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create announcement. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Error creating announcement:", error);
+    }
+  });
+
+  // Update announcement mutation
+  const updateAnnouncement = useMutation({
+    mutationFn: async ({ id, announcement }: { id: number; announcement: any }) => {
+      const response = await apiRequest('PUT', `/api/announcements/${id}`, announcement);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/announcements'] });
+      toast({
+        title: "Success",
+        description: "Announcement updated successfully",
+      });
+      setAnnouncementFormOpen(false);
+      resetAnnouncementForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update announcement. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Error updating announcement:", error);
+    }
+  });
+
+  // Delete announcement mutation
+  const deleteAnnouncement = useMutation({
+    mutationFn: async (id: number) => {
+      // For DELETE requests, we don't need to parse JSON as the server returns 204 No Content
+      await apiRequest('DELETE', `/api/announcements/${id}`);
+      return true; // Just return true for success
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/announcements'] });
+      toast({
+        title: "Success",
+        description: "Announcement deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete announcement. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Error deleting announcement:", error);
+    }
+  });
+  
+  // Upload announcement image mutation
+  const uploadAnnouncementImage = useMutation({
+    mutationFn: async (file: File) => {
+      try {
+        // Create a fresh FormData object
+        const formData = new FormData();
+        
+        // Add the file with the exact name expected by the server
+        formData.append('image', file, file.name);
+        
+        console.log('Starting announcement image upload');
+        console.log('File details:', file.name, file.type, `${(file.size / 1024).toFixed(2)}KB`);
+        
+        // Enhanced fetch request with improved error handling
+        const response = await fetch('/api/upload/announcement-image', {
+          method: 'POST',
+          body: formData,
+          // Add cache-busting headers to prevent caching issues
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        // Handle non-success responses
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Upload failed with status:', response.status, response.statusText);
+          console.error('Error response body:', errorText);
+          throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
+        }
+        
+        // Parse and return the response data
+        const data = await response.json();
+        console.log('Announcement image upload successful:', data);
+        return data;
+      } catch (err) {
+        console.error('Announcement image upload error:', err);
+        throw err;
+      }
+    },
+    onSuccess: (data) => {
+      // Set the image URL in the announcement form
+      setAnnouncementForm(prev => ({
+        ...prev,
+        imageUrl: data.imageUrl
+      }));
+      
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again with a smaller file or different format.",
+        variant: "destructive",
+      });
+      console.error("Error uploading announcement image:", error);
     }
   });
 
@@ -612,6 +749,123 @@ export default function Dashboard() {
     setPropertyImages(prev => prev.filter((_, i) => i !== index));
   };
   
+  // Handle announcement form input changes
+  const handleAnnouncementInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setAnnouncementForm(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setAnnouncementForm(prev => ({ ...prev, [name]: value }));
+    }
+  };
+  
+  // Handle announcement image selection
+  const handleAnnouncementImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      console.log(`Selected announcement image: ${file.name}, type: ${file.type}, size: ${(file.size / 1024).toFixed(2)}KB`);
+      
+      setAnnouncementImage(file);
+      
+      // For Adobe Illustrator files, show a placeholder preview
+      if (file.name.toLowerCase().endsWith('.ai') || 
+          file.type === 'application/postscript' || 
+          file.type === 'application/illustrator') {
+        console.log('Adobe Illustrator file detected, using placeholder preview');
+        setAnnouncementImagePreview('/uploads/ai-placeholder.svg');
+      } else {
+        // Create preview for regular image files
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAnnouncementImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+  
+  // Handle announcement image upload
+  const handleUploadAnnouncementImage = () => {
+    if (announcementImage) {
+      uploadAnnouncementImage.mutate(announcementImage);
+    }
+  };
+  
+  // Handle announcement form submission
+  const handleAnnouncementSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Make sure the form data is complete
+    const currentDate = new Date().toISOString();
+    
+    const announcementData = {
+      ...announcementForm,
+      createdAt: currentDate
+    };
+    
+    console.log('Submitting announcement data:', announcementData);
+    
+    if (editingAnnouncement && currentAnnouncementId) {
+      updateAnnouncement.mutate({ id: currentAnnouncementId, announcement: announcementData });
+    } else {
+      createAnnouncement.mutate(announcementData);
+    }
+  };
+  
+  // Handle editing an announcement
+  const handleEditAnnouncement = (announcement: Announcement) => {
+    setAnnouncementForm({
+      title: announcement.title,
+      content: announcement.content,
+      imageUrl: announcement.imageUrl || "",
+      startDate: announcement.startDate.split('T')[0],
+      endDate: announcement.endDate ? announcement.endDate.split('T')[0] : "",
+      isActive: announcement.isActive
+    });
+    setEditingAnnouncement(true);
+    setCurrentAnnouncementId(announcement.id);
+    
+    // If there's an image, set the preview
+    if (announcement.imageUrl) {
+      setAnnouncementImagePreview(announcement.imageUrl);
+    } else {
+      setAnnouncementImagePreview(null);
+    }
+    
+    setAnnouncementFormOpen(true);
+  };
+  
+  // Handle deleting an announcement
+  const handleDeleteAnnouncement = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this announcement?")) {
+      deleteAnnouncement.mutate(id);
+    }
+  };
+  
+  // Reset announcement form
+  const resetAnnouncementForm = () => {
+    setAnnouncementForm({
+      title: "",
+      content: "",
+      imageUrl: "",
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: "",
+      isActive: true
+    });
+    setEditingAnnouncement(false);
+    setCurrentAnnouncementId(null);
+    setAnnouncementImage(null);
+    setAnnouncementImagePreview(null);
+  };
+  
+  // Open announcement form
+  const openAnnouncementForm = () => {
+    resetAnnouncementForm();
+    setAnnouncementFormOpen(true);
+  };
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -678,6 +932,7 @@ export default function Dashboard() {
       >
         <TabsList className="mb-6">
           <TabsTrigger value="properties">Properties</TabsTrigger>
+          <TabsTrigger value="announcements">Announcements</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
         
@@ -743,6 +998,111 @@ export default function Dashboard() {
                 </TableBody>
               </Table>
             </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="announcements">
+          <div className="flex justify-between mb-4">
+            <h2 className="text-2xl font-semibold text-gray-800">Manage Announcements</h2>
+            <Button onClick={openAnnouncementForm}>Add New Announcement</Button>
+          </div>
+          
+          {isLoadingAnnouncements ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-8 w-1/3" />
+                    <Skeleton className="h-4 w-1/4" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-24 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : announcements && announcements.length > 0 ? (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {announcements.map((announcement: Announcement) => (
+                    <TableRow key={announcement.id}>
+                      <TableCell className="font-medium">{announcement.title}</TableCell>
+                      <TableCell>{new Date(announcement.startDate).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {announcement.endDate ? new Date(announcement.endDate).toLocaleDateString() : 'No End Date'}
+                      </TableCell>
+                      <TableCell>
+                        <span 
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            announcement.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {announcement.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditAnnouncement(announcement)}
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteAnnouncement(announcement.id)}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-8">
+                <div className="rounded-full bg-blue-50 p-3 mb-4">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-6 w-6 text-blue-500"
+                  >
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                    <path d="M14 2v6h6" />
+                    <path d="M16 13H8" />
+                    <path d="M16 17H8" />
+                    <path d="M10 9H8" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-center">No Announcements Found</h3>
+                <p className="text-sm text-gray-500 text-center mt-1">
+                  Create your first announcement to engage with your customers.
+                </p>
+                <Button onClick={openAnnouncementForm} className="mt-4">
+                  Create Announcement
+                </Button>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
         
