@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Property } from "@/types";
+import { Property, Announcement } from "@/types";
 import {
   Carousel,
   CarouselContent,
@@ -9,77 +9,41 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatDate, formatPrice, getImageUrl } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Define news/announcement item structure
-interface NewsItem {
-  id: number;
-  title: string;
-  date: string;
-  description: string;
-  image: string;
-  link?: string;
-  tag: 'news' | 'announcement' | 'event';
-}
-
-// Sample news data - In a real application, this would come from an API
-const sampleNews: NewsItem[] = [
-  {
-    id: 1,
-    title: "The Views Real Estate Launches Exclusive Beachfront Collection",
-    date: "2025-03-15",
-    description: "Discover our newest collection of luxury beachfront properties with exclusive access to private beaches and panoramic ocean views.",
-    image: "https://images.unsplash.com/photo-1545566239-0d773a881c74?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    link: "/properties?tag=beachfront",
-    tag: 'announcement'
-  },
-  {
-    id: 2,
-    title: "Luxury Property Market Report for Q1 2025 Now Available",
-    date: "2025-03-10",
-    description: "Our comprehensive analysis of the luxury property market trends, investment opportunities, and forecasts for the upcoming year.",
-    image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    link: "/market-report",
-    tag: 'news'
-  },
-  {
-    id: 3,
-    title: "Spring Showcase: Luxury Villa Open House Weekend",
-    date: "2025-04-05",
-    description: "Join us for a special open house weekend showcasing our most luxurious villa properties with complimentary champagne and gourmet catering.",
-    image: "https://images.unsplash.com/photo-1554995207-c18c203602cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    link: "/events/spring-showcase",
-    tag: 'event'
-  }
-];
+// Default placeholder image for announcements without images
+const DEFAULT_ANNOUNCEMENT_IMAGE = "/uploads/default-announcement.svg";
 
 export default function NewsCarousel() {
   const { data: properties, isLoading: propertiesLoading } = useQuery<Property[]>({
     queryKey: ['/api/properties/featured'],
   });
   
-  const [news] = useState<NewsItem[]>(sampleNews);
-  const [activeNewsIndex, setActiveNewsIndex] = useState(0);
+  const { data: announcements, isLoading: announcementsLoading } = useQuery<Announcement[]>({
+    queryKey: ['/api/announcements'],
+  });
+  
+  const [activeAnnouncementIndex, setActiveAnnouncementIndex] = useState(0);
   const [activePropertyIndex, setActivePropertyIndex] = useState(0);
-  const [autoplayNews, setAutoplayNews] = useState(true);
+  const [autoplayAnnouncements, setAutoplayAnnouncements] = useState(true);
   const [autoplayProperties, setAutoplayProperties] = useState(true);
   
-  // Autoplay functionality for news
+  // Autoplay functionality for announcements
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     
-    if (autoplayNews && news.length > 0) {
+    if (autoplayAnnouncements && announcements && announcements.length > 0) {
       interval = setInterval(() => {
-        setActiveNewsIndex((current) => (current + 1) % news.length);
-      }, 8000); // Change news item every 8 seconds
+        setActiveAnnouncementIndex((current) => (current + 1) % announcements.length);
+      }, 8000); // Change announcement every 8 seconds
     }
     
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [autoplayNews, news.length]);
+  }, [autoplayAnnouncements, announcements?.length]);
   
   // Autoplay functionality for properties
   useEffect(() => {
@@ -97,13 +61,28 @@ export default function NewsCarousel() {
   }, [autoplayProperties, properties]);
   
   // Pause autoplay on hover
-  const pauseNewsAutoplay = () => setAutoplayNews(false);
-  const resumeNewsAutoplay = () => setAutoplayNews(true);
+  const pauseAnnouncementsAutoplay = () => setAutoplayAnnouncements(false);
+  const resumeAnnouncementsAutoplay = () => setAutoplayAnnouncements(true);
   const pausePropertiesAutoplay = () => setAutoplayProperties(false);
   const resumePropertiesAutoplay = () => setAutoplayProperties(true);
 
-  if (!news || news.length === 0) {
-    return null;
+  // Skip rendering if there's nothing to show
+  if (propertiesLoading && announcementsLoading) {
+    return (
+      <section className="py-8 bg-[#F9F6F2] border-b border-[#E8DACB]">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl md:text-3xl font-serif font-semibold">
+              <span className="text-[#B87333]">The Views</span> Updates
+            </h2>
+          </div>
+          <div className="py-10">
+            <Skeleton className="h-8 w-48 mx-auto mb-4" />
+            <Skeleton className="h-64 w-full rounded-lg" />
+          </div>
+        </div>
+      </section>
+    );
   }
   
   return (
@@ -260,38 +239,45 @@ export default function NewsCarousel() {
           
           {/* Announcements Tab */}
           <TabsContent value="announcements">
-            <div
-              className="relative"
-              onMouseEnter={pauseNewsAutoplay}
-              onMouseLeave={resumeNewsAutoplay}
-            >
-              <Carousel 
-                opts={{ loop: true }} 
-                className="w-full"
-                setApi={(api) => {
-                  api?.on('select', () => {
-                    setActiveNewsIndex(api.selectedScrollSnap());
-                  });
-                  
-                  // Initial position
-                  if (activeNewsIndex > 0) {
-                    api?.scrollTo(activeNewsIndex);
-                  }
-                }}
+            {announcementsLoading ? (
+              <div className="flex flex-col md:flex-row items-center gap-8 py-2">
+                <Skeleton className="w-full md:w-1/2 aspect-video rounded-lg" />
+                <div className="w-full md:w-1/2 space-y-4">
+                  <Skeleton className="h-8 w-3/4" />
+                  <Skeleton className="h-6 w-1/2" />
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-12 w-40" />
+                </div>
+              </div>
+            ) : announcements && announcements.length > 0 ? (
+              <div
+                className="relative"
+                onMouseEnter={pauseAnnouncementsAutoplay}
+                onMouseLeave={resumeAnnouncementsAutoplay}
               >
-                <CarouselContent>
-                  {news.map((item, index) => (
-                    <CarouselItem key={item.id}>
-                      <Link 
-                        href={item.link || "#"} 
-                        className="block w-full hover:opacity-95 transition-opacity"
-                      >
+                <Carousel 
+                  opts={{ loop: true }} 
+                  className="w-full"
+                  setApi={(api) => {
+                    api?.on('select', () => {
+                      setActiveAnnouncementIndex(api.selectedScrollSnap());
+                    });
+                    
+                    // Initial position
+                    if (activeAnnouncementIndex > 0) {
+                      api?.scrollTo(activeAnnouncementIndex);
+                    }
+                  }}
+                >
+                  <CarouselContent>
+                    {announcements.map((announcement, index) => (
+                      <CarouselItem key={announcement.id}>
                         <div className="flex flex-col md:flex-row items-center justify-between py-4 gap-6">
                           {/* Left - Image */}
                           <div className="w-full md:w-1/2 aspect-video rounded-lg overflow-hidden shadow-lg">
                             <img 
-                              src={item.image} 
-                              alt={item.title}
+                              src={announcement.imageUrl || DEFAULT_ANNOUNCEMENT_IMAGE} 
+                              alt={announcement.title}
                               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                             />
                           </div>
@@ -299,35 +285,25 @@ export default function NewsCarousel() {
                           {/* Right - Content */}
                           <div className="w-full md:w-1/2 flex flex-col">
                             <div className="flex items-center mb-3">
-                              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                                item.tag === 'news' 
-                                  ? 'bg-black text-[#F9F6F2]' 
-                                  : item.tag === 'announcement' 
-                                    ? 'bg-[#B87333] text-white' 
-                                    : 'bg-[#F1E5CC] text-black'
-                              }`}>
-                                {item.tag === 'news' 
-                                  ? 'News' 
-                                  : item.tag === 'announcement' 
-                                    ? 'Announcement' 
-                                    : 'Event'}
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#B87333] text-white">
+                                Announcement
                               </span>
                               <span className="ml-3 text-sm text-gray-500">
-                                {formatDate(item.date)}
+                                {formatDate(announcement.startDate)}
                               </span>
                             </div>
                             
                             <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-3">
-                              {item.title}
+                              {announcement.title}
                             </h3>
                             
-                            <p className="text-gray-700 mb-5">
-                              {item.description}
+                            <p className="text-gray-700 mb-5 line-clamp-4">
+                              {announcement.content}
                             </p>
                             
                             <div className="mt-auto">
                               <span className="inline-flex items-center text-sm font-medium text-[#B87333]">
-                                Learn More
+                                Read More
                                 <svg 
                                   xmlns="http://www.w3.org/2000/svg" 
                                   className="ml-1 h-4 w-4" 
@@ -346,38 +322,44 @@ export default function NewsCarousel() {
                             </div>
                           </div>
                         </div>
-                      </Link>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                
-                {/* News Indicators */}
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex items-center space-x-1">
-                  {news.map((_, index) => (
-                    <button
-                      key={index}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        index === activeNewsIndex 
-                          ? 'bg-[#B87333] w-4' 
-                          : 'bg-gray-300'
-                      }`}
-                      onClick={() => {
-                        setActiveNewsIndex(index);
-                        setAutoplayNews(false);
-                      }}
-                      aria-label={`Go to announcement ${index + 1}`}
-                    />
-                  ))}
-                </div>
-                
-                <CarouselPrevious 
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-none text-[#B87333] h-10 w-10 md:h-12 md:w-12" 
-                />
-                <CarouselNext 
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-none text-[#B87333] h-10 w-10 md:h-12 md:w-12" 
-                />
-              </Carousel>
-            </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  
+                  {/* Announcement Indicators */}
+                  {announcements.length > 1 && (
+                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex items-center space-x-1">
+                      {announcements.map((_, index) => (
+                        <button
+                          key={index}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            index === activeAnnouncementIndex 
+                              ? 'bg-[#B87333] w-4' 
+                              : 'bg-gray-300'
+                          }`}
+                          onClick={() => {
+                            setActiveAnnouncementIndex(index);
+                            setAutoplayAnnouncements(false);
+                          }}
+                          aria-label={`Go to announcement ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  
+                  <CarouselPrevious 
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-none text-[#B87333] h-10 w-10 md:h-12 md:w-12" 
+                  />
+                  <CarouselNext 
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-none text-[#B87333] h-10 w-10 md:h-12 md:w-12" 
+                  />
+                </Carousel>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p>No announcements available at this time.</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
