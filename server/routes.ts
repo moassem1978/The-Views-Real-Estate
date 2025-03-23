@@ -2,7 +2,7 @@ import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { z } from "zod";
-import { insertPropertySchema, insertTestimonialSchema } from "@shared/schema";
+import { insertPropertySchema, insertTestimonialSchema, insertAnnouncementSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import multer from "multer";

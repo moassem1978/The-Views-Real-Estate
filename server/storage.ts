@@ -31,6 +31,13 @@ export interface IStorage {
   getTestimonialById(id: number): Promise<Testimonial | undefined>;
   createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
   
+  // Announcement operations
+  getAllAnnouncements(): Promise<Announcement[]>;
+  getAnnouncementById(id: number): Promise<Announcement | undefined>;
+  createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
+  updateAnnouncement(id: number, announcement: Partial<Announcement>): Promise<Announcement | undefined>;
+  deleteAnnouncement(id: number): Promise<boolean>;
+  
   // Site settings operations
   getSiteSettings(): Promise<SiteSettings>;
   updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings>;
@@ -54,10 +61,12 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private properties: Map<number, Property>;
   private testimonials: Map<number, Testimonial>;
+  private announcements: Map<number, Announcement>;
   private siteSettings: SiteSettings;
   userCurrentId: number;
   propertyCurrentId: number;
   testimonialCurrentId: number;
+  announcementCurrentId: number;
   private persistencePath = './data-store.json';
 
   constructor() {
@@ -65,9 +74,11 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.properties = new Map();
     this.testimonials = new Map();
+    this.announcements = new Map();
     this.userCurrentId = 1;
     this.propertyCurrentId = 1;
     this.testimonialCurrentId = 1;
+    this.announcementCurrentId = 1;
     
     // Initialize default site settings
     this.siteSettings = {
@@ -117,10 +128,12 @@ export class MemStorage implements IStorage {
         users: Array.from(this.users.entries()),
         properties: Array.from(this.properties.entries()),
         testimonials: Array.from(this.testimonials.entries()),
+        announcements: Array.from(this.announcements.entries()),
         siteSettings: this.siteSettings,
         userCurrentId: this.userCurrentId,
         propertyCurrentId: this.propertyCurrentId,
-        testimonialCurrentId: this.testimonialCurrentId
+        testimonialCurrentId: this.testimonialCurrentId,
+        announcementCurrentId: this.announcementCurrentId
       };
       
       fs.writeFileSync(this.persistencePath, JSON.stringify(data, null, 2));
@@ -241,12 +254,14 @@ export class MemStorage implements IStorage {
         this.users = new Map(data.users);
         this.properties = new Map(data.properties);
         this.testimonials = new Map(data.testimonials);
+        this.announcements = new Map(data.announcements || []);
         
         // Restore settings and counters
         this.siteSettings = data.siteSettings;
         this.userCurrentId = data.userCurrentId;
         this.propertyCurrentId = data.propertyCurrentId;
         this.testimonialCurrentId = data.testimonialCurrentId;
+        this.announcementCurrentId = data.announcementCurrentId || 1;
         
         console.log('Data loaded from disk successfully');
       } else {
@@ -471,6 +486,57 @@ export class MemStorage implements IStorage {
     this.testimonials.set(id, testimonial);
     this.saveToDisk(); // Save after changes
     return testimonial;
+  }
+  
+  // Announcement operations
+  async getAllAnnouncements(): Promise<Announcement[]> {
+    return Array.from(this.announcements.values());
+  }
+
+  async getAnnouncementById(id: number): Promise<Announcement | undefined> {
+    return this.announcements.get(id);
+  }
+
+  async createAnnouncement(insertAnnouncement: InsertAnnouncement): Promise<Announcement> {
+    const id = this.announcementCurrentId++;
+    
+    // Create a complete announcement object
+    const announcement: Announcement = {
+      id,
+      title: insertAnnouncement.title,
+      description: insertAnnouncement.description,
+      image: insertAnnouncement.image ?? null,
+      date: new Date(insertAnnouncement.date || new Date()).toISOString(),
+      link: insertAnnouncement.link ?? null,
+      tag: insertAnnouncement.tag ?? "announcement",
+      createdAt: new Date().toISOString()
+    };
+    
+    this.announcements.set(id, announcement);
+    this.saveToDisk(); // Save after changes
+    return announcement;
+  }
+
+  async updateAnnouncement(id: number, updates: Partial<Announcement>): Promise<Announcement | undefined> {
+    const announcement = this.announcements.get(id);
+    
+    if (!announcement) {
+      return undefined;
+    }
+    
+    const updatedAnnouncement = { ...announcement, ...updates };
+    this.announcements.set(id, updatedAnnouncement);
+    this.saveToDisk(); // Save after changes
+    
+    return updatedAnnouncement;
+  }
+
+  async deleteAnnouncement(id: number): Promise<boolean> {
+    const result = this.announcements.delete(id);
+    if (result) {
+      this.saveToDisk(); // Save after successful deletion
+    }
+    return result;
   }
   
   // Site settings operations
