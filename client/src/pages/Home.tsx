@@ -18,7 +18,7 @@ export default function Home() {
         <Suspense fallback={<HeroLoadingSkeleton />}>
           <HeroCarousel />
         </Suspense>
-        <NewsCarousel />
+        {/* Removed secondary NewsCarousel as requested */}
         <PropertySearch />
                 
         <Suspense fallback={<FeaturedPropertySkeleton />}>

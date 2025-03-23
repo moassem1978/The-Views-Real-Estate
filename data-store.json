@@ -140,6 +140,44 @@
         "floor": 0,
         "isGroundUnit": true
       }
+    ],
+    [
+      4,
+      {
+        "id": 4,
+        "title": "Lakdjfjt",
+        "description": "I’m Ken and I just finished up with my friend and she said she’s going home and Oreo is on her phone now so I’m just letting you go and I don’t think I should go back to ",
+        "address": "Eastown",
+        "city": "New Cairo",
+        "state": "Eastown",
+        "zipCode": "",
+        "price": 5000000,
+        "downPayment": 0,
+        "installmentAmount": 0,
+        "installmentPeriod": 0,
+        "isFullCash": false,
+        "listingType": "Resale",
+        "projectName": "",
+        "developerName": "",
+        "bedrooms": 3,
+        "bathrooms": 4,
+        "builtUpArea": 210,
+        "plotSize": 0,
+        "gardenSize": 905,
+        "floor": 0,
+        "isGroundUnit": true,
+        "propertyType": "Apartment",
+        "isFeatured": true,
+        "isNewListing": true,
+        "yearBuilt": 0,
+        "views": "Sea View",
+        "amenities": [],
+        "images": [],
+        "latitude": 0,
+        "longitude": 0,
+        "createdAt": "2025-03-23T02:07:29.321Z",
+        "agentId": 1
+      }
     ]
   ],
   "testimonials": [],
@@ -157,6 +195,6 @@
     "companyLogo": "/uploads/logos/logo-1742677490208-285368626.png"
   },
   "userCurrentId": 2,
-  "propertyCurrentId": 4,
+  "propertyCurrentId": 5,
   "testimonialCurrentId": 1
 }
