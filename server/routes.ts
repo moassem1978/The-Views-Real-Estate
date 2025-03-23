@@ -132,6 +132,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  app.get("/api/properties/highlighted", async (req: Request, res: Response) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
+      const properties = await dbStorage.getHighlightedProperties(limit);
+      res.json(properties);
+    } catch (error) {
+      console.error("Error fetching highlighted properties:", error);
+      res.status(500).json({ message: "Failed to fetch highlighted properties" });
+    }
+  });
+
   app.get("/api/properties/new", async (req: Request, res: Response) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
@@ -290,6 +301,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     } catch (error) {
       console.error("Error fetching featured announcements:", error);
       res.status(500).json({ message: "Failed to fetch featured announcements" });
+    }
+  });
+
+  app.get("/api/announcements/highlighted", async (req: Request, res: Response) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const announcements = await dbStorage.getHighlightedAnnouncements(limit);
+      res.json(announcements);
+    } catch (error) {
+      console.error("Error fetching highlighted announcements:", error);
+      res.status(500).json({ message: "Failed to fetch highlighted announcements" });
     }
   });
 
