@@ -281,6 +281,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: "Failed to fetch announcements" });
     }
   });
+  
+  app.get("/api/announcements/featured", async (req: Request, res: Response) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const announcements = await dbStorage.getFeaturedAnnouncements(limit);
+      res.json(announcements);
+    } catch (error) {
+      console.error("Error fetching featured announcements:", error);
+      res.status(500).json({ message: "Failed to fetch featured announcements" });
+    }
+  });
 
   app.get("/api/announcements/:id", async (req: Request, res: Response) => {
     try {

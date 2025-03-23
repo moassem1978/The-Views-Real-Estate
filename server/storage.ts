@@ -33,6 +33,7 @@ export interface IStorage {
   
   // Announcement operations
   getAllAnnouncements(): Promise<Announcement[]>;
+  getFeaturedAnnouncements(limit?: number): Promise<Announcement[]>;
   getAnnouncementById(id: number): Promise<Announcement | undefined>;
   createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
   updateAnnouncement(id: number, announcement: Partial<Announcement>): Promise<Announcement | undefined>;
@@ -491,6 +492,14 @@ export class MemStorage implements IStorage {
   // Announcement operations
   async getAllAnnouncements(): Promise<Announcement[]> {
     return Array.from(this.announcements.values());
+  }
+  
+  async getFeaturedAnnouncements(limit?: number): Promise<Announcement[]> {
+    const announcements = Array.from(this.announcements.values())
+      .filter(announcement => announcement.isActive && announcement.isFeatured)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+    return limit ? announcements.slice(0, limit) : announcements;
   }
 
   async getAnnouncementById(id: number): Promise<Announcement | undefined> {
