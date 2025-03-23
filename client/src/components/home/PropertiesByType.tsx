@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, memo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,180 +9,36 @@ import { Property } from "../../types";
 import { ArrowRight, BedDouble, Bath, Grid2X2, ChevronRight } from "lucide-react";
 import { formatPrice, getImageUrl } from "@/lib/utils";
 
-export default function PropertiesByType() {
-  const [displayCount, setDisplayCount] = useState(6);
-  
-  // Fetch all properties
-  const { data: properties, isLoading } = useQuery({
-    queryKey: ['/api/properties'],
-    staleTime: 60000,
-  });
-
-  // Filter and organize properties by listing type
-  const { primaryProperties, resaleProperties } = React.useMemo(() => {
-    if (!properties || !Array.isArray(properties)) {
-      return { primaryProperties: [], resaleProperties: [] };
-    }
-
-    const primary = properties
-      .filter((property: Property) => 
-        property.listingType === "Primary" && property.isFeatured
-      )
-      .sort((a: Property, b: Property) => 
-        // Sort by newest first
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    
-    const resale = properties
-      .filter((property: Property) => 
-        property.listingType === "Resale" && property.isFeatured
-      )
-      .sort((a: Property, b: Property) => 
-        // Sort by newest first
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    
-    return { primaryProperties: primary, resaleProperties: resale };
-  }, [properties]);
-
-  const loadMore = () => {
-    setDisplayCount(prev => prev + 3);
-  };
-
-  if (isLoading) {
-    return (
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center mb-8">
-            <div className="h-12 w-64 bg-gray-200 animate-pulse rounded"></div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-[#F9F6F2] rounded-lg shadow-md overflow-hidden">
-                <div className="h-56 bg-gray-300 animate-pulse"></div>
-                <div className="p-6">
-                  <div className="flex justify-between mb-3">
-                    <div className="h-6 w-24 bg-gray-200 animate-pulse rounded"></div>
-                    <div className="h-6 w-20 bg-gray-200 animate-pulse rounded"></div>
-                  </div>
-                  <div className="h-7 w-full bg-gray-200 animate-pulse rounded mb-3"></div>
-                  <div className="h-5 w-32 bg-gray-200 animate-pulse rounded mb-4"></div>
-                  <div className="flex justify-between mb-4">
-                    {[1, 2, 3].map((j) => (
-                      <div key={j} className="h-6 w-20 bg-gray-200 animate-pulse rounded"></div>
-                    ))}
-                  </div>
-                  <div className="h-10 w-full bg-gray-200 animate-pulse rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  const allFeaturedCount = primaryProperties.length + resaleProperties.length;
-  
-  if (allFeaturedCount === 0) {
-    return null;
-  }
-
-  const defaultTab = primaryProperties.length > 0 ? "primary" : "resale";
-
-  return (
-    <section className="py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8">
-          <div>
-            <h2 className="text-sm uppercase tracking-wider text-[#B87333] font-semibold mb-2 text-center md:text-left">
-              Our Featured Collection
-            </h2>
-            <h3 className="text-3xl font-serif font-semibold text-gray-900 text-center md:text-left">
-              Exclusive Properties
-            </h3>
-          </div>
-          
-          <Button
-            asChild
-            variant="outline"
-            className="mt-4 md:mt-0 border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white self-center md:self-auto"
-          >
-            <Link href="/properties">
-              Browse All Properties <ChevronRight size={16} />
-            </Link>
-          </Button>
-        </div>
-        
-        <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 mb-8">
-            <TabsTrigger 
-              value="primary"
-              disabled={primaryProperties.length === 0}
-              className="data-[state=active]:bg-[#B87333] data-[state=active]:text-white"
-            >
-              Primary Projects
-            </TabsTrigger>
-            <TabsTrigger 
-              value="resale"
-              disabled={resaleProperties.length === 0}
-              className="data-[state=active]:bg-[#B87333] data-[state=active]:text-white"
-            >
-              Resale Units
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="primary" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {primaryProperties.slice(0, displayCount).map((property: Property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))}
-            </div>
-            
-            {primaryProperties.length > displayCount && (
-              <div className="mt-10 text-center">
-                <Button 
-                  onClick={loadMore}
-                  variant="outline"
-                  className="border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white"
-                >
-                  Load More Properties
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="resale" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {resaleProperties.slice(0, displayCount).map((property: Property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))}
-            </div>
-            
-            {resaleProperties.length > displayCount && (
-              <div className="mt-10 text-center">
-                <Button 
-                  onClick={loadMore}
-                  variant="outline"
-                  className="border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white"
-                >
-                  Load More Properties
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+// Simple loading skeleton component separate from main component
+const LoadingSkeleton = () => (
+  <section className="py-16 bg-white">
+    <div className="container mx-auto px-4">
+      <div className="flex justify-center mb-8">
+        <div className="h-10 w-56 bg-gray-200 animate-pulse rounded"></div>
       </div>
-    </section>
-  );
-}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-[#F9F6F2] rounded-lg shadow-md overflow-hidden">
+            <div className="h-56 bg-gray-300 animate-pulse"></div>
+            <div className="p-6">
+              <div className="flex justify-between mb-3">
+                <div className="h-6 w-24 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-6 w-20 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+              <div className="h-7 w-full bg-gray-200 animate-pulse rounded mb-3"></div>
+              <div className="h-5 w-32 bg-gray-200 animate-pulse rounded mb-4"></div>
+              <div className="h-10 w-full bg-gray-200 animate-pulse rounded"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
 
-interface PropertyCardProps {
-  property: Property;
-}
-
-function PropertyCard({ property }: PropertyCardProps) {
+// Memoized property card to prevent unnecessary re-renders
+const PropertyCard = memo(({ property }: { property: Property }) => {
   return (
     <Card className="overflow-hidden transition-shadow hover:shadow-lg">
       <div className="h-56 overflow-hidden relative">
@@ -191,7 +47,8 @@ function PropertyCard({ property }: PropertyCardProps) {
             getImageUrl(property.images[0]) : 
             '/uploads/default-property.svg'}
           alt={property.title}
-          className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
+          loading="lazy"
         />
         {property.isNewListing && (
           <Badge className="absolute top-3 left-3 bg-green-600 text-white">
@@ -250,5 +107,153 @@ function PropertyCard({ property }: PropertyCardProps) {
         </Button>
       </CardFooter>
     </Card>
+  );
+});
+
+// Tab content component to split rendering logic
+const PropertyTabContent = memo(({ 
+  properties, 
+  displayCount, 
+  loadMore 
+}: { 
+  properties: Property[], 
+  displayCount: number, 
+  loadMore: () => void 
+}) => {
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {properties.slice(0, displayCount).map((property: Property) => (
+          <PropertyCard key={property.id} property={property} />
+        ))}
+      </div>
+      
+      {properties.length > displayCount && (
+        <div className="mt-10 text-center">
+          <Button 
+            onClick={loadMore}
+            variant="outline"
+            className="border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white"
+          >
+            Load More Properties
+          </Button>
+        </div>
+      )}
+    </>
+  );
+});
+
+export default function PropertiesByType() {
+  const [displayCount, setDisplayCount] = useState(3); // Reduced initial load
+  
+  // Optimized query with increased stale time
+  const { data: properties, isLoading } = useQuery({
+    queryKey: ['/api/properties'],
+    staleTime: 300000, // Increased to 5 minutes
+  });
+
+  // Filter and organize properties by listing type
+  const { primaryProperties, resaleProperties } = useMemo(() => {
+    if (!properties || !Array.isArray(properties)) {
+      return { primaryProperties: [], resaleProperties: [] };
+    }
+
+    const primary = properties
+      .filter((property: Property) => 
+        property.listingType === "Primary" && property.isFeatured
+      )
+      .sort((a: Property, b: Property) => 
+        // Sort by newest first
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    
+    const resale = properties
+      .filter((property: Property) => 
+        property.listingType === "Resale" && property.isFeatured
+      )
+      .sort((a: Property, b: Property) => 
+        // Sort by newest first
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    
+    return { primaryProperties: primary, resaleProperties: resale };
+  }, [properties]);
+
+  const loadMore = () => {
+    setDisplayCount(prev => prev + 3);
+  };
+
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
+
+  const allFeaturedCount = primaryProperties.length + resaleProperties.length;
+  
+  if (allFeaturedCount === 0) {
+    return null;
+  }
+
+  const defaultTab = primaryProperties.length > 0 ? "primary" : "resale";
+
+  return (
+    <section className="py-16 bg-white">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8">
+          <div>
+            <h2 className="text-sm uppercase tracking-wider text-[#B87333] font-semibold mb-2 text-center md:text-left">
+              Our Featured Collection
+            </h2>
+            <h3 className="text-3xl font-serif font-semibold text-gray-900 text-center md:text-left">
+              Exclusive Properties
+            </h3>
+          </div>
+          
+          <Button
+            asChild
+            variant="outline"
+            className="mt-4 md:mt-0 border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white self-center md:self-auto"
+          >
+            <Link href="/properties">
+              Browse All Properties <ChevronRight size={16} />
+            </Link>
+          </Button>
+        </div>
+        
+        <Tabs defaultValue={defaultTab} className="w-full">
+          <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 mb-8">
+            <TabsTrigger 
+              value="primary"
+              disabled={primaryProperties.length === 0}
+              className="data-[state=active]:bg-[#B87333] data-[state=active]:text-white"
+            >
+              Primary Projects
+            </TabsTrigger>
+            <TabsTrigger 
+              value="resale"
+              disabled={resaleProperties.length === 0}
+              className="data-[state=active]:bg-[#B87333] data-[state=active]:text-white"
+            >
+              Resale Units
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="primary" className="mt-0">
+            <PropertyTabContent 
+              properties={primaryProperties} 
+              displayCount={displayCount} 
+              loadMore={loadMore} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="resale" className="mt-0">
+            <PropertyTabContent 
+              properties={resaleProperties} 
+              displayCount={displayCount} 
+              loadMore={loadMore} 
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </section>
   );
 }

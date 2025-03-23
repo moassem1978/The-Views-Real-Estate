@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -8,15 +8,91 @@ import { Announcement } from "../../types";
 import { ArrowRight, Calendar, ChevronRight } from "lucide-react";
 import { formatDate, getImageUrl } from "@/lib/utils";
 
+// Simplified loading skeleton to improve performance
+const LoadingSkeleton = () => (
+  <section className="py-16 bg-[#F9F6F2]">
+    <div className="container mx-auto px-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
+        <div>
+          <div className="h-5 w-40 bg-gray-300 animate-pulse rounded mb-2"></div>
+          <div className="h-10 w-64 bg-gray-300 animate-pulse rounded"></div>
+        </div>
+        <div className="h-10 w-32 bg-gray-300 animate-pulse rounded mt-4 md:mt-0"></div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="h-48 bg-gray-300 animate-pulse"></div>
+            <div className="p-6">
+              <div className="h-4 w-24 bg-gray-200 animate-pulse rounded mb-3"></div>
+              <div className="h-6 w-full bg-gray-200 animate-pulse rounded mb-3"></div>
+              <div className="h-16 w-full bg-gray-200 animate-pulse rounded mb-4"></div>
+              <div className="h-6 w-32 bg-gray-200 animate-pulse rounded"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+// Optimized announcement card component to reduce re-renders
+const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
+  return (
+    <Card className="overflow-hidden transition-shadow hover:shadow-lg">
+      <div className="h-48 overflow-hidden relative">
+        <img
+          src={getImageUrl(announcement.imageUrl) || '/uploads/default-announcement.svg'}
+          alt={announcement.title}
+          className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+        />
+        {announcement.isFeatured && (
+          <Badge className="absolute top-3 right-3 bg-[#B87333] text-white">
+            Featured
+          </Badge>
+        )}
+      </div>
+      
+      <CardHeader className="pb-2">
+        <div className="flex items-center text-sm text-gray-500 mb-2">
+          <Calendar size={14} className="mr-1" />
+          <span>{formatDate(announcement.startDate)}</span>
+        </div>
+        <CardTitle className="text-xl font-serif">{announcement.title}</CardTitle>
+      </CardHeader>
+      
+      <CardContent>
+        <p className="text-gray-600 line-clamp-3">
+          {announcement.content}
+        </p>
+      </CardContent>
+      
+      <CardFooter>
+        <Button
+          asChild
+          variant="ghost"
+          className="text-[#B87333] hover:text-[#B87333]/80 hover:bg-[#B87333]/10 p-0 flex items-center gap-1"
+        >
+          <Link href={`/announcements/${announcement.id}`}>
+            Read more <ArrowRight size={14} />
+          </Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
 export default function AnnouncementsSection() {
-  // Fetch all announcements (active only)
+  // Optimized query with increased stale time
   const { data: announcements, isLoading } = useQuery({
     queryKey: ['/api/announcements'],
-    staleTime: 60000,
+    staleTime: 300000, // Increased to 5 minutes
   });
 
-  // Filter active announcements and sort by newest
-  const activeAnnouncements = React.useMemo(() => {
+  // Memoized filtering of announcements
+  const activeAnnouncements = useMemo(() => {
     if (!announcements || !Array.isArray(announcements)) return [];
     
     return announcements
@@ -29,33 +105,7 @@ export default function AnnouncementsSection() {
   }, [announcements]);
 
   if (isLoading) {
-    return (
-      <section className="py-16 bg-[#F9F6F2]">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
-            <div>
-              <div className="h-5 w-40 bg-gray-300 animate-pulse rounded mb-2"></div>
-              <div className="h-10 w-64 bg-gray-300 animate-pulse rounded"></div>
-            </div>
-            <div className="h-10 w-32 bg-gray-300 animate-pulse rounded mt-4 md:mt-0"></div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="h-48 bg-gray-300 animate-pulse"></div>
-                <div className="p-6">
-                  <div className="h-4 w-24 bg-gray-200 animate-pulse rounded mb-3"></div>
-                  <div className="h-6 w-full bg-gray-200 animate-pulse rounded mb-3"></div>
-                  <div className="h-20 w-full bg-gray-200 animate-pulse rounded mb-5"></div>
-                  <div className="h-10 w-full bg-gray-200 animate-pulse rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
+    return <LoadingSkeleton />;
   }
 
   if (!activeAnnouncements.length) {
@@ -88,46 +138,7 @@ export default function AnnouncementsSection() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {activeAnnouncements.map((announcement: Announcement) => (
-            <Card key={announcement.id} className="overflow-hidden transition-shadow hover:shadow-lg">
-              <div className="h-48 overflow-hidden relative">
-                <img
-                  src={getImageUrl(announcement.imageUrl) || '/uploads/default-announcement.svg'}
-                  alt={announcement.title}
-                  className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
-                />
-                {announcement.isFeatured && (
-                  <Badge className="absolute top-3 right-3 bg-[#B87333] text-white">
-                    Featured
-                  </Badge>
-                )}
-              </div>
-              
-              <CardHeader className="pb-2">
-                <div className="flex items-center text-sm text-gray-500 mb-2">
-                  <Calendar size={14} className="mr-1" />
-                  <span>{formatDate(announcement.startDate)}</span>
-                </div>
-                <CardTitle className="text-xl font-serif">{announcement.title}</CardTitle>
-              </CardHeader>
-              
-              <CardContent>
-                <p className="text-gray-600 line-clamp-3">
-                  {announcement.content}
-                </p>
-              </CardContent>
-              
-              <CardFooter>
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="text-[#B87333] hover:text-[#B87333]/80 hover:bg-[#B87333]/10 p-0 flex items-center gap-1"
-                >
-                  <Link href={`/announcements/${announcement.id}`}>
-                    Read more <ArrowRight size={14} />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
+            <AnnouncementCard key={announcement.id} announcement={announcement} />
           ))}
         </div>
       </div>
