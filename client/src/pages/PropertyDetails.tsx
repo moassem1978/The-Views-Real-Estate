@@ -193,6 +193,32 @@ export default function PropertyDetails() {
                 <div className="mb-10">
                   <h2 className="text-2xl font-serif font-semibold text-gray-800 mb-4">Features & Amenities</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Add Garden Size as a feature for ground units */}
+                    {property.isGroundUnit && property.gardenSize && property.gardenSize > 0 && (
+                      <div className="flex items-center bg-[#F5F0E6] p-3 rounded-md">
+                        <div className="h-8 w-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#D4AF37]" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                          </svg>
+                        </div>
+                        <span className="text-gray-700">Garden Size: {property.gardenSize} m²</span>
+                      </div>
+                    )}
+                    
+                    {/* Add Floor Number as a feature for vertical units */}
+                    {['Apartment', 'Studio', 'Penthouse', 'Chalet'].includes(property.propertyType) && 
+                     property.floor !== undefined && property.floor > 0 && (
+                      <div className="flex items-center bg-[#F5F0E6] p-3 rounded-md">
+                        <div className="h-8 w-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#D4AF37]" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-gray-700">Floor: {property.floor}</span>
+                      </div>
+                    )}
+                    
+                    {/* Show all regular amenities */}
                     {amenities.map((amenity, index) => (
                       <div key={index} className="flex items-center bg-[#F5F0E6] p-3 rounded-md">
                         <div className="h-8 w-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center mr-3">
