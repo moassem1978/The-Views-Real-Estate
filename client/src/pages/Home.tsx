@@ -1,12 +1,12 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import HeroCarousel from "@/components/home/HeroCarousel";
-import NewsCarousel from "@/components/home/NewsCarousel";
 import PropertySearch from "@/components/home/PropertySearch";
-import FeaturedProperty from "@/components/home/FeaturedProperty";
 import Services from "@/components/home/Services";
 import Testimonials from "@/components/home/Testimonials";
 import ContactCTA from "@/components/home/ContactCTA";
+import FeaturedCarousel from "@/components/home/FeaturedCarousel";
+import AnnouncementsSection from "@/components/home/AnnouncementsSection";
+import PropertiesByType from "@/components/home/PropertiesByType";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -16,13 +16,17 @@ export default function Home() {
       <Header />
       <main className="flex-grow">
         <Suspense fallback={<HeroLoadingSkeleton />}>
-          <HeroCarousel />
+          <FeaturedCarousel />
         </Suspense>
-        {/* Removed secondary NewsCarousel as requested */}
+        
         <PropertySearch />
                 
-        <Suspense fallback={<FeaturedPropertySkeleton />}>
-          <FeaturedProperty />
+        <Suspense fallback={<PropertyLoadingSkeleton />}>
+          <PropertiesByType />
+        </Suspense>
+        
+        <Suspense fallback={<PropertyLoadingSkeleton />}>
+          <AnnouncementsSection />
         </Suspense>
         
         <Services />

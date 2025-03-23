@@ -6,17 +6,25 @@
   <rect x="40" y="40" width="520" height="320" rx="10" stroke="#B87333" stroke-width="2" fill="transparent" />
   <rect x="60" y="60" width="480" height="280" rx="5" stroke="#B87333" stroke-opacity="0.3" stroke-width="1" fill="transparent" />
   
-  <!-- Announcement Icon -->
+  <!-- Property Icon -->
   <g transform="translate(250, 120)">
-    <circle cx="50" cy="50" r="50" fill="#B87333" fill-opacity="0.1" />
-    <path d="M40 30V70C40 75.5228 44.4772 80 50 80H60C65.5228 80 70 75.5228 70 70V30C70 24.4772 65.5228 20 60 20H50C44.4772 20 40 24.4772 40 30Z" fill="#B87333" />
-    <path d="M70 36.6667H85C87.7614 36.6667 90 38.9053 90 41.6667V58.3333C90 61.0947 87.7614 63.3333 85 63.3333H70V36.6667Z" fill="#B87333" />
-    <path d="M30 41.6667C30 38.9053 32.2386 36.6667 35 36.6667H40V63.3333H35C32.2386 63.3333 30 61.0947 30 58.3333V41.6667Z" fill="#B87333" />
-    <path d="M10 46.6667C10 44.4575 11.7909 42.6667 14 42.6667H30V57.3333H14C11.7909 57.3333 10 55.5425 10 53.3333V46.6667Z" fill="#B87333" />
+    <!-- House Shape -->
+    <path d="M100 80V40L50 10L0 40V80H100Z" fill="#B87333" fill-opacity="0.1" />
+    <path d="M15 45V80H85V45L50 20L15 45Z" fill="#B87333" fill-opacity="0.2" />
+    
+    <!-- Roof -->
+    <path d="M50 10L0 40H100L50 10Z" fill="#B87333" />
+    
+    <!-- Door -->
+    <rect x="40" y="55" width="20" height="25" rx="2" fill="#B87333" />
+    
+    <!-- Windows -->
+    <rect x="20" y="50" width="15" height="15" rx="2" fill="#B87333" fill-opacity="0.7" />
+    <rect x="65" y="50" width="15" height="15" rx="2" fill="#B87333" fill-opacity="0.7" />
   </g>
   
   <!-- Text Label -->
-  <text x="300" y="220" font-family="Arial, sans-serif" font-size="18" fill="#333333" text-anchor="middle" font-weight="bold">ANNOUNCEMENT</text>
+  <text x="300" y="220" font-family="Arial, sans-serif" font-size="18" fill="#333333" text-anchor="middle" font-weight="bold">LUXURY PROPERTY</text>
   <text x="300" y="250" font-family="Arial, sans-serif" font-size="14" fill="#666666" text-anchor="middle">No image available</text>
   
   <!-- Company Branding -->
