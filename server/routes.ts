@@ -34,6 +34,7 @@ const ensureDir = (dirPath: string) => {
 ensureDir(uploadsDir);
 ensureDir(path.join(uploadsDir, 'logos'));
 ensureDir(path.join(uploadsDir, 'properties'));
+ensureDir(path.join(uploadsDir, 'announcements'));
 
 // Create a more permissive file filter
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -45,7 +46,12 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     // Determine which folder to use based on the file purpose
-    const purpose = req.path.includes('property-images') ? 'properties' : 'logos';
+    let purpose = 'logos';
+    if (req.path.includes('property-images')) {
+      purpose = 'properties';
+    } else if (req.path.includes('announcement-image')) {
+      purpose = 'announcements';
+    }
     const targetDir = path.join(uploadsDir, purpose);
 
     console.log(`Storing file in: ${targetDir}`);
@@ -69,7 +75,12 @@ const multerStorage = multer.diskStorage({
     }
 
     // Create safe filename with appropriate prefix
-    const prefix = req.path.includes('property-images') ? 'property-' : 'logo-';
+    let prefix = 'logo-';
+    if (req.path.includes('property-images')) {
+      prefix = 'property-';
+    } else if (req.path.includes('announcement-image')) {
+      prefix = 'announcement-';
+    }
     const filename = prefix + uniqueSuffix + ext;
 
     console.log(`Generated filename: ${filename}`);
@@ -260,6 +271,100 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // API routes for announcements
+  app.get("/api/announcements", async (_req: Request, res: Response) => {
+    try {
+      const announcements = await dbStorage.getAllAnnouncements();
+      res.json(announcements);
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
+      res.status(500).json({ message: "Failed to fetch announcements" });
+    }
+  });
+
+  app.get("/api/announcements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid announcement ID" });
+      }
+      
+      const announcement = await dbStorage.getAnnouncementById(id);
+      if (!announcement) {
+        return res.status(404).json({ message: "Announcement not found" });
+      }
+      
+      res.json(announcement);
+    } catch (error) {
+      console.error("Error fetching announcement:", error);
+      res.status(500).json({ message: "Failed to fetch announcement" });
+    }
+  });
+  
+  app.post("/api/announcements", async (req: Request, res: Response) => {
+    try {
+      const announcementData = insertAnnouncementSchema.parse(req.body);
+      const announcement = await dbStorage.createAnnouncement(announcementData);
+      res.status(201).json(announcement);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating announcement:", error);
+        res.status(500).json({ message: "Failed to create announcement" });
+      }
+    }
+  });
+  
+  app.put("/api/announcements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid announcement ID" });
+      }
+      
+      // Check if announcement exists
+      const existingAnnouncement = await dbStorage.getAnnouncementById(id);
+      if (!existingAnnouncement) {
+        return res.status(404).json({ message: "Announcement not found" });
+      }
+      
+      // Update the announcement
+      const updatedAnnouncement = await dbStorage.updateAnnouncement(id, req.body);
+      res.json(updatedAnnouncement);
+    } catch (error) {
+      console.error("Error updating announcement:", error);
+      res.status(500).json({ message: "Failed to update announcement" });
+    }
+  });
+  
+  app.delete("/api/announcements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid announcement ID" });
+      }
+      
+      // Check if announcement exists
+      const existingAnnouncement = await dbStorage.getAnnouncementById(id);
+      if (!existingAnnouncement) {
+        return res.status(404).json({ message: "Announcement not found" });
+      }
+      
+      // Delete the announcement
+      const success = await dbStorage.deleteAnnouncement(id);
+      if (!success) {
+        return res.status(500).json({ message: "Failed to delete announcement" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting announcement:", error);
+      res.status(500).json({ message: "Failed to delete announcement" });
+    }
+  });
+
   // API routes for site settings
   app.get("/api/site-settings", async (_req: Request, res: Response) => {
     try {
@@ -329,7 +434,52 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Property image upload endpoint - for multiple files
+  // Announcement image upload endpoint
+  app.post("/api/upload/announcement-image", finalUpload.single('image'), async (req: Request, res: Response) => {
+    try {
+      console.log("Received announcement image upload request");
+      console.log("Request file:", req.file ? `File present: ${req.file.originalname}, mimetype: ${req.file.mimetype}, size: ${req.file.size}` : "No file present");
+
+      if (!req.file) {
+        console.error("File upload failed - No file received");
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      console.log(`Announcement image uploaded: ${req.file.filename} (${req.file.mimetype}), original: ${req.file.originalname}, size: ${req.file.size}`);
+
+      // Ensure the file is copied to the public/uploads directory for web access
+      try {
+        const sourcePath = req.file.path;
+        const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'announcements');
+
+        // Create the destination directory if it doesn't exist
+        fs.mkdirSync(publicUploadsDir, { recursive: true });
+
+        const destPath = path.join(publicUploadsDir, req.file.filename);
+
+        // Copy the file to public/uploads/announcements
+        fs.copyFileSync(sourcePath, destPath);
+        console.log(`Copied file to ${destPath} for web access`);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.error(`Error copying announcement image to public directory: ${err}`);
+        return res.status(500).json({ message: `Error copying announcement image: ${errorMessage}` });
+      }
+
+      // Create the file URL relative to the server
+      const fileUrl = `/uploads/announcements/${req.file.filename}`;
+
+      res.json({ 
+        message: "Announcement image uploaded successfully", 
+        imageUrl: fileUrl
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error uploading announcement image:', error);
+      res.status(500).json({ message: `Failed to upload announcement image: ${errorMessage}` });
+    }
+  });
+
   app.post("/api/upload/property-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
       console.log("Received property images upload request");
