@@ -13,8 +13,7 @@ import { formatDate, formatPrice, getImageUrl } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Default placeholder image for announcements without images
-const DEFAULT_ANNOUNCEMENT_IMAGE = "/uploads/default-announcement.svg";
+
 
 export default function NewsCarousel() {
   const { data: properties, isLoading: propertiesLoading } = useQuery<Property[]>({
@@ -276,7 +275,7 @@ export default function NewsCarousel() {
                           {/* Left - Image */}
                           <div className="w-full md:w-1/2 aspect-video rounded-lg overflow-hidden shadow-lg">
                             <img 
-                              src={announcement.imageUrl || DEFAULT_ANNOUNCEMENT_IMAGE} 
+                              src={getImageUrl(announcement.imageUrl)} 
                               alt={announcement.title}
                               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                             />

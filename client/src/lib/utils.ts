@@ -114,8 +114,8 @@ export function truncateText(text: string, maxLength: number): string {
  * @param path - The image path from the API
  * @returns Full URL to the image
  */
-export function getImageUrl(path: string): string {
-  if (!path) return "https://placehold.co/600x400/222222/FFFFFF?text=No+Image";
+export function getImageUrl(path: string | undefined): string {
+  if (!path) return "/uploads/default-announcement.svg";
   
   // If it's already a full URL, return as is
   if (path.startsWith('http')) return path;
