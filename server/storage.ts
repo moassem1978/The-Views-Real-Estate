@@ -504,11 +504,11 @@ export class MemStorage implements IStorage {
     const announcement: Announcement = {
       id,
       title: insertAnnouncement.title,
-      description: insertAnnouncement.description,
-      image: insertAnnouncement.image ?? null,
-      date: new Date(insertAnnouncement.date || new Date()).toISOString(),
-      link: insertAnnouncement.link ?? null,
-      tag: insertAnnouncement.tag ?? "announcement",
+      content: insertAnnouncement.content,
+      imageUrl: insertAnnouncement.imageUrl ?? null,
+      startDate: new Date(insertAnnouncement.startDate || new Date()).toISOString(),
+      endDate: insertAnnouncement.endDate ? new Date(insertAnnouncement.endDate).toISOString() : null,
+      isActive: insertAnnouncement.isActive ?? true,
       createdAt: new Date().toISOString()
     };
     

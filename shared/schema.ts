@@ -79,15 +79,15 @@ export type User = typeof users.$inferSelect;
 export type Property = typeof properties.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
 
-// Site settings type
+// Announcements table
 export const announcements = pgTable("announcements", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  description: text("description").notNull(),
-  image: text("image"),
-  date: timestamp("date").defaultNow().notNull(),
-  link: text("link"),
-  tag: text("tag").notNull().default("announcement"),
+  content: text("content").notNull(), // Changed from description to content
+  imageUrl: text("image_url"), // Changed from image to imageUrl
+  startDate: timestamp("start_date").defaultNow().notNull(), // Changed from date to startDate
+  endDate: timestamp("end_date"), // Added endDate
+  isActive: boolean("is_active").default(true).notNull(), // Added isActive
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
