@@ -132,7 +132,6 @@ export default function Dashboard() {
     startDate: new Date().toISOString().split('T')[0],
     endDate: "",
     isActive: true,
-    isFeatured: false,
     isHighlighted: false
   });
   
@@ -825,7 +824,6 @@ export default function Dashboard() {
       startDate: announcement.startDate.split('T')[0],
       endDate: announcement.endDate ? announcement.endDate.split('T')[0] : "",
       isActive: announcement.isActive,
-      isFeatured: announcement.isFeatured || false,
       isHighlighted: announcement.isHighlighted || false
     });
     setEditingAnnouncement(true);
@@ -857,7 +855,6 @@ export default function Dashboard() {
       startDate: new Date().toISOString().split('T')[0],
       endDate: "",
       isActive: true,
-      isFeatured: false,
       isHighlighted: false
     });
     setEditingAnnouncement(false);
@@ -1036,7 +1033,6 @@ export default function Dashboard() {
                     <TableHead>Start Date</TableHead>
                     <TableHead>End Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Featured</TableHead>
                     <TableHead>Highlighted</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -1058,15 +1054,7 @@ export default function Dashboard() {
                           {announcement.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </TableCell>
-                      <TableCell>
-                        <span 
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            announcement.isFeatured ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {announcement.isFeatured ? 'Yes' : 'No'}
-                        </span>
-                      </TableCell>
+
                       <TableCell>
                         <span 
                           className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -1859,22 +1847,7 @@ export default function Dashboard() {
                   </label>
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isFeatured"
-                    name="isFeatured"
-                    checked={announcementForm.isFeatured}
-                    onChange={(e) => setAnnouncementForm(prev => ({
-                      ...prev,
-                      isFeatured: e.target.checked
-                    }))}
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <label htmlFor="isFeatured" className="text-sm font-medium">
-                    Featured (appears on the home page)
-                  </label>
-                </div>
+
                 
                 <div className="flex items-center space-x-2">
                   <input
