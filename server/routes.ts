@@ -380,6 +380,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         updatedData.endDate = updatedData.endDate ? new Date(updatedData.endDate) : null;
       }
       
+      // Remove createdAt from update data to avoid conversion issues
+      if (updatedData.createdAt) {
+        delete updatedData.createdAt;
+      }
+      
       // Update the announcement
       const updatedAnnouncement = await dbStorage.updateAnnouncement(id, updatedData);
       res.json(updatedAnnouncement);

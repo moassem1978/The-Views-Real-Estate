@@ -97,7 +97,6 @@ export const announcements = pgTable("announcements", {
 export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
   id: true,
   createdAt: true,
-  isFeatured: true, // No longer needed for announcements
 });
 
 export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
