@@ -8,6 +8,8 @@ import { faker } from '@faker-js/faker';
 import { formatISO } from 'date-fns';
 import * as fs from 'fs';
 import * as path from 'path';
+import { db } from "./db";
+import { eq, and, like, gte, lte, desc, sql, asc } from "drizzle-orm";
 
 // Storage interface for CRUD operations
 export interface IStorage {
@@ -1005,4 +1007,254 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  // Property operations
+  async getAllProperties(): Promise<Property[]> {
+    return await db.select().from(properties);
+  }
+
+  async getFeaturedProperties(limit = 3): Promise<Property[]> {
+    return await db
+      .select()
+      .from(properties)
+      .where(eq(properties.isFeatured, true))
+      .limit(limit);
+  }
+
+  async getHighlightedProperties(limit = 3): Promise<Property[]> {
+    return await db
+      .select()
+      .from(properties)
+      .where(eq(properties.isHighlighted, true))
+      .limit(limit);
+  }
+
+  async getNewListings(limit = 3): Promise<Property[]> {
+    return await db
+      .select()
+      .from(properties)
+      .where(eq(properties.isNewListing, true))
+      .limit(limit);
+  }
+
+  async getPropertyById(id: number): Promise<Property | undefined> {
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id));
+    return property || undefined;
+  }
+
+  async createProperty(insertProperty: InsertProperty): Promise<Property> {
+    const [property] = await db
+      .insert(properties)
+      .values(insertProperty)
+      .returning();
+    return property;
+  }
+
+  async updateProperty(id: number, updates: Partial<Property>): Promise<Property | undefined> {
+    const [updatedProperty] = await db
+      .update(properties)
+      .set(updates)
+      .where(eq(properties.id, id))
+      .returning();
+    return updatedProperty || undefined;
+  }
+
+  async deleteProperty(id: number): Promise<boolean> {
+    const result = await db
+      .delete(properties)
+      .where(eq(properties.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async searchProperties(filters: Partial<PropertySearchFilters>): Promise<Property[]> {
+    let query = db.select().from(properties);
+    
+    // Filter by location (city, state, zip)
+    if (filters.location) {
+      const locationTerm = `%${filters.location}%`;
+      query = query.where(
+        sql`(${properties.city} ILIKE ${locationTerm} OR 
+             ${properties.state} ILIKE ${locationTerm} OR 
+             ${properties.zipCode} ILIKE ${locationTerm})`
+      );
+    }
+    
+    // Filter by property type
+    if (filters.propertyType && filters.propertyType !== "all") {
+      query = query.where(eq(properties.propertyType, filters.propertyType));
+    }
+    
+    // Filter by listing type (Primary or Resale)
+    if (filters.listingType && filters.listingType !== "all") {
+      query = query.where(eq(properties.listingType, filters.listingType));
+    }
+    
+    // Filter by project name
+    if (filters.projectName) {
+      const projectTerm = `%${filters.projectName}%`;
+      query = query.where(sql`${properties.projectName} ILIKE ${projectTerm}`);
+    }
+    
+    // Filter by developer name
+    if (filters.developerName) {
+      const developerTerm = `%${filters.developerName}%`;
+      query = query.where(sql`${properties.developerName} ILIKE ${developerTerm}`);
+    }
+    
+    // Filter by price range
+    if (filters.minPrice) {
+      query = query.where(gte(properties.price, filters.minPrice));
+    }
+    
+    if (filters.maxPrice) {
+      query = query.where(lte(properties.price, filters.maxPrice));
+    }
+    
+    // Filter by bedrooms
+    if (filters.minBedrooms) {
+      query = query.where(gte(properties.bedrooms, filters.minBedrooms));
+    }
+    
+    // Filter by bathrooms
+    if (filters.minBathrooms) {
+      query = query.where(gte(properties.bathrooms, filters.minBathrooms));
+    }
+    
+    // Filter by payment options
+    if (filters.isFullCash === true) {
+      query = query.where(eq(properties.isFullCash, true));
+    }
+    
+    if (filters.hasInstallments === true) {
+      query = query.where(sql`${properties.installmentAmount} IS NOT NULL`);
+    }
+    
+    return await query;
+  }
+
+  // Testimonial operations
+  async getAllTestimonials(): Promise<Testimonial[]> {
+    return await db.select().from(testimonials);
+  }
+
+  async getTestimonialById(id: number): Promise<Testimonial | undefined> {
+    const [testimonial] = await db
+      .select()
+      .from(testimonials)
+      .where(eq(testimonials.id, id));
+    return testimonial || undefined;
+  }
+
+  async createTestimonial(insertTestimonial: InsertTestimonial): Promise<Testimonial> {
+    const [testimonial] = await db
+      .insert(testimonials)
+      .values(insertTestimonial)
+      .returning();
+    return testimonial;
+  }
+
+  // Announcement operations
+  async getAllAnnouncements(): Promise<Announcement[]> {
+    return await db.select().from(announcements);
+  }
+
+  async getFeaturedAnnouncements(limit = 3): Promise<Announcement[]> {
+    return await db
+      .select()
+      .from(announcements)
+      .where(eq(announcements.isFeatured, true))
+      .limit(limit);
+  }
+
+  async getHighlightedAnnouncements(limit = 3): Promise<Announcement[]> {
+    return await db
+      .select()
+      .from(announcements)
+      .where(eq(announcements.isHighlighted, true))
+      .limit(limit);
+  }
+
+  async getAnnouncementById(id: number): Promise<Announcement | undefined> {
+    const [announcement] = await db
+      .select()
+      .from(announcements)
+      .where(eq(announcements.id, id));
+    return announcement || undefined;
+  }
+
+  async createAnnouncement(insertAnnouncement: InsertAnnouncement): Promise<Announcement> {
+    const [announcement] = await db
+      .insert(announcements)
+      .values(insertAnnouncement)
+      .returning();
+    return announcement;
+  }
+
+  async updateAnnouncement(id: number, updates: Partial<Announcement>): Promise<Announcement | undefined> {
+    const [updatedAnnouncement] = await db
+      .update(announcements)
+      .set(updates)
+      .where(eq(announcements.id, id))
+      .returning();
+    return updatedAnnouncement || undefined;
+  }
+
+  async deleteAnnouncement(id: number): Promise<boolean> {
+    const result = await db
+      .delete(announcements)
+      .where(eq(announcements.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Site settings operations
+  // For site settings, we'll need to create a table or use an external solution
+  // For simplicity, we'll use a singleton approach for now with default values
+  private siteSettings: SiteSettings = {
+    companyName: "The Views Real Estate",
+    primaryColor: "#B87333",
+    contactEmail: "info@theviewsrealestate.com",
+    contactPhone: "1-800-555-VIEWS",
+    socialLinks: {
+      facebook: "https://facebook.com/theviewsrealestate",
+      instagram: "https://instagram.com/theviewsrealestate",
+      twitter: "https://twitter.com/theviewsrealestate",
+      linkedin: "https://linkedin.com/company/theviewsrealestate"
+    }
+  };
+
+  async getSiteSettings(): Promise<SiteSettings> {
+    return this.siteSettings;
+  }
+
+  async updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
+    this.siteSettings = { ...this.siteSettings, ...settings };
+    return this.siteSettings;
+  }
+}
+
+// Use either MemStorage or DatabaseStorage based on database availability
+export const storage = new DatabaseStorage();

@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/select";
 import { formatPrice } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 
 // Define the SiteSettings interface
 interface SiteSettings {
@@ -160,6 +161,7 @@ export default function Dashboard() {
     isGroundUnit: false,
     propertyType: "House",
     isFeatured: false,
+    isHighlighted: false,
     isNewListing: true,
     yearBuilt: 0,
     views: "",
@@ -607,6 +609,7 @@ export default function Dashboard() {
       isGroundUnit: property.isGroundUnit || false,
       propertyType: property.propertyType,
       isFeatured: property.isFeatured,
+      isHighlighted: property.isHighlighted || false,
       isNewListing: property.isNewListing,
       yearBuilt: property.yearBuilt || 0,
       views: property.views || "",
@@ -894,6 +897,7 @@ export default function Dashboard() {
       isGroundUnit: false,
       propertyType: "House",
       isFeatured: false,
+      isHighlighted: false,
       isNewListing: true,
       yearBuilt: 0,
       views: "",
@@ -969,6 +973,7 @@ export default function Dashboard() {
                     <TableHead>Location</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Featured</TableHead>
+                    <TableHead>Highlighted</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -980,6 +985,7 @@ export default function Dashboard() {
                       <TableCell>{property.city}, {property.state}</TableCell>
                       <TableCell>{property.propertyType}</TableCell>
                       <TableCell>{property.isFeatured ? "Yes" : "No"}</TableCell>
+                      <TableCell>{property.isHighlighted ? "Yes" : "No"}</TableCell>
                       <TableCell className="space-x-2">
                         <Button 
                           variant="outline" 
@@ -1736,6 +1742,37 @@ export default function Dashboard() {
                 </div>
               </div>
               
+              {/* Featured and Highlighted Switches */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 p-4 bg-amber-50 rounded-lg border border-amber-100">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="property-featured"
+                    name="isFeatured"
+                    checked={formData.isFeatured}
+                    onCheckedChange={(checked) => 
+                      setFormData(prev => ({ ...prev, isFeatured: checked }))
+                    }
+                  />
+                  <label htmlFor="property-featured" className="text-sm font-medium">
+                    Featured Property <span className="text-xs text-gray-500">(Shows on main page)</span>
+                  </label>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="property-highlighted"
+                    name="isHighlighted"
+                    checked={formData.isHighlighted}
+                    onCheckedChange={(checked) => 
+                      setFormData(prev => ({ ...prev, isHighlighted: checked }))
+                    }
+                  />
+                  <label htmlFor="property-highlighted" className="text-sm font-medium">
+                    Highlighted Property <span className="text-xs text-gray-500">(Shows in main carousel)</span>
+                  </label>
+                </div>
+              </div>
+
               <div className="md:col-span-2 mt-2">
                 <p className="text-sm text-red-500">* Required fields</p>
               </div>
