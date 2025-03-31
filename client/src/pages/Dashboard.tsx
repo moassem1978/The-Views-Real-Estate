@@ -1221,13 +1221,13 @@ export default function Dashboard() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Apartment">Apartment</SelectItem>
-                    <SelectItem value="Villa">Villa</SelectItem>
-                    <SelectItem value="Penthouse">Penthouse</SelectItem>
                     <SelectItem value="Duplex">Duplex</SelectItem>
-                    <SelectItem value="Townhouse">Townhouse</SelectItem>
+                    <SelectItem value="Penthouse">Penthouse</SelectItem>
                     <SelectItem value="Chalet">Chalet</SelectItem>
-                    <SelectItem value="Studio">Studio</SelectItem>
-                    <SelectItem value="Commercial">Commercial</SelectItem>
+                    <SelectItem value="Townhouse">Townhouse</SelectItem>
+                    <SelectItem value="Twin house">Twin house</SelectItem>
+                    <SelectItem value="Villa">Villa</SelectItem>
+                    <SelectItem value="Administrative office">Administrative office</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

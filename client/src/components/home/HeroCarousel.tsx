@@ -246,9 +246,9 @@ export default function HeroCarousel() {
                             </Link>
                             <Link
                               href="/properties"
-                              className="inline-flex items-center justify-center px-6 py-3 border-2 border-white text-white font-medium rounded hover:bg-white hover:text-black transition-colors"
+                              className="inline-flex items-center justify-center px-5 py-3 border-2 border-white text-white font-medium rounded hover:bg-white hover:text-black transition-colors text-sm"
                             >
-                              Browse All
+                              All Properties
                             </Link>
                           </div>
                         </>

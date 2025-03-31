@@ -55,6 +55,11 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         
         {/* Status badges */}
         <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+          {/* Listing Type Badge - Always shown at the top */}
+          <span className={`px-3 py-1 text-white text-sm font-medium rounded ${property.listingType === 'Primary' ? 'bg-blue-600' : 'bg-amber-600'}`}>
+            {property.listingType}
+          </span>
+          
           {property.isFeatured && (
             <span className="px-3 py-1 bg-[#D4AF37] text-white text-sm font-medium rounded">Featured</span>
           )}
@@ -96,11 +101,8 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       <div className="p-6">
         <div className="flex justify-between items-start">
           <div>
-            {/* Property Type Badge */}
+            {/* Property Type Badge - only show Property Type in details section */}
             <div className="flex gap-2 mb-1">
-              <span className={`inline-block px-2 py-1 text-xs rounded ${property.listingType === 'Primary' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
-                {property.listingType}
-              </span>
               {property.propertyType && (
                 <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
                   {property.propertyType}
