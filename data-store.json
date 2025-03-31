@@ -231,18 +231,18 @@
   "testimonials": [],
   "announcements": [
     [
-      4,
+      5,
       {
-        "id": 4,
-        "title": "New amazing launch ",
-        "content": "Management don do this for you o but I no get sense again o ",
-        "imageUrl": "/uploads/announcements/image-1742762322401-632104661.jpeg",
+        "id": 5,
+        "title": "New launch in sahel",
+        "content": "If you’re interested in Sahel units, leave your details and will send you newest launches",
+        "imageUrl": "/uploads/announcements/image-1742763580936-338551400.jpeg",
         "startDate": "2025-03-23T00:00:00.000Z",
         "endDate": "2025-03-31T00:00:00.000Z",
         "isActive": true,
         "isFeatured": false,
-        "createdAt": "2025-03-23T20:40:00.630Z",
-        "isHighlighted": true
+        "isHighlighted": false,
+        "createdAt": "2025-03-23T20:59:44.322Z"
       }
     ]
   ],
@@ -262,5 +262,5 @@
   "userCurrentId": 2,
   "propertyCurrentId": 6,
   "testimonialCurrentId": 1,
-  "announcementCurrentId": 5
+  "announcementCurrentId": 6
 }
