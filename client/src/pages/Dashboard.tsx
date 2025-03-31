@@ -131,7 +131,9 @@ export default function Dashboard() {
     imageUrl: "",
     startDate: new Date().toISOString().split('T')[0],
     endDate: "",
-    isActive: true
+    isActive: true,
+    isFeatured: false,
+    isHighlighted: false
   });
   
   // Form state
@@ -822,7 +824,9 @@ export default function Dashboard() {
       imageUrl: announcement.imageUrl || "",
       startDate: announcement.startDate.split('T')[0],
       endDate: announcement.endDate ? announcement.endDate.split('T')[0] : "",
-      isActive: announcement.isActive
+      isActive: announcement.isActive,
+      isFeatured: announcement.isFeatured || false,
+      isHighlighted: announcement.isHighlighted || false
     });
     setEditingAnnouncement(true);
     setCurrentAnnouncementId(announcement.id);
@@ -852,7 +856,9 @@ export default function Dashboard() {
       imageUrl: "",
       startDate: new Date().toISOString().split('T')[0],
       endDate: "",
-      isActive: true
+      isActive: true,
+      isFeatured: false,
+      isHighlighted: false
     });
     setEditingAnnouncement(false);
     setCurrentAnnouncementId(null);
@@ -1030,6 +1036,8 @@ export default function Dashboard() {
                     <TableHead>Start Date</TableHead>
                     <TableHead>End Date</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Featured</TableHead>
+                    <TableHead>Highlighted</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1048,6 +1056,24 @@ export default function Dashboard() {
                           }`}
                         >
                           {announcement.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span 
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            announcement.isFeatured ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {announcement.isFeatured ? 'Yes' : 'No'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span 
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            announcement.isHighlighted ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {announcement.isHighlighted ? 'Yes' : 'No'}
                         </span>
                       </TableCell>
                       <TableCell className="space-x-2">
@@ -1815,21 +1841,57 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2 py-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  name="isActive"
-                  checked={announcementForm.isActive}
-                  onChange={(e) => setAnnouncementForm(prev => ({
-                    ...prev,
-                    isActive: e.target.checked
-                  }))}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                <label htmlFor="isActive" className="text-sm font-medium">
-                  Active (visible to users)
-                </label>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    name="isActive"
+                    checked={announcementForm.isActive}
+                    onChange={(e) => setAnnouncementForm(prev => ({
+                      ...prev,
+                      isActive: e.target.checked
+                    }))}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="isActive" className="text-sm font-medium">
+                    Active (visible to users)
+                  </label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isFeatured"
+                    name="isFeatured"
+                    checked={announcementForm.isFeatured}
+                    onChange={(e) => setAnnouncementForm(prev => ({
+                      ...prev,
+                      isFeatured: e.target.checked
+                    }))}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="isFeatured" className="text-sm font-medium">
+                    Featured (appears on the home page)
+                  </label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isHighlighted"
+                    name="isHighlighted"
+                    checked={announcementForm.isHighlighted}
+                    onChange={(e) => setAnnouncementForm(prev => ({
+                      ...prev,
+                      isHighlighted: e.target.checked
+                    }))}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="isHighlighted" className="text-sm font-medium">
+                    Highlighted (appears in main carousel)
+                  </label>
+                </div>
               </div>
               
               <div className="space-y-2 mt-4">
