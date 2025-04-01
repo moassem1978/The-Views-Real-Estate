@@ -145,8 +145,9 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: 300000, // 5 minutes - balance between freshness and performance
+      refetchOnWindowFocus: true, // Enable window focus refetching for better data freshness
+      refetchOnMount: true, // Always refresh data when component mounts
+      staleTime: 30000, // 30 seconds - improved freshness for carousel content
       retry: 1, // Allow one retry for transient network issues
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
     },

@@ -1041,11 +1041,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getHighlightedProperties(limit = 3): Promise<Property[]> {
-    return await db
+    console.log(`DEBUG: Fetching highlighted properties with limit: ${limit}`);
+    // Get all properties first to debug
+    const allProps = await db.select().from(properties);
+    console.log(`DEBUG: Total properties in database: ${allProps.length}`);
+    console.log(`DEBUG: Properties with isHighlighted=true: ${allProps.filter(p => p.isHighlighted).length}`);
+    
+    // Perform the actual query
+    const results = await db
       .select()
       .from(properties)
       .where(eq(properties.isHighlighted, true))
       .limit(limit);
+    
+    console.log(`DEBUG: Query returned ${results.length} highlighted properties`);
+    return results;
   }
 
   async getNewListings(limit = 3): Promise<Property[]> {
@@ -1190,11 +1200,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getHighlightedAnnouncements(limit = 3): Promise<Announcement[]> {
-    return await db
+    console.log(`DEBUG: Fetching highlighted announcements with limit: ${limit}`);
+    // Get all announcements first to debug
+    const allAnnouncements = await db.select().from(announcements);
+    console.log(`DEBUG: Total announcements in database: ${allAnnouncements.length}`);
+    console.log(`DEBUG: Announcements with isHighlighted=true: ${allAnnouncements.filter(a => a.isHighlighted).length}`);
+    
+    // Perform the actual query
+    const results = await db
       .select()
       .from(announcements)
       .where(eq(announcements.isHighlighted, true))
       .limit(limit);
+    
+    console.log(`DEBUG: Query returned ${results.length} highlighted announcements`);
+    return results;
   }
 
   async getAnnouncementById(id: number): Promise<Announcement | undefined> {

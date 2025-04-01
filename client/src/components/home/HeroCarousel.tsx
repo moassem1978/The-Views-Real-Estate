@@ -54,9 +54,11 @@ export default function HeroCarousel() {
   
   // Debug logs to check data and combined items
   useEffect(() => {
-    console.log("Properties data:", properties);
-    console.log("Announcements data:", announcements);
-    console.log("Combined carousel items:", carouselItems);
+    console.log("🚀 Properties data length:", properties.length);
+    console.log("📢 Announcements data length:", announcements.length);
+    console.log("🔄 Combined carousel items length:", carouselItems.length);
+    console.log("🔍 Properties data details:", JSON.stringify(properties));
+    console.log("📋 Announcements data details:", JSON.stringify(announcements));
   }, [properties, announcements, carouselItems]);
   
   // Autoplay functionality

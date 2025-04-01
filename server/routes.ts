@@ -136,6 +136,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
       const properties = await dbStorage.getHighlightedProperties(limit);
+      console.log(`DEBUG: Found ${properties.length} highlighted properties`);
+      // Log more details about highlighted properties
+      properties.forEach(prop => {
+        console.log(`DEBUG: Highlighted property: ID ${prop.id}, Title: ${prop.title}, isHighlighted: ${prop.isHighlighted}`);
+      });
       res.json(properties);
     } catch (error) {
       console.error("Error fetching highlighted properties:", error);
@@ -308,6 +313,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const announcements = await dbStorage.getHighlightedAnnouncements(limit);
+      console.log(`DEBUG: Found ${announcements.length} highlighted announcements`);
+      // Log details about highlighted announcements
+      announcements.forEach(ann => {
+        console.log(`DEBUG: Highlighted announcement: ID ${ann.id}, Title: ${ann.title}, isHighlighted: ${ann.isHighlighted}`);
+      });
       res.json(announcements);
     } catch (error) {
       console.error("Error fetching highlighted announcements:", error);
