@@ -27,13 +27,6 @@ export function formatPrice(price: number, maximumFractionDigits = 0): string {
   // Return quickly for common cases
   if (price === 0) return "0 L.E";
   
-  // For prices over 1 million, show in millions with special format
-  if (price >= 1000000) {
-    const inMillions = price / 1000000;
-    const formattedPrice = `${inMillions.toFixed(inMillions % 1 === 0 ? 0 : 1)}M`;
-    return `${formattedPrice} L.E`;
-  }
-  
   // Use cached formatter instance for performance
   const cacheKey = `price-${maximumFractionDigits}`;
   if (!formatterCache[cacheKey]) {
