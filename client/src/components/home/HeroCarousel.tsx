@@ -22,7 +22,7 @@ type CarouselItem = {
 
 export default function HeroCarousel() {
   // Fetch highlighted properties
-  const { data: properties = [], isLoading: propertiesLoading } = useQuery<Property[]>({
+  const { data: properties = [], isLoading: propertiesLoading, error: propertiesError } = useQuery<Property[]>({
     queryKey: ['/api/properties/highlighted'],
     staleTime: 0, // Don't use cached data
     refetchOnMount: true, // Always refetch when component mounts
@@ -31,13 +31,31 @@ export default function HeroCarousel() {
   });
   
   // Fetch highlighted announcements
-  const { data: announcements = [], isLoading: announcementsLoading } = useQuery<Announcement[]>({
+  const { data: announcements = [], isLoading: announcementsLoading, error: announcementsError } = useQuery<Announcement[]>({
     queryKey: ['/api/announcements/highlighted'],
     staleTime: 0, // Don't use cached data
     refetchOnMount: true, // Always refetch when component mounts
     retry: 3,
     refetchInterval: 5000, // Refetch every 5 seconds for testing
   });
+  
+  // Log detailed information about the requests
+  useEffect(() => {
+    console.log("🔍 HeroCarousel - Properties request status:", propertiesLoading ? "loading" : "complete");
+    console.log("🔍 HeroCarousel - Announcements request status:", announcementsLoading ? "loading" : "complete");
+    
+    if (propertiesError) {
+      console.error("❌ Properties fetch error:", propertiesError);
+    }
+    
+    if (announcementsError) {
+      console.error("❌ Announcements fetch error:", announcementsError);
+    }
+    
+    // Log the raw data objects for debugging
+    console.log("📊 Raw properties data:", properties);
+    console.log("📊 Raw announcements data:", announcements);
+  }, [properties, announcements, propertiesLoading, announcementsLoading, propertiesError, announcementsError]);
   
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoplay, setAutoplay] = useState(true);

@@ -25,6 +25,7 @@ export interface Property {
   propertyType: string;
   isFeatured: boolean;
   isNewListing: boolean;
+  isHighlighted: boolean; // Adding the missing isHighlighted flag for main carousel
   yearBuilt?: number;
   views?: string;
   amenities: string[];
@@ -88,5 +89,6 @@ export interface Announcement {
   endDate?: string;
   isActive: boolean;
   isFeatured: boolean;
+  isHighlighted: boolean; // Adding the missing isHighlighted flag for main carousel
   createdAt: string;
 }
