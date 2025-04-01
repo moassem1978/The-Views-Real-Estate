@@ -1255,7 +1255,7 @@ export class DatabaseStorage implements IStorage {
   // For simplicity, we'll use a singleton approach for now with default values
   private siteSettings: SiteSettings = {
     companyName: "The Views Real Estate",
-    companyLogo: "/uploads/company-logo.svg",
+    companyLogo: "/uploads/logos/company-logo.svg",
     primaryColor: "#B87333",
     contactEmail: "info@theviewsrealestate.com",
     contactPhone: "1-800-555-VIEWS",
