@@ -26,6 +26,8 @@ export default function HeroCarousel() {
     queryKey: ['/api/properties/highlighted'],
     staleTime: 0, // Don't use cached data
     refetchOnMount: true, // Always refetch when component mounts
+    retry: 3,
+    refetchInterval: 5000, // Refetch every 5 seconds for testing
   });
   
   // Fetch highlighted announcements
@@ -33,6 +35,8 @@ export default function HeroCarousel() {
     queryKey: ['/api/announcements/highlighted'],
     staleTime: 0, // Don't use cached data
     refetchOnMount: true, // Always refetch when component mounts
+    retry: 3,
+    refetchInterval: 5000, // Refetch every 5 seconds for testing
   });
   
   const [activeIndex, setActiveIndex] = useState(0);
