@@ -49,7 +49,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           
           {/* Price Tag */}
           <div className="absolute bottom-0 left-0 z-10 px-3 py-1.5 bg-[#B87333] text-white font-medium rounded-tr-md">
-            {formatPrice(property.price)}
+            {property.price.toLocaleString()} L.E
           </div>
         </div>
         
