@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Property, Announcement } from "@/types";
 import { formatPrice, formatDate } from "@/lib/utils";
+import { DEBUG } from "../../debug";
 import {
   Carousel,
   CarouselContent,
@@ -30,13 +31,40 @@ export default function HeroCarousel() {
     refetchInterval: 5000, // Refetch every 5 seconds for testing
   });
   
-  // Fetch highlighted announcements
+  // Fetch highlighted announcements with explicit fetcher override
   const { data: announcements = [], isLoading: announcementsLoading, error: announcementsError } = useQuery<Announcement[]>({
     queryKey: ['/api/announcements/highlighted'],
     staleTime: 0, // Don't use cached data
     refetchOnMount: true, // Always refetch when component mounts
     retry: 3,
     refetchInterval: 5000, // Refetch every 5 seconds for testing
+    queryFn: async () => {
+      // Log that we're making a direct API call for debugging
+      DEBUG.log("HERO CAROUSEL: Making direct API call to /api/announcements/highlighted");
+      
+      try {
+        const res = await fetch('/api/announcements/highlighted', {
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Error fetching highlighted announcements: ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        DEBUG.log(`HERO CAROUSEL: Direct API call returned ${data.length} highlighted announcements`);
+        
+        // Log each announcement
+        data.forEach((announcement: Announcement, index: number) => {
+          DEBUG.log(`HERO CAROUSEL: Direct API call - Announcement ${index + 1} - ID: ${announcement.id}, Title: ${announcement.title}, isHighlighted: ${announcement.isHighlighted}`);
+        });
+        
+        return data;
+      } catch (error) {
+        DEBUG.error("HERO CAROUSEL: Error in direct API call", error);
+        throw error;
+      }
+    }
   });
   
   // Log detailed information about the requests
@@ -76,11 +104,27 @@ export default function HeroCarousel() {
   
   // Debug logs to check data and combined items
   useEffect(() => {
-    console.log("🚀 Properties data length:", properties.length);
-    console.log("📢 Announcements data length:", announcements.length);
-    console.log("🔄 Combined carousel items length:", carouselItems.length);
-    console.log("🔍 Properties data details:", JSON.stringify(properties));
-    console.log("📋 Announcements data details:", JSON.stringify(announcements));
+    DEBUG.log(`HERO CAROUSEL: Properties data length: ${properties.length}`);
+    DEBUG.log(`HERO CAROUSEL: Announcements data length: ${announcements.length}`);
+    DEBUG.log(`HERO CAROUSEL: Combined carousel items length: ${carouselItems.length}`);
+    
+    // Detailed logs about each highlighted property
+    properties.forEach((property, index) => {
+      DEBUG.log(`HERO CAROUSEL: Property ${index + 1} - ID: ${property.id}, Title: ${property.title}, isHighlighted: ${property.isHighlighted}`);
+    });
+    
+    // Detailed logs about each highlighted announcement
+    announcements.forEach((announcement, index) => {
+      DEBUG.log(`HERO CAROUSEL: Announcement ${index + 1} - ID: ${announcement.id}, Title: ${announcement.title}, isHighlighted: ${announcement.isHighlighted}`);
+    });
+    
+    // Log the endpoint URL that's being called
+    DEBUG.log("HERO CAROUSEL: Properties endpoint: /api/properties/highlighted");
+    DEBUG.log("HERO CAROUSEL: Announcements endpoint: /api/announcements/highlighted");
+    
+    if (announcements.length === 0) {
+      DEBUG.warn("HERO CAROUSEL: No highlighted announcements found. Check API endpoint and data.");
+    }
   }, [properties, announcements, carouselItems]);
   
   // Autoplay functionality
