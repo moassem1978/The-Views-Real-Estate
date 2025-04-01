@@ -180,7 +180,7 @@ export default function FeaturedCarousel() {
                           asChild
                           size="lg" 
                           variant="outline" 
-                          className="border-white text-white hover:bg-white hover:text-black transition-colors"
+                          className="border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white transition-colors"
                         >
                           <Link href={item.type === 'property' ? "/properties" : "/announcements"}>
                             {item.type === 'property' ? "Browse All Properties" : "View All Announcements"}

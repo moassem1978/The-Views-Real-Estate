@@ -81,7 +81,7 @@ export default function PropertyDetails() {
             </p>
             <Link 
               href="/properties" 
-              className="px-6 py-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow-md inline-flex items-center"
+              className="px-6 py-3 bg-[#B87333] hover:bg-[#964B00] text-white font-medium rounded-md transition-colors shadow-md inline-flex items-center"
             >
               Browse All Properties
             </Link>
