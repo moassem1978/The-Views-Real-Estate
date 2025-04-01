@@ -2,20 +2,19 @@ import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 
-// Sizes for responsive images - optimized for real estate listings
+// Reduced sizes for better performance
 export const imageSizes = {
-  thumbnail: { width: 280, height: 180 }, // For listings grid (smaller to save space)
-  medium: { width: 640, height: 480 },    // For property detail (reduced size)
-  large: { width: 1024, height: 768 }     // For fullscreen view (reduced from 1200x900)
+  thumbnail: { width: 150, height: 100 }, // Smaller thumbnails
+  medium: { width: 480, height: 320 },    // Reduced medium size
+  large: { width: 800, height: 600 }      // Reduced large size
 };
 
-// Maximum file sizes in bytes to keep app size under control
-const MAX_FILE_SIZES = {
-  thumbnail: 30 * 1024,   // 30KB max for thumbnails
-  medium: 100 * 1024,     // 100KB max for medium images
-  large: 200 * 1024,      // 200KB max for large images
-  original: 500 * 1024    // 500KB max for originals (heavily compressed)
+// Compression options
+const compressionOptions = {
+  jpeg: { quality: 80, progressive: true },
+  webp: { quality: 75 }
 };
+
 
 /**
  * Optimizes an image and creates multiple sizes for responsive loading
@@ -68,7 +67,7 @@ export async function optimizeImage(inputPath: string, outputDir: string, filena
       
       // Generate webp with current quality setting
       outputBuffer = await transformer
-        .webp({ quality })
+        .webp(compressionOptions.webp)
         .toBuffer();
       
       fileSize = outputBuffer.length;
@@ -96,7 +95,7 @@ export async function optimizeImage(inputPath: string, outputDir: string, filena
     originalPath, 
     null, // Keep original dimensions
     null,
-    MAX_FILE_SIZES.original,
+    500 * 1024, // 500KB max for originals (heavily compressed)
     75 // Start with lower quality for original
   );
 
@@ -109,7 +108,7 @@ export async function optimizeImage(inputPath: string, outputDir: string, filena
     thumbnailPath,
     imageSizes.thumbnail.width,
     imageSizes.thumbnail.height,
-    MAX_FILE_SIZES.thumbnail,
+    30 * 1024, // 30KB max for thumbnails
     65 // Start with even lower quality for thumbnails
   );
 
@@ -122,7 +121,7 @@ export async function optimizeImage(inputPath: string, outputDir: string, filena
     mediumPath,
     imageSizes.medium.width,
     imageSizes.medium.height,
-    MAX_FILE_SIZES.medium,
+    100 * 1024, // 100KB max for medium images
     70
   );
 
@@ -135,7 +134,7 @@ export async function optimizeImage(inputPath: string, outputDir: string, filena
     largePath,
     imageSizes.large.width,
     imageSizes.large.height,
-    MAX_FILE_SIZES.large,
+    200 * 1024, // 200KB max for large images
     75
   );
 
