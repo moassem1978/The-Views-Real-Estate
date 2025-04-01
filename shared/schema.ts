@@ -102,6 +102,7 @@ export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
 export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
 export type Announcement = typeof announcements.$inferSelect;
 
+// Define SiteSettings interface
 export interface SiteSettings {
   companyLogo?: string;
   companyName: string;

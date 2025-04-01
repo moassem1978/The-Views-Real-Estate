@@ -1250,12 +1250,10 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  // Site settings operations
-  // For site settings, we'll need to create a table or use an external solution
-  // For simplicity, we'll use a singleton approach for now with default values
-  private siteSettings: SiteSettings = {
+  // Site settings operations using file persistence
+  private defaultSiteSettings: SiteSettings = {
     companyName: "The Views Real Estate",
-    companyLogo: "/uploads/logos/company-logo.svg",
+    companyLogo: "/uploads/logos/logo-1743513611120-669479078.png", // Use the most recent logo
     primaryColor: "#B87333",
     contactEmail: "info@theviewsrealestate.com",
     contactPhone: "1-800-555-VIEWS",
@@ -1266,14 +1264,82 @@ export class DatabaseStorage implements IStorage {
       linkedin: "https://linkedin.com/company/theviewsrealestate"
     }
   };
+  
+  private siteSettingsPath = './site-settings.json';
+  private currentSettings: SiteSettings | null = null;
 
-  async getSiteSettings(): Promise<SiteSettings> {
-    return this.siteSettings;
+  private loadSettingsFromFile(): SiteSettings {
+    try {
+      if (fs.existsSync(this.siteSettingsPath)) {
+        const data = JSON.parse(fs.readFileSync(this.siteSettingsPath, 'utf8'));
+        console.log('Site settings loaded from file');
+        return data;
+      }
+    } catch (error) {
+      console.error('Failed to load site settings from file:', error);
+    }
+    
+    // If we couldn't load from the file, return default settings
+    return { ...this.defaultSiteSettings };
   }
 
-  async updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
-    this.siteSettings = { ...this.siteSettings, ...settings };
-    return this.siteSettings;
+  private saveSettingsToFile(settings: SiteSettings): void {
+    try {
+      fs.writeFileSync(this.siteSettingsPath, JSON.stringify(settings, null, 2));
+      console.log('Site settings saved to file');
+    } catch (error) {
+      console.error('Failed to save site settings to file:', error);
+    }
+  }
+
+  async getSiteSettings(): Promise<SiteSettings> {
+    // Return cached settings if available
+    if (this.currentSettings) {
+      return { ...this.currentSettings };
+    }
+    
+    // Otherwise, load from file and cache
+    this.currentSettings = this.loadSettingsFromFile();
+    return { ...this.currentSettings };
+  }
+
+  async updateSiteSettings(updates: Partial<SiteSettings>): Promise<SiteSettings> {
+    // Get current settings
+    const currentSettings = await this.getSiteSettings();
+    
+    // Prepare the updates, handling socialLinks specially
+    let updatedSettings: SiteSettings;
+    
+    if (updates.socialLinks && currentSettings.socialLinks) {
+      // Create a new object with properly merged socialLinks
+      const mergedSocialLinks = {
+        ...currentSettings.socialLinks,
+        ...updates.socialLinks
+      };
+      
+      // Remove socialLinks from updates to avoid duplicate merging
+      const { socialLinks, ...restUpdates } = updates;
+      
+      // Merge with current settings
+      updatedSettings = {
+        ...currentSettings,
+        ...restUpdates,
+        socialLinks: mergedSocialLinks
+      };
+    } else {
+      // Just merge all updates
+      updatedSettings = {
+        ...currentSettings,
+        ...updates
+      };
+    }
+    
+    // Save to file and update the cache
+    this.saveSettingsToFile(updatedSettings);
+    this.currentSettings = updatedSettings;
+    
+    // Return the updated settings
+    return { ...this.currentSettings };
   }
 }
 
