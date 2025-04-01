@@ -25,6 +25,7 @@ const PropertyDetails = lazy(() => import(/* webpackChunkName: "property-details
 const Contact = lazy(() => import(/* webpackChunkName: "contact" */ "@/pages/Contact"));
 const About = lazy(() => import(/* webpackChunkName: "about" */ "@/pages/About"));
 const Services = lazy(() => import(/* webpackChunkName: "services" */ "@/pages/Services"));
+const ServiceDetails = lazy(() => import(/* webpackChunkName: "service-details" */ "@/pages/ServiceDetails"));
 const SignIn = lazy(() => import(/* webpackChunkName: "signin" */ "@/pages/SignIn"));
 const Dashboard = lazy(() => import(/* webpackChunkName: "dashboard" */ "@/pages/Dashboard"));
 const Announcements = lazy(() => import(/* webpackChunkName: "announcements" */ "@/pages/Announcements"));
@@ -39,6 +40,7 @@ const routes = [
   { path: "/contact", Component: Contact },
   { path: "/about", Component: About },
   { path: "/services", Component: Services },
+  { path: "/services/:serviceType", Component: ServiceDetails },
   { path: "/signin", Component: SignIn },
   { path: "/dashboard", Component: Dashboard },
   { path: "/announcements", Component: Announcements },
