@@ -24,11 +24,15 @@ export default function HeroCarousel() {
   // Fetch highlighted properties
   const { data: properties = [], isLoading: propertiesLoading } = useQuery<Property[]>({
     queryKey: ['/api/properties/highlighted'],
+    staleTime: 0, // Don't use cached data
+    refetchOnMount: true, // Always refetch when component mounts
   });
   
   // Fetch highlighted announcements
   const { data: announcements = [], isLoading: announcementsLoading } = useQuery<Announcement[]>({
     queryKey: ['/api/announcements/highlighted'],
+    staleTime: 0, // Don't use cached data
+    refetchOnMount: true, // Always refetch when component mounts
   });
   
   const [activeIndex, setActiveIndex] = useState(0);
@@ -48,10 +52,12 @@ export default function HeroCarousel() {
     }))
   ];
   
-  // Debug log to check combined items
+  // Debug logs to check data and combined items
   useEffect(() => {
+    console.log("Properties data:", properties);
+    console.log("Announcements data:", announcements);
     console.log("Combined carousel items:", carouselItems);
-  }, [carouselItems]);
+  }, [properties, announcements, carouselItems]);
   
   // Autoplay functionality
   useEffect(() => {
@@ -246,7 +252,7 @@ export default function HeroCarousel() {
                             </Link>
                             <Link
                               href="/properties"
-                              className="inline-flex items-center justify-center px-5 py-3 border-2 border-[#B87333] text-[#B87333] font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors text-sm"
+                              className="inline-flex items-center justify-center px-5 py-3 border-2 border-[#B87333] text-white bg-black/30 font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors text-sm"
                             >
                               All Properties
                             </Link>
@@ -281,7 +287,7 @@ export default function HeroCarousel() {
                             </Link>
                             <Link
                               href="/announcements"
-                              className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] text-[#B87333] font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors"
+                              className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] text-white bg-black/30 font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors"
                             >
                               View All
                             </Link>
