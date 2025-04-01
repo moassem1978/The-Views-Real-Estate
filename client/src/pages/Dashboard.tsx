@@ -143,7 +143,6 @@ export default function Dashboard() {
     address: "",
     city: "",
     state: "",
-    zipCode: "",
     price: 0,
     downPayment: 0,
     installmentAmount: 0,
@@ -591,7 +590,6 @@ export default function Dashboard() {
       address: property.address,
       city: property.city,
       state: property.state,
-      zipCode: property.zipCode,
       price: property.price,
       downPayment: property.downPayment || 0,
       installmentAmount: property.installmentAmount || 0,
@@ -879,7 +877,6 @@ export default function Dashboard() {
       address: "",
       city: "",
       state: "",
-      zipCode: "",
       price: 0,
       downPayment: 0,
       installmentAmount: 0,
@@ -1262,19 +1259,12 @@ export default function Dashboard() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Cairo">Cairo</SelectItem>
-                        <SelectItem value="Alexandria">Alexandria</SelectItem>
-                        <SelectItem value="Giza">Giza</SelectItem>
-                        <SelectItem value="Sharm El Sheikh">Sharm El Sheikh</SelectItem>
-                        <SelectItem value="Hurghada">Hurghada</SelectItem>
-                        <SelectItem value="El Gouna">El Gouna</SelectItem>
-                        <SelectItem value="New Cairo">New Cairo</SelectItem>
-                        <SelectItem value="6th of October">6th of October</SelectItem>
-                        <SelectItem value="Maadi">Maadi</SelectItem>
-                        <SelectItem value="Zamalek">Zamalek</SelectItem>
+                        <SelectItem value="Sheikh Zayed">Sheikh Zayed</SelectItem>
                         <SelectItem value="North Coast">North Coast</SelectItem>
-                        <SelectItem value="Luxor">Luxor</SelectItem>
-                        <SelectItem value="Aswan">Aswan</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        <SelectItem value="Gouna">Gouna</SelectItem>
+                        <SelectItem value="Red Sea">Red Sea</SelectItem>
+                        <SelectItem value="Dubai">Dubai</SelectItem>
+                        <SelectItem value="London">London</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1291,28 +1281,20 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="space-y-2">
-                    <label htmlFor="address" className="text-sm font-medium flex items-center">
-                      Address/Location
+                    <label htmlFor="projectName" className="text-sm font-medium flex items-center">
+                      Project Name
                       <span className="text-red-500 ml-1">*</span>
                     </label>
                     <Input
-                      id="address"
-                      name="address"
-                      value={formData.address}
+                      id="projectName"
+                      name="projectName"
+                      value={formData.projectName}
                       onChange={handleInputChange}
                       required
+                      placeholder="Enter the project name instead of address"
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <label htmlFor="zipCode" className="text-sm font-medium">Postal Code</label>
-                    <Input
-                      id="zipCode"
-                      name="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleInputChange}
-                    />
-                  </div>
                 </div>
               </div>
               

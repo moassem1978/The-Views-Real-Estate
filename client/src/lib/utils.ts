@@ -25,13 +25,13 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatPrice(price: number, maximumFractionDigits = 0): string {
   // Return quickly for common cases
-  if (price === 0) return "£ 0 L.E";
+  if (price === 0) return "0 L.E";
   
   // For prices over 1 million, show in millions with special format
   if (price >= 1000000) {
     const inMillions = price / 1000000;
     const formattedPrice = `${inMillions.toFixed(inMillions % 1 === 0 ? 0 : 1)}M`;
-    return `£ ${formattedPrice} L.E`;
+    return `${formattedPrice} L.E`;
   }
   
   // Use cached formatter instance for performance
@@ -41,11 +41,12 @@ export function formatPrice(price: number, maximumFractionDigits = 0): string {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits,
+      useGrouping: true, // This ensures thousand separators are used
     });
   }
   
-  // Format using cached formatter and return with currency symbols
-  return `£ ${formatterCache[cacheKey].format(price)} L.E`;
+  // Format using cached formatter and return with currency symbol (only L.E)
+  return `${formatterCache[cacheKey].format(price)} L.E`;
 }
 
 /**
