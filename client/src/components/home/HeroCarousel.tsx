@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Property, Announcement } from "@/types";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { DEBUG } from "../../debug";
 import {
   Carousel,
   CarouselContent,
@@ -14,150 +13,104 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
 // Define a union type for our carousel items
-type CarouselItem = {
+type SlideItem = {
   id: number;
   type: 'property' | 'announcement';
   data: Property | Announcement;
 };
 
 export default function HeroCarousel() {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
-  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
+  // Simplified state management - only maintain a single array of slides
+  const [slides, setSlides] = useState<SlideItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
   
-  // Fetch properties directly
+  // Single data fetching function that gets both types of data and combines them
   useEffect(() => {
-    const fetchProperties = async () => {
-      setIsLoadingProperties(true);
+    async function fetchData() {
+      setIsLoading(true);
       try {
-        DEBUG.log("HERO CAROUSEL: Fetching highlighted properties directly");
-        const response = await fetch('/api/properties/highlighted', {
-          headers: { 'Cache-Control': 'no-cache' }
-        });
+        console.log("Fetching carousel data...");
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch properties: ${response.status}`);
+        // Fetch properties and announcements in parallel
+        const [propertiesResponse, announcementsResponse] = await Promise.all([
+          fetch('/api/properties/highlighted', { headers: { 'Cache-Control': 'no-cache' } }),
+          fetch('/api/announcements/highlighted', { headers: { 'Cache-Control': 'no-cache' } })
+        ]);
+        
+        // Handle property response
+        let properties: Property[] = [];
+        if (propertiesResponse.ok) {
+          properties = await propertiesResponse.json();
+          console.log(`Found ${properties.length} highlighted properties`);
+        } else {
+          console.error("Failed to fetch properties:", propertiesResponse.status);
         }
         
-        const data = await response.json();
-        DEBUG.log(`HERO CAROUSEL: Direct fetch returned ${data.length} highlighted properties`);
+        // Handle announcement response
+        let announcements: Announcement[] = [];
+        if (announcementsResponse.ok) {
+          announcements = await announcementsResponse.json();
+          console.log(`Found ${announcements.length} highlighted announcements`);
+        } else {
+          console.error("Failed to fetch announcements:", announcementsResponse.status);
+        }
         
-        // Log each property
-        data.forEach((property: Property, index: number) => {
-          DEBUG.log(`HERO CAROUSEL: Property ${index + 1} - ID: ${property.id}, Title: ${property.title}, isHighlighted: ${property.isHighlighted}`);
-        });
+        // Convert to slide items and combine
+        const propertySlides: SlideItem[] = properties.map(property => ({
+          id: property.id,
+          type: 'property',
+          data: property
+        }));
         
-        setProperties(data);
+        const announcementSlides: SlideItem[] = announcements.map(announcement => ({
+          id: announcement.id,
+          type: 'announcement',
+          data: announcement
+        }));
+        
+        // Merge both types of slides
+        const combinedSlides = [...propertySlides, ...announcementSlides];
+        console.log(`Combined slides: ${combinedSlides.length}`);
+        
+        // Set the slides in state
+        setSlides(combinedSlides);
       } catch (error) {
-        DEBUG.error("HERO CAROUSEL: Error fetching properties:", error);
+        console.error("Error fetching carousel data:", error);
       } finally {
-        setIsLoadingProperties(false);
+        setIsLoading(false);
       }
-    };
+    }
     
-    fetchProperties();
+    // Initial fetch
+    fetchData();
     
-    // Set up an interval to refetch properties every 5 seconds for testing
-    const intervalId = setInterval(fetchProperties, 5000);
+    // Refresh data every 30 seconds (reduced from 5s to save resources)
+    const intervalId = setInterval(fetchData, 30000);
     
     return () => clearInterval(intervalId);
   }, []);
   
-  // Fetch announcements directly
-  useEffect(() => {
-    const fetchAnnouncements = async () => {
-      setIsLoadingAnnouncements(true);
-      try {
-        DEBUG.log("HERO CAROUSEL: Fetching highlighted announcements directly");
-        const response = await fetch('/api/announcements/highlighted', {
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch announcements: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        DEBUG.log(`HERO CAROUSEL: Direct fetch returned ${data.length} highlighted announcements`);
-        
-        // Log each announcement
-        data.forEach((announcement: Announcement, index: number) => {
-          DEBUG.log(`HERO CAROUSEL: Announcement ${index + 1} - ID: ${announcement.id}, Title: ${announcement.title}, isHighlighted: ${announcement.isHighlighted}`);
-        });
-        
-        setAnnouncements(data);
-      } catch (error) {
-        DEBUG.error("HERO CAROUSEL: Error fetching announcements:", error);
-      } finally {
-        setIsLoadingAnnouncements(false);
-      }
-    };
-    
-    fetchAnnouncements();
-    
-    // Set up an interval to refetch announcements every 5 seconds for testing
-    const intervalId = setInterval(fetchAnnouncements, 5000);
-    
-    return () => clearInterval(intervalId);
-  }, []);
-  
-  // Combine properties and announcements into a single carousel items array
-  const carouselItems: CarouselItem[] = [
-    ...properties.map(property => ({
-      id: property.id,
-      type: 'property' as const,
-      data: property
-    })),
-    ...announcements.map(announcement => ({
-      id: announcement.id,
-      type: 'announcement' as const,
-      data: announcement
-    }))
-  ];
-  
-  // Debug logs to check data and combined items
-  useEffect(() => {
-    DEBUG.log(`HERO CAROUSEL: Properties data length: ${properties.length}`);
-    DEBUG.log(`HERO CAROUSEL: Announcements data length: ${announcements.length}`);
-    DEBUG.log(`HERO CAROUSEL: Combined carousel items length: ${carouselItems.length}`);
-    
-    if (properties.length === 0) {
-      DEBUG.warn("HERO CAROUSEL: No highlighted properties found.");
-    }
-    
-    if (announcements.length === 0) {
-      DEBUG.warn("HERO CAROUSEL: No highlighted announcements found.");
-    }
-    
-    if (carouselItems.length > 0) {
-      DEBUG.log("HERO CAROUSEL: Carousel items:", carouselItems);
-    }
-  }, [properties, announcements, carouselItems]);
-  
-  // Autoplay functionality
+  // Autoplay functionality with reduced timer frequency
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     
-    if (autoplay && carouselItems.length > 0) {
+    if (autoplay && slides.length > 0) {
       interval = setInterval(() => {
-        setActiveIndex((current) => (current + 1) % carouselItems.length);
-      }, 6000); // Change slide every 6 seconds
+        setActiveIndex((current) => (current + 1) % slides.length);
+      }, 8000); // Increased to 8 seconds to reduce resource usage
     }
     
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [autoplay, carouselItems.length]);
+  }, [autoplay, slides.length]);
   
   // Pause autoplay on hover
   const pauseAutoplay = () => setAutoplay(false);
   const resumeAutoplay = () => setAutoplay(true);
-  
-  const isLoading = isLoadingProperties || isLoadingAnnouncements;
-  
+
   if (isLoading) {
     return (
       <section className="relative h-[80vh] bg-gray-900 overflow-hidden">
@@ -186,7 +139,7 @@ export default function HeroCarousel() {
     );
   }
   
-  if (carouselItems.length === 0) {
+  if (slides.length === 0) {
     return (
       <section className="relative h-[80vh] bg-gray-900">
         {/* Default background image */}
@@ -223,7 +176,7 @@ export default function HeroCarousel() {
     );
   }
   
-  // Render the carousel with combined items
+  // Render the carousel with all slides
   return (
     <section 
       className="relative h-[80vh] overflow-hidden"
@@ -245,7 +198,7 @@ export default function HeroCarousel() {
         }}
       >
         <CarouselContent className="h-full">
-          {carouselItems.map((item, index) => (
+          {slides.map((item, index) => (
             <CarouselItem key={`${item.type}-${item.id}`} className="h-full">
               <div className="relative h-full w-full">
                 {/* Background Image - different rendering based on item type */}
@@ -382,7 +335,7 @@ export default function HeroCarousel() {
         
         {/* Navigation Controls */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 flex justify-center items-center space-x-2">
-          {carouselItems.map((_, index) => (
+          {slides.map((_, index) => (
             <button
               key={index}
               className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
@@ -400,10 +353,10 @@ export default function HeroCarousel() {
         </div>
         
         <CarouselPrevious 
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 border-none text-[#B87333] h-12 w-12" 
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#964B00]/80 hover:bg-[#964B00] border-none text-white h-10 w-10"
         />
         <CarouselNext 
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 border-none text-[#B87333] h-12 w-12" 
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#964B00]/80 hover:bg-[#964B00] border-none text-white h-10 w-10"
         />
       </Carousel>
     </section>
