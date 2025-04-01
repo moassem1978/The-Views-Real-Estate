@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Property, Announcement } from "@/types";
 import { formatPrice, formatDate } from "@/lib/utils";
@@ -22,71 +21,88 @@ type CarouselItem = {
 };
 
 export default function HeroCarousel() {
-  // Fetch highlighted properties
-  const { data: properties = [], isLoading: propertiesLoading, error: propertiesError } = useQuery<Property[]>({
-    queryKey: ['/api/properties/highlighted'],
-    staleTime: 0, // Don't use cached data
-    refetchOnMount: true, // Always refetch when component mounts
-    retry: 3,
-    refetchInterval: 5000, // Refetch every 5 seconds for testing
-  });
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
+  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [autoplay, setAutoplay] = useState(true);
   
-  // Fetch highlighted announcements with explicit fetcher override
-  const { data: announcements = [], isLoading: announcementsLoading, error: announcementsError } = useQuery<Announcement[]>({
-    queryKey: ['/api/announcements/highlighted'],
-    staleTime: 0, // Don't use cached data
-    refetchOnMount: true, // Always refetch when component mounts
-    retry: 3,
-    refetchInterval: 5000, // Refetch every 5 seconds for testing
-    queryFn: async () => {
-      // Log that we're making a direct API call for debugging
-      DEBUG.log("HERO CAROUSEL: Making direct API call to /api/announcements/highlighted");
-      
+  // Fetch properties directly
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setIsLoadingProperties(true);
       try {
-        const res = await fetch('/api/announcements/highlighted', {
+        DEBUG.log("HERO CAROUSEL: Fetching highlighted properties directly");
+        const response = await fetch('/api/properties/highlighted', {
           headers: { 'Cache-Control': 'no-cache' }
         });
         
-        if (!res.ok) {
-          throw new Error(`Error fetching highlighted announcements: ${res.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch properties: ${response.status}`);
         }
         
-        const data = await res.json();
-        DEBUG.log(`HERO CAROUSEL: Direct API call returned ${data.length} highlighted announcements`);
+        const data = await response.json();
+        DEBUG.log(`HERO CAROUSEL: Direct fetch returned ${data.length} highlighted properties`);
+        
+        // Log each property
+        data.forEach((property: Property, index: number) => {
+          DEBUG.log(`HERO CAROUSEL: Property ${index + 1} - ID: ${property.id}, Title: ${property.title}, isHighlighted: ${property.isHighlighted}`);
+        });
+        
+        setProperties(data);
+      } catch (error) {
+        DEBUG.error("HERO CAROUSEL: Error fetching properties:", error);
+      } finally {
+        setIsLoadingProperties(false);
+      }
+    };
+    
+    fetchProperties();
+    
+    // Set up an interval to refetch properties every 5 seconds for testing
+    const intervalId = setInterval(fetchProperties, 5000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
+  
+  // Fetch announcements directly
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      setIsLoadingAnnouncements(true);
+      try {
+        DEBUG.log("HERO CAROUSEL: Fetching highlighted announcements directly");
+        const response = await fetch('/api/announcements/highlighted', {
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch announcements: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        DEBUG.log(`HERO CAROUSEL: Direct fetch returned ${data.length} highlighted announcements`);
         
         // Log each announcement
         data.forEach((announcement: Announcement, index: number) => {
-          DEBUG.log(`HERO CAROUSEL: Direct API call - Announcement ${index + 1} - ID: ${announcement.id}, Title: ${announcement.title}, isHighlighted: ${announcement.isHighlighted}`);
+          DEBUG.log(`HERO CAROUSEL: Announcement ${index + 1} - ID: ${announcement.id}, Title: ${announcement.title}, isHighlighted: ${announcement.isHighlighted}`);
         });
         
-        return data;
+        setAnnouncements(data);
       } catch (error) {
-        DEBUG.error("HERO CAROUSEL: Error in direct API call", error);
-        throw error;
+        DEBUG.error("HERO CAROUSEL: Error fetching announcements:", error);
+      } finally {
+        setIsLoadingAnnouncements(false);
       }
-    }
-  });
-  
-  // Log detailed information about the requests
-  useEffect(() => {
-    console.log("🔍 HeroCarousel - Properties request status:", propertiesLoading ? "loading" : "complete");
-    console.log("🔍 HeroCarousel - Announcements request status:", announcementsLoading ? "loading" : "complete");
+    };
     
-    if (propertiesError) {
-      console.error("❌ Properties fetch error:", propertiesError);
-    }
+    fetchAnnouncements();
     
-    if (announcementsError) {
-      console.error("❌ Announcements fetch error:", announcementsError);
-    }
+    // Set up an interval to refetch announcements every 5 seconds for testing
+    const intervalId = setInterval(fetchAnnouncements, 5000);
     
-    // Log the raw data objects for debugging
-    console.log("📊 Raw properties data:", properties);
-    console.log("📊 Raw announcements data:", announcements);
-  }, [properties, announcements, propertiesLoading, announcementsLoading, propertiesError, announcementsError]);
-  
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
+    return () => clearInterval(intervalId);
+  }, []);
   
   // Combine properties and announcements into a single carousel items array
   const carouselItems: CarouselItem[] = [
@@ -108,22 +124,16 @@ export default function HeroCarousel() {
     DEBUG.log(`HERO CAROUSEL: Announcements data length: ${announcements.length}`);
     DEBUG.log(`HERO CAROUSEL: Combined carousel items length: ${carouselItems.length}`);
     
-    // Detailed logs about each highlighted property
-    properties.forEach((property, index) => {
-      DEBUG.log(`HERO CAROUSEL: Property ${index + 1} - ID: ${property.id}, Title: ${property.title}, isHighlighted: ${property.isHighlighted}`);
-    });
-    
-    // Detailed logs about each highlighted announcement
-    announcements.forEach((announcement, index) => {
-      DEBUG.log(`HERO CAROUSEL: Announcement ${index + 1} - ID: ${announcement.id}, Title: ${announcement.title}, isHighlighted: ${announcement.isHighlighted}`);
-    });
-    
-    // Log the endpoint URL that's being called
-    DEBUG.log("HERO CAROUSEL: Properties endpoint: /api/properties/highlighted");
-    DEBUG.log("HERO CAROUSEL: Announcements endpoint: /api/announcements/highlighted");
+    if (properties.length === 0) {
+      DEBUG.warn("HERO CAROUSEL: No highlighted properties found.");
+    }
     
     if (announcements.length === 0) {
-      DEBUG.warn("HERO CAROUSEL: No highlighted announcements found. Check API endpoint and data.");
+      DEBUG.warn("HERO CAROUSEL: No highlighted announcements found.");
+    }
+    
+    if (carouselItems.length > 0) {
+      DEBUG.log("HERO CAROUSEL: Carousel items:", carouselItems);
     }
   }, [properties, announcements, carouselItems]);
   
@@ -146,7 +156,7 @@ export default function HeroCarousel() {
   const pauseAutoplay = () => setAutoplay(false);
   const resumeAutoplay = () => setAutoplay(true);
   
-  const isLoading = propertiesLoading || announcementsLoading;
+  const isLoading = isLoadingProperties || isLoadingAnnouncements;
   
   if (isLoading) {
     return (
