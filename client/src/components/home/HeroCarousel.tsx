@@ -252,7 +252,7 @@ export default function HeroCarousel() {
                             </Link>
                             <Link
                               href="/properties"
-                              className="inline-flex items-center justify-center px-5 py-3 border-2 border-[#B87333] text-white bg-black/30 font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors text-sm"
+                              className="inline-flex items-center justify-center px-5 py-3 border-2 border-[#B87333] text-[#B87333] font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors text-sm"
                             >
                               All Properties
                             </Link>
@@ -287,7 +287,7 @@ export default function HeroCarousel() {
                             </Link>
                             <Link
                               href="/announcements"
-                              className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] text-white bg-black/30 font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors"
+                              className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] text-[#B87333] font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors"
                             >
                               View All
                             </Link>
@@ -322,10 +322,10 @@ export default function HeroCarousel() {
         </div>
         
         <CarouselPrevious 
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 border-none text-white h-12 w-12" 
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 border-none text-[#B87333] h-12 w-12" 
         />
         <CarouselNext 
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 border-none text-white h-12 w-12" 
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 border-none text-[#B87333] h-12 w-12" 
         />
       </Carousel>
     </section>
