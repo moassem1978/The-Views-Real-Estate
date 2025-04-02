@@ -170,16 +170,16 @@ export default function SimpleHeroCarousel() {
           {/* Only show type tag and title/location - NOTHING ELSE */}
           {activeSlide.type === 'property' ? (
             <>
-              {/* Type tag at top left */}
-              <div className="absolute top-4 left-4">
+              {/* Type tag at top right */}
+              <div className="absolute top-4 right-4">
                 <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
-                  {(activeSlide.data as Property).propertyType}
+                  {(activeSlide.data as Property).listingType || "Property"}
                 </span>
               </div>
               
-              {/* Title and location at bottom left */}
-              <div className="absolute bottom-4 left-4">
-                <h3 className="text-white text-xl font-serif">
+              {/* Title and location at bottom left, with slightly elevated position */}
+              <div className="absolute bottom-8 left-4">
+                <h3 className="text-white text-2xl md:text-3xl font-serif mb-1">
                   {(activeSlide.data as Property).title}
                 </h3>
                 <p className="text-white/80 text-xs">
@@ -189,16 +189,16 @@ export default function SimpleHeroCarousel() {
             </>
           ) : (
             <>
-              {/* Type tag at top left */}
-              <div className="absolute top-4 left-4">
+              {/* Type tag at top right */}
+              <div className="absolute top-4 right-4">
                 <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
                   Announcement
                 </span>
               </div>
               
-              {/* Title and date at bottom left */}
-              <div className="absolute bottom-4 left-4">
-                <h3 className="text-white text-xl font-serif">
+              {/* Title and date at bottom left, with slightly elevated position */}
+              <div className="absolute bottom-8 left-4">
+                <h3 className="text-white text-2xl md:text-3xl font-serif mb-1">
                   {(activeSlide.data as Announcement).title}
                 </h3>
                 <p className="text-white/80 text-xs">
@@ -210,8 +210,8 @@ export default function SimpleHeroCarousel() {
         </div>
       </div>
       
-      {/* Simple navigation controls */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 flex justify-center items-center space-x-2">
+      {/* Simple navigation controls - moved lower to avoid overlapping with titles */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex justify-center items-center space-x-2">
         {slides.map((_, i) => (
           <button
             key={i}
