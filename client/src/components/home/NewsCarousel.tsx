@@ -145,25 +145,33 @@ export default function NewsCarousel() {
                           </div>
                           
                           {/* Right - Property Details */}
-                          <div className="w-full md:w-1/2">
-                            <div className="mb-2">
+                          <div className="w-full md:w-1/2 relative">
+                            {/* Type at top left */}
+                            <div className="absolute top-0 left-0">
                               <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
                                 {property.propertyType}
                               </span>
                             </div>
                             
-                            <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-2">
-                              {property.title}
-                            </h3>
+                            {/* Content positioned at bottom */}
+                            <div className="absolute bottom-0 left-0">
+                              <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-1">
+                                {property.title}
+                              </h3>
+                              <p className="text-sm text-gray-600 mb-4">
+                                {property.city}
+                              </p>
+                            </div>
                             
-
-                            
-                            <Link 
-                              href={`/properties/${property.id}`}
-                              className="inline-block px-5 py-2.5 bg-[#B87333] text-white font-medium rounded hover:bg-[#955A28] transition-colors"
-                            >
-                              View Property
-                            </Link>
+                            {/* Button at the right bottom */}
+                            <div className="absolute bottom-0 right-0">
+                              <Link 
+                                href={`/properties/${property.id}`}
+                                className="inline-block px-4 py-2 bg-[#B87333] text-white font-medium rounded hover:bg-[#955A28] transition-colors"
+                              >
+                                View
+                              </Link>
+                            </div>
                           </div>
                         </div>
                       </CarouselItem>
@@ -252,23 +260,33 @@ export default function NewsCarousel() {
                           </div>
                           
                           {/* Right - Content */}
-                          <div className="w-full md:w-1/2 flex flex-col">
-                            <div className="mb-3">
+                          <div className="w-full md:w-1/2 relative">
+                            {/* Type at top left */}
+                            <div className="absolute top-0 left-0">
                               <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
                                 Announcement
                               </span>
                             </div>
                             
-                            <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-3">
-                              {announcement.title}
-                            </h3>
+                            {/* Content positioned at bottom */}
+                            <div className="absolute bottom-0 left-0">
+                              <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-1">
+                                {announcement.title}
+                              </h3>
+                              <p className="text-sm text-gray-600 mb-4">
+                                {formatDate(announcement.startDate)}
+                              </p>
+                            </div>
                             
-                            <Link 
-                              href={`/announcements/${announcement.id}`}
-                              className="inline-block px-5 py-2.5 bg-[#B87333] text-white font-medium rounded hover:bg-[#955A28] transition-colors mt-2"
-                            >
-                              Read More
-                            </Link>
+                            {/* Button at the right bottom */}
+                            <div className="absolute bottom-0 right-0">
+                              <Link 
+                                href={`/announcements/${announcement.id}`}
+                                className="inline-block px-4 py-2 bg-[#B87333] text-white font-medium rounded hover:bg-[#955A28] transition-colors"
+                              >
+                                Read
+                              </Link>
+                            </div>
                           </div>
                         </div>
                       </CarouselItem>

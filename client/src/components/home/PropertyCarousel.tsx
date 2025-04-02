@@ -120,13 +120,18 @@ export default function PropertyCarousel() {
                       </div>
                     </div>
                     
-                    {/* Property Details */}
-                    <div className="mt-6 text-center">
-                      <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-2">
+                    {/* Property Details - positioned at the bottom of the image */}
+                    <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent pt-10 pb-6 px-4 text-left">
+                      <h3 className="text-2xl font-serif font-semibold text-white mb-1">
                         {property.title}
                       </h3>
-                      <div className="mt-4 mb-6"></div>
-                      
+                      <p className="text-sm text-white/80">
+                        {property.city}
+                      </p>
+                    </div>
+                    
+                    {/* View button positioned separately */}
+                    <div className="mt-4 text-center">
                       <Link 
                         href={`/properties/${property.id}`}
                         className="inline-block px-6 py-3 bg-[#B87333] text-white font-medium rounded hover:bg-[#955A28] transition-colors"

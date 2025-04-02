@@ -232,15 +232,20 @@ export default function HeroCarousel() {
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
                 </div>
                 
-                {/* Only title at bottom left */}
+                {/* Title at bottom left with location below */}
                 <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent pt-8 pb-6">
                   <div className="container mx-auto px-6">
                     <div className="text-white">
                       {/* Just the title - no description, no price */}
                       {item.type === 'property' ? (
-                        <h1 className="text-2xl md:text-3xl font-serif font-bold">
-                          {(item.data as Property).title}
-                        </h1>
+                        <>
+                          <h1 className="text-2xl md:text-3xl font-serif font-bold">
+                            {(item.data as Property).title}
+                          </h1>
+                          <p className="text-white/80 text-sm mt-1">
+                            {(item.data as Property).city}
+                          </p>
+                        </>
                       ) : (
                         <h1 className="text-2xl md:text-3xl font-serif font-bold">
                           {(item.data as Announcement).title}
