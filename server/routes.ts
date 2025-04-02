@@ -43,22 +43,7 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
   return cb(null, true);
 };
 
-const multerStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Determine which folder to use based on the file purpose
-    let purpose = 'logos';
-    if (req.path.includes('property-images')) {
-      purpose = 'properties';
-    } else if (req.path.includes('announcement-image')) {
-      purpose = 'announcements';
-    }
-    const targetDir = path.join(uploadsDir, purpose);
-
-    console.log(`Storing file in: ${targetDir}`);
-    cb(null, targetDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+const multerStorage = multer.memoryStorage();
 
     // Get original extension or use a default
     let ext = path.extname(file.originalname).toLowerCase();
