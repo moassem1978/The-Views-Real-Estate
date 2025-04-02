@@ -167,101 +167,46 @@ export default function SimpleHeroCarousel() {
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
           </div>
           
-          {/* Hero Content */}
-          <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent pt-16 pb-8">
-            <div className="container mx-auto px-4">
-              <div className="max-w-3xl text-white">
-                {activeSlide.type === 'property' ? (
-                  <>
-                    <div className="flex flex-wrap items-center justify-between mb-4">
-                      <Badge variant="secondary" className="bg-[#B87333] text-white text-sm mb-2 md:mb-0">
-                        {(activeSlide.data as Property).propertyType} | {(activeSlide.data as Property).price.toLocaleString()} L.E
-                      </Badge>
-                      
-                      <div className="flex flex-wrap gap-6">
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                          </svg>
-                          <span>{(activeSlide.data as Property).bedrooms} {(activeSlide.data as Property).bedrooms === 1 ? 'Bedroom' : 'Bedrooms'}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span>{(activeSlide.data as Property).bathrooms} {(activeSlide.data as Property).bathrooms === 1 ? 'Bathroom' : 'Bathrooms'}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                          </svg>
-                          <span>{((activeSlide.data as Property).builtUpArea || 0).toLocaleString()} m²</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold mb-2">
-                      {(activeSlide.data as Property).title}
-                    </h1>
-                    
-                    <p className="text-lg opacity-90 mb-4">
-                      {(activeSlide.data as Property).city}, {(activeSlide.data as Property).state}
-                    </p>
-                    
-                    <div className="flex flex-col sm:flex-row gap-4 mt-6">
-                      <Link
-                        href={`/properties/${(activeSlide.data as Property).id}`}
-                        className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] bg-[#B87333] text-white font-medium rounded hover:bg-transparent hover:text-[#B87333] transition-colors"
-                      >
-                        View Details
-                      </Link>
-                      <Link
-                        href="/properties"
-                        className="inline-flex items-center justify-center px-5 py-3 border-2 border-[#B87333] text-[#B87333] font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors text-sm"
-                      >
-                        All Properties
-                      </Link>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex flex-wrap items-center justify-between mb-4">
-                      <Badge variant="secondary" className="bg-[#B87333] text-white text-sm mb-2 md:mb-0">
-                        Announcement
-                      </Badge>
-                      
-                      <div className="text-sm opacity-80">
-                        {formatDate((activeSlide.data as Announcement).startDate)}
-                      </div>
-                    </div>
-                    
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold mb-4">
-                      {(activeSlide.data as Announcement).title}
-                    </h1>
-                    
-                    <p className="text-lg opacity-90 mb-6 line-clamp-3">
-                      {(activeSlide.data as Announcement).content}
-                    </p>
-                    
-                    <div className="flex flex-col sm:flex-row gap-4 mt-6">
-                      <Link
-                        href={`/announcements/${(activeSlide.data as Announcement).id}`}
-                        className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] bg-[#B87333] text-white font-medium rounded hover:bg-transparent hover:text-[#B87333] transition-colors"
-                      >
-                        Read More
-                      </Link>
-                      <Link
-                        href="/announcements"
-                        className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] text-[#B87333] font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors"
-                      >
-                        View All
-                      </Link>
-                    </div>
-                  </>
-                )}
+          {/* Only show type tag and title/location - NOTHING ELSE */}
+          {activeSlide.type === 'property' ? (
+            <>
+              {/* Type tag at top left */}
+              <div className="absolute top-4 left-4">
+                <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
+                  {(activeSlide.data as Property).propertyType}
+                </span>
               </div>
-            </div>
-          </div>
+              
+              {/* Title and location at bottom left */}
+              <div className="absolute bottom-4 left-4">
+                <h3 className="text-white text-xl font-serif">
+                  {(activeSlide.data as Property).title}
+                </h3>
+                <p className="text-white/80 text-xs">
+                  {(activeSlide.data as Property).city}
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Type tag at top left */}
+              <div className="absolute top-4 left-4">
+                <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
+                  Announcement
+                </span>
+              </div>
+              
+              {/* Title and date at bottom left */}
+              <div className="absolute bottom-4 left-4">
+                <h3 className="text-white text-xl font-serif">
+                  {(activeSlide.data as Announcement).title}
+                </h3>
+                <p className="text-white/80 text-xs">
+                  {formatDate((activeSlide.data as Announcement).startDate)}
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
       
