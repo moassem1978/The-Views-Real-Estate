@@ -129,16 +129,6 @@ export default function PropertyCarousel() {
                         {property.city}
                       </p>
                     </div>
-                    
-                    {/* View button positioned separately */}
-                    <div className="mt-4 text-center">
-                      <Link 
-                        href={`/properties/${property.id}`}
-                        className="inline-block px-6 py-3 bg-[#B87333] text-white font-medium rounded hover:bg-[#955A28] transition-colors"
-                      >
-                        View Details
-                      </Link>
-                    </div>
                   </div>
                 </CarouselItem>
               ))}

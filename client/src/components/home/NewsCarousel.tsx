@@ -145,7 +145,7 @@ export default function NewsCarousel() {
                           </div>
                           
                           {/* Right - Property Details */}
-                          <div className="w-full md:w-1/2 relative">
+                          <div className="w-full md:w-1/2 relative h-full">
                             {/* Type at top left */}
                             <div className="absolute top-0 left-0">
                               <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
@@ -153,24 +153,14 @@ export default function NewsCarousel() {
                               </span>
                             </div>
                             
-                            {/* Content positioned at bottom */}
+                            {/* Content positioned at bottom left */}
                             <div className="absolute bottom-0 left-0">
                               <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-1">
                                 {property.title}
                               </h3>
-                              <p className="text-sm text-gray-600 mb-4">
+                              <p className="text-sm text-gray-600">
                                 {property.city}
                               </p>
-                            </div>
-                            
-                            {/* Button at the right bottom */}
-                            <div className="absolute bottom-0 right-0">
-                              <Link 
-                                href={`/properties/${property.id}`}
-                                className="inline-block px-4 py-2 bg-[#B87333] text-white font-medium rounded hover:bg-[#955A28] transition-colors"
-                              >
-                                View
-                              </Link>
                             </div>
                           </div>
                         </div>
@@ -260,7 +250,7 @@ export default function NewsCarousel() {
                           </div>
                           
                           {/* Right - Content */}
-                          <div className="w-full md:w-1/2 relative">
+                          <div className="w-full md:w-1/2 relative h-full">
                             {/* Type at top left */}
                             <div className="absolute top-0 left-0">
                               <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
@@ -268,24 +258,14 @@ export default function NewsCarousel() {
                               </span>
                             </div>
                             
-                            {/* Content positioned at bottom */}
+                            {/* Content positioned at bottom left */}
                             <div className="absolute bottom-0 left-0">
                               <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-1">
                                 {announcement.title}
                               </h3>
-                              <p className="text-sm text-gray-600 mb-4">
+                              <p className="text-sm text-gray-600">
                                 {formatDate(announcement.startDate)}
                               </p>
-                            </div>
-                            
-                            {/* Button at the right bottom */}
-                            <div className="absolute bottom-0 right-0">
-                              <Link 
-                                href={`/announcements/${announcement.id}`}
-                                className="inline-block px-4 py-2 bg-[#B87333] text-white font-medium rounded hover:bg-[#955A28] transition-colors"
-                              >
-                                Read
-                              </Link>
                             </div>
                           </div>
                         </div>
