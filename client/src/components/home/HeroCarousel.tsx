@@ -232,95 +232,56 @@ export default function HeroCarousel() {
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
                 </div>
                 
-                {/* Hero Content - Positioned at the bottom */}
-                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent pt-16 pb-8">
-                  <div className="container mx-auto px-4">
-                    <div className="max-w-3xl text-white">
+                {/* Minimal Hero Content - Positioned at the bottom left */}
+                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent pt-10 pb-6">
+                  <div className="container mx-auto px-6">
+                    <div className="max-w-md text-white">
                       {/* Content differs based on item type */}
                       {item.type === 'property' ? (
                         <>
-                          <div className="flex flex-wrap items-center justify-between mb-4">
-                            <Badge variant="secondary" className="bg-[#B87333] text-white text-sm mb-2 md:mb-0">
-                              {(item.data as Property).propertyType} | {(item.data as Property).price.toLocaleString()} L.E
-                            </Badge>
-                            
-                            <div className="flex flex-wrap gap-6">
-                              <div className="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                </svg>
-                                <span>{(item.data as Property).bedrooms} {(item.data as Property).bedrooms === 1 ? 'Bedroom' : 'Bedrooms'}</span>
-                              </div>
-                              <div className="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span>{(item.data as Property).bathrooms} {(item.data as Property).bathrooms === 1 ? 'Bathroom' : 'Bathrooms'}</span>
-                              </div>
-                              <div className="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                </svg>
-                                <span>{((item.data as Property).builtUpArea || 0).toLocaleString()} m²</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold mb-2">
+                          <h1 className="text-2xl md:text-3xl font-serif font-bold mb-2">
                             {(item.data as Property).title}
                           </h1>
                           
-                          <p className="text-lg opacity-90 mb-4">
-                            {(item.data as Property).city}, {(item.data as Property).state}
-                          </p>
+                          <div className="flex items-center space-x-4 text-sm mb-2">
+                            <div className="flex items-center">
+                              <span className="text-[#B87333] mr-1">{(item.data as Property).bedrooms}</span> Bed
+                            </div>
+                            
+                            {(item.data as Property).plotArea > 0 && (
+                              <div className="flex items-center">
+                                <span className="text-[#B87333] mr-1">{(item.data as Property).plotArea.toLocaleString()}</span> m² Plot
+                              </div>
+                            )}
+                            
+                            {(item.data as Property).builtUpArea > 0 && (
+                              <div className="flex items-center">
+                                <span className="text-[#B87333] mr-1">{(item.data as Property).builtUpArea.toLocaleString()}</span> m² BUA
+                              </div>
+                            )}
+                          </div>
                           
-                          <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                          <div className="mt-3 hidden md:flex">
                             <Link
                               href={`/properties/${(item.data as Property).id}`}
-                              className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] bg-[#B87333] text-white font-medium rounded hover:bg-transparent hover:text-[#B87333] transition-colors"
+                              className="text-sm text-[#B87333] border-b border-[#B87333] font-medium hover:text-white hover:border-white transition-colors"
                             >
                               View Details
-                            </Link>
-                            <Link
-                              href="/properties"
-                              className="inline-flex items-center justify-center px-5 py-3 border-2 border-[#B87333] text-[#B87333] font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors text-sm"
-                            >
-                              All Properties
                             </Link>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="flex flex-wrap items-center justify-between mb-4">
-                            <Badge variant="secondary" className="bg-[#B87333] text-white text-sm mb-2 md:mb-0">
-                              Announcement
-                            </Badge>
-                            
-                            <div className="text-sm opacity-80">
-                              {formatDate((item.data as Announcement).startDate)}
-                            </div>
-                          </div>
-                          
-                          <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold mb-4">
+                          <h1 className="text-2xl md:text-3xl font-serif font-bold mb-1">
                             {(item.data as Announcement).title}
                           </h1>
                           
-                          <p className="text-lg opacity-90 mb-6 line-clamp-3">
-                            {(item.data as Announcement).content}
-                          </p>
-                          
-                          <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                          <div className="mt-3 hidden md:flex">
                             <Link
                               href={`/announcements/${(item.data as Announcement).id}`}
-                              className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] bg-[#B87333] text-white font-medium rounded hover:bg-transparent hover:text-[#B87333] transition-colors"
+                              className="text-sm text-[#B87333] border-b border-[#B87333] font-medium hover:text-white hover:border-white transition-colors"
                             >
                               Read More
-                            </Link>
-                            <Link
-                              href="/announcements"
-                              className="inline-flex items-center justify-center px-6 py-3 border-2 border-[#B87333] text-[#B87333] font-medium rounded hover:bg-[#B87333] hover:text-white transition-colors"
-                            >
-                              View All
                             </Link>
                           </div>
                         </>
@@ -328,6 +289,23 @@ export default function HeroCarousel() {
                     </div>
                   </div>
                 </div>
+                
+                {/* Property Type and Price - Top positioned tags */}
+                {item.type === 'property' && (
+                  <div className="absolute top-4 right-4">
+                    <Badge variant="secondary" className="bg-black/70 text-white text-sm px-3 py-1.5">
+                      {(item.data as Property).price.toLocaleString()} L.E
+                    </Badge>
+                  </div>
+                )}
+                
+                {item.type === 'property' && (
+                  <div className="absolute top-4 left-4">
+                    <Badge variant="secondary" className="bg-[#B87333] text-white text-sm px-3 py-1.5">
+                      {(item.data as Property).propertyType}
+                    </Badge>
+                  </div>
+                )}
               </div>
             </CarouselItem>
           ))}

@@ -45,6 +45,27 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
 
 const multerStorage = multer.memoryStorage();
 
+// Define the disk storage configuration
+const diskStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    let uploadPath = uploadsDir;
+    
+    // Determine the correct subfolder based on upload type
+    if (req.path.includes('/api/upload/logo')) {
+      uploadPath = path.join(uploadsDir, 'logos');
+    } else if (req.path.includes('/api/upload/property-images')) {
+      uploadPath = path.join(uploadsDir, 'properties');
+    } else if (req.path.includes('/api/upload/announcement-image')) {
+      uploadPath = path.join(uploadsDir, 'announcements');
+    }
+    
+    console.log(`Uploading to directory: ${uploadPath}`);
+    cb(null, uploadPath);
+  },
+  
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    
     // Get original extension or use a default
     let ext = path.extname(file.originalname).toLowerCase();
 
