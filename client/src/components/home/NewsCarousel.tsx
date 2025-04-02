@@ -146,12 +146,9 @@ export default function NewsCarousel() {
                           
                           {/* Right - Property Details */}
                           <div className="w-full md:w-1/2">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="inline-block px-3 py-1 bg-[#B87333] text-white text-sm rounded-full">
-                                Featured
-                              </span>
-                              <span className="text-black font-medium">
-                                {property.price.toLocaleString()} L.E
+                            <div className="mb-2">
+                              <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
+                                {property.propertyType}
                               </span>
                             </div>
                             
@@ -159,40 +156,7 @@ export default function NewsCarousel() {
                               {property.title}
                             </h3>
                             
-                            <p className="text-[#B87333] font-medium mb-2">
-                              {property.city}, {property.state}
-                            </p>
-                            
-                            <p className="text-gray-700 mb-4 line-clamp-3">
-                              {property.description}
-                            </p>
-                            
-                            <div className="flex flex-wrap gap-6 mb-4">
-                              <div className="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                </svg>
-                                <span>{property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}</span>
-                              </div>
-                              <div className="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span>{property.bathrooms} {property.bathrooms === 1 ? 'Bath' : 'Baths'}</span>
-                              </div>
-                              <div className="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                </svg>
-                                <span>
-                                  {property.builtUpArea 
-                                    ? property.builtUpArea.toLocaleString() 
-                                    : property.squareFeet 
-                                      ? property.squareFeet.toLocaleString() 
-                                      : '0'} m²
-                                </span>
-                              </div>
-                            </div>
+
                             
                             <Link 
                               href={`/properties/${property.id}`}
@@ -289,12 +253,9 @@ export default function NewsCarousel() {
                           
                           {/* Right - Content */}
                           <div className="w-full md:w-1/2 flex flex-col">
-                            <div className="flex items-center mb-3">
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#B87333] text-white">
+                            <div className="mb-3">
+                              <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
                                 Announcement
-                              </span>
-                              <span className="ml-3 text-sm text-gray-500">
-                                {formatDate(announcement.startDate)}
                               </span>
                             </div>
                             
@@ -302,29 +263,12 @@ export default function NewsCarousel() {
                               {announcement.title}
                             </h3>
                             
-                            <p className="text-gray-700 mb-5 line-clamp-4">
-                              {announcement.content}
-                            </p>
-                            
-                            <div className="mt-auto">
-                              <span className="inline-flex items-center text-sm font-medium text-[#B87333]">
-                                Read More
-                                <svg 
-                                  xmlns="http://www.w3.org/2000/svg" 
-                                  className="ml-1 h-4 w-4" 
-                                  fill="none" 
-                                  viewBox="0 0 24 24" 
-                                  stroke="currentColor"
-                                >
-                                  <path 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round" 
-                                    strokeWidth={2} 
-                                    d="M14 5l7 7m0 0l-7 7m7-7H3" 
-                                  />
-                                </svg>
-                              </span>
-                            </div>
+                            <Link 
+                              href={`/announcements/${announcement.id}`}
+                              className="inline-block px-5 py-2.5 bg-[#B87333] text-white font-medium rounded hover:bg-[#955A28] transition-colors mt-2"
+                            >
+                              Read More
+                            </Link>
                           </div>
                         </div>
                       </CarouselItem>

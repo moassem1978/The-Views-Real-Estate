@@ -114,13 +114,8 @@ export default function PropertyCarousel() {
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       />
                       <div className="absolute top-4 left-4">
-                        <span className="inline-block px-3 py-1 bg-[#B87333] text-white text-sm rounded-full">
+                        <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
                           {property.propertyType}
-                        </span>
-                      </div>
-                      <div className="absolute top-4 right-4">
-                        <span className="inline-block px-3 py-1 bg-black/70 text-white text-sm rounded-full">
-                          {property.price.toLocaleString()} L.E
                         </span>
                       </div>
                     </div>
@@ -130,33 +125,7 @@ export default function PropertyCarousel() {
                       <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-2">
                         {property.title}
                       </h3>
-                      <p className="text-[#B87333] font-medium mb-3">
-                        {property.city}, {property.state}
-                      </p>
-                      <p className="text-gray-700 mb-5 line-clamp-3">
-                        {property.description}
-                      </p>
-                      
-                      <div className="flex justify-center items-center gap-6 mb-6">
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                          </svg>
-                          <span>{property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span>{property.bathrooms} {property.bathrooms === 1 ? 'Bath' : 'Baths'}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                          </svg>
-                          <span>{property.squareFeet ? property.squareFeet.toLocaleString() : '0'} m²</span>
-                        </div>
-                      </div>
+                      <div className="mt-4 mb-6"></div>
                       
                       <Link 
                         href={`/properties/${property.id}`}
