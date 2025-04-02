@@ -131,20 +131,22 @@ export default function HeroCarousel() {
                 </div>
 
                 {/* Type Badge - Top Left */}
-                <div className="absolute top-6 left-6 bg-black/60 text-white px-3 py-1 text-sm">
-                  {item.type === 'property' 
-                    ? (item.data as Property).listingType
-                    : 'Announcement'
-                  }
+                <div className="absolute top-6 left-6">
+                  <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
+                    {item.type === 'property' 
+                      ? (item.data as Property).listingType
+                      : 'Announcement'
+                    }
+                  </span>
                 </div>
 
                 {/* Title and Location - Bottom Left */}
                 <div className="absolute bottom-6 left-6">
-                  <h2 className="text-white text-2xl font-serif">
+                  <h2 className="text-white text-xl font-serif">
                     {item.data.title}
                   </h2>
                   {item.type === 'property' && (
-                    <p className="text-white/80 text-sm mt-1">
+                    <p className="text-white/80 text-xs">
                       {(item.data as Property).city}
                     </p>
                   )}

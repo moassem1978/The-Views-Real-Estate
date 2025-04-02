@@ -106,28 +106,30 @@ export default function PropertyCarousel() {
               {properties.map((property) => (
                 <CarouselItem key={property.id}>
                   <div className="flex flex-col">
-                    {/* Property Image */}
+                    {/* Property Image with ONLY type tag and title/location */}
                     <div className="relative aspect-[16/9] overflow-hidden rounded-lg shadow-lg">
                       <img 
                         src={property.images[0]} 
                         alt={property.title}
-                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                        className="w-full h-full object-cover"
                       />
+                      
+                      {/* Type at top left - ONLY THIS TAG */}
                       <div className="absolute top-4 left-4">
-                        <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
+                        <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
                           {property.propertyType}
                         </span>
                       </div>
-                    </div>
-                    
-                    {/* Property Details - positioned at the bottom of the image */}
-                    <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent pt-10 pb-6 px-4 text-left">
-                      <h3 className="text-2xl font-serif font-semibold text-white mb-1">
-                        {property.title}
-                      </h3>
-                      <p className="text-sm text-white/80">
-                        {property.city}
-                      </p>
+                      
+                      {/* ONLY title and location at bottom left */}
+                      <div className="absolute bottom-4 left-4">
+                        <h3 className="text-white text-xl font-serif">
+                          {property.title}
+                        </h3>
+                        <p className="text-white/80 text-xs">
+                          {property.city}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </CarouselItem>

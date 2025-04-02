@@ -134,34 +134,28 @@ export default function NewsCarousel() {
                   <CarouselContent>
                     {properties.map((property, index) => (
                       <CarouselItem key={property.id}>
-                        <div className="flex flex-col md:flex-row items-center gap-8 py-4">
-                          {/* Left - Property Image */}
-                          <div className="w-full md:w-1/2 aspect-video rounded-lg overflow-hidden shadow-lg">
-                            <img 
-                              src={property.images[0]} 
-                              alt={property.title}
-                              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                            />
+                        <div className="relative aspect-video rounded-lg overflow-hidden shadow-lg">
+                          <img 
+                            src={property.images[0]} 
+                            alt={property.title}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {/* Type at top left ONLY */}
+                          <div className="absolute top-4 left-4">
+                            <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
+                              {property.propertyType}
+                            </span>
                           </div>
                           
-                          {/* Right - Property Details */}
-                          <div className="w-full md:w-1/2 relative h-full">
-                            {/* Type at top left */}
-                            <div className="absolute top-0 left-0">
-                              <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
-                                {property.propertyType}
-                              </span>
-                            </div>
-                            
-                            {/* Content positioned at bottom left */}
-                            <div className="absolute bottom-0 left-0">
-                              <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-1">
-                                {property.title}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                {property.city}
-                              </p>
-                            </div>
+                          {/* Title and location at bottom left ONLY */}
+                          <div className="absolute bottom-4 left-4">
+                            <h3 className="text-white text-xl font-serif">
+                              {property.title}
+                            </h3>
+                            <p className="text-white/80 text-xs">
+                              {property.city}
+                            </p>
                           </div>
                         </div>
                       </CarouselItem>
@@ -239,34 +233,28 @@ export default function NewsCarousel() {
                   <CarouselContent>
                     {announcements.map((announcement, index) => (
                       <CarouselItem key={announcement.id}>
-                        <div className="flex flex-col md:flex-row items-center justify-between py-4 gap-6">
-                          {/* Left - Image */}
-                          <div className="w-full md:w-1/2 aspect-video rounded-lg overflow-hidden shadow-lg">
-                            <img 
-                              src={getImageUrl(announcement.imageUrl)} 
-                              alt={announcement.title}
-                              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                            />
+                        <div className="relative aspect-video rounded-lg overflow-hidden shadow-lg">
+                          <img 
+                            src={getImageUrl(announcement.imageUrl)} 
+                            alt={announcement.title}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {/* Type at top left ONLY */}
+                          <div className="absolute top-4 left-4">
+                            <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
+                              Announcement
+                            </span>
                           </div>
                           
-                          {/* Right - Content */}
-                          <div className="w-full md:w-1/2 relative h-full">
-                            {/* Type at top left */}
-                            <div className="absolute top-0 left-0">
-                              <span className="inline-block px-2 py-1 bg-black/60 text-white text-xs rounded-full">
-                                Announcement
-                              </span>
-                            </div>
-                            
-                            {/* Content positioned at bottom left */}
-                            <div className="absolute bottom-0 left-0">
-                              <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-1">
-                                {announcement.title}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                {formatDate(announcement.startDate)}
-                              </p>
-                            </div>
+                          {/* Title and date at bottom left ONLY */}
+                          <div className="absolute bottom-4 left-4">
+                            <h3 className="text-white text-xl font-serif">
+                              {announcement.title}
+                            </h3>
+                            <p className="text-white/80 text-xs">
+                              {formatDate(announcement.startDate)}
+                            </p>
                           </div>
                         </div>
                       </CarouselItem>
