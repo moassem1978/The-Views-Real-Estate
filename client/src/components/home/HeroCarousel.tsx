@@ -1,5 +1,5 @@
+
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
 import { Property, Announcement } from "@/types";
 import {
   Carousel,
@@ -9,7 +9,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 
 type SlideItem = {
   id: number;
@@ -83,7 +82,7 @@ export default function HeroCarousel() {
 
   if (isLoading) {
     return (
-      <section className="relative h-[80vh] bg-gray-900">
+      <section className="relative h-[80vh]">
         <Skeleton className="h-full w-full" />
       </section>
     );
@@ -91,8 +90,8 @@ export default function HeroCarousel() {
 
   if (slides.length === 0) {
     return (
-      <section className="relative h-[80vh] bg-gray-900">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/80 to-black/70" />
+      <section className="relative h-[80vh]">
+        <div className="absolute inset-0" />
       </section>
     );
   }
@@ -129,43 +128,34 @@ export default function HeroCarousel() {
                     alt={item.data.title}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60" />
                 </div>
 
                 {/* Type Badge - Top Left */}
-                <div className="absolute top-6 left-6">
-                  <Badge variant="secondary" className="bg-black/60 text-white text-xs px-3 py-1">
-                    {item.type === 'property' 
-                      ? (item.data as Property).propertyType
-                      : 'Announcement'
-                    }
-                  </Badge>
+                <div className="absolute top-6 left-6 bg-black/60 text-white px-3 py-1 text-sm">
+                  {item.type === 'property' 
+                    ? (item.data as Property).listingType
+                    : 'Announcement'
+                  }
                 </div>
 
                 {/* Title and Location - Bottom Left */}
-                <div className="absolute bottom-0 left-0 w-full p-6">
-                  <div className="container mx-auto">
-                    <h2 className="text-white text-3xl font-serif mb-1">
-                      {item.data.title}
-                    </h2>
-                    {item.type === 'property' && (
-                      <p className="text-white/80 text-sm">
-                        {(item.data as Property).city}
-                      </p>
-                    )}
-                  </div>
+                <div className="absolute bottom-6 left-6">
+                  <h2 className="text-white text-2xl font-serif">
+                    {item.data.title}
+                  </h2>
+                  {item.type === 'property' && (
+                    <p className="text-white/80 text-sm mt-1">
+                      {(item.data as Property).city}
+                    </p>
+                  )}
                 </div>
               </div>
             </CarouselItem>
           ))}
         </CarouselContent>
 
-        <CarouselPrevious 
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 border-none text-white h-10 w-10"
-        />
-        <CarouselNext 
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 border-none text-white h-10 w-10"
-        />
+        <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 border-none text-white h-10 w-10" />
+        <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 border-none text-white h-10 w-10" />
       </Carousel>
     </section>
   );
