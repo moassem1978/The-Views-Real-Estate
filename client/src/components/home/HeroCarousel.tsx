@@ -232,80 +232,33 @@ export default function HeroCarousel() {
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
                 </div>
                 
-                {/* Minimal Hero Content - Positioned at the bottom left */}
-                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent pt-10 pb-6">
+                {/* Only title at bottom left */}
+                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent pt-8 pb-6">
                   <div className="container mx-auto px-6">
-                    <div className="max-w-md text-white">
-                      {/* Content differs based on item type */}
+                    <div className="text-white">
+                      {/* Just the title - no description, no price */}
                       {item.type === 'property' ? (
-                        <>
-                          <h1 className="text-2xl md:text-3xl font-serif font-bold mb-2">
-                            {(item.data as Property).title}
-                          </h1>
-                          
-                          <div className="flex items-center space-x-4 text-sm mb-2">
-                            <div className="flex items-center">
-                              <span className="text-[#B87333] mr-1">{(item.data as Property).bedrooms}</span> Bed
-                            </div>
-                            
-                            {(item.data as Property).plotArea > 0 && (
-                              <div className="flex items-center">
-                                <span className="text-[#B87333] mr-1">{(item.data as Property).plotArea.toLocaleString()}</span> m² Plot
-                              </div>
-                            )}
-                            
-                            {(item.data as Property).builtUpArea > 0 && (
-                              <div className="flex items-center">
-                                <span className="text-[#B87333] mr-1">{(item.data as Property).builtUpArea.toLocaleString()}</span> m² BUA
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="mt-3 hidden md:flex">
-                            <Link
-                              href={`/properties/${(item.data as Property).id}`}
-                              className="text-sm text-[#B87333] border-b border-[#B87333] font-medium hover:text-white hover:border-white transition-colors"
-                            >
-                              View Details
-                            </Link>
-                          </div>
-                        </>
+                        <h1 className="text-2xl md:text-3xl font-serif font-bold">
+                          {(item.data as Property).title}
+                        </h1>
                       ) : (
-                        <>
-                          <h1 className="text-2xl md:text-3xl font-serif font-bold mb-1">
-                            {(item.data as Announcement).title}
-                          </h1>
-                          
-                          <div className="mt-3 hidden md:flex">
-                            <Link
-                              href={`/announcements/${(item.data as Announcement).id}`}
-                              className="text-sm text-[#B87333] border-b border-[#B87333] font-medium hover:text-white hover:border-white transition-colors"
-                            >
-                              Read More
-                            </Link>
-                          </div>
-                        </>
+                        <h1 className="text-2xl md:text-3xl font-serif font-bold">
+                          {(item.data as Announcement).title}
+                        </h1>
                       )}
                     </div>
                   </div>
                 </div>
                 
-                {/* Property Type and Price - Top positioned tags */}
-                {item.type === 'property' && (
-                  <div className="absolute top-4 right-4">
-                    <Badge variant="secondary" className="bg-black/70 text-white text-sm px-3 py-1.5">
-                      {(item.data as Property).price.toLocaleString()} L.E
-                    </Badge>
-                  </div>
-                )}
-                
-                {item.type === 'property' && (
-                  <div className="absolute top-4 left-4">
-                    <Badge variant="secondary" className="bg-[#B87333] text-white text-sm px-3 py-1.5">
-                      {(item.data as Property).propertyType}
-                    </Badge>
-                  </div>
-                )}
+                {/* Type of listing at top left only - small font */}
+                <div className="absolute top-4 left-4">
+                  <Badge variant="secondary" className="bg-black/60 text-white text-xs px-2 py-1">
+                    {item.type === 'property' 
+                      ? (item.data as Property).propertyType
+                      : 'Announcement'
+                    }
+                  </Badge>
+                </div>
               </div>
             </CarouselItem>
           ))}
