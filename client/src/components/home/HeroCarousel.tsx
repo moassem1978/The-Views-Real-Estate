@@ -241,7 +241,7 @@ export default function HeroCarousel() {
                         <>
                           <div className="flex flex-wrap items-center justify-between mb-4">
                             <Badge variant="secondary" className="bg-[#B87333] text-white text-sm mb-2 md:mb-0">
-                              {(item.data as Property).propertyType} | {formatPrice((item.data as Property).price)}
+                              {(item.data as Property).propertyType} | {(item.data as Property).price.toLocaleString()} L.E
                             </Badge>
                             
                             <div className="flex flex-wrap gap-6">

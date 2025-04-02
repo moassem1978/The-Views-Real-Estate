@@ -111,12 +111,12 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </div>
             
             {/* Price Info */}
-            <span className="text-[#D4AF37] font-medium">{formatPrice(property.price)}</span>
+            <span className="text-[#D4AF37] font-medium">{property.price.toLocaleString()} L.E</span>
             
             {/* Payment Details */}
             {property.listingType === 'Primary' && property.installmentAmount && (
               <div className="text-xs text-gray-600 mt-1">
-                <span className="font-medium">Installments:</span> {formatPrice(property.installmentAmount)}/month
+                <span className="font-medium">Installments:</span> {property.installmentAmount?.toLocaleString()} L.E/month
                 {property.installmentPeriod && (
                   <span className="ml-1">({Math.floor(property.installmentPeriod/12)} years)</span>
                 )}
@@ -124,7 +124,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             )}
             {property.downPayment && (
               <div className="text-xs text-gray-600">
-                <span className="font-medium">Down Payment:</span> {formatPrice(property.downPayment)}
+                <span className="font-medium">Down Payment:</span> {property.downPayment?.toLocaleString()} L.E
               </div>
             )}
             {property.isFullCash && (

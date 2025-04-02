@@ -153,7 +153,7 @@ export default function PropertyDetails() {
                 
                 <div className="flex items-center justify-between mb-8 border-y border-[#E8DACB] py-4">
                   <div className="text-3xl font-serif font-semibold text-[#D4AF37]">
-                    {formatPrice(property.price)}
+                    {property.price.toLocaleString()} L.E
                   </div>
                   <div className="flex space-x-4 text-gray-600">
                     <span className="flex items-center">
@@ -285,9 +285,9 @@ export default function PropertyDetails() {
                         <span className="text-gray-600">Price per Sq Ft</span>
                         <span className="font-medium text-gray-800">
                           {property.builtUpArea 
-                            ? formatPrice(property.price / property.builtUpArea, 0)
+                            ? `${Math.round(property.price / property.builtUpArea).toLocaleString()} L.E`
                             : property.squareFeet
-                              ? formatPrice(property.price / property.squareFeet, 0)
+                              ? `${Math.round(property.price / property.squareFeet).toLocaleString()} L.E`
                               : "N/A"}
                         </span>
                       </div>

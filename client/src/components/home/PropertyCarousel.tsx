@@ -120,7 +120,7 @@ export default function PropertyCarousel() {
                       </div>
                       <div className="absolute top-4 right-4">
                         <span className="inline-block px-3 py-1 bg-black/70 text-white text-sm rounded-full">
-                          {formatPrice(property.price)}
+                          {property.price.toLocaleString()} L.E
                         </span>
                       </div>
                     </div>
@@ -154,7 +154,7 @@ export default function PropertyCarousel() {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#B87333] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                           </svg>
-                          <span>{property.squareFeet.toLocaleString()} sq ft</span>
+                          <span>{property.squareFeet ? property.squareFeet.toLocaleString() : '0'} m²</span>
                         </div>
                       </div>
                       

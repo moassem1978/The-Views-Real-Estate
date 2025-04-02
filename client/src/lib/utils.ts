@@ -27,19 +27,8 @@ export function formatPrice(price: number, maximumFractionDigits = 0): string {
   // Return quickly for common cases
   if (price === 0) return "0 L.E";
   
-  // Use cached formatter instance for performance
-  const cacheKey = `price-${maximumFractionDigits}`;
-  if (!formatterCache[cacheKey]) {
-    formatterCache[cacheKey] = new Intl.NumberFormat('en-US', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits,
-      useGrouping: true, // This ensures thousand separators are used
-    });
-  }
-  
-  // Format using cached formatter and return with currency symbol (only L.E)
-  return `${formatterCache[cacheKey].format(price)} L.E`;
+  // Simply return number with thousand separators using toLocaleString and "L.E" suffix
+  return `${price.toLocaleString()} L.E`;
 }
 
 /**

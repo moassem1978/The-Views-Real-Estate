@@ -66,7 +66,7 @@ const PropertyCard = memo(({ property }: { property: Property }) => {
             {property.propertyType}
           </Badge>
           <span className="text-lg font-semibold text-[#B87333]">
-            {formatPrice(property.price)} L.E
+            {property.price.toLocaleString()} L.E
           </span>
         </div>
         <h3 className="font-semibold text-xl mt-2 font-serif">

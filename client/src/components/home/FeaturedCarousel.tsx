@@ -157,7 +157,7 @@ export default function FeaturedCarousel() {
                       
                       {item.price && (
                         <p className="text-xl sm:text-2xl md:text-3xl font-serif text-[#E6CCB2] mb-4">
-                          {formatPrice(item.price)} L.E
+                          {item.price.toLocaleString()} L.E
                         </p>
                       )}
                       
