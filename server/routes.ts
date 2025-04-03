@@ -121,19 +121,31 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // API routes for properties
   app.get("/api/properties", async (req: Request, res: Response) => {
     try {
-      const properties = await dbStorage.getAllProperties();
-      res.json(properties);
+      // Extract pagination parameters from query
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
+      
+      // Get paginated properties
+      const result = await dbStorage.getAllProperties(page, pageSize);
+      res.json(result);
     } catch (error) {
+      console.error('Error fetching properties:', error);
       res.status(500).json({ message: "Failed to fetch properties" });
     }
   });
 
   app.get("/api/properties/featured", async (req: Request, res: Response) => {
     try {
+      // Get pagination parameters if provided, otherwise use defaults
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
-      const properties = await dbStorage.getFeaturedProperties(limit);
-      res.json(properties);
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
+      
+      // Get paginated featured properties
+      const result = await dbStorage.getFeaturedProperties(limit, page, pageSize);
+      res.json(result);
     } catch (error) {
+      console.error("Error fetching featured properties:", error);
       res.status(500).json({ message: "Failed to fetch featured properties" });
     }
   });
@@ -156,10 +168,16 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   app.get("/api/properties/new", async (req: Request, res: Response) => {
     try {
+      // Get pagination parameters if provided, otherwise use defaults
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
-      const properties = await dbStorage.getNewListings(limit);
-      res.json(properties);
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
+      
+      // Get paginated new listings
+      const result = await dbStorage.getNewListings(limit, page, pageSize);
+      res.json(result);
     } catch (error) {
+      console.error("Error fetching new listings:", error);
       res.status(500).json({ message: "Failed to fetch new listings" });
     }
   });
@@ -238,24 +256,37 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   app.get("/api/properties/search", async (req: Request, res: Response) => {
     try {
       const filters = searchFiltersSchema.parse(req.query);
-      const properties = await dbStorage.searchProperties(filters);
-      res.json(properties);
+      
+      // Get pagination parameters if provided, otherwise use defaults
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
+      
+      // Get paginated search results
+      const result = await dbStorage.searchProperties(filters, page, pageSize);
+      res.json(result);
     } catch (error) {
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
         res.status(400).json({ message: validationError.message });
       } else {
+        console.error("Error searching properties:", error);
         res.status(500).json({ message: "Failed to search properties" });
       }
     }
   });
 
   // API routes for testimonials
-  app.get("/api/testimonials", async (_req: Request, res: Response) => {
+  app.get("/api/testimonials", async (req: Request, res: Response) => {
     try {
-      const testimonials = await dbStorage.getAllTestimonials();
-      res.json(testimonials);
+      // Extract pagination parameters from query
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
+      
+      // Get paginated testimonials
+      const result = await dbStorage.getAllTestimonials(page, pageSize);
+      res.json(result);
     } catch (error) {
+      console.error("Error fetching testimonials:", error);
       res.status(500).json({ message: "Failed to fetch testimonials" });
     }
   });
@@ -294,10 +325,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // API routes for announcements
-  app.get("/api/announcements", async (_req: Request, res: Response) => {
+  app.get("/api/announcements", async (req: Request, res: Response) => {
     try {
-      const announcements = await dbStorage.getAllAnnouncements();
-      res.json(announcements);
+      // Extract pagination parameters from query
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
+      
+      // Get paginated announcements
+      const result = await dbStorage.getAllAnnouncements(page, pageSize);
+      res.json(result);
     } catch (error) {
       console.error("Error fetching announcements:", error);
       res.status(500).json({ message: "Failed to fetch announcements" });

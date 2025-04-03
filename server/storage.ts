@@ -12,6 +12,14 @@ import { db } from "./db";
 import { eq, and, like, gte, lte, desc, sql, asc } from "drizzle-orm";
 
 // Storage interface for CRUD operations
+export interface PaginatedResult<T> {
+  data: T[];
+  totalCount: number;
+  pageCount: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -19,29 +27,31 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   
   // Property operations
-  getAllProperties(): Promise<Property[]>;
-  getFeaturedProperties(limit?: number): Promise<Property[]>;
+  getAllProperties(page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
+  getFeaturedProperties(limit?: number, page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
   getHighlightedProperties(limit?: number): Promise<Property[]>;
-  getNewListings(limit?: number): Promise<Property[]>;
+  getNewListings(limit?: number, page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
   getPropertyById(id: number): Promise<Property | undefined>;
   createProperty(property: InsertProperty): Promise<Property>;
   updateProperty(id: number, property: Partial<Property>): Promise<Property | undefined>;
   deleteProperty(id: number): Promise<boolean>;
-  searchProperties(filters: Partial<PropertySearchFilters>): Promise<Property[]>;
+  searchProperties(filters: Partial<PropertySearchFilters>, page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
+  getPropertyCount(): Promise<number>;
   
   // Testimonial operations
-  getAllTestimonials(): Promise<Testimonial[]>;
+  getAllTestimonials(page?: number, pageSize?: number): Promise<PaginatedResult<Testimonial>>;
   getTestimonialById(id: number): Promise<Testimonial | undefined>;
   createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
   
   // Announcement operations
-  getAllAnnouncements(): Promise<Announcement[]>;
+  getAllAnnouncements(page?: number, pageSize?: number): Promise<PaginatedResult<Announcement>>;
   getFeaturedAnnouncements(limit?: number): Promise<Announcement[]>;
   getHighlightedAnnouncements(limit?: number): Promise<Announcement[]>;
   getAnnouncementById(id: number): Promise<Announcement | undefined>;
   createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
   updateAnnouncement(id: number, announcement: Partial<Announcement>): Promise<Announcement | undefined>;
   deleteAnnouncement(id: number): Promise<boolean>;
+  getAnnouncementCount(): Promise<number>;
   
   // Site settings operations
   getSiteSettings(): Promise<SiteSettings>;
@@ -1028,16 +1038,78 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Property operations
-  async getAllProperties(): Promise<Property[]> {
-    return await db.select().from(properties);
+  async getPropertyCount(): Promise<number> {
+    const result = await db.select({ count: sql`count(*)` }).from(properties);
+    return Number(result[0].count);
   }
 
-  async getFeaturedProperties(limit = 3): Promise<Property[]> {
-    return await db
+  async getAllProperties(page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
+    const offset = (page - 1) * pageSize;
+    const totalCount = await this.getPropertyCount();
+    const pageCount = Math.ceil(totalCount / pageSize);
+    
+    const data = await db
+      .select()
+      .from(properties)
+      .orderBy(desc(properties.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+    
+    return {
+      data,
+      totalCount,
+      pageCount,
+      page,
+      pageSize
+    };
+  }
+
+  async getFeaturedProperties(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
+    const offset = (page - 1) * pageSize;
+    
+    // Get total count for featured properties
+    const countResult = await db
+      .select({ count: sql`count(*)` })
+      .from(properties)
+      .where(eq(properties.isFeatured, true));
+    
+    const totalCount = Number(countResult[0].count);
+    const pageCount = Math.ceil(totalCount / pageSize);
+    
+    // If limit is provided, use it instead of pagination
+    if (limit > 0) {
+      const data = await db
+        .select()
+        .from(properties)
+        .where(eq(properties.isFeatured, true))
+        .orderBy(desc(properties.createdAt))
+        .limit(limit);
+      
+      return {
+        data,
+        totalCount,
+        pageCount: 1,
+        page: 1,
+        pageSize: limit
+      };
+    }
+    
+    // Otherwise use pagination
+    const data = await db
       .select()
       .from(properties)
       .where(eq(properties.isFeatured, true))
-      .limit(limit);
+      .orderBy(desc(properties.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+    
+    return {
+      data,
+      totalCount,
+      pageCount,
+      page,
+      pageSize
+    };
   }
 
   async getHighlightedProperties(limit = 3): Promise<Property[]> {
@@ -1055,15 +1127,63 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
     
     console.log(`DEBUG: Query returned ${results.length} highlighted properties`);
+    
+    // Log each property for debugging
+    if (results.length > 0) {
+      results.forEach(p => {
+        console.log(`DEBUG: Highlighted property: ID ${p.id}, Title: ${p.title}, isHighlighted: ${p.isHighlighted}`);
+      });
+    }
+    
     return results;
   }
 
-  async getNewListings(limit = 3): Promise<Property[]> {
-    return await db
+  async getNewListings(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
+    const offset = (page - 1) * pageSize;
+    
+    // Get total count for new listings
+    const countResult = await db
+      .select({ count: sql`count(*)` })
+      .from(properties)
+      .where(eq(properties.isNewListing, true));
+    
+    const totalCount = Number(countResult[0].count);
+    const pageCount = Math.ceil(totalCount / pageSize);
+    
+    // If limit is provided, use it instead of pagination
+    if (limit > 0) {
+      const data = await db
+        .select()
+        .from(properties)
+        .where(eq(properties.isNewListing, true))
+        .orderBy(desc(properties.createdAt))
+        .limit(limit);
+      
+      return {
+        data,
+        totalCount,
+        pageCount: 1,
+        page: 1,
+        pageSize: limit
+      };
+    }
+    
+    // Otherwise use pagination
+    const data = await db
       .select()
       .from(properties)
       .where(eq(properties.isNewListing, true))
-      .limit(limit);
+      .orderBy(desc(properties.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+    
+    return {
+      data,
+      totalCount,
+      pageCount,
+      page,
+      pageSize
+    };
   }
 
   async getPropertyById(id: number): Promise<Property | undefined> {
@@ -1099,75 +1219,132 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async searchProperties(filters: Partial<PropertySearchFilters>): Promise<Property[]> {
-    let query = db.select().from(properties);
+  async searchProperties(filters: Partial<PropertySearchFilters>, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
+    let countQuery = db.select({ count: sql`count(*)` }).from(properties);
+    let dataQuery = db.select().from(properties);
+    
+    // Apply all filters to both queries
     
     // Filter by location (city, state, zip)
     if (filters.location) {
       const locationTerm = `%${filters.location}%`;
-      query = query.where(
-        sql`(${properties.city} ILIKE ${locationTerm} OR 
-             ${properties.state} ILIKE ${locationTerm} OR 
-             ${properties.zipCode} ILIKE ${locationTerm})`
-      );
+      const locationFilter = sql`(${properties.city} ILIKE ${locationTerm} OR 
+                                 ${properties.state} ILIKE ${locationTerm} OR 
+                                 ${properties.zipCode} ILIKE ${locationTerm})`;
+      countQuery = countQuery.where(locationFilter);
+      dataQuery = dataQuery.where(locationFilter);
     }
     
     // Filter by property type
     if (filters.propertyType && filters.propertyType !== "all") {
-      query = query.where(eq(properties.propertyType, filters.propertyType));
+      countQuery = countQuery.where(eq(properties.propertyType, filters.propertyType));
+      dataQuery = dataQuery.where(eq(properties.propertyType, filters.propertyType));
     }
     
     // Filter by listing type (Primary or Resale)
     if (filters.listingType && filters.listingType !== "all") {
-      query = query.where(eq(properties.listingType, filters.listingType));
+      countQuery = countQuery.where(eq(properties.listingType, filters.listingType));
+      dataQuery = dataQuery.where(eq(properties.listingType, filters.listingType));
     }
     
     // Filter by project name
     if (filters.projectName) {
       const projectTerm = `%${filters.projectName}%`;
-      query = query.where(sql`${properties.projectName} ILIKE ${projectTerm}`);
+      const projectFilter = sql`${properties.projectName} ILIKE ${projectTerm}`;
+      countQuery = countQuery.where(projectFilter);
+      dataQuery = dataQuery.where(projectFilter);
     }
     
     // Filter by developer name
     if (filters.developerName) {
       const developerTerm = `%${filters.developerName}%`;
-      query = query.where(sql`${properties.developerName} ILIKE ${developerTerm}`);
+      const developerFilter = sql`${properties.developerName} ILIKE ${developerTerm}`;
+      countQuery = countQuery.where(developerFilter);
+      dataQuery = dataQuery.where(developerFilter);
     }
     
     // Filter by price range
     if (filters.minPrice) {
-      query = query.where(gte(properties.price, filters.minPrice));
+      countQuery = countQuery.where(gte(properties.price, filters.minPrice));
+      dataQuery = dataQuery.where(gte(properties.price, filters.minPrice));
     }
     
     if (filters.maxPrice) {
-      query = query.where(lte(properties.price, filters.maxPrice));
+      countQuery = countQuery.where(lte(properties.price, filters.maxPrice));
+      dataQuery = dataQuery.where(lte(properties.price, filters.maxPrice));
     }
     
     // Filter by bedrooms
     if (filters.minBedrooms) {
-      query = query.where(gte(properties.bedrooms, filters.minBedrooms));
+      countQuery = countQuery.where(gte(properties.bedrooms, filters.minBedrooms));
+      dataQuery = dataQuery.where(gte(properties.bedrooms, filters.minBedrooms));
     }
     
     // Filter by bathrooms
     if (filters.minBathrooms) {
-      query = query.where(gte(properties.bathrooms, filters.minBathrooms));
+      countQuery = countQuery.where(gte(properties.bathrooms, filters.minBathrooms));
+      dataQuery = dataQuery.where(gte(properties.bathrooms, filters.minBathrooms));
     }
     
     // Filter by payment options
     if (filters.isFullCash === true) {
-      query = query.where(eq(properties.isFullCash, true));
+      countQuery = countQuery.where(eq(properties.isFullCash, true));
+      dataQuery = dataQuery.where(eq(properties.isFullCash, true));
     }
     
     if (filters.hasInstallments === true) {
-      query = query.where(sql`${properties.installmentAmount} IS NOT NULL`);
+      const installmentFilter = sql`${properties.installmentAmount} IS NOT NULL`;
+      countQuery = countQuery.where(installmentFilter);
+      dataQuery = dataQuery.where(installmentFilter);
     }
     
-    return await query;
+    // Calculate pagination parameters
+    const offset = (page - 1) * pageSize;
+    
+    // Get total count
+    const countResult = await countQuery;
+    const totalCount = Number(countResult[0].count);
+    const pageCount = Math.ceil(totalCount / pageSize);
+    
+    // Get paginated data
+    const data = await dataQuery
+      .orderBy(desc(properties.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+    
+    return {
+      data,
+      totalCount,
+      pageCount,
+      page,
+      pageSize
+    };
   }
 
   // Testimonial operations
-  async getAllTestimonials(): Promise<Testimonial[]> {
-    return await db.select().from(testimonials);
+  async getAllTestimonials(page = 1, pageSize = 10): Promise<PaginatedResult<Testimonial>> {
+    const offset = (page - 1) * pageSize;
+    
+    // Get total count
+    const countResult = await db.select({ count: sql`count(*)` }).from(testimonials);
+    const totalCount = Number(countResult[0].count);
+    const pageCount = Math.ceil(totalCount / pageSize);
+    
+    // Get paginated data
+    const data = await db
+      .select()
+      .from(testimonials)
+      .orderBy(desc(testimonials.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+    
+    return {
+      data,
+      totalCount,
+      pageCount,
+      page,
+      pageSize
+    };
   }
 
   async getTestimonialById(id: number): Promise<Testimonial | undefined> {
@@ -1187,8 +1364,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Announcement operations
-  async getAllAnnouncements(): Promise<Announcement[]> {
-    return await db.select().from(announcements);
+  async getAnnouncementCount(): Promise<number> {
+    const result = await db.select({ count: sql`count(*)` }).from(announcements);
+    return Number(result[0].count);
+  }
+  
+  async getAllAnnouncements(page = 1, pageSize = 10): Promise<PaginatedResult<Announcement>> {
+    const offset = (page - 1) * pageSize;
+    const totalCount = await this.getAnnouncementCount();
+    const pageCount = Math.ceil(totalCount / pageSize);
+    
+    const data = await db
+      .select()
+      .from(announcements)
+      .orderBy(desc(announcements.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+    
+    return {
+      data,
+      totalCount,
+      pageCount,
+      page,
+      pageSize
+    };
   }
 
   async getFeaturedAnnouncements(limit = 3): Promise<Announcement[]> {
