@@ -1,3 +1,13 @@
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  fullName: string;
+  phone?: string;
+  isAgent: boolean;
+  createdAt: string;
+}
+
 export interface Property {
   id: number;
   title: string;
@@ -9,23 +19,22 @@ export interface Property {
   price: number;
   downPayment?: number;
   installmentAmount?: number;
-  installmentPeriod?: number; // In months
-  isFullCash?: boolean;
+  installmentPeriod?: number;
+  isFullCash: boolean;
   listingType: string; // "Primary" or "Resale"
   projectName?: string;
   developerName?: string;
   bedrooms: number;
   bathrooms: number;
-  squareFeet?: number;
-  builtUpArea?: number;
+  builtUpArea: number;
   plotSize?: number;
   gardenSize?: number;
   floor?: number;
-  isGroundUnit?: boolean;
+  isGroundUnit: boolean;
   propertyType: string;
   isFeatured: boolean;
   isNewListing: boolean;
-  isHighlighted: boolean; // Adding the missing isHighlighted flag for main carousel
+  isHighlighted: boolean;
   yearBuilt?: number;
   views?: string;
   amenities: string[];
@@ -46,40 +55,6 @@ export interface Testimonial {
   createdAt: string;
 }
 
-export interface SearchFilters {
-  location?: string;
-  propertyType?: string;
-  listingType?: string; // "Primary" or "Resale" 
-  projectName?: string;
-  developerName?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  minBedrooms?: number;
-  minBathrooms?: number;
-  isFullCash?: boolean;
-  hasInstallments?: boolean;
-}
-
-export interface FormattedPriceRange {
-  value: string;
-  label: string;
-  min?: number;
-  max?: number;
-}
-
-export interface Agent {
-  id: number;
-  fullName: string;
-  email: string;
-  phone?: string;
-}
-
-export interface Service {
-  icon: string;
-  title: string;
-  description: string;
-}
-
 export interface Announcement {
   id: number;
   title: string;
@@ -89,6 +64,20 @@ export interface Announcement {
   endDate?: string;
   isActive: boolean;
   isFeatured: boolean;
-  isHighlighted: boolean; // Adding the missing isHighlighted flag for main carousel
+  isHighlighted: boolean;
   createdAt: string;
+}
+
+export interface SiteSettings {
+  companyLogo?: string;
+  companyName: string;
+  primaryColor?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  socialLinks?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
 }

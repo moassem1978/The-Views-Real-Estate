@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import React, { lazy, Suspense, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { clearImageCache } from "./lib/utils";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "./lib/protected-route";
 
 // Streamlined loading fallback
 const LoadingFallback = () => (
@@ -71,13 +73,67 @@ function Router() {
 
   return (
     <Switch>
-      {routes.map(({ path, Component }) => (
-        <Route key={path} path={path}>
+      {/* Standard public routes */}
+      <Route path="/">
+        <Suspense fallback={<LoadingFallback />}>
+          <Home />
+        </Suspense>
+      </Route>
+      <Route path="/properties">
+        <Suspense fallback={<LoadingFallback />}>
+          <Properties />
+        </Suspense>
+      </Route>
+      <Route path="/properties/:id">
+        <Suspense fallback={<LoadingFallback />}>
+          <PropertyDetails />
+        </Suspense>
+      </Route>
+      <Route path="/contact">
+        <Suspense fallback={<LoadingFallback />}>
+          <Contact />
+        </Suspense>
+      </Route>
+      <Route path="/about">
+        <Suspense fallback={<LoadingFallback />}>
+          <About />
+        </Suspense>
+      </Route>
+      <Route path="/services">
+        <Suspense fallback={<LoadingFallback />}>
+          <Services />
+        </Suspense>
+      </Route>
+      <Route path="/services/:serviceType">
+        <Suspense fallback={<LoadingFallback />}>
+          <ServiceDetails />
+        </Suspense>
+      </Route>
+      <Route path="/signin">
+        <Suspense fallback={<LoadingFallback />}>
+          <SignIn />
+        </Suspense>
+      </Route>
+      <Route path="/announcements">
+        <Suspense fallback={<LoadingFallback />}>
+          <Announcements />
+        </Suspense>
+      </Route>
+      <Route path="/announcements/:id">
+        <Suspense fallback={<LoadingFallback />}>
+          <AnnouncementDetails />
+        </Suspense>
+      </Route>
+      
+      {/* Protected routes */}
+      <ProtectedRoute 
+        path="/dashboard" 
+        component={() => (
           <Suspense fallback={<LoadingFallback />}>
-            <Component />
+            <Dashboard />
           </Suspense>
-        </Route>
-      ))}
+        )} 
+      />
       
       {/* Fallback to 404 */}
       <Route>
@@ -92,8 +148,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -1,4 +1,4 @@
-import express, { type Express, Request, Response } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { z } from "zod";
@@ -8,6 +8,7 @@ import { fromZodError } from "zod-validation-error";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { setupAuth } from "./auth";
 
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
@@ -115,6 +116,9 @@ const logoUpload = multer({
 });
 
 export async function registerRoutes(app: Express, customUpload?: any, customUploadsDir?: string): Promise<Server> {
+  // Set up authentication routes and middleware
+  setupAuth(app);
+  
   // Use either the provided upload and uploads directory or the defaults
   const finalUpload = customUpload || upload;
   const finalUploadsDir = customUploadsDir || uploadsDir;
