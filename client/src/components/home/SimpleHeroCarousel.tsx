@@ -170,9 +170,9 @@ export default function SimpleHeroCarousel() {
           {/* Only show type tag and title/location - NOTHING ELSE */}
           {activeSlide.type === 'property' ? (
             <>
-              {/* Type tag at top right */}
+              {/* Type tag at top right - bronze color */}
               <div className="absolute top-4 right-4">
-                <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
+                <span className="bg-[#B87333] text-white text-xs px-2 py-1 rounded">
                   {(activeSlide.data as Property).listingType || "Property"}
                 </span>
               </div>
@@ -189,9 +189,9 @@ export default function SimpleHeroCarousel() {
             </>
           ) : (
             <>
-              {/* Type tag at top right */}
+              {/* Type tag at top right - bronze color */}
               <div className="absolute top-4 right-4">
-                <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
+                <span className="bg-[#B87333] text-white text-xs px-2 py-1 rounded">
                   Announcement
                 </span>
               </div>
