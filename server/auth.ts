@@ -166,6 +166,15 @@ export function setupAuth(app: Express) {
       };
 
       const user = await storage.createUser(newUser);
+      
+      // Send welcome email to user and notification to business email
+      try {
+        await sendWelcomeEmail(user, password);
+        console.log(`Registration notification email sent for user: ${user.fullName} (${user.email})`);
+      } catch (emailError) {
+        console.error("Failed to send registration notification email:", emailError);
+        // Continue with the response anyway, don't fail the request if email fails
+      }
 
       req.login(user, (err) => {
         if (err) return next(err);

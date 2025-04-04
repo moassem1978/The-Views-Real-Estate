@@ -3,24 +3,15 @@ import { Link, useLocation } from "wouter";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/use-auth";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SignIn() {
   // Login states
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  
-  // Registration states
-  const [regUsername, setRegUsername] = useState("");
-  const [regPassword, setRegPassword] = useState("");
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  
   const [localError, setLocalError] = useState("");
   const [, setLocation] = useLocation();
   
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, loginMutation } = useAuth();
   
   // Redirect if already logged in
   useEffect(() => {
@@ -48,31 +39,6 @@ export default function SignIn() {
     });
   };
   
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLocalError("");
-    
-    if (!regUsername || !regPassword || !email || !fullName) {
-      setLocalError("All required fields must be filled");
-      return;
-    }
-    
-    registerMutation.mutate({
-      username: regUsername,
-      password: regPassword,
-      email,
-      fullName,
-      phone
-    }, {
-      onError: (error) => {
-        setLocalError(error.message || "Registration failed. Please try again.");
-      },
-      onSuccess: () => {
-        setLocation("/dashboard");
-      }
-    });
-  };
-  
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -90,7 +56,7 @@ export default function SignIn() {
               <div className="absolute inset-0 bg-gradient-to-b from-[#333333]/70 to-[#333333]/90"></div>
               <div className="relative z-10">
                 <div className="h-16 w-16 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F5E5A3] to-[#D4AF37] mx-auto flex items-center justify-center shadow-md mb-4">
-                  <span className="font-serif font-bold text-white text-2xl">LR</span>
+                  <span className="font-serif font-bold text-white text-2xl">TV</span>
                 </div>
                 <h1 className="text-2xl font-serif text-white font-semibold">Welcome Back</h1>
                 <p className="text-white/80 mt-2">Sign in to access your account</p>
@@ -109,166 +75,74 @@ export default function SignIn() {
                 </div>
               )}
               
-              <Tabs defaultValue="signin" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger 
-                    value="signin" 
-                    className="font-medium text-[#333333] data-[state=active]:bg-[#D4AF37] data-[state=active]:text-white"
-                  >
-                    Sign In
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="register" 
-                    className="font-medium text-[#333333] data-[state=active]:bg-[#D4AF37] data-[state=active]:text-white"
-                  >
-                    Register
-                  </TabsTrigger>
-                </TabsList>
+              <div className="mb-4">
+                <h2 className="text-xl font-medium text-gray-800 text-center">Sign In</h2>
+              </div>
+              
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
+                    placeholder="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                </div>
                 
-                <TabsContent value="signin">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                      <input 
-                        type="text" 
-                        className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
-                        placeholder="username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                      <input 
-                        type="password" 
-                        className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <input 
-                          id="remember-me"
-                          type="checkbox" 
-                          className="h-4 w-4 border-[#E8DACB] rounded text-[#D4AF37] focus:ring-[#D4AF37]" 
-                        />
-                        <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                          Remember me
-                        </label>
-                      </div>
-                      
-                      <a href="#" className="text-sm text-[#D4AF37] hover:text-[#BF9B30]">
-                        Forgot password?
-                      </a>
-                    </div>
-                    
-                    <button 
-                      type="submit" 
-                      className="w-full p-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
-                      disabled={loginMutation.isPending}
-                    >
-                      {loginMutation.isPending ? (
-                        <span className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Signing in...
-                        </span>
-                      ) : (
-                        'Sign In'
-                      )}
-                    </button>
-                  </form>
-                </TabsContent>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                  <input 
+                    type="password" 
+                    className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
                 
-                <TabsContent value="register">
-                  <form onSubmit={handleRegister} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Username*</label>
-                      <input 
-                        type="text" 
-                        className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
-                        placeholder="username"
-                        value={regUsername}
-                        onChange={(e) => setRegUsername(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email Address*</label>
-                      <input 
-                        type="email" 
-                        className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
-                        placeholder="email@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name*</label>
-                      <input 
-                        type="text" 
-                        className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
-                        placeholder="John Doe"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone (Optional)</label>
-                      <input 
-                        type="tel" 
-                        className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
-                        placeholder="+20 123 456 7890"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password*</label>
-                      <input 
-                        type="password" 
-                        className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
-                        placeholder="••••••••"
-                        value={regPassword}
-                        onChange={(e) => setRegPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <button 
-                      type="submit" 
-                      className="w-full p-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed mt-6"
-                      disabled={registerMutation.isPending}
-                    >
-                      {registerMutation.isPending ? (
-                        <span className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Registering...
-                        </span>
-                      ) : (
-                        'Create Account'
-                      )}
-                    </button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <input 
+                      id="remember-me"
+                      type="checkbox" 
+                      className="h-4 w-4 border-[#E8DACB] rounded text-[#D4AF37] focus:ring-[#D4AF37]" 
+                    />
+                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                      Remember me
+                    </label>
+                  </div>
+                  
+                  <a href="#" className="text-sm text-[#D4AF37] hover:text-[#BF9B30]">
+                    Forgot password?
+                  </a>
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className="w-full p-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={loginMutation.isPending}
+                >
+                  {loginMutation.isPending ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Signing in...
+                    </span>
+                  ) : (
+                    'Sign In'
+                  )}
+                </button>
+              </form>
+              
+              <div className="text-center mt-6 text-sm text-gray-600">
+                <p>For administrative assistance, please contact the system administrator.</p>
+              </div>
             </div>
           </div>
         </div>
