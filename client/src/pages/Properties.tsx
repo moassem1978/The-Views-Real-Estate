@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Property, SearchFilters } from "@/types";
+import { Property, SearchFilters } from "../types";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyList from "@/components/properties/PropertyList";
@@ -31,15 +31,24 @@ export default function Properties() {
   // Prepare query parameters for API call
   const queryParams = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined) {
-      queryParams.append(key, value.toString());
+    if (value !== undefined && value !== null) {
+      queryParams.append(key, String(value));
     }
   });
   
   const queryString = queryParams.toString();
   const apiUrl = queryString ? `/api/properties/search?${queryString}` : '/api/properties';
   
-  const { data: properties, isLoading, error } = useQuery<Property[]>({
+  // Define the paginated response type
+  interface PaginatedResponse {
+    data: Property[];
+    totalCount: number;
+    pageCount: number;
+    page: number;
+    pageSize: number;
+  }
+  
+  const { data: propertiesResponse, isLoading, error } = useQuery<PaginatedResponse>({
     queryKey: [apiUrl],
   });
   
@@ -49,8 +58,8 @@ export default function Properties() {
     // Update URL with new filters
     const params = new URLSearchParams();
     Object.entries(newFilters).forEach(([key, value]) => {
-      if (value !== undefined) {
-        params.append(key, value.toString());
+      if (value !== undefined && value !== null) {
+        params.append(key, String(value));
       }
     });
     
@@ -151,7 +160,7 @@ export default function Properties() {
                 </div>
               </div>
             ) : (
-              <PropertyList properties={properties || []} filters={filters} />
+              <PropertyList properties={propertiesResponse?.data || []} filters={filters} />
             )}
           </div>
         </section>

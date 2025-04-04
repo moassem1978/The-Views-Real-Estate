@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Property } from "@/types";
+import { Property } from "../../types";
 import { formatPrice, parseJsonArray } from "@/lib/utils";
 import PropertyImage from "@/components/properties/PropertyImage";
 
@@ -174,9 +174,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                 ? `${property.builtUpArea.toLocaleString()} m²` 
                 : property.plotSize
                   ? `${property.plotSize.toLocaleString()} m²`
-                  : property.squareFeet 
-                    ? `${property.squareFeet.toLocaleString()} m²`
-                    : "N/A"}
+                  : "N/A"}
             </span>
           </div>
         </div>

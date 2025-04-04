@@ -84,3 +84,17 @@ export interface SiteSettings {
     linkedin?: string;
   };
 }
+
+export interface SearchFilters {
+  location?: string;
+  propertyType?: string;
+  listingType?: string;
+  projectName?: string;
+  developerName?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minBedrooms?: number;
+  minBathrooms?: number;
+  isFullCash?: boolean;
+  hasInstallments?: boolean;
+}

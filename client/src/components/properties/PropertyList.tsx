@@ -1,4 +1,4 @@
-import { Property, SearchFilters } from "@/types";
+import { Property, SearchFilters } from "../../types";
 import PropertyCard from "./PropertyCard";
 import { useEffect, useState } from "react";
 
@@ -29,7 +29,7 @@ export default function PropertyList({ properties, filters }: PropertyListProps)
         sorted.sort((a, b) => b.bedrooms - a.bedrooms);
         break;
       case "sqft":
-        sorted.sort((a, b) => b.squareFeet - a.squareFeet);
+        sorted.sort((a, b) => b.builtUpArea - a.builtUpArea);
         break;
       // Default shows featured properties first
       default:
@@ -80,7 +80,7 @@ export default function PropertyList({ properties, filters }: PropertyListProps)
     if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
       let priceText = "Price: ";
       if (filters.minPrice !== undefined) {
-        priceText += `$${(filters.minPrice / 1000000).toFixed(1)}M`;
+        priceText += `${filters.minPrice.toLocaleString()} L.E`;
       }
 
       if (filters.minPrice !== undefined && filters.maxPrice !== undefined) {
@@ -88,7 +88,7 @@ export default function PropertyList({ properties, filters }: PropertyListProps)
       }
 
       if (filters.maxPrice !== undefined) {
-        priceText += `$${(filters.maxPrice / 1000000).toFixed(1)}M`;
+        priceText += `${filters.maxPrice.toLocaleString()} L.E`;
       }
 
       parts.push(priceText);
