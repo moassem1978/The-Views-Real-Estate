@@ -182,9 +182,7 @@ export default function Header() {
                 <Link href="/services/selling" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
                   Selling
                 </Link>
-                <Link href="/services/consultation" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
-                  Consultation
-                </Link>
+
               </div>
             </div>
             <Link 
@@ -327,7 +325,7 @@ export default function Header() {
               <div className="pl-4 mt-2 space-y-2 border-l-2 border-copper/20">
                 <Link href="/services/buying" className="block py-1 text-rich-black hover:text-copper transition-colors">Buying</Link>
                 <Link href="/services/selling" className="block py-1 text-rich-black hover:text-copper transition-colors">Selling</Link>
-                <Link href="/services/consultation" className="block py-1 text-rich-black hover:text-copper transition-colors">Consultation</Link>
+
               </div>
             </div>
             <Link 
