@@ -1,11 +1,11 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, userRoles } from "@shared/schema";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 
@@ -30,6 +30,52 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
+// Helper function to create an owner account if it doesn't exist
+async function createOwnerIfNotExists() {
+  try {
+    // Check if any owner exists
+    const ownerExists = await storage.hasUserWithRole(userRoles.OWNER);
+    
+    if (!ownerExists) {
+      console.log("Creating initial owner account...");
+      const defaultPassword = await hashPassword("owner123"); // Default password
+      
+      const ownerUser = {
+        username: "owner",
+        password: defaultPassword,
+        email: "owner@theviews.com",
+        fullName: "System Owner",
+        role: userRoles.OWNER,
+        isAgent: true,
+        createdAt: new Date().toISOString(),
+      };
+      
+      await storage.createUser(ownerUser);
+      console.log("Initial owner account created successfully. Username: owner, Password: owner123");
+    }
+  } catch (error) {
+    console.error("Error creating initial owner account:", error);
+  }
+}
+
+// Middleware for role-based access control
+export function requireRole(roles: string | string[]) {
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
+  
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
+    const user = req.user as SelectUser;
+    if (!user.role || !allowedRoles.includes(user.role)) {
+      return res.status(403).json({ message: "Insufficient permissions" });
+    }
+    
+    next();
+  };
+}
+
 export function setupAuth(app: Express) {
   // Set up PostgreSQL session store
   const PostgresSessionStore = connectPgSimple(session);
@@ -48,6 +94,9 @@ export function setupAuth(app: Express) {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     }
   };
+  
+  // Create the owner account if it doesn't exist
+  createOwnerIfNotExists();
 
   app.set("trust proxy", 1);
   app.use(session(sessionSettings));
@@ -79,6 +128,7 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Public registration endpoint - only creates regular users
   app.post("/api/register", async (req, res, next) => {
     try {
       const { username, password, email, fullName, phone } = req.body;
@@ -99,6 +149,7 @@ export function setupAuth(app: Express) {
         email,
         fullName,
         phone,
+        role: userRoles.USER, // Default role is regular user
         isAgent: false,
         createdAt: new Date().toISOString(),
       };
@@ -113,6 +164,55 @@ export function setupAuth(app: Express) {
       });
     } catch (error) {
       console.error("Registration error:", error);
+      next(error);
+    }
+  });
+  
+  // Admin/Owner endpoint to create users with specific roles
+  app.post("/api/users", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
+    try {
+      const { username, password, email, fullName, phone, role, isAgent } = req.body;
+      const currentUser = req.user as SelectUser;
+      
+      if (!username || !password || !email || !fullName || !role) {
+        return res.status(400).json({ message: "All required fields must be provided" });
+      }
+      
+      // Only owners can create admin accounts
+      if (role === userRoles.ADMIN && currentUser.role !== userRoles.OWNER) {
+        return res.status(403).json({ message: "Only owners can create admin accounts" });
+      }
+      
+      // Nobody can create owner accounts through the API
+      if (role === userRoles.OWNER) {
+        return res.status(403).json({ message: "Owner accounts cannot be created through the API" });
+      }
+      
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      const hashedPassword = await hashPassword(password);
+      const newUser = {
+        username,
+        password: hashedPassword,
+        email,
+        fullName,
+        phone,
+        role,
+        isAgent: isAgent || false,
+        createdBy: currentUser.id, // Track who created this user
+        createdAt: new Date().toISOString(),
+      };
+
+      const user = await storage.createUser(newUser);
+
+      // Omit the password from the response
+      const { password: pwd, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      console.error("User creation error:", error);
       next(error);
     }
   });
@@ -138,10 +238,139 @@ export function setupAuth(app: Express) {
     });
   });
 
+  // Get current user
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
     // Omit the password from the response
     const { password, ...userWithoutPassword } = req.user as SelectUser;
     res.json(userWithoutPassword);
+  });
+  
+  // Get all users (admin and owner only)
+  app.get("/api/users", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Omit passwords from the response
+      const usersWithoutPasswords = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      res.json(usersWithoutPasswords);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      next(error);
+    }
+  });
+  
+  // Get user by ID (admin and owner only)
+  app.get("/api/users/:id", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Omit password from the response
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      next(error);
+    }
+  });
+  
+  // Update user (admin and owner only, with restrictions)
+  app.put("/api/users/:id", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const currentUser = req.user as SelectUser;
+      const userToUpdate = await storage.getUser(userId);
+      
+      if (!userToUpdate) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check permission hierarchy
+      if (userToUpdate.role === userRoles.OWNER && currentUser.role !== userRoles.OWNER) {
+        return res.status(403).json({ message: "Only owners can update owner accounts" });
+      }
+      
+      if (userToUpdate.role === userRoles.ADMIN && currentUser.role !== userRoles.OWNER) {
+        return res.status(403).json({ message: "Only owners can update admin accounts" });
+      }
+      
+      // Don't allow changing role to OWNER
+      if (req.body.role === userRoles.OWNER && userToUpdate.role !== userRoles.OWNER) {
+        return res.status(403).json({ message: "Cannot promote user to owner role" });
+      }
+      
+      // Don't allow admins to create other admins
+      if (currentUser.role === userRoles.ADMIN && req.body.role === userRoles.ADMIN && userToUpdate.role !== userRoles.ADMIN) {
+        return res.status(403).json({ message: "Admins cannot promote users to admin role" });
+      }
+      
+      // Hash password if provided
+      let updates = { ...req.body };
+      if (updates.password) {
+        updates.password = await hashPassword(updates.password);
+      }
+      
+      const updatedUser = await storage.updateUser(userId, updates);
+      
+      // Omit password from the response
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      next(error);
+    }
+  });
+  
+  // Deactivate user (admin and owner only, with restrictions)
+  app.delete("/api/users/:id", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const currentUser = req.user as SelectUser;
+      const userToDeactivate = await storage.getUser(userId);
+      
+      if (!userToDeactivate) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check permission hierarchy
+      if (userToDeactivate.role === userRoles.OWNER) {
+        return res.status(403).json({ message: "Owner accounts cannot be deactivated" });
+      }
+      
+      if (userToDeactivate.role === userRoles.ADMIN && currentUser.role !== userRoles.OWNER) {
+        return res.status(403).json({ message: "Only owners can deactivate admin accounts" });
+      }
+      
+      // Don't allow self-deactivation
+      if (userId === currentUser.id) {
+        return res.status(403).json({ message: "Cannot deactivate your own account" });
+      }
+      
+      // Soft delete by setting isActive to false
+      await storage.updateUser(userId, { isActive: false });
+      
+      res.status(200).json({ message: "User deactivated successfully" });
+    } catch (error) {
+      console.error("Error deactivating user:", error);
+      next(error);
+    }
   });
 }

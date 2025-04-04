@@ -24,7 +24,11 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  hasUserWithRole(role: string): Promise<boolean>;
+  getAllUsers(page?: number, pageSize?: number): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
+  deactivateUser(id: number): Promise<boolean>;
   
   // Property operations
   getAllProperties(page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
@@ -1029,12 +1033,60 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async hasUserWithRole(role: string): Promise<boolean> {
+    const result = await db
+      .select({ count: sql`count(*)` })
+      .from(users)
+      .where(eq(users.role, role));
+    return Number(result[0].count) > 0;
+  }
+
+  async getAllUsers(page = 1, pageSize = 20): Promise<User[]> {
+    const offset = (page - 1) * pageSize;
+    
+    const usersList = await db
+      .select()
+      .from(users)
+      .orderBy(desc(users.id))
+      .limit(pageSize)
+      .offset(offset);
+      
+    return usersList;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(insertUser)
       .returning();
     return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    // Remove id from updates if present
+    const { id: _, ...updatesWithoutId } = updates;
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set(updatesWithoutId)
+      .where(eq(users.id, id))
+      .returning();
+      
+    if (!updatedUser) {
+      throw new Error(`User with ID ${id} not found`);
+    }
+      
+    return updatedUser;
+  }
+
+  async deactivateUser(id: number): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({ isActive: false })
+      .where(eq(users.id, id))
+      .returning({ id: users.id });
+      
+    return result.length > 0;
   }
 
   // Property operations

@@ -2,6 +2,13 @@ import { pgTable, text, serial, integer, boolean, doublePrecision, jsonb, timest
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Define user roles enum
+export const userRoles = {
+  OWNER: "owner",
+  ADMIN: "admin",
+  USER: "user"
+} as const;
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -9,9 +16,21 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   fullName: text("full_name").notNull(),
   phone: text("phone"),
+  role: text("role").notNull().default(userRoles.USER), // Add role for permissions (owner, admin, user)
   isAgent: boolean("is_agent").default(false).notNull(),
+  createdBy: integer("created_by"), // ID of the admin/owner who created this user
   createdAt: text("created_at").notNull(),
+  isActive: boolean("is_active").default(true).notNull(), // Whether the user is active
 });
+
+// Define publication status enum
+export const publicationStatus = {
+  DRAFT: "draft",
+  PENDING_APPROVAL: "pending_approval",
+  PUBLISHED: "published",
+  REJECTED: "rejected",
+  ARCHIVED: "archived"
+} as const;
 
 export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
@@ -46,7 +65,11 @@ export const properties = pgTable("properties", {
   images: jsonb("images").notNull(),
   latitude: doublePrecision("latitude"),
   longitude: doublePrecision("longitude"),
+  status: text("status").notNull().default(publicationStatus.DRAFT), // Publication status
+  createdBy: integer("created_by").default(1), // User who created this property (default to the system owner)
+  approvedBy: integer("approved_by"), // Admin/owner who approved this property
   createdAt: text("created_at").notNull(),
+  updatedAt: timestamp("updated_at"),
   agentId: integer("agent_id").notNull(),
 });
 
@@ -62,10 +85,13 @@ export const testimonials = pgTable("testimonials", {
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  isActive: true,
 });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({
   id: true,
+  updatedAt: true,
+  approvedBy: true, // This will be set during approval
 });
 
 export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
@@ -91,12 +117,18 @@ export const announcements = pgTable("announcements", {
   isActive: boolean("is_active").default(true).notNull(), // Added isActive
   isFeatured: boolean("is_featured").default(false).notNull(), // Add isFeatured flag for featured section
   isHighlighted: boolean("is_highlighted").default(false).notNull(), // Added highlight flag for main carousel
+  status: text("status").notNull().default(publicationStatus.DRAFT), // Publication status
+  createdBy: integer("created_by").default(1), // User who created this announcement (default to the system owner)
+  approvedBy: integer("approved_by"), // Admin/owner who approved this announcement
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at"),
 });
 
 export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+  approvedBy: true, // This will be set during approval
 });
 
 export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
