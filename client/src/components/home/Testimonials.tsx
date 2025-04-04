@@ -3,9 +3,21 @@ import { Testimonial } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Testimonials() {
-  const { data: testimonials, isLoading, error } = useQuery<Testimonial[]>({
+  // Define the paginated response type
+  interface PaginatedResponse {
+    data: Testimonial[];
+    totalCount: number;
+    pageCount: number;
+    page: number;
+    pageSize: number;
+  }
+  
+  const { data: testimonialsResponse, isLoading, error } = useQuery<PaginatedResponse>({
     queryKey: ['/api/testimonials'],
   });
+  
+  // Extract testimonials array from response
+  const testimonials = testimonialsResponse?.data;
 
   const renderStars = (rating: number) => {
     return Array(5).fill(0).map((_, i) => (

@@ -138,33 +138,39 @@ export default function SimpleHeroCarousel() {
     <section className="relative h-[80vh] overflow-hidden">
       <div className="h-full">
         <div className="relative h-full w-full">
-          {/* Background Image */}
+          {/* Background Image - wrapped with Link to make entire slide clickable */}
           <div className="absolute inset-0">
             {activeSlide.type === 'property' ? (
-              <img 
-                src={(activeSlide.data as Property).images && (activeSlide.data as Property).images.length > 0 
-                  ? (activeSlide.data as Property).images[0] 
-                  : "/default-property.svg"} 
-                alt={(activeSlide.data as Property).title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/default-property.svg";
-                }}
-              />
+              <Link href={`/properties/${(activeSlide.data as Property).id}`} className="block h-full cursor-pointer">
+                <img 
+                  src={(activeSlide.data as Property).images && (activeSlide.data as Property).images.length > 0 
+                    ? (activeSlide.data as Property).images[0] 
+                    : "/default-property.svg"} 
+                  alt={(activeSlide.data as Property).title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/default-property.svg";
+                  }}
+                />
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+              </Link>
             ) : (
-              <img 
-                src={(activeSlide.data as Announcement).imageUrl || "/default-announcement.svg"} 
-                alt={(activeSlide.data as Announcement).title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/default-announcement.svg";
-                }}
-              />
+              <Link href={`/announcements/${(activeSlide.data as Announcement).id}`} className="block h-full cursor-pointer">
+                <img 
+                  src={(activeSlide.data as Announcement).imageUrl || "/default-announcement.svg"} 
+                  alt={(activeSlide.data as Announcement).title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/default-announcement.svg";
+                  }}
+                />
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+              </Link>
             )}
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
           </div>
           
           {/* Only show type tag and title/location - NOTHING ELSE */}
@@ -178,13 +184,15 @@ export default function SimpleHeroCarousel() {
               </div>
               
               {/* Title and location at bottom left, with slightly elevated position */}
-              <div className="absolute bottom-8 left-4">
-                <h3 className="text-white text-2xl md:text-3xl font-serif mb-1">
-                  {(activeSlide.data as Property).title}
-                </h3>
-                <p className="text-white/80 text-xs">
-                  {(activeSlide.data as Property).city}
-                </p>
+              <div className="absolute bottom-8 left-4 z-10">
+                <Link href={`/properties/${(activeSlide.data as Property).id}`}>
+                  <h3 className="text-white text-2xl md:text-3xl font-serif mb-1 hover:text-[#B87333] transition-colors cursor-pointer">
+                    {(activeSlide.data as Property).title}
+                  </h3>
+                  <p className="text-white/80 text-xs">
+                    {(activeSlide.data as Property).city}
+                  </p>
+                </Link>
               </div>
             </>
           ) : (
@@ -197,13 +205,15 @@ export default function SimpleHeroCarousel() {
               </div>
               
               {/* Title and date at bottom left, with slightly elevated position */}
-              <div className="absolute bottom-8 left-4">
-                <h3 className="text-white text-2xl md:text-3xl font-serif mb-1">
-                  {(activeSlide.data as Announcement).title}
-                </h3>
-                <p className="text-white/80 text-xs">
-                  {formatDate((activeSlide.data as Announcement).startDate)}
-                </p>
+              <div className="absolute bottom-8 left-4 z-10">
+                <Link href={`/announcements/${(activeSlide.data as Announcement).id}`}>
+                  <h3 className="text-white text-2xl md:text-3xl font-serif mb-1 hover:text-[#B87333] transition-colors cursor-pointer">
+                    {(activeSlide.data as Announcement).title}
+                  </h3>
+                  <p className="text-white/80 text-xs">
+                    {formatDate((activeSlide.data as Announcement).startDate)}
+                  </p>
+                </Link>
               </div>
             </>
           )}
@@ -211,7 +221,7 @@ export default function SimpleHeroCarousel() {
       </div>
       
       {/* Simple navigation controls - moved lower to avoid overlapping with titles */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex justify-center items-center space-x-2">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex justify-center items-center space-x-2">
         {slides.map((_, i) => (
           <button
             key={i}
@@ -226,10 +236,10 @@ export default function SimpleHeroCarousel() {
         ))}
       </div>
       
-      {/* Navigation buttons */}
+      {/* Navigation buttons - with higher z-index to ensure they work properly */}
       <button 
         onClick={() => setActiveIndex((current) => (current - 1 + slides.length) % slides.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#964B00]/80 hover:bg-[#964B00] border-none text-white h-10 w-10 rounded-full flex items-center justify-center"
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#964B00]/80 hover:bg-[#964B00] border-none text-white h-10 w-10 rounded-full flex items-center justify-center z-20"
         aria-label="Previous slide"
       >
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -238,7 +248,7 @@ export default function SimpleHeroCarousel() {
       </button>
       <button 
         onClick={() => setActiveIndex((current) => (current + 1) % slides.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#964B00]/80 hover:bg-[#964B00] border-none text-white h-10 w-10 rounded-full flex items-center justify-center"
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#964B00]/80 hover:bg-[#964B00] border-none text-white h-10 w-10 rounded-full flex items-center justify-center z-20"
         aria-label="Next slide"
       >
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">

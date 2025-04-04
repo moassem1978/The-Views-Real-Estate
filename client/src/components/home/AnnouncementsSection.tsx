@@ -85,14 +85,26 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
 }
 
 export default function AnnouncementsSection() {
+  // Define the paginated response type
+  interface PaginatedResponse {
+    data: Announcement[];
+    totalCount: number;
+    pageCount: number;
+    page: number;
+    pageSize: number;
+  }
+  
   // Optimized query with increased stale time
-  const { data: announcements, isLoading } = useQuery({
+  const { data: announcementsResponse, isLoading } = useQuery<PaginatedResponse>({
     queryKey: ['/api/announcements'],
     staleTime: 300000, // Increased to 5 minutes
   });
 
   // Memoized filtering of announcements
   const activeAnnouncements = useMemo(() => {
+    // Extract the actual announcements array from the response
+    const announcements = announcementsResponse?.data;
+    
     if (!announcements || !Array.isArray(announcements)) return [];
     
     return announcements
@@ -102,7 +114,7 @@ export default function AnnouncementsSection() {
         return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
       })
       .slice(0, 3); // Display up to 3 announcements
-  }, [announcements]);
+  }, [announcementsResponse]);
 
   if (isLoading) {
     return <LoadingSkeleton />;

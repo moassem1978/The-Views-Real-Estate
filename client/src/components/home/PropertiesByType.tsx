@@ -90,7 +90,7 @@ const PropertyCard = memo(({ property }: { property: Property }) => {
           <div className="flex items-center gap-1">
             <Grid2X2 size={18} />
             <span>
-              {property.squareFeet || property.builtUpArea || property.plotSize || 0} m²
+              {property.builtUpArea || property.plotSize || 0} m²
             </span>
           </div>
         </div>
@@ -146,14 +146,26 @@ const PropertyTabContent = memo(({
 export default function PropertiesByType() {
   const [displayCount, setDisplayCount] = useState(3); // Reduced initial load
   
+  // Define the paginated response type
+  interface PaginatedResponse {
+    data: Property[];
+    totalCount: number;
+    pageCount: number;
+    page: number;
+    pageSize: number;
+  }
+  
   // Optimized query with increased stale time
-  const { data: properties, isLoading } = useQuery({
+  const { data: propertiesResponse, isLoading } = useQuery<PaginatedResponse>({
     queryKey: ['/api/properties'],
     staleTime: 300000, // Increased to 5 minutes
   });
 
   // Filter and organize properties by listing type
   const { primaryProperties, resaleProperties } = useMemo(() => {
+    // Extract the actual properties array from the response
+    const properties = propertiesResponse?.data;
+    
     if (!properties || !Array.isArray(properties)) {
       return { primaryProperties: [], resaleProperties: [] };
     }
@@ -177,7 +189,7 @@ export default function PropertiesByType() {
       );
     
     return { primaryProperties: primary, resaleProperties: resale };
-  }, [properties]);
+  }, [propertiesResponse]);
 
   const loadMore = () => {
     setDisplayCount(prev => prev + 3);
