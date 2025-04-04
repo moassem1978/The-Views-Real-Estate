@@ -12,27 +12,27 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [mainImage, setMainImage] = useState<string>('');
   const [imageError, setImageError] = useState(false);
-  
+
   useEffect(() => {
     // Set the main image when the property data loads
-    const images = getImages();
+    const images = getImages() || [];
     console.log("Property images array:", images);
-    const firstImage = images.length > 0 ? images[0] : '';
+    const firstImage = images.length > 0 ? images[0] : '/default-property.svg';
     setMainImage(firstImage);
   }, [property]);
-  
+
   const toggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsFavorite(!isFavorite);
   };
-  
+
   // Parse images from JSON string if necessary
   const getImages = () => {
     // Use our utility function to safely parse the images array
     return parseJsonArray(property.images);
   };
-  
+
   // We no longer need these functions as we now use utilities from lib/utils.ts
   // Keeping imageError state for backward compatibility
 
@@ -46,20 +46,20 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             priority={property.isFeatured}
             className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
           />
-          
+
           {/* Price Tag */}
           <div className="absolute bottom-0 left-0 z-10 px-3 py-1.5 bg-[#B87333] text-white font-medium rounded-tr-md">
             {property.price.toLocaleString()} L.E
           </div>
         </div>
-        
+
         {/* Status badges */}
         <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
           {/* Listing Type Badge - Always shown at the top */}
           <span className={`px-3 py-1 text-white text-sm font-medium rounded ${property.listingType === 'Primary' ? 'bg-blue-600' : 'bg-amber-600'}`}>
             {property.listingType}
           </span>
-          
+
           {property.isFeatured && (
             <span className="px-3 py-1 bg-[#D4AF37] text-white text-sm font-medium rounded">Featured</span>
           )}
@@ -67,7 +67,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             <span className="px-3 py-1 bg-[#6E2639] text-white text-sm font-medium rounded">New Listing</span>
           )}
         </div>
-        
+
         {/* Contact buttons */}
         <div className="absolute bottom-20 right-4 z-10 flex flex-col gap-2">
           <button className="h-9 w-9 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-white text-green-600 hover:text-green-700 rounded-full transition-colors shadow-md">
@@ -81,7 +81,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </svg>
           </button>
         </div>
-        
+
         {/* Favorite button */}
         <button 
           className="absolute top-4 right-4 h-9 w-9 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-white text-gray-800 hover:text-[#D4AF37] rounded-full transition-colors shadow-md z-10"
@@ -109,10 +109,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                 </span>
               )}
             </div>
-            
+
             {/* Price Info */}
             <span className="text-[#D4AF37] font-medium">{property.price.toLocaleString()} L.E</span>
-            
+
             {/* Payment Details */}
             {property.listingType === 'Primary' && property.installmentAmount && (
               <div className="text-xs text-gray-600 mt-1">
@@ -130,9 +130,9 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             {property.isFullCash && (
               <div className="text-xs font-medium text-emerald-700">Full Cash Payment</div>
             )}
-            
+
             <h3 className="mt-1 font-serif text-xl font-semibold text-gray-800 leading-tight">{property.title}</h3>
-            
+
             {/* Project & Developer Info */}
             {(property.projectName || property.developerName) && (
               <div className="mt-1 text-xs text-gray-700">
@@ -141,7 +141,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                 {property.developerName && <span>By {property.developerName}</span>}
               </div>
             )}
-            
+
             <p className="mt-1 text-gray-600 flex items-center text-sm">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -151,7 +151,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </p>
           </div>
         </div>
-        
+
         <div className="mt-4 flex items-center justify-between border-t border-[#E8DACB] pt-4">
           <div className="flex space-x-4 text-sm text-gray-600">
             <span className="flex items-center">

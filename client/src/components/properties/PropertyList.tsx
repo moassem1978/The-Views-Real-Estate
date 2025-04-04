@@ -10,10 +10,10 @@ interface PropertyListProps {
 export default function PropertyList({ properties, filters }: PropertyListProps) {
   const [sortOption, setSortOption] = useState("default");
   const [sortedProperties, setSortedProperties] = useState<Property[]>([]);
-  
+
   useEffect(() => {
-    let sorted = [...properties];
-    
+    let sorted = [...(properties || [])];
+
     // Apply sorting
     switch (sortOption) {
       case "price-asc":
@@ -41,14 +41,14 @@ export default function PropertyList({ properties, filters }: PropertyListProps)
           return 0;
         });
     }
-    
+
     setSortedProperties(sorted);
   }, [properties, sortOption]);
-  
+
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortOption(e.target.value);
   };
-  
+
   // Get active filters count for display
   const getActiveFilterCount = () => {
     let count = 0;
@@ -60,45 +60,45 @@ export default function PropertyList({ properties, filters }: PropertyListProps)
     if (filters.minBathrooms !== undefined) count++;
     return count;
   };
-  
+
   // Format for display
   const formatFilterSummary = () => {
     const parts = [];
-    
+
     if (filters.location) {
       parts.push(`Location: ${filters.location}`);
     }
-    
+
     if (filters.propertyType) {
       parts.push(`Type: ${filters.propertyType}`);
     }
-    
+
     if (filters.minBedrooms !== undefined) {
       parts.push(`${filters.minBedrooms}+ Beds`);
     }
-    
+
     if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
       let priceText = "Price: ";
       if (filters.minPrice !== undefined) {
         priceText += `$${(filters.minPrice / 1000000).toFixed(1)}M`;
       }
-      
+
       if (filters.minPrice !== undefined && filters.maxPrice !== undefined) {
         priceText += " - ";
       }
-      
+
       if (filters.maxPrice !== undefined) {
         priceText += `$${(filters.maxPrice / 1000000).toFixed(1)}M`;
       }
-      
+
       parts.push(priceText);
     }
-    
+
     return parts.join(" • ");
   };
-  
+
   const activeFilterCount = getActiveFilterCount();
-  
+
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
@@ -113,7 +113,7 @@ export default function PropertyList({ properties, filters }: PropertyListProps)
             </p>
           )}
         </div>
-        
+
         <div className="mt-4 md:mt-0 flex items-center">
           <label htmlFor="sort" className="text-sm text-gray-600 mr-2">Sort By:</label>
           <select 
@@ -131,7 +131,7 @@ export default function PropertyList({ properties, filters }: PropertyListProps)
           </select>
         </div>
       </div>
-      
+
       {sortedProperties.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {sortedProperties.map((property) => (
