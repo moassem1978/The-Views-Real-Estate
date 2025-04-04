@@ -179,7 +179,7 @@ export default function Dashboard() {
   const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
   
   // Fetch properties
-  const { data: properties, isLoading } = useQuery({
+  const { data: propertiesResponse, isLoading } = useQuery({
     queryKey: ['/api/properties'],
     queryFn: async () => {
       const response = await fetch('/api/properties');
@@ -190,8 +190,11 @@ export default function Dashboard() {
     }
   });
   
+  // Extract the properties data array from the paginated response
+  const properties = propertiesResponse?.data;
+  
   // Fetch announcements
-  const { data: announcements, isLoading: isLoadingAnnouncements } = useQuery({
+  const { data: announcementsResponse, isLoading: isLoadingAnnouncements } = useQuery({
     queryKey: ['/api/announcements'],
     queryFn: async () => {
       const response = await fetch('/api/announcements');
@@ -201,6 +204,9 @@ export default function Dashboard() {
       return response.json();
     }
   });
+  
+  // Extract the announcements data array from the paginated response
+  const announcements = announcementsResponse?.data;
 
   // Create property mutation
   const createProperty = useMutation({
