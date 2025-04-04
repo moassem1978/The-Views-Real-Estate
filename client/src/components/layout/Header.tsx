@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import LogoDisplay from "@/components/ui/LogoDisplay";
+import { useAuth } from "@/hooks/use-auth";
 
 // Define SiteSettings interface 
 interface SiteSettings {
@@ -20,7 +21,12 @@ interface SiteSettings {
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [location] = useLocation();
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Get auth information
+  const { user, logoutMutation } = useAuth();
   
   // Fetch site settings including logo
   const { data: settings } = useQuery<SiteSettings>({
@@ -30,6 +36,29 @@ export default function Header() {
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
+  
+  const toggleUserMenu = () => {
+    setUserMenuOpen(!userMenuOpen);
+  };
+  
+  const handleLogout = () => {
+    logoutMutation.mutate();
+    setUserMenuOpen(false);
+  };
+  
+  // Close user menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 bg-white/95 backdrop-blur-sm z-50 shadow-md border-b border-copper/10">
@@ -188,12 +217,69 @@ export default function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </button>
-          <Link href="/dashboard" className="hidden md:inline-flex items-center px-5 py-2 border border-copper/20 rounded text-rich-black hover:border-copper hover:text-copper transition-all duration-300 shadow-sm mr-2">
-            <span className="font-medium">Dashboard</span>
-          </Link>
-          <Link href="/signin" className="hidden md:inline-flex items-center px-5 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
-            <span className="font-medium">Sign In</span>
-          </Link>
+{!user ? (
+            <>
+              <Link href="/signin" className="hidden md:inline-flex items-center px-5 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
+                <span className="font-medium">Sign In</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/dashboard" className="hidden md:inline-flex items-center px-5 py-2 border border-copper/20 rounded text-rich-black hover:border-copper hover:text-copper transition-all duration-300 shadow-sm mr-2">
+                <span className="font-medium">Dashboard</span>
+              </Link>
+              
+              {/* User dropdown menu */}
+              <div className="relative" ref={userMenuRef}>
+                <button 
+                  onClick={toggleUserMenu}
+                  className="hidden md:flex items-center space-x-2 px-3 py-2 rounded border border-copper/20 text-rich-black hover:border-copper hover:text-copper transition-all duration-300"
+                >
+                  <span className="font-medium">{user.fullName || user.username}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white shadow-lg rounded-md overflow-hidden z-50 gold-border">
+                    <div className="px-4 py-3 border-b border-copper/10">
+                      <p className="text-sm text-rich-black-light">Signed in as</p>
+                      <p className="text-sm font-medium text-rich-black truncate">{user.email}</p>
+                    </div>
+                    
+                    <div className="py-1">
+                      <Link 
+                        href="/dashboard" 
+                        className="block px-4 py-2 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
+                      
+                      {/* Show User Management only for owner or admin roles */}
+                      {(user.role === 'owner' || user.role === 'admin') && (
+                        <Link 
+                          href="/user-management" 
+                          className="block px-4 py-2 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          User Management
+                        </Link>
+                      )}
+                      
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
           
           {/* Mobile menu button */}
           <button 
@@ -260,12 +346,25 @@ export default function Header() {
             >
               Contact
             </Link>
-            <Link 
-              href="/dashboard" 
-              className={`py-2 font-medium ${location === "/dashboard" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
-            >
-              Dashboard
-            </Link>
+            {user && (
+              <>
+                <Link 
+                  href="/dashboard" 
+                  className={`py-2 font-medium ${location === "/dashboard" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                >
+                  Dashboard
+                </Link>
+                
+                {(user.role === 'owner' || user.role === 'admin') && (
+                  <Link 
+                    href="/user-management" 
+                    className={`py-2 font-medium ${location === "/user-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                  >
+                    User Management
+                  </Link>
+                )}
+              </>
+            )}
             
             {/* Mobile contact info */}
             <div className="pt-4 border-t border-copper/10 space-y-3 text-sm">
@@ -288,9 +387,25 @@ export default function Header() {
             </div>
             
             <div className="flex space-x-4 py-4">
-              <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
-                <span className="font-medium">Sign In</span>
-              </Link>
+              {!user ? (
+                <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
+                  <span className="font-medium">Sign In</span>
+                </Link>
+              ) : (
+                <>
+                  {(user.role === 'owner' || user.role === 'admin') && (
+                    <Link href="/user-management" className="inline-flex items-center px-4 py-2 rounded border border-copper/20 text-rich-black hover:border-copper hover:text-copper transition-colors">
+                      <span className="font-medium">User Management</span>
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="inline-flex items-center px-4 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm"
+                  >
+                    <span className="font-medium">Sign Out</span>
+                  </button>
+                </>
+              )}
               <button className="flex items-center justify-center h-10 w-10 rounded-full text-copper hover:text-copper-dark hover:bg-cream transition-all">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

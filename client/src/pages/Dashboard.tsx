@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { Property, Announcement } from "../types";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -114,6 +115,7 @@ function CompanyLogo() {
 export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("properties");
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
   const [logoFormOpen, setLogoFormOpen] = useState(false);
@@ -606,7 +608,7 @@ export default function Dashboard() {
       developerName: property.developerName || "",
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
-      builtUpArea: property.builtUpArea || property.squareFeet || 0,
+      builtUpArea: property.builtUpArea || 0,
       plotSize: property.plotSize || 0,
       gardenSize: property.gardenSize || 0,
       floor: property.floor || 0,
@@ -944,6 +946,11 @@ export default function Dashboard() {
           <TabsTrigger value="properties">Properties</TabsTrigger>
           <TabsTrigger value="announcements">Announcements</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
+          {(user?.role === 'admin' || user?.role === 'owner') && (
+            <TabsTrigger value="users" asChild>
+              <Link href="/user-management">User Management</Link>
+            </TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="properties">

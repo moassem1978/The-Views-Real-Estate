@@ -32,6 +32,7 @@ const SignIn = lazy(() => import(/* webpackChunkName: "signin" */ "@/pages/SignI
 const Dashboard = lazy(() => import(/* webpackChunkName: "dashboard" */ "@/pages/Dashboard"));
 const Announcements = lazy(() => import(/* webpackChunkName: "announcements" */ "@/pages/Announcements"));
 const AnnouncementDetails = lazy(() => import(/* webpackChunkName: "announcement-details" */ "@/pages/AnnouncementDetails"));
+const UserManagement = lazy(() => import(/* webpackChunkName: "user-management" */ "@/pages/UserManagement"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -132,7 +133,18 @@ function Router() {
           <Suspense fallback={<LoadingFallback />}>
             <Dashboard />
           </Suspense>
-        )} 
+        )}
+        requiredRole={['owner', 'admin', 'user']} 
+      />
+      
+      <ProtectedRoute 
+        path="/user-management" 
+        component={() => (
+          <Suspense fallback={<LoadingFallback />}>
+            <UserManagement />
+          </Suspense>
+        )}
+        requiredRole={['owner', 'admin']}
       />
       
       {/* Fallback to 404 */}
