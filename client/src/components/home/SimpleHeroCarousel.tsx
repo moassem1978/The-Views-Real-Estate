@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Define a union type for our carousel items
 type SlideItem = {
@@ -133,47 +135,51 @@ export default function SimpleHeroCarousel() {
   
   // Manual carousel implementation
   const activeSlide = slides[activeIndex];
-  
+
   return (
     <section className="relative h-[80vh] overflow-hidden">
       <div className="h-full">
         <div className="relative h-full w-full">
-          {/* Background Image - wrapped with Link to make entire slide clickable */}
+          {/* Background Image */}
           <div className="absolute inset-0">
             {activeSlide.type === 'property' ? (
-              <Link href={`/properties/${(activeSlide.data as Property).id}`} className="block h-full cursor-pointer">
-                <img 
-                  src={(activeSlide.data as Property).images && (activeSlide.data as Property).images.length > 0 
-                    ? (activeSlide.data as Property).images[0] 
-                    : "/default-property.svg"} 
-                  alt={(activeSlide.data as Property).title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/default-property.svg";
-                  }}
-                />
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+              <Link href={`/properties/${(activeSlide.data as Property).id}`}>
+                <div className="block h-full cursor-pointer">
+                  <img 
+                    src={(activeSlide.data as Property).images && (activeSlide.data as Property).images.length > 0 
+                      ? (activeSlide.data as Property).images[0] 
+                      : "/default-property.svg"} 
+                    alt={(activeSlide.data as Property).title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/default-property.svg";
+                    }}
+                  />
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+                </div>
               </Link>
             ) : (
-              <Link href={`/announcements/${(activeSlide.data as Announcement).id}`} className="block h-full cursor-pointer">
-                <img 
-                  src={(activeSlide.data as Announcement).imageUrl || "/default-announcement.svg"} 
-                  alt={(activeSlide.data as Announcement).title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/default-announcement.svg";
-                  }}
-                />
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+              <Link href={`/announcements/${(activeSlide.data as Announcement).id}`}>
+                <div className="block h-full cursor-pointer">
+                  <img 
+                    src={(activeSlide.data as Announcement).imageUrl || "/default-announcement.svg"} 
+                    alt={(activeSlide.data as Announcement).title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/default-announcement.svg";
+                    }}
+                  />
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+                </div>
               </Link>
             )}
           </div>
           
-          {/* Only show type tag and title/location - NOTHING ELSE */}
+          {/* Content and Type Tag */}
           {activeSlide.type === 'property' ? (
             <>
               {/* Type tag at top right - bronze color */}
@@ -183,15 +189,24 @@ export default function SimpleHeroCarousel() {
                 </span>
               </div>
               
-              {/* Title and location at bottom left, with slightly elevated position */}
-              <div className="absolute bottom-8 left-4 z-10">
+              {/* Content with Title, Location, and View Button */}
+              <div className="absolute bottom-12 left-4 z-10 max-w-md">
                 <Link href={`/properties/${(activeSlide.data as Property).id}`}>
-                  <h3 className="text-white text-2xl md:text-3xl font-serif mb-1 hover:text-[#B87333] transition-colors cursor-pointer">
+                  <h3 className="text-white text-2xl md:text-3xl font-serif mb-1 cursor-pointer hover:text-[#B87333] transition-colors">
                     {(activeSlide.data as Property).title}
                   </h3>
-                  <p className="text-white/80 text-xs">
-                    {(activeSlide.data as Property).city}
-                  </p>
+                </Link>
+                <p className="text-white/80 text-sm mb-4">
+                  {(activeSlide.data as Property).city}
+                </p>
+                <Link
+                  href={`/properties/${(activeSlide.data as Property).id}`}
+                >
+                  <Button 
+                    className="bg-[#B87333] hover:bg-[#964B00] text-white"
+                  >
+                    View Property <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </Link>
               </div>
             </>
@@ -204,15 +219,24 @@ export default function SimpleHeroCarousel() {
                 </span>
               </div>
               
-              {/* Title and date at bottom left, with slightly elevated position */}
-              <div className="absolute bottom-8 left-4 z-10">
+              {/* Content with Title, Date, and Read More Button */}
+              <div className="absolute bottom-12 left-4 z-10 max-w-md">
                 <Link href={`/announcements/${(activeSlide.data as Announcement).id}`}>
-                  <h3 className="text-white text-2xl md:text-3xl font-serif mb-1 hover:text-[#B87333] transition-colors cursor-pointer">
+                  <h3 className="text-white text-2xl md:text-3xl font-serif mb-1 cursor-pointer hover:text-[#B87333] transition-colors">
                     {(activeSlide.data as Announcement).title}
                   </h3>
-                  <p className="text-white/80 text-xs">
-                    {formatDate((activeSlide.data as Announcement).startDate)}
-                  </p>
+                </Link>
+                <p className="text-white/80 text-sm mb-4">
+                  {formatDate((activeSlide.data as Announcement).startDate)}
+                </p>
+                <Link
+                  href={`/announcements/${(activeSlide.data as Announcement).id}`}
+                >
+                  <Button 
+                    className="bg-[#B87333] hover:bg-[#964B00] text-white"
+                  >
+                    Read More <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </Link>
               </div>
             </>
