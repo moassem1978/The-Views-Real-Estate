@@ -182,6 +182,31 @@ export default function UserManagement() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Back to Website button at the top */}
+      <div className="mb-6">
+        <Button 
+          variant="outline" 
+          className="border-copper text-copper hover:bg-cream"
+          onClick={() => window.location.href = '/'}
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-4 w-4 mr-2" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M10 19l-7-7m0 0l7-7m-7 7h18" 
+            />
+          </svg>
+          Back to Website
+        </Button>
+      </div>
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h1 className="text-3xl font-serif font-bold text-rich-black mb-2">User Management</h1>

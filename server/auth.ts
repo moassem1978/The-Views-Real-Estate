@@ -8,6 +8,7 @@ import { storage } from "./storage";
 import { User as SelectUser, userRoles } from "@shared/schema";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
+import { sendWelcomeEmail } from "./services/email";
 
 declare global {
   namespace Express {
@@ -217,6 +218,15 @@ export function setupAuth(app: Express) {
       };
 
       const user = await storage.createUser(newUser);
+      
+      // Send welcome email with credentials
+      try {
+        await sendWelcomeEmail(user, password);
+        console.log(`Notification email sent to ${user.email}`);
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Continue with the response anyway, don't fail the request if email fails
+      }
 
       // Omit the password from the response
       const { password: pwd, ...userWithoutPassword } = user;

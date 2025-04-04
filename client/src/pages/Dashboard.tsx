@@ -924,15 +924,37 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      {/* Back to Website button at the top */}
+      <div className="mb-6">
+        <Button 
+          variant="outline" 
+          className="border-copper text-copper hover:bg-cream"
+          onClick={() => window.location.href = '/'}
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-4 w-4 mr-2" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M10 19l-7-7m0 0l7-7m-7 7h18" 
+            />
+          </svg>
+          Back to Website
+        </Button>
+      </div>
+      
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
         <div className="flex space-x-3">
           <Button onClick={() => setLogoFormOpen(true)} variant="outline">
             Upload Logo
           </Button>
-          <Link href="/">
-            <Button variant="outline">Back to Website</Button>
-          </Link>
         </div>
       </div>
 

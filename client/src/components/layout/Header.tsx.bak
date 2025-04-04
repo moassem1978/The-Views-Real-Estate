@@ -225,13 +225,17 @@ export default function Header() {
             </>
           ) : (
             <>
-              {/* Account dropdown menu */}
+              <Link href="/dashboard" className="hidden md:inline-flex items-center px-5 py-2 border border-copper/20 rounded text-rich-black hover:border-copper hover:text-copper transition-all duration-300 shadow-sm mr-2">
+                <span className="font-medium">Dashboard</span>
+              </Link>
+              
+              {/* User dropdown menu */}
               <div className="relative" ref={userMenuRef}>
                 <button 
                   onClick={toggleUserMenu}
-                  className="hidden md:flex items-center space-x-2 px-5 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm"
+                  className="hidden md:flex items-center space-x-2 px-3 py-2 rounded border border-copper/20 text-rich-black hover:border-copper hover:text-copper transition-all duration-300"
                 >
-                  <span className="font-medium">Account</span>
+                  <span className="font-medium">{user.fullName || user.username}</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
