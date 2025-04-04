@@ -5,7 +5,10 @@ export interface User {
   fullName: string;
   phone?: string;
   isAgent: boolean;
+  role: string;
+  isActive?: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Property {

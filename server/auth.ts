@@ -85,13 +85,23 @@ export function setupAuth(app: Express) {
       pool,
       tableName: 'session', // Default table name
       createTableIfMissing: true,
+      // Cleanup expired sessions every 15 minutes
+      pruneSessionInterval: 15
     }),
     secret: process.env.SESSION_SECRET || "the-views-real-estate-secret-key",
     resave: false,
+    // Don't create a session until something is stored
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      // Shorter session timeout for better security (4 hours)
+      maxAge: 4 * 60 * 60 * 1000,
+      // Make sure session cookies work across subdomains
+      domain: process.env.NODE_ENV === "production" ? '.theviews.com' : undefined,
+      // Prevent client-side JS from accessing cookies
+      httpOnly: true,
+      // Strict same-site policy for better security
+      sameSite: 'strict'
     }
   };
   
