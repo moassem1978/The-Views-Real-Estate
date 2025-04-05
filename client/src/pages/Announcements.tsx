@@ -60,14 +60,20 @@ const AnnouncementCard = memo(({ announcement }: { announcement: Announcement })
 
 export default function Announcements() {
   // Fetch all announcements, optimized for performance
-  const { data: announcements, isLoading } = useQuery({
+  const { data: announcementsResponse, isLoading } = useQuery({
     queryKey: ['/api/announcements'],
     staleTime: 300000, // 5 minutes
   });
 
   // Filter active announcements and sort by newest
   const activeAnnouncements = useMemo(() => {
-    if (!announcements || !Array.isArray(announcements)) return [];
+    // Check if response exists and has the data property
+    if (!announcementsResponse || !announcementsResponse.data || !Array.isArray(announcementsResponse.data)) {
+      console.log('Missing or invalid announcements data:', announcementsResponse);
+      return [];
+    }
+    
+    const announcements = announcementsResponse.data;
     
     // Preload the first 3 announcement images for better user experience
     if (announcements.length > 0) {
@@ -87,7 +93,7 @@ export default function Announcements() {
         // Sort by startDate (newest first)
         return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
       });
-  }, [announcements]);
+  }, [announcementsResponse]);
 
   return (
     <div className="flex flex-col min-h-screen">
