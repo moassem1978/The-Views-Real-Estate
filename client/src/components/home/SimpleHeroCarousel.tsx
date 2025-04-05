@@ -1,18 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { Link } from "wouter";
 import { Property, Announcement } from "@/types";
-import { formatPrice, formatDate } from "@/lib/utils";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { formatPrice, formatDate, getResizedImageUrl } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 
 // Define a union type for our carousel items
 type SlideItem = {
@@ -21,64 +14,121 @@ type SlideItem = {
   data: Property | Announcement;
 };
 
+// Memoized carousel item components to prevent unnecessary re-renders
+const PropertySlide = memo(({ property, onClick }: { property: Property, onClick: () => void }) => (
+  <Link href={`/properties/${property.id}`}>
+    <div className="block h-full cursor-pointer" onClick={onClick}>
+      <img 
+        src={property.images && property.images.length > 0 
+          ? getResizedImageUrl(property.images[0], 'large') 
+          : "/default-property.svg"} 
+        alt={property.title}
+        className="w-full h-full object-cover"
+        loading="lazy"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.src = "/default-property.svg";
+        }}
+      />
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+    </div>
+  </Link>
+));
+
+const AnnouncementSlide = memo(({ announcement, onClick }: { announcement: Announcement, onClick: () => void }) => (
+  <Link href={`/announcements/${announcement.id}`}>
+    <div className="block h-full cursor-pointer" onClick={onClick}>
+      <img 
+        src={getResizedImageUrl(announcement.imageUrl, 'large') || "/default-announcement.svg"} 
+        alt={announcement.title}
+        className="w-full h-full object-cover"
+        loading="lazy"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.src = "/default-announcement.svg";
+        }}
+      />
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+    </div>
+  </Link>
+));
+
+// Memoized navigation button component
+const NavButton = memo(({ direction, onClick }: { direction: 'prev' | 'next', onClick: () => void }) => (
+  <button 
+    onClick={onClick}
+    className={`absolute ${direction === 'prev' ? 'left-4' : 'right-4'} top-1/2 -translate-y-1/2 bg-[#964B00]/80 hover:bg-[#964B00] border-none text-white h-10 w-10 rounded-full flex items-center justify-center z-20`}
+    aria-label={direction === 'prev' ? "Previous slide" : "Next slide"}
+  >
+    {direction === 'prev' ? (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8.84182 3.13514C9.04327 3.32401 9.05348 3.64042 8.86462 3.84188L5.43521 7.49991L8.86462 11.1579C9.05348 11.3594 9.04327 11.6758 8.84182 11.8647C8.64036 12.0535 8.32394 12.0433 8.13508 11.8419L4.38508 7.84188C4.20477 7.64955 4.20477 7.35027 4.38508 7.15794L8.13508 3.15794C8.32394 2.95648 8.64036 2.94628 8.84182 3.13514Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+      </svg>
+    ) : (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6.1584 3.13514C5.95694 3.32401 5.94673 3.64042 6.13559 3.84188L9.565 7.49991L6.13559 11.1579C5.94673 11.3594 5.95694 11.6758 6.1584 11.8647C6.35986 12.0535 6.67627 12.0433 6.86514 11.8419L10.6151 7.84188C10.7954 7.64955 10.7954 7.35027 10.6151 7.15794L6.86514 3.15794C6.67627 2.95648 6.35986 2.94628 6.1584 3.13514Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+      </svg>
+    )}
+  </button>
+));
+
+// Main carousel component
 export default function SimpleHeroCarousel() {
   const [slides, setSlides] = useState<SlideItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   
-  // One-time data fetching for a lighter-weight implementation
+  // Use React Query for data fetching with better caching
+  const { data: propertiesData = [], isLoading: propertiesLoading } = useQuery<Property[]>({
+    queryKey: ['/api/properties/highlighted'],
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+  
+  const { data: announcementsData = [], isLoading: announcementsLoading } = useQuery<Announcement[]>({
+    queryKey: ['/api/announcements/highlighted'],
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+  
+  // Convert fetched data to slide items
   useEffect(() => {
-    async function fetchData() {
-      try {
-        // Fetch properties and announcements in parallel
-        const [propertiesResponse, announcementsResponse] = await Promise.all([
-          fetch('/api/properties/highlighted'),
-          fetch('/api/announcements/highlighted')
-        ]);
-        
-        // Handle property response
-        let properties: Property[] = [];
-        if (propertiesResponse.ok) {
-          properties = await propertiesResponse.json();
-          console.log(`Found ${properties.length} highlighted properties`);
-        }
-        
-        // Handle announcement response
-        let announcements: Announcement[] = [];
-        if (announcementsResponse.ok) {
-          announcements = await announcementsResponse.json();
-          console.log(`Found ${announcements.length} highlighted announcements`);
-        }
-        
-        // Convert to slide items and combine
-        const propertySlides = properties.map(property => ({
-          id: property.id,
-          type: 'property' as const,
-          data: property
-        }));
-        
-        const announcementSlides = announcements.map(announcement => ({
-          id: announcement.id,
-          type: 'announcement' as const,
-          data: announcement
-        }));
-        
-        // Merge both types of slides
-        const combinedSlides = [...propertySlides, ...announcementSlides];
-        console.log(`Combined slides: ${combinedSlides.length}`);
-        
-        setSlides(combinedSlides);
-      } catch (error) {
-        console.error("Error fetching carousel data:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    // Wait until we have data from at least one source
+    if (propertiesData.length === 0 && announcementsData.length === 0) {
+      return;
     }
     
-    fetchData();
-  }, []);
+    // Process properties
+    const propertySlides = propertiesData.map(property => ({
+      id: property.id,
+      type: 'property' as const,
+      data: property
+    }));
+    
+    // Process announcements
+    const announcementSlides = announcementsData.map(announcement => ({
+      id: announcement.id,
+      type: 'announcement' as const,
+      data: announcement
+    }));
+    
+    // Merge both types of slides
+    const combinedSlides = [...propertySlides, ...announcementSlides];
+    if (combinedSlides.length > 0) {
+      console.log(`Combined ${propertySlides.length} properties and ${announcementSlides.length} announcements`);
+      setSlides(combinedSlides);
+    }
+  }, [propertiesData, announcementsData]);
   
-  // Simple autoplay
+  // Memoized navigation functions to prevent recreating on every render
+  const goToPrevSlide = useCallback(() => {
+    setActiveIndex((current) => (current - 1 + slides.length) % slides.length);
+  }, [slides.length]);
+  
+  const goToNextSlide = useCallback(() => {
+    setActiveIndex((current) => (current + 1) % slides.length);
+  }, [slides.length]);
+  
+  // Simple autoplay with debounce
   useEffect(() => {
     if (slides.length === 0) return;
     
@@ -89,6 +139,8 @@ export default function SimpleHeroCarousel() {
     return () => clearInterval(interval);
   }, [slides.length]);
 
+  const isLoading = propertiesLoading || announcementsLoading;
+  
   if (isLoading) {
     return (
       <section className="relative h-[80vh] bg-gray-900 overflow-hidden">
@@ -143,39 +195,15 @@ export default function SimpleHeroCarousel() {
           {/* Background Image */}
           <div className="absolute inset-0">
             {activeSlide.type === 'property' ? (
-              <Link href={`/properties/${(activeSlide.data as Property).id}`}>
-                <div className="block h-full cursor-pointer">
-                  <img 
-                    src={(activeSlide.data as Property).images && (activeSlide.data as Property).images.length > 0 
-                      ? (activeSlide.data as Property).images[0] 
-                      : "/default-property.svg"} 
-                    alt={(activeSlide.data as Property).title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/default-property.svg";
-                    }}
-                  />
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
-                </div>
-              </Link>
+              <PropertySlide 
+                property={activeSlide.data as Property} 
+                onClick={() => {}} 
+              />
             ) : (
-              <Link href={`/announcements/${(activeSlide.data as Announcement).id}`}>
-                <div className="block h-full cursor-pointer">
-                  <img 
-                    src={(activeSlide.data as Announcement).imageUrl || "/default-announcement.svg"} 
-                    alt={(activeSlide.data as Announcement).title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/default-announcement.svg";
-                    }}
-                  />
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
-                </div>
-              </Link>
+              <AnnouncementSlide 
+                announcement={activeSlide.data as Announcement} 
+                onClick={() => {}} 
+              />
             )}
           </div>
           
@@ -260,25 +288,9 @@ export default function SimpleHeroCarousel() {
         ))}
       </div>
       
-      {/* Navigation buttons - with higher z-index to ensure they work properly */}
-      <button 
-        onClick={() => setActiveIndex((current) => (current - 1 + slides.length) % slides.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#964B00]/80 hover:bg-[#964B00] border-none text-white h-10 w-10 rounded-full flex items-center justify-center z-20"
-        aria-label="Previous slide"
-      >
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8.84182 3.13514C9.04327 3.32401 9.05348 3.64042 8.86462 3.84188L5.43521 7.49991L8.86462 11.1579C9.05348 11.3594 9.04327 11.6758 8.84182 11.8647C8.64036 12.0535 8.32394 12.0433 8.13508 11.8419L4.38508 7.84188C4.20477 7.64955 4.20477 7.35027 4.38508 7.15794L8.13508 3.15794C8.32394 2.95648 8.64036 2.94628 8.84182 3.13514Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
-        </svg>
-      </button>
-      <button 
-        onClick={() => setActiveIndex((current) => (current + 1) % slides.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#964B00]/80 hover:bg-[#964B00] border-none text-white h-10 w-10 rounded-full flex items-center justify-center z-20"
-        aria-label="Next slide"
-      >
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6.1584 3.13514C5.95694 3.32401 5.94673 3.64042 6.13559 3.84188L9.565 7.49991L6.13559 11.1579C5.94673 11.3594 5.95694 11.6758 6.1584 11.8647C6.35986 12.0535 6.67627 12.0433 6.86514 11.8419L10.6151 7.84188C10.7954 7.64955 10.7954 7.35027 10.6151 7.15794L6.86514 3.15794C6.67627 2.95648 6.35986 2.94628 6.1584 3.13514Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
-        </svg>
-      </button>
+      {/* Navigation buttons using memoized functions */}
+      <NavButton direction="prev" onClick={goToPrevSlide} />
+      <NavButton direction="next" onClick={goToNextSlide} />
     </section>
   );
 }
