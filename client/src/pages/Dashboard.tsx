@@ -118,6 +118,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("properties");
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("Add New Property");
   const [logoFormOpen, setLogoFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentPropertyId, setCurrentPropertyId] = useState<number | null>(null);
@@ -917,8 +918,35 @@ export default function Dashboard() {
     setPropertyImages([]);
   };
 
+  // Handler for adding a new project
+  const addProjectHandler = () => {
+    resetForm();
+    setFormData(prev => ({
+      ...prev,
+      listingType: "Primary",
+      propertyType: "Apartment",
+      projectName: "", // Empty but required for projects
+      developerName: "", // Developer name is important for projects
+    }));
+    setDialogTitle("Add New Project");
+    setPropertyFormOpen(true);
+  };
+
+  // Handler for adding an international property
+  const addInternationalPropertyHandler = () => {
+    resetForm();
+    setFormData(prev => ({
+      ...prev,
+      city: "Dubai", // Default to Dubai for international properties
+      listingType: "Primary", // Usually primary for international
+    }));
+    setDialogTitle("Add International Property");
+    setPropertyFormOpen(true);
+  };
+
   const openPropertyForm = () => {
     resetForm();
+    setDialogTitle("Add New Property");
     setPropertyFormOpen(true);
   };
 
@@ -966,6 +994,8 @@ export default function Dashboard() {
       >
         <TabsList className="mb-6">
           <TabsTrigger value="properties">Properties</TabsTrigger>
+          <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="international">International</TabsTrigger>
           <TabsTrigger value="announcements">Announcements</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
           {(user?.role === 'admin' || user?.role === 'owner') && (
@@ -1018,6 +1048,140 @@ export default function Dashboard() {
                       <TableCell>{property.propertyType}</TableCell>
                       <TableCell>{property.isFeatured ? "Yes" : "No"}</TableCell>
                       <TableCell>{property.isHighlighted ? "Yes" : "No"}</TableCell>
+                      <TableCell className="space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditProperty(property)}
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteProperty(property.id)}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="projects">
+          <div className="flex justify-between mb-4">
+            <h2 className="text-2xl font-semibold text-gray-800">Manage Projects</h2>
+            <Button onClick={addProjectHandler}>Add New Project</Button>
+          </div>
+          
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-8 w-1/3" />
+                    <Skeleton className="h-4 w-1/4" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-24 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Project Name</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Developer</TableHead>
+                    <TableHead>Units</TableHead>
+                    <TableHead>Featured</TableHead>
+                    <TableHead>Highlighted</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {properties?.filter((property: Property) => property.listingType === "Primary" && property.projectName)
+                    .map((property: Property) => (
+                    <TableRow key={property.id}>
+                      <TableCell className="font-medium">{property.projectName}</TableCell>
+                      <TableCell>{property.city}, {property.state}</TableCell>
+                      <TableCell>{property.developerName || "N/A"}</TableCell>
+                      <TableCell>{1}</TableCell>
+                      <TableCell>{property.isFeatured ? "Yes" : "No"}</TableCell>
+                      <TableCell>{property.isHighlighted ? "Yes" : "No"}</TableCell>
+                      <TableCell className="space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditProperty(property)}
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteProperty(property.id)}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="international">
+          <div className="flex justify-between mb-4">
+            <h2 className="text-2xl font-semibold text-gray-800">Manage International Properties</h2>
+            <Button onClick={addInternationalPropertyHandler}>Add International Property</Button>
+          </div>
+          
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-8 w-1/3" />
+                    <Skeleton className="h-4 w-1/4" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-24 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Featured</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {properties?.filter((property: Property) => property.city === "Dubai" || property.city === "London")
+                    .map((property: Property) => (
+                    <TableRow key={property.id}>
+                      <TableCell className="font-medium">{property.title}</TableCell>
+                      <TableCell>{formatPrice(property.price)}</TableCell>
+                      <TableCell>{property.city}, {property.state}</TableCell>
+                      <TableCell>{property.propertyType}</TableCell>
+                      <TableCell>{property.isFeatured ? "Yes" : "No"}</TableCell>
                       <TableCell className="space-x-2">
                         <Button 
                           variant="outline" 
@@ -1218,7 +1382,7 @@ export default function Dashboard() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {isEditing ? "Edit Property" : "Add New Property"}
+              {isEditing ? "Edit Property" : dialogTitle}
             </DialogTitle>
             <DialogDescription>
               Fill in the property details below. Fields marked with * are required.
