@@ -206,6 +206,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   app.post("/api/properties", async (req: Request, res: Response) => {
     try {
+      // First check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Property creation failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to create properties" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to create property: ${user.username} (Role: ${user.role})`);
+      
+      // All authenticated users can create properties
       // Log the incoming data for debugging
       console.log("Creating property with data:", JSON.stringify(req.body, null, 2));
       
@@ -214,7 +225,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Log after validation success
       console.log("Property data validated successfully");
       
-      const property = await dbStorage.createProperty(propertyData);
+      // Add createdBy field to track who created this property
+      const propertyWithUser = {
+        ...propertyData,
+        createdBy: user.id,
+        // Regular users' properties start as pending approval
+        status: user.role === 'user' ? 'pending_approval' : 'published'
+      };
+      
+      const property = await dbStorage.createProperty(propertyWithUser);
       
       // Log after DB operation success
       console.log("Property created successfully with ID:", property.id);
@@ -237,29 +256,81 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   app.put("/api/properties/:id", async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Property update failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to update properties" });
+      }
+      
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid property ID" });
       }
 
-      const propertyData = req.body;
-      const property = await dbStorage.updateProperty(id, propertyData);
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to update property ${id}: ${user.username} (Role: ${user.role})`);
 
-      if (!property) {
+      // Get the property to check ownership
+      const existingProperty = await dbStorage.getPropertyById(id);
+      if (!existingProperty) {
         return res.status(404).json({ message: "Property not found" });
       }
 
+      // Check if user has permission to update this property
+      // Owner and Admin can update any property
+      // Regular users can only update their own properties
+      if (user.role === 'user' && existingProperty.createdBy !== user.id) {
+        console.error(`Permission denied: User ${user.username} attempted to update property ${id} created by user ${existingProperty.createdBy}`);
+        return res.status(403).json({ message: "You do not have permission to update this property" });
+      }
+
+      const propertyData = req.body;
+      
+      // If a regular user updates a property, set status back to pending_approval
+      if (user.role === 'user') {
+        propertyData.status = 'pending_approval';
+      }
+      
+      const property = await dbStorage.updateProperty(id, propertyData);
+
       res.json(property);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update property" });
+      console.error("Error updating property:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ message: `Failed to update property: ${errorMessage}` });
     }
   });
 
   app.delete("/api/properties/:id", async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Property deletion failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to delete properties" });
+      }
+      
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to delete property ${id}: ${user.username} (Role: ${user.role})`);
+
+      // Get the property to check ownership
+      const existingProperty = await dbStorage.getPropertyById(id);
+      if (!existingProperty) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Check if user has permission to delete this property
+      // Owner and Admin can delete any property
+      // Regular users can only delete their own properties
+      if (user.role === 'user' && existingProperty.createdBy !== user.id) {
+        console.error(`Permission denied: User ${user.username} attempted to delete property ${id} created by user ${existingProperty.createdBy}`);
+        return res.status(403).json({ message: "You do not have permission to delete this property" });
       }
 
       const success = await dbStorage.deleteProperty(id);
@@ -269,7 +340,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete property" });
+      console.error("Error deleting property:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ message: `Failed to delete property: ${errorMessage}` });
     }
   });
 
@@ -331,15 +404,35 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   app.post("/api/testimonials", async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Testimonial creation failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to create testimonials" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to create testimonial: ${user.username} (Role: ${user.role})`);
+      
+      // Only admins or owners can create testimonials directly
+      // Regular users testimonials need approval (not implemented yet)
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        console.error(`Permission denied: User ${user.username} with role ${user.role} attempted to create a testimonial`);
+        return res.status(403).json({ message: "Only administrators and owners can create testimonials directly" });
+      }
+      
       const testimonialData = insertTestimonialSchema.parse(req.body);
       const testimonial = await dbStorage.createTestimonial(testimonialData);
       res.status(201).json(testimonial);
     } catch (error) {
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
+        console.error("Validation error details:", validationError);
         res.status(400).json({ message: validationError.message });
       } else {
-        res.status(500).json({ message: "Failed to create testimonial" });
+        console.error("Error creating testimonial:", error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({ message: `Failed to create testimonial: ${errorMessage}` });
       }
     }
   });
@@ -408,6 +501,16 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   
   app.post("/api/announcements", async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Announcement creation failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to create announcements" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to create announcement: ${user.username} (Role: ${user.role})`);
+      
       // Create a modified schema that accepts string dates
       const modifiedAnnouncementSchema = insertAnnouncementSchema
         .extend({
@@ -417,30 +520,59 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         
       // Parse with our modified schema
       const announcementData = modifiedAnnouncementSchema.parse(req.body);
-      const announcement = await dbStorage.createAnnouncement(announcementData);
+      
+      // Add metadata about who created this announcement
+      const announcementWithUser = {
+        ...announcementData,
+        createdBy: user.id,
+        // Regular users' announcements start as pending approval
+        status: user.role === 'user' ? 'pending_approval' : 'published'
+      };
+      
+      const announcement = await dbStorage.createAnnouncement(announcementWithUser);
       res.status(201).json(announcement);
     } catch (error) {
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
+        console.error("Validation error details:", validationError);
         res.status(400).json({ message: validationError.message });
       } else {
         console.error("Error creating announcement:", error);
-        res.status(500).json({ message: "Failed to create announcement" });
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        res.status(500).json({ message: `Failed to create announcement: ${errorMessage}` });
       }
     }
   });
   
   app.put("/api/announcements/:id", async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Announcement update failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to update announcements" });
+      }
+      
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid announcement ID" });
       }
       
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to update announcement ${id}: ${user.username} (Role: ${user.role})`);
+      
       // Check if announcement exists
       const existingAnnouncement = await dbStorage.getAnnouncementById(id);
       if (!existingAnnouncement) {
         return res.status(404).json({ message: "Announcement not found" });
+      }
+      
+      // Check if user has permission to update this announcement
+      // Owner and Admin can update any announcement
+      // Regular users can only update their own announcements
+      if (user.role === 'user' && existingAnnouncement.createdBy !== user.id) {
+        console.error(`Permission denied: User ${user.username} attempted to update announcement ${id} created by user ${existingAnnouncement.createdBy}`);
+        return res.status(403).json({ message: "You do not have permission to update this announcement" });
       }
       
       // Handle date strings in the request body
@@ -457,26 +589,50 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         delete updatedData.createdAt;
       }
       
+      // If a regular user updates an announcement, set status back to pending_approval
+      if (user.role === 'user') {
+        updatedData.status = 'pending_approval';
+      }
+      
       // Update the announcement
       const updatedAnnouncement = await dbStorage.updateAnnouncement(id, updatedData);
       res.json(updatedAnnouncement);
     } catch (error) {
       console.error("Error updating announcement:", error);
-      res.status(500).json({ message: "Failed to update announcement" });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Failed to update announcement: ${errorMessage}` });
     }
   });
   
   app.delete("/api/announcements/:id", async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Announcement deletion failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to delete announcements" });
+      }
+      
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid announcement ID" });
       }
       
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to delete announcement ${id}: ${user.username} (Role: ${user.role})`);
+      
       // Check if announcement exists
       const existingAnnouncement = await dbStorage.getAnnouncementById(id);
       if (!existingAnnouncement) {
         return res.status(404).json({ message: "Announcement not found" });
+      }
+      
+      // Check if user has permission to delete this announcement
+      // Owner and Admin can delete any announcement
+      // Regular users can only delete their own announcements
+      if (user.role === 'user' && existingAnnouncement.createdBy !== user.id) {
+        console.error(`Permission denied: User ${user.username} attempted to delete announcement ${id} created by user ${existingAnnouncement.createdBy}`);
+        return res.status(403).json({ message: "You do not have permission to delete this announcement" });
       }
       
       // Delete the announcement
@@ -488,7 +644,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting announcement:", error);
-      res.status(500).json({ message: "Failed to delete announcement" });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Failed to delete announcement: ${errorMessage}` });
     }
   });
 
@@ -504,16 +661,50 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   app.patch("/api/site-settings", async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Site settings update failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to update site settings" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to update site settings: ${user.username} (Role: ${user.role})`);
+      
+      // Only admin and owner can update site settings
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        console.error(`Permission denied: User ${user.username} with role ${user.role} attempted to update site settings`);
+        return res.status(403).json({ message: "Only administrators and owners can update site settings" });
+      }
+      
       const updatedSettings = await dbStorage.updateSiteSettings(req.body);
       res.json(updatedSettings);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update site settings" });
+      console.error("Error updating site settings:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Failed to update site settings: ${errorMessage}` });
     }
   });
 
   // Logo upload endpoint with improved error handling and logging
   app.post("/api/upload/logo", logoUpload.single('logo'), async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Logo upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to upload logo" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to upload logo: ${user.username} (Role: ${user.role})`);
+      
+      // Only admin and owner can upload a logo
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        console.error(`Permission denied: User ${user.username} with role ${user.role} attempted to upload logo`);
+        return res.status(403).json({ message: "Only administrators and owners can update the company logo" });
+      }
+      
       console.log("Received logo upload request");
       console.log("Request file:", req.file ? `File present: ${req.file.originalname}, mimetype: ${req.file.mimetype}, size: ${req.file.size}` : "No file present");
 
@@ -566,6 +757,16 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // Announcement image upload endpoint
   app.post("/api/upload/announcement-image", finalUpload.single('image'), async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Announcement image upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to upload announcement images" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to upload announcement image: ${user.username} (Role: ${user.role})`);
+      
       console.log("Received announcement image upload request");
       console.log("Request file:", req.file ? `File present: ${req.file.originalname}, mimetype: ${req.file.mimetype}, size: ${req.file.size}` : "No file present");
 
@@ -611,6 +812,16 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   app.post("/api/upload/property-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Property images upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to upload property images" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
+      
       console.log("Received property images upload request");
       
       // Log session information to help debug session timeouts
