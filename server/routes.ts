@@ -206,15 +206,31 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   app.post("/api/properties", async (req: Request, res: Response) => {
     try {
+      // Log the incoming data for debugging
+      console.log("Creating property with data:", JSON.stringify(req.body, null, 2));
+      
       const propertyData = insertPropertySchema.parse(req.body);
+      
+      // Log after validation success
+      console.log("Property data validated successfully");
+      
       const property = await dbStorage.createProperty(propertyData);
+      
+      // Log after DB operation success
+      console.log("Property created successfully with ID:", property.id);
+      
       res.status(201).json(property);
     } catch (error) {
+      console.error("Error creating property:", error);
+      
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
+        console.error("Validation error details:", validationError);
         res.status(400).json({ message: validationError.message });
       } else {
-        res.status(500).json({ message: "Failed to create property" });
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error("Database or server error:", errorMessage);
+        res.status(500).json({ message: `Failed to create property: ${errorMessage}` });
       }
     }
   });
@@ -596,10 +612,27 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   app.post("/api/upload/property-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
       console.log("Received property images upload request");
+      
+      // Log session information to help debug session timeouts
+      if (req.session) {
+        console.log(`Session ID: ${req.sessionID}`);
+        console.log(`Session cookie maxAge: ${req.session.cookie.maxAge}`);
+        console.log(`Session expires: ${req.session.cookie.expires ? new Date(req.session.cookie.expires).toISOString() : 'N/A'}`);
+      } else {
+        console.log("No session data available");
+      }
 
       if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
         console.log("No property image files received");
         return res.status(400).json({ message: "No files uploaded" });
+      }
+      
+      console.log(`Received ${Array.isArray(req.files) ? req.files.length : 0} files for upload`);
+      
+      if (Array.isArray(req.files)) {
+        req.files.forEach((file, index) => {
+          console.log(`File ${index + 1}: ${file.originalname}, type: ${file.mimetype}, size: ${(file.size / 1024).toFixed(2)}KB`);
+        });
       }
 
       // Use the Express.Multer.File type to correctly handle files

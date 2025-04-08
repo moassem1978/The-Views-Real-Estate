@@ -215,10 +215,25 @@ export default function Dashboard() {
   // Create property mutation
   const createProperty = useMutation({
     mutationFn: async (newProperty: any) => {
-      const response = await apiRequest('POST', '/api/properties', newProperty);
-      return response.json();
+      try {
+        console.log("Creating property with data:", JSON.stringify(newProperty, null, 2));
+        const response = await apiRequest('POST', '/api/properties', newProperty);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Property creation failed with status:', response.status, response.statusText);
+          console.error('Error response body:', errorText);
+          throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
+        }
+        
+        return await response.json();
+      } catch (err) {
+        console.error('Property creation error (detailed):', err);
+        throw err;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Property created successfully with ID:", data.id);
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
       toast({
         title: "Success",
@@ -227,10 +242,12 @@ export default function Dashboard() {
       setPropertyFormOpen(false);
       resetForm();
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      // Extract the error message for a better user experience
+      const errorMessage = error.message || "Failed to create property. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to create property. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       console.error("Error creating property:", error);
@@ -514,18 +531,70 @@ export default function Dashboard() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate required fields first
+    const requiredFields = [
+      { field: 'title', label: 'Title' },
+      { field: 'description', label: 'Description' },
+      { field: 'address', label: 'Address' },
+      { field: 'city', label: 'City' },
+      { field: 'price', label: 'Price' },
+      { field: 'bedrooms', label: 'Bedrooms' },
+      { field: 'bathrooms', label: 'Bathrooms' },
+      { field: 'builtUpArea', label: 'Built-up Area' },
+      { field: 'propertyType', label: 'Property Type' },
+    ];
+    
+    const missingFields = requiredFields.filter(field => {
+      const value = formData[field.field as keyof typeof formData];
+      return value === undefined || value === null || value === '' || 
+             (typeof value === 'number' && (isNaN(value) || value <= 0));
+    });
+    
+    if (missingFields.length > 0) {
+      const fieldLabels = missingFields.map(f => f.label).join(', ');
+      toast({
+        title: "Form Incomplete",
+        description: `Please fill in the following required fields: ${fieldLabels}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Verify images array has content
+    if (!formData.images || formData.images.length === 0) {
+      toast({
+        title: "Images Required",
+        description: "Please upload at least one image for the property",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Make sure the form data is complete
     const currentDate = new Date().toISOString();
     
-    // Ensure amenities and images are arrays
+    // Create a clean version of the form data with proper typing
     const propertyData = {
       ...formData,
       amenities: Array.isArray(formData.amenities) ? formData.amenities : [],
       images: Array.isArray(formData.images) ? formData.images : [],
+      price: Number(formData.price), // Ensure these are proper numbers
+      downPayment: Number(formData.downPayment),
+      installmentAmount: Number(formData.installmentAmount),
+      installmentPeriod: Number(formData.installmentPeriod),
+      bedrooms: Number(formData.bedrooms),
+      bathrooms: Number(formData.bathrooms),
+      builtUpArea: Number(formData.builtUpArea),
       createdAt: currentDate
     };
     
-    console.log('Submitting property data:', propertyData);
+    console.log('Submitting property data:', JSON.stringify(propertyData, null, 2));
+    
+    // Show a pending toast to indicate submission is in progress
+    toast({
+      title: "Processing...",
+      description: isEditing ? "Updating property..." : "Creating property...",
+    });
     
     if (isEditing && currentPropertyId) {
       updateProperty.mutate({ id: currentPropertyId, property: propertyData });
