@@ -77,11 +77,11 @@ function CompanyLogo() {
   const { data: settings, isLoading } = useQuery<SiteSettings>({
     queryKey: ['/api/site-settings'],
   });
-  
+
   if (isLoading) {
     return <Skeleton className="w-32 h-32" />;
   }
-  
+
   if (settings?.companyLogo) {
     return (
       <img 
@@ -91,7 +91,7 @@ function CompanyLogo() {
       />
     );
   }
-  
+
   return (
     <div className="flex flex-col items-center justify-center text-center p-4 text-gray-400">
       <svg 
@@ -123,7 +123,7 @@ export default function Dashboard() {
   const [logoFormOpen, setLogoFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentPropertyId, setCurrentPropertyId] = useState<number | null>(null);
-  
+
   // Announcement-related state
   const [announcementFormOpen, setAnnouncementFormOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState(false);
@@ -139,7 +139,7 @@ export default function Dashboard() {
     isActive: true,
     isHighlighted: false
   });
-  
+
   // Form state
   const [formData, setFormData] = useState({
     title: "",
@@ -178,10 +178,10 @@ export default function Dashboard() {
   // Logo state
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  
+
   // Property images state
   const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
-  
+
   // Fetch properties
   const { data: propertiesResponse, isLoading } = useQuery({
     queryKey: ['/api/properties'],
@@ -193,10 +193,10 @@ export default function Dashboard() {
       return response.json();
     }
   });
-  
+
   // Extract the properties data array from the paginated response
   const properties = propertiesResponse?.data;
-  
+
   // Fetch announcements
   const { data: announcementsResponse, isLoading: isLoadingAnnouncements } = useQuery({
     queryKey: ['/api/announcements'],
@@ -208,7 +208,7 @@ export default function Dashboard() {
       return response.json();
     }
   });
-  
+
   // Extract the announcements data array from the paginated response
   const announcements = announcementsResponse?.data;
 
@@ -218,17 +218,17 @@ export default function Dashboard() {
       try {
         // Log the full property data being sent
         console.log("Creating property with data:", JSON.stringify(newProperty, null, 2));
-        
+
         // Verify required fields
         const requiredFields = ['title', 'description', 'price', 'address', 'city', 'state', 'zipCode', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType'];
         const missingFields = requiredFields.filter(field => !newProperty[field]);
-        
+
         if (missingFields.length > 0) {
           throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
         }
 
         const response = await apiRequest('POST', '/api/properties', newProperty);
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Property creation failed:', {
@@ -238,7 +238,7 @@ export default function Dashboard() {
           });
           throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
         }
-        
+
         return await response.json();
       } catch (err) {
         console.error('Property creation error:', err);
@@ -316,7 +316,7 @@ export default function Dashboard() {
       console.error("Error deleting property:", error);
     }
   });
-  
+
   // Create announcement mutation
   const createAnnouncement = useMutation({
     mutationFn: async (newAnnouncement: any) => {
@@ -390,20 +390,20 @@ export default function Dashboard() {
       console.error("Error deleting announcement:", error);
     }
   });
-  
+
   // Upload announcement image mutation
   const uploadAnnouncementImage = useMutation({
     mutationFn: async (file: File) => {
       try {
         // Create a fresh FormData object
         const formData = new FormData();
-        
+
         // Add the file with the exact name expected by the server
         formData.append('image', file, file.name);
-        
+
         console.log('Starting announcement image upload');
         console.log('File details:', file.name, file.type, `${(file.size / 1024).toFixed(2)}KB`);
-        
+
         // Enhanced fetch request with improved error handling
         const response = await fetch('/api/upload/announcement-image', {
           method: 'POST',
@@ -414,7 +414,7 @@ export default function Dashboard() {
             'Pragma': 'no-cache'
           }
         });
-        
+
         // Handle non-success responses
         if (!response.ok) {
           const errorText = await response.text();
@@ -422,7 +422,7 @@ export default function Dashboard() {
           console.error('Error response body:', errorText);
           throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
         }
-        
+
         // Parse and return the response data
         const data = await response.json();
         console.log('Announcement image upload successful:', data);
@@ -438,7 +438,7 @@ export default function Dashboard() {
         ...prev,
         imageUrl: data.imageUrl
       }));
-      
+
       toast({
         title: "Success",
         description: "Image uploaded successfully",
@@ -460,13 +460,13 @@ export default function Dashboard() {
       try {
         // Create a fresh FormData object
         const formData = new FormData();
-        
+
         // Add the file with the exact name expected by the server
         formData.append('logo', file, file.name);
-        
+
         console.log('Starting improved logo upload with fetch API');
         console.log('File details:', file.name, file.type, `${(file.size / 1024).toFixed(2)}KB`);
-        
+
         // Enhanced fetch request with improved error handling
         const response = await fetch('/api/upload/logo', {
           method: 'POST',
@@ -478,7 +478,7 @@ export default function Dashboard() {
             'Pragma': 'no-cache'
           }
         });
-        
+
         // Handle non-success responses
         if (!response.ok) {
           const errorText = await response.text();
@@ -486,7 +486,7 @@ export default function Dashboard() {
           console.error('Error response body:', errorText);
           throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
         }
-        
+
         // Parse and return the response data
         const data = await response.json();
         console.log('Logo upload successful with response:', data);
@@ -519,7 +519,7 @@ export default function Dashboard() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
@@ -544,7 +544,7 @@ export default function Dashboard() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields first
     const requiredFields = [
       { field: 'title', label: 'Title' },
@@ -557,13 +557,13 @@ export default function Dashboard() {
       { field: 'builtUpArea', label: 'Built-up Area' },
       { field: 'propertyType', label: 'Property Type' },
     ];
-    
+
     const missingFields = requiredFields.filter(field => {
       const value = formData[field.field as keyof typeof formData];
       return value === undefined || value === null || value === '' || 
              (typeof value === 'number' && (isNaN(value) || value <= 0));
     });
-    
+
     if (missingFields.length > 0) {
       const fieldLabels = missingFields.map(f => f.label).join(', ');
       toast({
@@ -573,7 +573,7 @@ export default function Dashboard() {
       });
       return;
     }
-    
+
     // Verify images array has content
     if (!formData.images || formData.images.length === 0) {
       toast({
@@ -583,10 +583,10 @@ export default function Dashboard() {
       });
       return;
     }
-    
+
     // Make sure the form data is complete
     const currentDate = new Date().toISOString();
-    
+
     // Create a clean version of the form data with proper typing
     const propertyData = {
       ...formData,
@@ -599,17 +599,20 @@ export default function Dashboard() {
       bedrooms: Number(formData.bedrooms),
       bathrooms: Number(formData.bathrooms),
       builtUpArea: Number(formData.builtUpArea),
-      createdAt: currentDate
+      createdAt: currentDate,
+      agentId: user?.id || 1, // Use logged in user's ID as agent ID, fallback to 1
+      createdBy: user?.id,
+      status: user?.role === 'user' ? 'pending_approval' : 'published'
     };
-    
+
     console.log('Submitting property data:', JSON.stringify(propertyData, null, 2));
-    
+
     // Show a pending toast to indicate submission is in progress
     toast({
       title: "Processing...",
       description: isEditing ? "Updating property..." : "Creating property...",
     });
-    
+
     if (isEditing && currentPropertyId) {
       updateProperty.mutate({ id: currentPropertyId, property: propertyData });
     } else {
@@ -621,9 +624,9 @@ export default function Dashboard() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       console.log(`Selected logo file: ${file.name}, type: ${file.type}, size: ${(file.size / 1024).toFixed(2)}KB`);
-      
+
       setLogoFile(file);
-      
+
       // For Adobe Illustrator files, show a placeholder preview
       if (file.name.toLowerCase().endsWith('.ai') || 
           file.type === 'application/postscript' || 
@@ -648,21 +651,21 @@ export default function Dashboard() {
 
   const handleLogoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (logoFile) {
       try {
         console.log("Submitting logo file directly from form...");
-        
+
         // Create the form data
         const formData = new FormData();
         formData.append('logo', logoFile);
-        
+
         // Show upload in progress
         toast({
           title: "Uploading logo...",
           description: "Please wait while your logo is being uploaded.",
         });
-        
+
         // Trigger the upload mutation
         uploadLogo.mutate(logoFile);
       } catch (error) {
@@ -725,48 +728,48 @@ export default function Dashboard() {
   // Track upload progress separately from the mutation state
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  
+
   const uploadPropertyImages = useMutation({
     mutationFn: async (files: File[]) => {
       try {
         setIsUploading(true);
         setUploadProgress(0);
-        
+
         // Split large files into smaller batches for more reliable uploading
         const MAX_BATCH_SIZE = 2; // Only send 2 files at a time
         const batches: File[][] = [];
-        
+
         // Create batches of files
         for (let i = 0; i < files.length; i += MAX_BATCH_SIZE) {
           batches.push(files.slice(i, i + MAX_BATCH_SIZE));
         }
-        
+
         console.log(`Split ${files.length} files into ${batches.length} batches for more reliable upload`);
-        
+
         // Track all image URLs across batches
         const allImageUrls: string[] = [];
-        
+
         // Process each batch sequentially
         for (let i = 0; i < batches.length; i++) {
           const batch = batches[i];
           const formData = new FormData();
-          
+
           // Add each file in this batch to FormData
           batch.forEach(file => {
             formData.append('images', file, file.name);
             console.log(`Batch ${i+1}/${batches.length}: Adding file to upload: ${file.name} (${file.type}, ${(file.size / 1024).toFixed(2)}KB)`);
           });
-          
+
           console.log(`Uploading batch ${i+1} of ${batches.length} (${batch.length} files)`);
-          
+
           // Update progress based on which batch we're on
           setUploadProgress(Math.floor((i / batches.length) * 100));
-          
+
           // Retry logic for each batch
           let retries = 0;
           const MAX_RETRIES = 2;
           let success = false;
-          
+
           while (!success && retries <= MAX_RETRIES) {
             try {
               // Enhanced fetch request with improved error handling
@@ -779,13 +782,13 @@ export default function Dashboard() {
                   'Pragma': 'no-cache'
                 }
               });
-              
+
               // Better error handling
               if (!response.ok) {
                 const errorText = await response.text();
                 console.error(`Batch ${i+1} upload failed (attempt ${retries+1}): Status ${response.status}`);
                 console.error('Error response body:', errorText);
-                
+
                 if (retries < MAX_RETRIES) {
                   retries++;
                   // Add exponential backoff
@@ -815,7 +818,7 @@ export default function Dashboard() {
               }
             }
           }
-          
+
           // Add a small delay between batches to let the server catch up
           if (i < batches.length - 1) {
             // Update progress for the current batch - increment by a small amount to show activity
@@ -824,11 +827,11 @@ export default function Dashboard() {
             await new Promise(resolve => setTimeout(resolve, 500));
           }
         }
-        
+
         // Upload completed
         setUploadProgress(100);
         setIsUploading(false);
-        
+
         return { imageUrls: allImageUrls, count: allImageUrls.length };
       } catch (err) {
         setIsUploading(false);
@@ -844,12 +847,12 @@ export default function Dashboard() {
           ...prev,
           images: [...prev.images, ...newImageUrls]
         }));
-        
+
         toast({
           title: "Success",
           description: `${newImageUrls.length} image(s) uploaded successfully`,
         });
-        
+
         // Clear the property images state
         setPropertyImages([]);
       }
@@ -863,26 +866,26 @@ export default function Dashboard() {
       console.error("Error uploading property images:", error);
     }
   });
-  
+
   const handlePropertyImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newImages: PropertyImage[] = [];
       const totalFiles = e.target.files.length;
       let processedFiles = 0;
-      
+
       Array.from(e.target.files).forEach(file => {
         // Check if it's an Adobe Illustrator file
         if (file.name.toLowerCase().endsWith('.ai') || 
             file.type === 'application/postscript' || 
             file.type === 'application/illustrator') {
           console.log('AI file detected for property image, using placeholder');
-          
+
           // Use placeholder for AI files
           newImages.push({
             file,
             preview: '/uploads/ai-placeholder.svg'
           });
-          
+
           processedFiles++;
           if (processedFiles === totalFiles) {
             setPropertyImages(prev => [...prev, ...newImages]);
@@ -895,7 +898,7 @@ export default function Dashboard() {
               file,
               preview: reader.result as string
             });
-            
+
             processedFiles++;
             if (processedFiles === totalFiles) {
               setPropertyImages(prev => [...prev, ...newImages]);
@@ -906,21 +909,21 @@ export default function Dashboard() {
       });
     }
   };
-  
+
   const handleUploadPropertyImages = () => {
     if (propertyImages.length > 0) {
       uploadPropertyImages.mutate(propertyImages.map(img => img.file));
     }
   };
-  
+
   const removePropertyImage = (index: number) => {
     setPropertyImages(prev => prev.filter((_, i) => i !== index));
   };
-  
+
   // Handle announcement form input changes
   const handleAnnouncementInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setAnnouncementForm(prev => ({ ...prev, [name]: checked }));
@@ -928,15 +931,15 @@ export default function Dashboard() {
       setAnnouncementForm(prev => ({ ...prev, [name]: value }));
     }
   };
-  
+
   // Handle announcement image selection
   const handleAnnouncementImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       console.log(`Selected announcement image: ${file.name}, type: ${file.type}, size: ${(file.size / 1024).toFixed(2)}KB`);
-      
+
       setAnnouncementImage(file);
-      
+
       // For Adobe Illustrator files, show a placeholder preview
       if (file.name.toLowerCase().endsWith('.ai') || 
           file.type === 'application/postscript' || 
@@ -953,35 +956,35 @@ export default function Dashboard() {
       }
     }
   };
-  
+
   // Handle announcement image upload
   const handleUploadAnnouncementImage = () => {
     if (announcementImage) {
       uploadAnnouncementImage.mutate(announcementImage);
     }
   };
-  
+
   // Handle announcement form submission
   const handleAnnouncementSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Make sure the form data is complete
     const currentDate = new Date().toISOString();
-    
+
     const announcementData = {
       ...announcementForm,
       createdAt: currentDate
     };
-    
+
     console.log('Submitting announcement data:', announcementData);
-    
+
     if (editingAnnouncement && currentAnnouncementId) {
       updateAnnouncement.mutate({ id: currentAnnouncementId, announcement: announcementData });
     } else {
       createAnnouncement.mutate(announcementData);
     }
   };
-  
+
   // Handle editing an announcement
   const handleEditAnnouncement = (announcement: Announcement) => {
     setAnnouncementForm({
@@ -995,24 +998,24 @@ export default function Dashboard() {
     });
     setEditingAnnouncement(true);
     setCurrentAnnouncementId(announcement.id);
-    
+
     // If there's an image, set the preview
     if (announcement.imageUrl) {
       setAnnouncementImagePreview(announcement.imageUrl);
     } else {
       setAnnouncementImagePreview(null);
     }
-    
+
     setAnnouncementFormOpen(true);
   };
-  
+
   // Handle deleting an announcement
   const handleDeleteAnnouncement = (id: number) => {
     if (window.confirm("Are you sure you want to delete this announcement?")) {
       deleteAnnouncement.mutate(id);
     }
   };
-  
+
   // Reset announcement form
   const resetAnnouncementForm = () => {
     setAnnouncementForm({
@@ -1029,7 +1032,7 @@ export default function Dashboard() {
     setAnnouncementImage(null);
     setAnnouncementImagePreview(null);
   };
-  
+
   // Open announcement form
   const openAnnouncementForm = () => {
     resetAnnouncementForm();
@@ -1133,7 +1136,7 @@ export default function Dashboard() {
           Back to Website
         </Button>
       </div>
-      
+
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
         <div className="flex space-x-3">
@@ -1161,13 +1164,13 @@ export default function Dashboard() {
             </TabsTrigger>
           )}
         </TabsList>
-        
+
         <TabsContent value="properties">
           <div className="flex justify-between mb-4">
             <h2 className="text-2xl font-semibold text-gray-800">Manage Properties</h2>
             <Button onClick={openPropertyForm}>Add New Property</Button>
           </div>
-          
+
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -1234,7 +1237,7 @@ export default function Dashboard() {
             <h2 className="text-2xl font-semibold text-gray-800">Manage Projects</h2>
             <Button onClick={addProjectHandler}>Add New Project</Button>
           </div>
-          
+
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -1296,13 +1299,13 @@ export default function Dashboard() {
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="international">
           <div className="flex justify-between mb-4">
             <h2 className="text-2xl font-semibold text-gray-800">Manage International Properties</h2>
             <Button onClick={addInternationalPropertyHandler}>Add International Property</Button>
           </div>
-          
+
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -1362,13 +1365,13 @@ export default function Dashboard() {
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="announcements">
           <div className="flex justify-between mb-4">
             <h2 className="text-2xl font-semibold text-gray-800">Manage Announcements</h2>
             <Button onClick={openAnnouncementForm}>Add New Announcement</Button>
           </div>
-          
+
           {isLoadingAnnouncements ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -1478,7 +1481,7 @@ export default function Dashboard() {
             </Card>
           )}
         </TabsContent>
-        
+
         <TabsContent value="settings">
           <Card>
             <CardHeader>
@@ -1502,21 +1505,21 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="border-t pt-4">
                   <h3 className="text-lg font-medium mb-4">Account Information</h3>
-                  
+
                   <div className="grid gap-4">
                     <div className="grid gap-2">
                       <label htmlFor="companyName">Company Name</label>
                       <Input id="companyName" value="The Views Real Estate" readOnly />
                     </div>
-                    
+
                     <div className="grid gap-2">
                       <label htmlFor="email">Contact Email</label>
                       <Input id="email" value="info@theviewsrealestate.com" readOnly />
                     </div>
-                    
+
                     <div className="grid gap-2">
                       <label htmlFor="phone">Contact Phone</label>
                       <Input id="phone" value="1-800-555-VIEWS" readOnly />
@@ -1545,7 +1548,7 @@ export default function Dashboard() {
               Fill in the property details below. Fields marked with * are required.
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -1558,7 +1561,7 @@ export default function Dashboard() {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <label htmlFor="propertyType" className="text-sm font-medium flex items-center">
                   Property Type
@@ -1584,7 +1587,7 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2 md:col-span-2">
                 <label htmlFor="description" className="text-sm font-medium">Description</label>
                 <Textarea
@@ -1596,7 +1599,7 @@ export default function Dashboard() {
                   required
                 />
               </div>
-              
+
               <div className="md:col-span-2 bg-amber-50 p-4 rounded-lg border border-amber-200">
                 <h3 className="font-medium mb-3 text-amber-800">Location Information (Egypt)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1624,7 +1627,7 @@ export default function Dashboard() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="state" className="text-sm font-medium">District/Governorate</label>
                     <Input
@@ -1635,7 +1638,7 @@ export default function Dashboard() {
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="projectName" className="text-sm font-medium flex items-center">
                       Project Name
@@ -1650,13 +1653,13 @@ export default function Dashboard() {
                       placeholder="Enter the project name instead of address"
                     />
                   </div>
-                  
+
                 </div>
               </div>
-              
+
               <div className="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h3 className="font-medium mb-3 text-blue-800">Property Details</h3>
-                
+
                 {/* Listing Type - Mandatory field */}
                 <div className="mb-4">
                   <div className="space-y-2">
@@ -1679,7 +1682,7 @@ export default function Dashboard() {
                     </Select>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Primary Market - Two price fields */}
                   {formData.listingType === "Primary" && (
@@ -1698,7 +1701,7 @@ export default function Dashboard() {
                           required
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <label htmlFor="downPayment" className="text-sm font-medium flex items-center">
                           Down Payment (EGP)
@@ -1728,7 +1731,7 @@ export default function Dashboard() {
                       </div>
                     </>
                   )}
-                  
+
                   {/* Resale Market - Single price field */}
                   {formData.listingType === "Resale" && (
                     <div className="space-y-2">
@@ -1746,7 +1749,7 @@ export default function Dashboard() {
                       />
                     </div>
                   )}
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="builtUpArea" className="text-sm font-medium flex items-center">
                       Built-Up Area (m²)
@@ -1762,7 +1765,7 @@ export default function Dashboard() {
                     />
                     <span className="text-xs text-gray-500">Built-Up Area in square meters</span>
                   </div>
-                  
+
                   {/* Is Ground Unit Toggle */}
                   <div className="space-y-2">
                     <label htmlFor="isGroundUnit" className="text-sm font-medium">Ground Unit</label>
@@ -1799,7 +1802,7 @@ export default function Dashboard() {
                       <span className="text-xs text-gray-500">Floor number (1, 2, etc.)</span>
                     </div>
                   )}
-                  
+
                   {/* Plot Size - for non-ground units */}
                   {!formData.isGroundUnit && (
                     <div className="space-y-2">
@@ -1820,7 +1823,7 @@ export default function Dashboard() {
                       <span className="text-xs text-gray-500">Plot Size in square meters</span>
                     </div>
                   )}
-                  
+
                   {/* Garden Size - only for ground units */}
                   {formData.isGroundUnit && (
                     <div className="space-y-2">
@@ -1839,7 +1842,7 @@ export default function Dashboard() {
                       <span className="text-xs text-gray-500">Garden Size in square meters</span>
                     </div>
                   )}
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="yearBuilt" className="text-sm font-medium">Year Built</label>
                     <Input
@@ -1850,7 +1853,7 @@ export default function Dashboard() {
                       onChange={handleInputChange}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="bedrooms" className="text-sm font-medium flex items-center">
                       Bedrooms
@@ -1865,7 +1868,7 @@ export default function Dashboard() {
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="bathrooms" className="text-sm font-medium flex items-center">
                       Bathrooms
@@ -1880,7 +1883,7 @@ export default function Dashboard() {
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="views" className="text-sm font-medium">Property View</label>
                     <Select
@@ -1906,7 +1909,7 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <label htmlFor="isFeatured" className="text-sm font-medium">Featured Listing</label>
                 <Select
@@ -1922,7 +1925,7 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <label htmlFor="isNewListing" className="text-sm font-medium">New Listing</label>
                 <Select
@@ -1938,7 +1941,7 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="md:col-span-2">
                 <div className="space-y-2">
                   <label htmlFor="amenities" className="text-sm font-medium">
@@ -1954,13 +1957,13 @@ export default function Dashboard() {
                   />
                 </div>
               </div>
-              
+
               <div className="md:col-span-2 mb-4">
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-sm font-medium">
                     Property Images
                   </label>
-                  
+
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -1969,7 +1972,7 @@ export default function Dashboard() {
                   >
                     Upload New Images
                   </Button>
-                  
+
                   <input 
                     type="file"
                     id="propertyImagesUpload"
@@ -1979,7 +1982,7 @@ export default function Dashboard() {
                     onChange={handlePropertyImagesChange}
                   />
                 </div>
-                
+
                 <div className="border rounded-md p-3">
                   {/* Selected images pending upload */}
                   {propertyImages.length > 0 && (
@@ -2006,7 +2009,7 @@ export default function Dashboard() {
                           </Button>
                         </div>
                       </div>
-                      
+
                       {/* Upload progress bar */}
                       {isUploading && (
                         <div className="mt-2 mb-4">
@@ -2026,7 +2029,7 @@ export default function Dashboard() {
                           <p className="text-xs text-amber-600">Please do not close this window during upload</p>
                         </div>
                       )}
-                      
+
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {propertyImages.map((img, idx) => (
                           <div key={idx} className="relative group">
@@ -2052,7 +2055,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   )}
-                
+
                   <div className="space-y-2">
                     <label htmlFor="images" className="text-sm font-medium">
                       Image URLs (comma separated)
@@ -2065,7 +2068,7 @@ export default function Dashboard() {
                     />
                     <p className="text-xs text-gray-500">Enter URLs for property images or use the upload button above</p>
                   </div>
-                  
+
                   {formData.images.length > 0 && (
                     <div className="mt-4">
                       <h4 className="text-sm font-medium text-blue-700 mb-2">Current Property Images</h4>
@@ -2100,7 +2103,7 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
-              
+
               {/* Featured and Highlighted Switches */}
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 p-4 bg-amber-50 rounded-lg border border-amber-100">
                 <div className="flex items-center gap-2">
@@ -2116,7 +2119,7 @@ export default function Dashboard() {
                     Featured Property <span className="text-xs text-gray-500">(Shows on main page)</span>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Switch
                     id="property-highlighted"
@@ -2136,7 +2139,7 @@ export default function Dashboard() {
                 <p className="text-sm text-red-500">* Required fields</p>
               </div>
             </div>
-            
+
             <DialogFooter>
               <Button 
                 variant="outline" 
@@ -2164,7 +2167,7 @@ export default function Dashboard() {
               Create announcements to display important information to your customers.
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleAnnouncementSubmit} className="space-y-4">
             <div className="space-y-3">
               <div className="space-y-2">
@@ -2180,7 +2183,7 @@ export default function Dashboard() {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <label htmlFor="content" className="text-sm font-medium">
                   Content <span className="text-red-500">*</span>
@@ -2195,7 +2198,7 @@ export default function Dashboard() {
                   required
                 />
               </div>
-              
+
               <div className="flex flex-col gap-4 sm:flex-row">
                 <div className="space-y-2 flex-1">
                   <label htmlFor="startDate" className="text-sm font-medium">
@@ -2210,7 +2213,7 @@ export default function Dashboard() {
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2 flex-1">
                   <label htmlFor="endDate" className="text-sm font-medium">
                     End Date <span className="text-muted-foreground text-xs">(Optional)</span>
@@ -2224,7 +2227,7 @@ export default function Dashboard() {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <input
@@ -2242,9 +2245,9 @@ export default function Dashboard() {
                     Active (visible to users)
                   </label>
                 </div>
-                
 
-                
+
+
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -2262,12 +2265,12 @@ export default function Dashboard() {
                   </label>
                 </div>
               </div>
-              
+
               <div className="space-y-2 mt-4">
                 <label className="text-sm font-medium">
                   Announcement Image <span className="text-muted-foreground text-xs">(Optional)</span>
                 </label>
-                
+
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <Input
@@ -2288,7 +2291,7 @@ export default function Dashboard() {
                       </Button>
                     )}
                   </div>
-                  
+
                   <div className="flex justify-center">
                     {/* Image preview */}
                     {(announcementImagePreview || announcementForm.imageUrl) && (
@@ -2304,7 +2307,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            
+
             <DialogFooter className="pt-4 border-t">
               <Button
                 type="button"
@@ -2333,7 +2336,7 @@ export default function Dashboard() {
               Upload your logo to be displayed on the website
             </DialogDescription>
           </DialogHeader>
-          
+
           {/* Use encType="multipart/form-data" to properly handle file uploads */}
           <form onSubmit={handleLogoSubmit} className="space-y-6" encType="multipart/form-data">
             <div className="space-y-4">
@@ -2355,7 +2358,7 @@ export default function Dashboard() {
                   Max file size: 10MB.
                 </p>
               </div>
-              
+
               {logoPreview && (
                 <div className="mt-4">
                   <h3 className="text-sm font-medium mb-2">Preview:</h3>
@@ -2369,7 +2372,7 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-            
+
             <DialogFooter>
               <Button 
                 variant="outline" 
