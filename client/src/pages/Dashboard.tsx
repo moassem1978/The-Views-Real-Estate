@@ -216,20 +216,34 @@ export default function Dashboard() {
   const createProperty = useMutation({
     mutationFn: async (newProperty: any) => {
       try {
+        // Log the full property data being sent
         console.log("Creating property with data:", JSON.stringify(newProperty, null, 2));
+        
+        // Verify required fields
+        const requiredFields = ['title', 'description', 'price', 'address', 'city', 'state', 'zipCode', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType'];
+        const missingFields = requiredFields.filter(field => !newProperty[field]);
+        
+        if (missingFields.length > 0) {
+          throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+        }
+
         const response = await apiRequest('POST', '/api/properties', newProperty);
         
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Property creation failed with status:', response.status, response.statusText);
-          console.error('Error response body:', errorText);
+          console.error('Property creation failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText
+          });
           throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
         }
         
         return await response.json();
       } catch (err) {
-        console.error('Property creation error (detailed):', err);
-        throw err;
+        console.error('Property creation error:', err);
+        // Include more details in the error
+        throw new Error(err instanceof Error ? err.message : 'Failed to create property - check console for details');
       }
     },
     onSuccess: (data) => {
