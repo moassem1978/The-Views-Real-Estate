@@ -9,16 +9,6 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { setupAuth } from "./auth";
-import "express-session";
-
-// Extend express-session declarations to include passport
-declare module "express-session" {
-  interface SessionData {
-    passport?: {
-      user: number;
-    };
-  }
-}
 
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
@@ -230,17 +220,36 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Log the incoming data for debugging
       console.log("Creating property with data:", JSON.stringify(req.body, null, 2));
       
-      const propertyData = insertPropertySchema.parse(req.body);
+      // Ensure required fields are present
+      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'images'];
+      const missingFields = requiredFields.filter(field => !req.body[field]);
+      
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          message: `Missing required fields: ${missingFields.join(', ')}`
+        });
+      }
+
+      let propertyData;
+      try {
+        propertyData = insertPropertySchema.parse(req.body);
+      } catch (parseError) {
+        console.error("Property data validation failed:", parseError);
+        return res.status(400).json({
+          message: "Invalid property data",
+          details: parseError
+        });
+      }
       
       // Log after validation success
       console.log("Property data validated successfully");
       
-      // Add createdBy field to track who created this property
+      // Add createdBy field and status
       const propertyWithUser = {
         ...propertyData,
         createdBy: user.id,
-        // Regular users' properties start as pending approval
-        status: user.role === 'user' ? 'pending_approval' : 'published'
+        status: 'published', // Admin properties are published immediately
+        createdAt: new Date().toISOString()
       };
       
       const property = await dbStorage.createProperty(propertyWithUser);
@@ -251,6 +260,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(201).json(property);
     } catch (error) {
       console.error("Error creating property:", error);
+      res.status(500).json({
+        message: "Failed to create property",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
       
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
@@ -822,43 +836,23 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   app.post("/api/upload/property-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
-      // Enhanced authentication debugging
-      console.log("==== PROPERTY IMAGES UPLOAD REQUEST ====");
-      console.log(`Authentication status: ${req.isAuthenticated() ? 'Authenticated' : 'Not authenticated'}`);
-      console.log(`Request headers:`, JSON.stringify({
-        cookie: req.headers.cookie ? 'Present' : 'Missing',
-        'content-type': req.headers['content-type'],
-        'user-agent': req.headers['user-agent']
-      }));
-      
       // Check if user is authenticated
       if (!req.isAuthenticated()) {
         console.error("Property images upload failed: User not authenticated");
-        // Also log if there is a session but no user
-        if (req.session) {
-          console.log(`Session exists but no authenticated user. Session ID: ${req.sessionID}`);
-        }
         return res.status(401).json({ message: "Authentication required to upload property images" });
       }
       
       // Get the authenticated user from request
       const user = req.user as Express.User;
-      console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role}, ID: ${user.id})`);
+      console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
       
-      // Log detailed session information
+      console.log("Received property images upload request");
+      
+      // Log session information to help debug session timeouts
       if (req.session) {
         console.log(`Session ID: ${req.sessionID}`);
         console.log(`Session cookie maxAge: ${req.session.cookie.maxAge}`);
         console.log(`Session expires: ${req.session.cookie.expires ? new Date(req.session.cookie.expires).toISOString() : 'N/A'}`);
-        console.log(`Session created: ${new Date(req.session.cookie.originalMaxAge || 0).toISOString()}`);
-        
-        // Check if passport data exists in session
-        const session = req.session as any; // Type assertion to access passport data
-        if (session.passport) {
-          console.log(`Session has passport data: User ID ${session.passport.user}`);
-        } else {
-          console.log(`Session missing passport data`);
-        }
       } else {
         console.log("No session data available");
       }
