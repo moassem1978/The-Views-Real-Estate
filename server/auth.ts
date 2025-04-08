@@ -95,15 +95,17 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      // Shorter session timeout for better security (4 hours)
-      maxAge: 4 * 60 * 60 * 1000,
+      // Extended session timeout (24 hours)
+      maxAge: 24 * 60 * 60 * 1000,
       // Make sure session cookies work across subdomains
       domain: process.env.NODE_ENV === "production" ? '.theviews.com' : undefined,
       // Prevent client-side JS from accessing cookies
       httpOnly: true,
       // Strict same-site policy for better security
       sameSite: 'strict'
-    }
+    },
+    // Enable rolling sessions to extend the session timeout on activity
+    rolling: true
   };
   
   // Create the owner account if it doesn't exist

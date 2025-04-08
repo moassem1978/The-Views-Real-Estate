@@ -95,13 +95,13 @@ const diskStorage = multer.diskStorage({
   }
 });
 
-// Create multer configuration with size restrictions for better performance
+// Create multer configuration optimized for property uploads
 const upload = multer({
-  storage: multerStorage,
+  storage: diskStorage, // Use disk storage instead of memory for larger files
   fileFilter: fileFilter,
   limits: { 
-    fileSize: 10 * 1024 * 1024, // 10MB max file size for better performance
-    files: 10                    // Up to 10 files at once
+    fileSize: 15 * 1024 * 1024, // 15MB max file size to accommodate high-quality images
+    files: 10                   // Up to 10 files at once
   }
 });
 
@@ -607,33 +607,41 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       console.log(`Uploaded ${files.length} property images`);
 
-      // Log detailed file information
-      files.forEach((file, index) => {
-        console.log(`File ${index + 1}: ${file.originalname} (${file.mimetype}) -> ${file.filename}, size: ${file.size}`);
-      });
-
-      // Ensure files are copied to the public directory for web access
-      for (const file of files) {
-        const sourcePath = file.path;
-        const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-
-        // Create the destination directory if it doesn't exist
-        fs.mkdirSync(publicUploadsDir, { recursive: true });
-
-        const destPath = path.join(publicUploadsDir, file.filename);
-
-        try {
-          // Copy the file to public/uploads/properties
-          fs.copyFileSync(sourcePath, destPath);
-          console.log(`Copied file to ${destPath} for web access`);
-        } catch (copyError) {
-          console.error(`Error copying file to public directory: ${copyError}`);
-          return res.status(500).json({ message: `Error copying file: ${copyError.message}` });
+      // Process files in batches to avoid overwhelming the system
+      const batchSize = 3;
+      const fileUrls: string[] = [];
+      
+      // Process files in smaller batches
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
+        
+        // Log batch processing
+        console.log(`Processing batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(files.length/batchSize)}`);
+        
+        // Process each file in the current batch
+        for (const file of batch) {
+          console.log(`Processing file: ${file.originalname} (${file.mimetype}) -> ${file.filename}, size: ${file.size}`);
+          
+          // Since we're using disk storage, files are already saved on disk
+          // We just need to create the public URLs for web access
+          fileUrls.push(`/uploads/properties/${file.filename}`);
+          
+          // Touch the session to keep it alive during long uploads
+          if (req.session) {
+            req.session.touch();
+          }
+        }
+        
+        // Small delay between batches to prevent system overload (50ms)
+        if (i + batchSize < files.length) {
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
       }
 
-      // Create file URLs for all uploaded images
-      const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
+      // Touch the session one more time at the end
+      if (req.session) {
+        req.session.touch();
+      }
 
       res.json({ 
         message: "Property images uploaded successfully", 
