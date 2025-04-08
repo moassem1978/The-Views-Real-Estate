@@ -404,7 +404,7 @@ export default function Dashboard() {
         console.log('Starting announcement image upload');
         console.log('File details:', file.name, file.type, `${(file.size / 1024).toFixed(2)}KB`);
 
-        // Enhanced fetch request with improved error handling
+        // Enhanced fetch request with improved error handling and authentication
         const response = await fetch('/api/upload/announcement-image', {
           method: 'POST',
           body: formData,
@@ -412,7 +412,9 @@ export default function Dashboard() {
           headers: {
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache'
-          }
+          },
+          // Explicitly include credentials to ensure session cookies are sent
+          credentials: 'include'
         });
 
         // Handle non-success responses
@@ -467,7 +469,7 @@ export default function Dashboard() {
         console.log('Starting improved logo upload with fetch API');
         console.log('File details:', file.name, file.type, `${(file.size / 1024).toFixed(2)}KB`);
 
-        // Enhanced fetch request with improved error handling
+        // Enhanced fetch request with improved error handling and authentication
         const response = await fetch('/api/upload/logo', {
           method: 'POST',
           body: formData,
@@ -476,7 +478,9 @@ export default function Dashboard() {
           headers: {
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache'
-          }
+          },
+          // Explicitly include credentials to ensure session cookies are sent
+          credentials: 'include'
         });
 
         // Handle non-success responses
@@ -772,7 +776,7 @@ export default function Dashboard() {
 
           while (!success && retries <= MAX_RETRIES) {
             try {
-              // Enhanced fetch request with improved error handling
+              // Enhanced fetch request with improved error handling and credentials
               const response = await fetch('/api/upload/property-images', {
                 method: 'POST',
                 body: formData,
@@ -780,7 +784,9 @@ export default function Dashboard() {
                 headers: {
                   'Cache-Control': 'no-cache',
                   'Pragma': 'no-cache'
-                }
+                },
+                // Explicitly include credentials to ensure session cookies are sent
+                credentials: 'include'
               });
 
               // Better error handling

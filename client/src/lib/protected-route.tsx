@@ -40,8 +40,9 @@ export function ProtectedRoute({
     );
   }
 
-  // Authentication check
+  // Authentication check with debug logging
   if (!user) {
+    console.debug(`[ProtectedRoute] User not authenticated for path ${path}, redirecting to ${redirectUrl}`);
     return (
       <Route path={path}>
         <Redirect to={redirectUrl} />
@@ -49,11 +50,15 @@ export function ProtectedRoute({
     );
   }
 
+  console.debug(`[ProtectedRoute] User authenticated: ${user.username} (${user.role}) for path: ${path}`);
+
   // Role-based access check (if required)
   if (requiredRole) {
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    console.debug(`[ProtectedRoute] Checking roles. Required: [${roles.join(', ')}], User has: ${user.role}`);
     
     if (!roles.includes(user.role)) {
+      console.error(`[ProtectedRoute] Access denied for user ${user.username} (${user.role}). Required roles: [${roles.join(', ')}]`);
       return (
         <Route path={path}>
           <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
