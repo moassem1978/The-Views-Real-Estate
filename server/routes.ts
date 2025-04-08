@@ -523,7 +523,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.log(`Copied logo file to ${destPath} for web access`);
       } catch (err) {
         console.error(`Error copying logo file to public directory: ${err}`);
-        return res.status(500).json({ message: `Error copying logo file: ${err.message}` });
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        return res.status(500).json({ message: `Error copying logo file: ${errorMessage}` });
       }
 
       // Create the file URL relative to the server
@@ -541,7 +542,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       });
     } catch (error) {
       console.error('Error uploading logo:', error);
-      res.status(500).json({ message: `Failed to upload logo: ${error.message}` });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Failed to upload logo: ${errorMessage}` });
     }
   });
 
@@ -607,11 +609,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       console.log(`Uploaded ${files.length} property images`);
 
-      // Process files in batches to avoid overwhelming the system
-      const batchSize = 3;
+      // Process files in smaller batches to avoid overwhelming the system
+      const batchSize = 2; // Reduced batch size for better performance
       const fileUrls: string[] = [];
       
-      // Process files in smaller batches
+      // Process files in smaller batches with longer delays between batches
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
         
@@ -622,27 +624,43 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         for (const file of batch) {
           console.log(`Processing file: ${file.originalname} (${file.mimetype}) -> ${file.filename}, size: ${file.size}`);
           
-          // Since we're using disk storage, files are already saved on disk
-          // We just need to create the public URLs for web access
-          fileUrls.push(`/uploads/properties/${file.filename}`);
-          
-          // Touch the session to keep it alive during long uploads
-          if (req.session) {
-            req.session.touch();
+          try {
+            // Since we're using disk storage, files are already saved on disk
+            // We just need to create the public URLs for web access
+            fileUrls.push(`/uploads/properties/${file.filename}`);
+            
+            // Touch the session to keep it alive during long uploads
+            if (req.session) {
+              req.session.touch();
+              console.log(`Session touched during file processing for ${file.filename}`);
+            }
+          } catch (fileError) {
+            console.error(`Error processing file ${file.originalname}:`, fileError);
+            // Continue with other files even if one fails
           }
         }
         
-        // Small delay between batches to prevent system overload (50ms)
+        // Touch the session between batches
+        if (req.session) {
+          req.session.touch();
+          console.log(`Session touched between batches at index ${i}`);
+        }
+        
+        // Increased delay between batches to prevent system overload (200ms)
         if (i + batchSize < files.length) {
-          await new Promise(resolve => setTimeout(resolve, 50));
+          console.log(`Adding delay between batches ${Math.floor(i/batchSize) + 1} and ${Math.floor(i/batchSize) + 2}`);
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
       }
 
       // Touch the session one more time at the end
       if (req.session) {
         req.session.touch();
+        console.log("Session touched at end of upload processing");
       }
 
+      console.log(`Successfully processed ${fileUrls.length} images. Returning URLs to client.`);
+      
       res.json({ 
         message: "Property images uploaded successfully", 
         imageUrls: fileUrls,
@@ -650,7 +668,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       });
     } catch (error) {
       console.error('Error uploading property images:', error);
-      res.status(500).json({ message: `Failed to upload property images: ${error.message}` });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Failed to upload property images: ${errorMessage}` });
     }
   });
 

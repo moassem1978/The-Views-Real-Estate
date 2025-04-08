@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Property, Announcement } from "../types";
@@ -8,7 +8,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { X } from "@/components/ui/icons";
+import { X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -638,43 +639,116 @@ export default function Dashboard() {
   };
 
   // Property images upload mutation with improved reliability
+  // Track upload progress separately from the mutation state
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  
   const uploadPropertyImages = useMutation({
     mutationFn: async (files: File[]) => {
       try {
-        // Create a fresh FormData object
-        const formData = new FormData();
+        setIsUploading(true);
+        setUploadProgress(0);
         
-        // Add each file to FormData with explicit filename
-        files.forEach(file => {
-          formData.append('images', file, file.name);
-          console.log(`Adding file to upload: ${file.name} (${file.type}, ${(file.size / 1024).toFixed(2)}KB)`);
-        });
+        // Split large files into smaller batches for more reliable uploading
+        const MAX_BATCH_SIZE = 2; // Only send 2 files at a time
+        const batches: File[][] = [];
         
-        console.log('Uploading property images:', files.length, 'files');
-        
-        // Enhanced fetch request with improved error handling
-        const response = await fetch('/api/upload/property-images', {
-          method: 'POST',
-          body: formData,
-          // Add cache-busting headers to prevent caching issues
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        // Better error handling
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Property images upload failed with status:', response.status, response.statusText);
-          console.error('Error response body:', errorText);
-          throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
+        // Create batches of files
+        for (let i = 0; i < files.length; i += MAX_BATCH_SIZE) {
+          batches.push(files.slice(i, i + MAX_BATCH_SIZE));
         }
         
-        const data = await response.json();
-        console.log('Property images upload successful:', data);
-        return data;
+        console.log(`Split ${files.length} files into ${batches.length} batches for more reliable upload`);
+        
+        // Track all image URLs across batches
+        const allImageUrls: string[] = [];
+        
+        // Process each batch sequentially
+        for (let i = 0; i < batches.length; i++) {
+          const batch = batches[i];
+          const formData = new FormData();
+          
+          // Add each file in this batch to FormData
+          batch.forEach(file => {
+            formData.append('images', file, file.name);
+            console.log(`Batch ${i+1}/${batches.length}: Adding file to upload: ${file.name} (${file.type}, ${(file.size / 1024).toFixed(2)}KB)`);
+          });
+          
+          console.log(`Uploading batch ${i+1} of ${batches.length} (${batch.length} files)`);
+          
+          // Update progress based on which batch we're on
+          setUploadProgress(Math.floor((i / batches.length) * 100));
+          
+          // Retry logic for each batch
+          let retries = 0;
+          const MAX_RETRIES = 2;
+          let success = false;
+          
+          while (!success && retries <= MAX_RETRIES) {
+            try {
+              // Enhanced fetch request with improved error handling
+              const response = await fetch('/api/upload/property-images', {
+                method: 'POST',
+                body: formData,
+                // Add cache-busting headers to prevent caching issues
+                headers: {
+                  'Cache-Control': 'no-cache',
+                  'Pragma': 'no-cache'
+                }
+              });
+              
+              // Better error handling
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Batch ${i+1} upload failed (attempt ${retries+1}): Status ${response.status}`);
+                console.error('Error response body:', errorText);
+                
+                if (retries < MAX_RETRIES) {
+                  retries++;
+                  // Add exponential backoff
+                  const delay = 1000 * Math.pow(2, retries);
+                  console.log(`Retrying batch ${i+1} in ${delay}ms...`);
+                  await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                  throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
+                }
+              } else {
+                // Batch succeeded
+                const data = await response.json();
+                console.log(`Batch ${i+1} upload successful:`, data);
+                allImageUrls.push(...(data.imageUrls || []));
+                success = true;
+              }
+            } catch (err) {
+              console.error(`Batch ${i+1} upload error (attempt ${retries+1}):`, err);
+              if (retries < MAX_RETRIES) {
+                retries++;
+                // Add exponential backoff
+                const delay = 1000 * Math.pow(2, retries);
+                console.log(`Retrying batch ${i+1} in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+              } else {
+                throw err;
+              }
+            }
+          }
+          
+          // Add a small delay between batches to let the server catch up
+          if (i < batches.length - 1) {
+            // Update progress for the current batch - increment by a small amount to show activity
+            setUploadProgress(Math.floor(((i + 0.5) / batches.length) * 100));
+            console.log(`Batch ${i+1} complete. Adding delay before next batch. Progress: ${Math.floor(((i + 0.5) / batches.length) * 100)}%`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+        
+        // Upload completed
+        setUploadProgress(100);
+        setIsUploading(false);
+        
+        return { imageUrls: allImageUrls, count: allImageUrls.length };
       } catch (err) {
+        setIsUploading(false);
         console.error('Property images upload error (detailed):', err);
         throw err;
       }
@@ -1835,6 +1909,7 @@ export default function Dashboard() {
                             size="sm" 
                             variant="outline" 
                             onClick={() => setPropertyImages([])}
+                            disabled={uploadPropertyImages.isPending || isUploading}
                           >
                             Clear All
                           </Button>
@@ -1842,12 +1917,32 @@ export default function Dashboard() {
                             type="button" 
                             size="sm" 
                             onClick={handleUploadPropertyImages}
-                            disabled={uploadPropertyImages.isPending}
+                            disabled={uploadPropertyImages.isPending || isUploading}
                           >
-                            {uploadPropertyImages.isPending ? 'Uploading...' : 'Upload Selected'}
+                            {uploadPropertyImages.isPending || isUploading ? 'Uploading...' : 'Upload Selected'}
                           </Button>
                         </div>
                       </div>
+                      
+                      {/* Upload progress bar */}
+                      {isUploading && (
+                        <div className="mt-2 mb-4">
+                          <div className="text-xs text-gray-500 flex justify-between mb-1">
+                            <div className="flex items-center">
+                              <Loader2 className="animate-spin h-3 w-3 mr-1" />
+                              <span>Uploading in batches for better reliability...</span>
+                            </div>
+                            <span className="font-medium">{uploadProgress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                            <div 
+                              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                              style={{ width: `${uploadProgress}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-amber-600">Please do not close this window during upload</p>
+                        </div>
+                      )}
                       
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {propertyImages.map((img, idx) => (
