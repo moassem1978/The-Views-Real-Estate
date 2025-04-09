@@ -146,14 +146,16 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "returnNull" }), // Return null instead of throwing for 401 responses
       refetchInterval: false,
       refetchOnWindowFocus: false, // Disable refetching on window focus to reduce API calls
-      refetchOnMount: false,       // Only fetch fresh data when explicitly needed
-      staleTime: 1000 * 60 * 5,    // Consider data fresh for 5 minutes
-      retry: 1,                    // Reduce retries to minimize network load
-      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000), // Faster backoff
+      refetchOnMount: true,        // Only fetch once when component mounts
+      staleTime: 1000 * 60 * 10,   // Consider data fresh for 10 minutes (increased from 5)
+      retry: 0,                    // Disable retries to reduce network load
+      retryDelay: 0,               // No delay for retries
+      networkMode: 'always',       // Don't wait for network reconnection
+      gcTime: 1000 * 60 * 15,      // Keep cached data for 15 minutes
     },
     mutations: {
-      retry: 1,                    // Single retry for mutations
-      retryDelay: 1000,            // Simple 1s delay for mutation retries
+      retry: 0,                    // No retries for mutations to improve error feedback
+      networkMode: 'always',       // Don't wait for network reconnection
     },
   },
 });

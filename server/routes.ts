@@ -260,11 +260,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(201).json(property);
     } catch (error) {
       console.error("Error creating property:", error);
-      res.status(500).json({
-        message: "Failed to create property",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
       
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);

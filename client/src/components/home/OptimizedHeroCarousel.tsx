@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useCallback } from "react";
+import { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { Link } from "wouter";
 import { Property, Announcement } from "@/types";
 import { formatPrice, formatDate, getResizedImageUrl } from "@/lib/utils";
@@ -75,33 +75,35 @@ const NavButton = memo(({ direction, onClick }: { direction: 'prev' | 'next', on
 ));
 
 // Main carousel component
-export default function SimpleHeroCarousel() {
+export default function OptimizedHeroCarousel() {
   const [slides, setSlides] = useState<SlideItem[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   
   // Use React Query for data fetching with better caching
   const { data: propertiesData = [], isLoading: propertiesLoading } = useQuery<Property[]>({
     queryKey: ['/api/properties/highlighted'],
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
   
   const { data: announcementsData = [], isLoading: announcementsLoading } = useQuery<Announcement[]>({
     queryKey: ['/api/announcements/highlighted'],
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
   
-  // Define loading state from both data sources
+  // Loading state from both data sources
   const isLoading = propertiesLoading || announcementsLoading;
   
-  // Convert fetched data to slide items - optimized to prevent infinite loop
-  useEffect(() => {
-    // Wait until we have data from at least one source and are not loading
-    if ((propertiesData.length === 0 && announcementsData.length === 0) || propertiesLoading || announcementsLoading) {
-      return;
+  // Create a memoized array of slide items
+  const combinedSlides = useMemo(() => {
+    if (isLoading) return [];
+    
+    // Only process when we have data
+    if (propertiesData.length === 0 && announcementsData.length === 0) {
+      return [];
     }
     
-    // Process properties and create a stable slides array
-    const combinedSlides = [
+    // Create combined slides array
+    return [
       // Process properties
       ...propertiesData.map(property => ({
         id: property.id,
@@ -116,27 +118,27 @@ export default function SimpleHeroCarousel() {
         data: announcement
       }))
     ];
-    
-    // Compare with current slides to prevent unnecessary updates
-    if (combinedSlides.length > 0 && 
-        (slides.length !== combinedSlides.length || 
-         JSON.stringify(slides.map(s => s.id)) !== JSON.stringify(combinedSlides.map(s => s.id)))) {
-      setSlides(combinedSlides);
-      // Reset active index when slides change
-      setActiveIndex(0);
-    }
-  }, [propertiesData, announcementsData, propertiesLoading, announcementsLoading, slides.length]);
+  }, [propertiesData, announcementsData, isLoading]);
   
-  // Memoized navigation functions to prevent recreating on every render
+  // Update slides state when combined slides change
+  useEffect(() => {
+    if (combinedSlides.length > 0) {
+      setSlides(combinedSlides);
+    }
+  }, [combinedSlides]);
+  
+  // Memoized navigation functions
   const goToPrevSlide = useCallback(() => {
+    if (slides.length === 0) return;
     setActiveIndex((current) => (current - 1 + slides.length) % slides.length);
   }, [slides.length]);
   
   const goToNextSlide = useCallback(() => {
+    if (slides.length === 0) return;
     setActiveIndex((current) => (current + 1) % slides.length);
   }, [slides.length]);
   
-  // Simple autoplay with debounce
+  // Simple autoplay with interval
   useEffect(() => {
     if (slides.length === 0) return;
     
@@ -146,7 +148,7 @@ export default function SimpleHeroCarousel() {
     
     return () => clearInterval(interval);
   }, [slides.length]);
-  
+
   if (isLoading) {
     return (
       <section className="relative h-[80vh] bg-gray-900 overflow-hidden">
