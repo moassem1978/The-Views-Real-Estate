@@ -28,12 +28,20 @@ export default function PropertyImage({
     // Format the source URL
     if (!src) {
       // Use a default placeholder image for missing sources
-      setFormattedSrc('/uploads/ai-placeholder.svg');
+      setFormattedSrc('/uploads/default-property.svg');
       return;
     }
     
-    // Use our utility function to get the correct image URL
-    setFormattedSrc(getImageUrl(src));
+    // Generate a unique cache-busting key each time the component mounts
+    // This ensures we're getting fresh images from the server and not stale cached ones
+    const cacheBuster = `?t=${Date.now()}`;
+    
+    // Use our utility function to get the correct image URL and add cache buster
+    const imageUrl = getImageUrl(src);
+    
+    // If it's already an uploaded image path (which should have a cache buster from getImageUrl),
+    // use it directly, otherwise add our cache buster
+    setFormattedSrc(imageUrl.includes('?') ? imageUrl : `${imageUrl}${cacheBuster}`);
   }, [src]);
   
   const handleLoad = () => {
@@ -41,11 +49,12 @@ export default function PropertyImage({
   };
   
   const handleError = () => {
+    console.log(`Image failed to load: ${formattedSrc}`);
     setIsError(true);
     
     // Fall back to placeholder on error
-    if (formattedSrc !== '/uploads/ai-placeholder.svg') {
-      setFormattedSrc('/uploads/ai-placeholder.svg');
+    if (!formattedSrc.includes('/uploads/default-property.svg')) {
+      setFormattedSrc('/uploads/default-property.svg');
     }
   };
   
@@ -66,7 +75,7 @@ export default function PropertyImage({
       )}
       
       {/* Error state */}
-      {isError && formattedSrc !== '/uploads/ai-placeholder.svg' && (
+      {isError && !formattedSrc.includes('/uploads/default-property.svg') && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
           <svg className="h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

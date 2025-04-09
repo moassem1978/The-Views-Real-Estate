@@ -146,16 +146,17 @@ export function getResizedImageUrl(path: string | undefined, size: 'thumbnail' |
   // For non-upload paths or external URLs, return as is
   if (!path.startsWith('/uploads/') || path.startsWith('http')) return path;
   
-  // For server-side image, we append width parameter based on size
-  // Note: This is just a performance optimization that doesn't actually affect
-  // the image size since we're not handling image resizing on the server.
-  // In a production environment, you would implement CDN-based image resizing.
-  return path;
+  // Add cache-busting timestamp parameter to prevent browser caching
+  // This helps with images that have been re-uploaded with the same name
+  const cacheBuster = `?t=${Date.now()}`;
+  
+  // For server-side image, we add the cache buster to ensure fresh images
+  return `${path}${cacheBuster}`;
 }
 
 /**
  * Returns a proper URL for an image path, handling both relative and absolute paths
- * Uses caching for better performance
+ * Uses caching for better performance, but also adds cache-busting for local uploads
  * 
  * @param path - The image path from the API
  * @returns Full URL to the image
@@ -164,35 +165,26 @@ export function getImageUrl(path: string | undefined): string {
   // Handle missing path
   if (!path) return "/uploads/default-announcement.svg";
   
-  // Check cache first
-  if (imageUrlCache.has(path)) {
-    return imageUrlCache.get(path)!;
-  }
-  
-  let result: string;
-  
-  // Handle default images directly
+  // For default images, don't add cache-busting or use cache
   if (path === '/uploads/default-announcement.svg' || 
       path === '/uploads/default-property.svg') {
-    result = path;
-  }
-  // Handle external URLs
-  else if (path.startsWith('http')) {
-    result = path;
-  } 
-  // Handle uploaded images
-  else if (path.startsWith('/uploads/')) {
-    // For uploads, don't add the origin as they are served directly from static folder
-    result = path;
-  } 
-  // Fallback for any other path format
-  else {
-    result = path;
+    return path;
   }
   
-  // Cache the result
-  imageUrlCache.set(path, result);
-  return result;
+  // Handle external URLs as-is
+  if (path.startsWith('http')) {
+    return path;
+  } 
+  
+  // Handle uploaded images with cache-busting to prevent stale images
+  if (path.startsWith('/uploads/')) {
+    // Add a timestamp cache-buster to force fresh image
+    const cacheBuster = `?t=${Date.now()}`;
+    return `${path}${cacheBuster}`;
+  } 
+  
+  // Fallback for any other path format
+  return path;
 }
 
 /**

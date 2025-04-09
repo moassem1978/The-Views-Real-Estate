@@ -147,11 +147,11 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false, // Disable refetching on window focus to reduce API calls
       refetchOnMount: true,        // Only fetch once when component mounts
-      staleTime: 1000 * 60 * 10,   // Consider data fresh for 10 minutes (increased from 5)
+      staleTime: 1000 * 60 * 15,   // Consider data fresh for 15 minutes (increased from 10)
       retry: 0,                    // Disable retries to reduce network load
       retryDelay: 0,               // No delay for retries
       networkMode: 'always',       // Don't wait for network reconnection
-      gcTime: 1000 * 60 * 15,      // Keep cached data for 15 minutes
+      gcTime: 1000 * 60 * 30,      // Keep cached data for 30 minutes (increased from 15)
     },
     mutations: {
       retry: 0,                    // No retries for mutations to improve error feedback

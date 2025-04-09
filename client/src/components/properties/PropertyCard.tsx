@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Property } from "../../types";
-import { formatPrice, parseJsonArray } from "@/lib/utils";
+import { formatPrice, parseJsonArray, getImageUrl } from "@/lib/utils";
 import PropertyImage from "@/components/properties/PropertyImage";
 
 interface PropertyCardProps {
@@ -11,13 +11,11 @@ interface PropertyCardProps {
 export default function PropertyCard({ property }: PropertyCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [mainImage, setMainImage] = useState<string>('');
-  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     // Set the main image when the property data loads
     const images = getImages() || [];
-    console.log("Property images array:", images);
-    const firstImage = images.length > 0 ? images[0] : '/default-property.svg';
+    const firstImage = images.length > 0 ? images[0] : '/uploads/default-property.svg';
     setMainImage(firstImage);
   }, [property]);
 
@@ -32,9 +30,6 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     // Use our utility function to safely parse the images array
     return parseJsonArray(property.images);
   };
-
-  // We no longer need these functions as we now use utilities from lib/utils.ts
-  // Keeping imageError state for backward compatibility
 
   return (
     <div className="property-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">

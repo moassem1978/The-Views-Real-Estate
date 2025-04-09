@@ -553,7 +553,6 @@ export default function Dashboard() {
     const requiredFields = [
       { field: 'title', label: 'Title' },
       { field: 'description', label: 'Description' },
-      { field: 'address', label: 'Address' },
       { field: 'city', label: 'City' },
       { field: 'price', label: 'Price' },
       { field: 'bedrooms', label: 'Bedrooms' },
