@@ -20,12 +20,17 @@ export default function PropertyImage({
   const [isError, setIsError] = useState(false);
   const [formattedSrc, setFormattedSrc] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+  const [useFallbackPath, setUseFallbackPath] = useState(false);
   
   // Reset state and format URL when src changes
   useEffect(() => {
     setIsLoaded(false);
     setIsError(false);
-    setRetryCount(0);
+    
+    // Reset useFallbackPath when src changes, but not on retry attempts
+    if (retryCount === 0) {
+      setUseFallbackPath(false);
+    }
     
     // Format the source URL
     if (!src) {
@@ -34,17 +39,25 @@ export default function PropertyImage({
       return;
     }
     
-    // Handle already formatted URLs (from previous cache busting)
-    if (src.includes('?t=')) {
-      // Strip the old cache buster and add a new one
-      const baseSrc = src.split('?')[0];
-      const newCacheBuster = `?t=${Date.now()}`;
-      setFormattedSrc(`${baseSrc}${newCacheBuster}`);
+    // Generate a unique cache buster for each retry attempt
+    const cacheBuster = `?t=${Date.now()}-${retryCount}`;
+    
+    // Handle path issues where images might be in /uploads directly instead of /uploads/properties
+    if (src.startsWith('/uploads/properties/') && useFallbackPath) {
+      // Try an alternative path if the original failed
+      const filename = src.split('/').pop();
+      const fallbackPath = `/uploads/${filename}`;
+      setFormattedSrc(`${fallbackPath}${cacheBuster}`);
       return;
     }
     
-    // For all other URLs, add a cache buster
-    const cacheBuster = `?t=${Date.now()}`;
+    // Handle already formatted URLs (from previous cache busting)
+    if (src.includes('?')) {
+      // Strip the old cache buster and add a new one
+      const baseSrc = src.split('?')[0];
+      setFormattedSrc(`${baseSrc}${cacheBuster}`);
+      return;
+    }
     
     // Use direct path to server for uploads directory (without getImageUrl processing)
     if (src.startsWith('/uploads/')) {
@@ -54,23 +67,33 @@ export default function PropertyImage({
     
     // Use our utility function for other types of URLs
     const imageUrl = getImageUrl(src);
-    setFormattedSrc(imageUrl.includes('?') ? imageUrl : `${imageUrl}${cacheBuster}`);
-  }, [src, retryCount]); // Add retryCount as a dependency
+    setFormattedSrc(`${imageUrl}${cacheBuster}`);
+  }, [src, retryCount, useFallbackPath]); // Add dependencies
   
   const handleLoad = () => {
     setIsLoaded(true);
+    setIsError(false);
   };
   
   const handleError = () => {
     console.log(`Image failed to load: ${formattedSrc}`);
     
-    // Attempt to retry loading the image up to 2 times
-    if (retryCount < 2) {
+    // First try the fallback path if we're using a /uploads/properties/ path
+    if (src.startsWith('/uploads/properties/') && !useFallbackPath) {
+      console.log(`Trying fallback path for: ${src}`);
+      setUseFallbackPath(true);
+      return;
+    }
+    
+    // Then try retrying the image a couple times
+    if (retryCount < 3) {
       console.log(`Retrying image load (attempt ${retryCount + 1})`);
       setRetryCount(prev => prev + 1);
       return;
     }
     
+    // Finally, give up and show the error state
+    console.error(`Failed to load image after multiple attempts: ${src}`);
     setIsError(true);
     
     // Fall back to placeholder on error after retries

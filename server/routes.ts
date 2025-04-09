@@ -60,6 +60,13 @@ const diskStorage = multer.diskStorage({
       uploadPath = path.join(uploadsDir, 'announcements');
     }
     
+    // Make sure the directory exists
+    try {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    } catch (err) {
+      console.error(`Failed to create upload directory ${uploadPath}:`, err);
+    }
+    
     console.log(`Uploading to directory: ${uploadPath}`);
     cb(null, uploadPath);
   },
@@ -81,14 +88,17 @@ const diskStorage = multer.diskStorage({
       console.log(`No extension detected, defaulting to ${ext}`);
     }
 
-    // Create safe filename with appropriate prefix
-    let prefix = 'logo-';
+    // Fixed naming convention for all images
+    // For property-images endpoint, use 'images-{timestamp}-{random}.ext'
+    // This matches the format that's currently being used in the database
+    let filename;
     if (req.path.includes('property-images')) {
-      prefix = 'property-';
+      filename = 'images-' + uniqueSuffix + ext;
     } else if (req.path.includes('announcement-image')) {
-      prefix = 'announcement-';
+      filename = 'announcement-' + uniqueSuffix + ext;
+    } else {
+      filename = 'logo-' + uniqueSuffix + ext;
     }
-    const filename = prefix + uniqueSuffix + ext;
 
     console.log(`Generated filename: ${filename}`);
     cb(null, filename);
@@ -895,7 +905,35 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           try {
             // Since we're using disk storage, files are already saved on disk
             // We just need to create the public URLs for web access
-            fileUrls.push(`/uploads/properties/${file.filename}`);
+            
+            // Check if the file exists in the expected location
+            const expectedPath = `${uploadsDir}/properties/${file.filename}`;
+            const alternativePath = `uploads/${file.filename}`;
+            
+            if (fs.existsSync(path.join(process.cwd(), 'public', 'uploads', 'properties', file.filename))) {
+              // File is in the correct location
+              fileUrls.push(`/uploads/properties/${file.filename}`);
+            } else if (fs.existsSync(path.join(process.cwd(), 'uploads', file.filename))) {
+              // File is saved in the root uploads directory instead
+              // Use this path but log a warning
+              console.log(`WARNING: File saved in wrong location: ${alternativePath}`);
+              fileUrls.push(`/uploads/${file.filename}`);
+              
+              // Try to copy the file to the correct location
+              try {
+                fs.copyFileSync(
+                  path.join(process.cwd(), alternativePath),
+                  path.join(process.cwd(), 'public', 'uploads', 'properties', file.filename)
+                );
+                console.log(`Successfully copied file to the correct location`);
+              } catch (copyError) {
+                console.error(`Failed to copy file to the correct location:`, copyError);
+              }
+            } else {
+              // File is not found - use the expected URL anyway
+              console.error(`WARNING: File not found at expected path: ${expectedPath} or ${alternativePath}`);
+              fileUrls.push(`/uploads/properties/${file.filename}`);
+            }
             
             // Touch the session to keep it alive during long uploads
             if (req.session) {
@@ -947,6 +985,14 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
     next();
   }, express.static(path.join(process.cwd(), 'public', 'uploads')));
+  
+  // Also serve from the uploads directory directly as a fallback
+  // This ensures backward compatibility with existing file paths
+  app.use('/uploads', (req, res, next) => {
+    // Set cache headers
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
+    next();
+  }, express.static(path.join(process.cwd(), 'uploads')));
 
   // Create HTTP server
   const httpServer = createServer(app);
