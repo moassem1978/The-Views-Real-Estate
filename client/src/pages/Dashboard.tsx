@@ -220,8 +220,14 @@ export default function Dashboard() {
         console.log("Creating property with data:", JSON.stringify(newProperty, null, 2));
 
         // Verify required fields
-        const requiredFields = ['title', 'description', 'price', 'address', 'city', 'state', 'zipCode', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType'];
-        const missingFields = requiredFields.filter(field => !newProperty[field]);
+        const requiredFields = ['title', 'description', 'price', 'city', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType'];
+        const missingFields = requiredFields.filter(field => {
+          // Check if field is missing or empty
+          const value = newProperty[field];
+          return value === undefined || value === null || 
+                (typeof value === 'string' && value.trim() === '') || 
+                (typeof value === 'number' && value <= 0);
+        });
 
         if (missingFields.length > 0) {
           throw new Error(`Missing required fields: ${missingFields.join(', ')}`);

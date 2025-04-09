@@ -19,11 +19,13 @@ export default function PropertyImage({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
   const [formattedSrc, setFormattedSrc] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   
   // Reset state and format URL when src changes
   useEffect(() => {
     setIsLoaded(false);
     setIsError(false);
+    setRetryCount(0);
     
     // Format the source URL
     if (!src) {
@@ -32,17 +34,28 @@ export default function PropertyImage({
       return;
     }
     
-    // Generate a unique cache-busting key each time the component mounts
-    // This ensures we're getting fresh images from the server and not stale cached ones
+    // Handle already formatted URLs (from previous cache busting)
+    if (src.includes('?t=')) {
+      // Strip the old cache buster and add a new one
+      const baseSrc = src.split('?')[0];
+      const newCacheBuster = `?t=${Date.now()}`;
+      setFormattedSrc(`${baseSrc}${newCacheBuster}`);
+      return;
+    }
+    
+    // For all other URLs, add a cache buster
     const cacheBuster = `?t=${Date.now()}`;
     
-    // Use our utility function to get the correct image URL and add cache buster
-    const imageUrl = getImageUrl(src);
+    // Use direct path to server for uploads directory (without getImageUrl processing)
+    if (src.startsWith('/uploads/')) {
+      setFormattedSrc(`${src}${cacheBuster}`);
+      return;
+    }
     
-    // If it's already an uploaded image path (which should have a cache buster from getImageUrl),
-    // use it directly, otherwise add our cache buster
+    // Use our utility function for other types of URLs
+    const imageUrl = getImageUrl(src);
     setFormattedSrc(imageUrl.includes('?') ? imageUrl : `${imageUrl}${cacheBuster}`);
-  }, [src]);
+  }, [src, retryCount]); // Add retryCount as a dependency
   
   const handleLoad = () => {
     setIsLoaded(true);
@@ -50,9 +63,17 @@ export default function PropertyImage({
   
   const handleError = () => {
     console.log(`Image failed to load: ${formattedSrc}`);
+    
+    // Attempt to retry loading the image up to 2 times
+    if (retryCount < 2) {
+      console.log(`Retrying image load (attempt ${retryCount + 1})`);
+      setRetryCount(prev => prev + 1);
+      return;
+    }
+    
     setIsError(true);
     
-    // Fall back to placeholder on error
+    // Fall back to placeholder on error after retries
     if (!formattedSrc.includes('/uploads/default-property.svg')) {
       setFormattedSrc('/uploads/default-property.svg');
     }

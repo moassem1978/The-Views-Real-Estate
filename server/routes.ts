@@ -221,10 +221,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.log("Creating property with data:", JSON.stringify(req.body, null, 2));
       
       // Ensure required fields are present
-      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'images'];
-      const missingFields = requiredFields.filter(field => !req.body[field]);
+      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'images', 'bedrooms', 'bathrooms', 'builtUpArea'];
+      const missingFields = requiredFields.filter(field => {
+        // Check if field is missing or empty
+        const value = req.body[field];
+        return value === undefined || value === null || (Array.isArray(value) && value.length === 0) || value === '';
+      });
       
       if (missingFields.length > 0) {
+        console.error(`Property creation failed: Missing required fields: ${missingFields.join(', ')}`);
         return res.status(400).json({
           message: `Missing required fields: ${missingFields.join(', ')}`
         });
