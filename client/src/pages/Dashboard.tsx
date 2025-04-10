@@ -147,6 +147,7 @@ export default function Dashboard() {
     address: "",
     city: "",
     state: "",
+    zipCode: "", // Added zip code field to match the schema requirement
     price: 0,
     downPayment: 0,
     installmentAmount: 0,
@@ -220,7 +221,7 @@ export default function Dashboard() {
         console.log("Creating property with data:", JSON.stringify(newProperty, null, 2));
 
         // Verify required fields
-        const requiredFields = ['title', 'description', 'price', 'city', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType', 'images'];
+        const requiredFields = ['title', 'description', 'price', 'city', 'zipCode', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType', 'images'];
         const missingFields = requiredFields.filter(field => {
           // Check if field is missing or empty
           const value = newProperty[field];
@@ -616,6 +617,7 @@ export default function Dashboard() {
       { field: 'title', label: 'Title' },
       { field: 'description', label: 'Description' },
       { field: 'city', label: 'City' },
+      { field: 'zipCode', label: 'ZIP/Postal Code' },
       { field: 'price', label: 'Price' },
       { field: 'bedrooms', label: 'Bedrooms' },
       { field: 'bathrooms', label: 'Bathrooms' },
@@ -748,9 +750,10 @@ export default function Dashboard() {
     setFormData({
       title: property.title,
       description: property.description,
-      address: property.address,
+      address: property.address || "",
       city: property.city,
-      state: property.state,
+      state: property.state || "",
+      zipCode: property.zipCode || "", // Added this field to match the schema
       price: property.price,
       downPayment: property.downPayment || 0,
       installmentAmount: property.installmentAmount || 0,

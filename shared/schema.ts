@@ -39,7 +39,7 @@ export const properties = pgTable("properties", {
   address: text("address"),
   city: text("city").notNull(),
   state: text("state"),
-  zipCode: text("zip_code"),
+  zipCode: text("zip_code").notNull(),
   price: doublePrecision("price").notNull(),
   downPayment: doublePrecision("down_payment"),
   installmentAmount: doublePrecision("installment_amount"),
