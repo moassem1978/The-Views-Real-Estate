@@ -1766,6 +1766,20 @@ export default function Dashboard() {
                   </div>
 
                   <div className="space-y-2">
+                    <label htmlFor="zipCode" className="text-sm font-medium flex items-center">
+                      ZIP/Postal Code
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <Input
+                      id="zipCode"
+                      name="zipCode"
+                      value={formData.zipCode}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <label htmlFor="projectName" className="text-sm font-medium flex items-center">
                       Project Name
                       <span className="text-red-500 ml-1">*</span>
