@@ -993,11 +993,15 @@ export default function Dashboard() {
 
   const handlePropertyImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      console.log(`Selected ${e.target.files.length} files for upload`);
+      
       const newImages: PropertyImage[] = [];
       const totalFiles = e.target.files.length;
       let processedFiles = 0;
 
       Array.from(e.target.files).forEach(file => {
+        console.log(`Processing file: ${file.name}, type: ${file.type}, size: ${(file.size / 1024).toFixed(2)}KB`);
+        
         // Check if it's an Adobe Illustrator file
         if (file.name.toLowerCase().endsWith('.ai') || 
             file.type === 'application/postscript' || 
@@ -1012,7 +1016,14 @@ export default function Dashboard() {
 
           processedFiles++;
           if (processedFiles === totalFiles) {
+            console.log(`All ${totalFiles} files processed. Setting state with new images.`);
             setPropertyImages(prev => [...prev, ...newImages]);
+            
+            // Show toast notification to guide user
+            toast({
+              title: "Images Selected",
+              description: `${totalFiles} images ready. Click "Upload Selected" to upload them.`,
+            });
           }
         } else {
           // Create preview for regular image files
@@ -1025,7 +1036,14 @@ export default function Dashboard() {
 
             processedFiles++;
             if (processedFiles === totalFiles) {
+              console.log(`All ${totalFiles} files processed. Setting state with new images.`);
               setPropertyImages(prev => [...prev, ...newImages]);
+              
+              // Show toast notification to guide user
+              toast({
+                title: "Images Selected",
+                description: `${totalFiles} images ready. Click "Upload Selected" to upload them.`,
+              });
             }
           };
           reader.readAsDataURL(file);
@@ -1036,7 +1054,21 @@ export default function Dashboard() {
 
   const handleUploadPropertyImages = () => {
     if (propertyImages.length > 0) {
+      // Show a toast to indicate upload is starting
+      toast({
+        title: "Upload Started",
+        description: `Uploading ${propertyImages.length} images to server...`,
+      });
+      
+      console.log(`Starting upload of ${propertyImages.length} images...`);
       uploadPropertyImages.mutate(propertyImages.map(img => img.file));
+    } else {
+      // Show an error message if no images are selected
+      toast({
+        title: "No Images Selected",
+        description: "Please select images to upload first",
+        variant: "destructive",
+      });
     }
   };
 
@@ -2129,10 +2161,14 @@ export default function Dashboard() {
                           <Button 
                             type="button" 
                             size="sm" 
+                            variant="default"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
                             onClick={handleUploadPropertyImages}
                             disabled={uploadPropertyImages.isPending || isUploading}
                           >
-                            {uploadPropertyImages.isPending || isUploading ? 'Uploading...' : 'Upload Selected'}
+                            {uploadPropertyImages.isPending || isUploading ? 
+                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</> : 
+                              <><Upload className="mr-2 h-4 w-4" /> Upload Selected</>}
                           </Button>
                         </div>
                       </div>
