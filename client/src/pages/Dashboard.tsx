@@ -1171,6 +1171,7 @@ export default function Dashboard() {
       address: "",
       city: "",
       state: "",
+      zipCode: "", // Added zip code field to match schema requirements
       price: 0,
       downPayment: 0,
       installmentAmount: 0,
