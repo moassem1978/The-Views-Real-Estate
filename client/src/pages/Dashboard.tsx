@@ -8,8 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { X } from "lucide-react";
-import { Loader2 } from "lucide-react";
+import { X, Loader2, Upload } from "lucide-react";
 import {
   Table,
   TableBody,
