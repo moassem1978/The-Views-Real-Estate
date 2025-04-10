@@ -221,7 +221,7 @@ export default function Dashboard() {
         console.log("Creating property with data:", JSON.stringify(newProperty, null, 2));
 
         // Verify required fields
-        const requiredFields = ['title', 'description', 'price', 'city', 'zipCode', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType', 'images'];
+        const requiredFields = ['title', 'description', 'price', 'city', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType', 'images'];
         const missingFields = requiredFields.filter(field => {
           // Check if field is missing or empty
           const value = newProperty[field];
@@ -617,7 +617,6 @@ export default function Dashboard() {
       { field: 'title', label: 'Title' },
       { field: 'description', label: 'Description' },
       { field: 'city', label: 'City' },
-      { field: 'zipCode', label: 'ZIP/Postal Code' },
       { field: 'price', label: 'Price' },
       { field: 'bedrooms', label: 'Bedrooms' },
       { field: 'bathrooms', label: 'Bathrooms' },
@@ -1765,19 +1764,7 @@ export default function Dashboard() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="zipCode" className="text-sm font-medium flex items-center">
-                      ZIP/Postal Code
-                      <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <Input
-                      id="zipCode"
-                      name="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
+
 
                   <div className="space-y-2">
                     <label htmlFor="projectName" className="text-sm font-medium flex items-center">
