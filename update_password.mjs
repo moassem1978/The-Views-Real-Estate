@@ -1,39 +1,35 @@
-import crypto from 'crypto';
+import { scrypt, randomBytes } from 'crypto';
 import { promisify } from 'util';
-import pg from '@neondatabase/serverless';
+import pkg from 'pg';
+const { Pool } = pkg;
 
-const scrypt = promisify(crypto.scrypt);
+const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const buf = await scrypt(password, salt, 64);
-  return `${buf.toString('hex')}.${salt}`;
+  const salt = randomBytes(16).toString("hex");
+  const buf = await scryptAsync(password, salt, 64);
+  return `${buf.toString("hex")}.${salt}`;
 }
 
 async function main() {
   try {
-    const newPassword = await hashPassword('Owner123');
-    console.log('New password hash:', newPassword);
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
     
-    // Connect to database
-    const client = new pg.Client({
-      connectionString: process.env.DATABASE_URL
-    });
-    await client.connect();
+    // Hash the password 'owner123'
+    const hashedPassword = await hashPassword('owner123');
+    console.log('Hashed password:', hashedPassword);
     
-    // Update the owner password
-    const query = 'UPDATE users SET password = $1 WHERE username = $2 RETURNING id, username';
-    const result = await client.query(query, [newPassword, 'owner']);
+    // Update the password in the database
+    const result = await pool.query(
+      'UPDATE users SET password = $1 WHERE username = $2 RETURNING id, username',
+      [hashedPassword, 'owner']
+    );
     
-    if (result.rows.length > 0) {
-      console.log('Updated password for user:', result.rows[0]);
-    } else {
-      console.log('User not found');
-    }
+    console.log('Updated user:', result.rows[0]);
     
-    await client.end();
-  } catch (err) {
-    console.error('Error:', err);
+    await pool.end();
+  } catch (error) {
+    console.error('Error updating password:', error);
   }
 }
 
