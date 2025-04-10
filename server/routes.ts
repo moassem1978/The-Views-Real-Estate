@@ -148,7 +148,7 @@ const upload = multer({
 
 // Separate configuration for logo uploads (smaller size limit)
 const logoUpload = multer({
-  storage: multerStorage,
+  storage: diskStorage, // Changed to diskStorage for consistency
   fileFilter: fileFilter,
   limits: { 
     fileSize: 2 * 1024 * 1024,  // 2MB max for logos
