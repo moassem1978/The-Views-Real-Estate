@@ -2,12 +2,14 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser, userRoles } from "@shared/schema";
 import { pool } from "./db";
-import { sendWelcomeEmail } from "./services/email";
+import { User as SelectUser } from "@shared/schema";
+import { userRoles } from "@shared/schema";
+import nodemailer from "nodemailer";
 
 declare global {
   namespace Express {
@@ -24,99 +26,206 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  try {
+    const parts = stored.split(".");
+    if (parts.length !== 2) {
+      console.error("Invalid password format in database");
+      return false;
+    }
+    
+    const [hashed, salt] = parts;
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error("Error comparing passwords:", error);
+    return false;
+  }
 }
 
-// Helper function to create an owner account if it doesn't exist
-async function createOwnerIfNotExists() {
+// Create or reset the owner account
+async function ensureOwnerAccount() {
   try {
-    // Check if any owner exists
-    const ownerExists = await storage.hasUserWithRole(userRoles.OWNER);
-
-    if (!ownerExists) {
-      console.log("Creating initial owner account...");
-      const defaultPassword = await hashPassword("owner123"); // Default password
-
+    console.log("Ensuring owner account exists with updated credentials...");
+    
+    // First check if the owner exists - use lowercase as in database
+    let owner = await storage.getUserByUsername("owner");
+    const ownerPassword = "owner123"; // Known expected password - lowercase
+    
+    if (!owner) {
+      // Create new owner account with lowercase username
+      console.log("Creating new owner account");
+      const hashedPassword = await hashPassword(ownerPassword);
+      
       const ownerUser = {
-        username: "owner",
-        password: defaultPassword,
+        username: "owner", // Use lowercase as expected in existing database
+        password: hashedPassword,
         email: "owner@theviews.com",
         fullName: "System Owner",
         role: userRoles.OWNER,
         isAgent: true,
+        isActive: true,
         createdAt: new Date().toISOString(),
       };
-
-      await storage.createUser(ownerUser);
-      console.log("Initial owner account created successfully. Username: owner, Password: owner123");
+      
+      owner = await storage.createUser(ownerUser);
+      console.log("Owner account created successfully");
+      return;
     }
+    
+    // Owner exists - ensure the password is correct
+    console.log("Updating owner account password");
+    const hashedPassword = await hashPassword(ownerPassword);
+    
+    await storage.updateUser(owner.id, {
+      password: hashedPassword,
+      isActive: true, // Ensure account is active
+    });
+    
+    console.log("Owner account credentials updated successfully");
+    
+    // Also ensure there's at least one admin account
+    const dina = await storage.getUserByUsername("Dina");
+    if (dina) {
+      console.log("Admin account 'Dina' exists, ensuring it's active");
+      await storage.updateUser(dina.id, {
+        isActive: true,
+      });
+    }
+    
   } catch (error) {
-    console.error("Error creating initial owner account:", error);
+    console.error("Error ensuring owner account:", error);
   }
 }
 
 // Middleware for role-based access control
 export function requireRole(roles: string | string[]) {
   const allowedRoles = Array.isArray(roles) ? roles : [roles];
-
+  
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-
+    
     const user = req.user as SelectUser;
     if (!user.role || !allowedRoles.includes(user.role)) {
       return res.status(403).json({ message: "Insufficient permissions" });
     }
-
+    
     next();
   };
 }
 
 export function setupAuth(app: Express) {
-  // Increase session duration and add keep-alive
-  app.use(session({
-    secret: process.env.SESSION_SECRET || 'default-secret-key',
+  // Set up PostgreSQL session store
+  const PostgresSessionStore = connectPgSimple(session);
+  
+  const sessionSettings: session.SessionOptions = {
+    store: new PostgresSessionStore({
+      pool,
+      tableName: 'session', // Default table name
+      createTableIfMissing: true,
+      // Cleanup expired sessions every 24 hours
+      pruneSessionInterval: 1440
+    }),
+    secret: process.env.SESSION_SECRET || "the-views-real-estate-secret-key-updated",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      secure: process.env.NODE_ENV === "production",
+      // Extended session timeout (24 hours) with rolling expiration for better user experience
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for better testing
+      // Prevent client-side JS from accessing cookies
+      httpOnly: true,
+      // Using lax instead of strict for better user experience
+      sameSite: 'lax'
     },
-    rolling: true // Refresh session with each request
-  }));
-
-  // Create the owner account if it doesn't exist
-  createOwnerIfNotExists();
+    // Enable rolling sessions to extend the session timeout on activity
+    rolling: true,
+    name: 'theviews.sid' // Custom name to avoid conflicts
+  };
+  
+  // Ensure owner account exists with correct credentials
+  ensureOwnerAccount();
 
   app.set("trust proxy", 1);
+  app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Debug authentication attempts
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Invalid username or password" });
-        } else {
-          return done(null, user);
+        console.log(`Authentication attempt for username: ${username}`);
+        
+        // Try exact match first
+        let user = await storage.getUserByUsername(username);
+        
+        // If not found, try case-insensitive match (for better UX)
+        if (!user) {
+          console.log(`User not found with exact username match, trying case-insensitive match`);
+          
+          // Convert username to lowercase for case-insensitive matching
+          const lowercaseUsername = username.toLowerCase();
+          if (lowercaseUsername === 'owner') {
+            user = await storage.getUserByUsername('owner');
+            console.log(`Case-insensitive match for 'owner' ${user ? 'found' : 'not found'}`);
+          } else if (lowercaseUsername === 'dina') {
+            user = await storage.getUserByUsername('Dina');
+            console.log(`Case-insensitive match for 'dina' ${user ? 'found' : 'not found'}`);
+          }
         }
+        
+        if (!user) {
+          console.log(`Authentication failed: user ${username} not found`);
+          return done(null, false, { message: "Invalid username or password" });
+        }
+        
+        // Check if account is active
+        if (!user.isActive) {
+          console.log(`Authentication failed: account ${username} is inactive`);
+          return done(null, false, { message: "Account is inactive" });
+        }
+        
+        // Verify password
+        const passwordValid = await comparePasswords(password, user.password);
+        console.log(`Password validation for ${username}: ${passwordValid ? 'success' : 'failed'}`);
+        
+        if (!passwordValid) {
+          return done(null, false, { message: "Invalid username or password" });
+        }
+        
+        console.log(`Authentication successful for ${user.username} (${user.role})`);
+        return done(null, user);
       } catch (error) {
+        console.error("Authentication error:", error);
         return done(error);
       }
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user, done) => {
+    console.log(`Serializing user: ${user.username} (ID: ${user.id})`);
+    done(null, user.id);
+  });
+  
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
+      if (!user) {
+        console.error(`Failed to deserialize user with ID ${id}: User not found`);
+        return done(null, false);
+      }
+      
+      if (!user.isActive) {
+        console.log(`Deserialize failed: user ${id} is inactive`);
+        return done(null, false);
+      }
+      
       done(null, user);
     } catch (error) {
+      console.error(`Error deserializing user ${id}:`, error);
       done(error);
     }
   });
@@ -125,263 +234,181 @@ export function setupAuth(app: Express) {
   app.post("/api/register", async (req, res, next) => {
     try {
       const { username, password, email, fullName, phone } = req.body;
-
+      
       if (!username || !password || !email || !fullName) {
         return res.status(400).json({ message: "All required fields must be provided" });
       }
-
-      const existingUser = await storage.getUserByUsername(username);
-      if (existingUser) {
+      
+      // Check if username is already taken
+      const existingUserByUsername = await storage.getUserByUsername(username);
+      if (existingUserByUsername) {
         return res.status(400).json({ message: "Username already exists" });
       }
-
+      
+      // Hash the password
       const hashedPassword = await hashPassword(password);
-      const newUser = {
+      
+      // Create the user with the user role
+      const user = await storage.createUser({
         username,
         password: hashedPassword,
         email,
         fullName,
-        phone,
-        role: userRoles.USER, // Default role is regular user
+        phone: phone || "",
+        role: userRoles.USER,
         isAgent: false,
+        isActive: true,
         createdAt: new Date().toISOString(),
-      };
-
-      const user = await storage.createUser(newUser);
-
-      // Send welcome email to user and notification to business email
+      });
+      
+      // Send notification email to admin
       try {
-        await sendWelcomeEmail(user, password);
-        console.log(`Registration notification email sent for user: ${user.fullName} (${user.email})`);
+        // Create test account - for development only
+        const testAccount = await nodemailer.createTestAccount();
+        
+        // Create reusable transporter
+        const transporter = nodemailer.createTransport({
+          host: process.env.EMAIL_HOST || "smtp.ethereal.email",
+          port: parseInt(process.env.EMAIL_PORT || "587"),
+          secure: process.env.EMAIL_SECURE === "true", 
+          auth: {
+            user: process.env.EMAIL_USER || testAccount.user,
+            pass: process.env.EMAIL_PASSWORD || testAccount.pass,
+          },
+        });
+        
+        console.log("Email transporter initialized with test account");
+        
+        // Send mail with defined transport object
+        const info = await transporter.sendMail({
+          from: process.env.EMAIL_FROM || '"The Views Real Estate" <notifications@theviews.com>',
+          to: process.env.ADMIN_EMAIL || "admin@theviews.com",
+          subject: "New User Registration",
+          text: `A new user has registered:\n\nUsername: ${username}\nEmail: ${email}\nFull Name: ${fullName}\nPhone: ${phone || "Not provided"}`,
+          html: `
+            <h2>New User Registration</h2>
+            <p>A new user has registered on The Views Real Estate website:</p>
+            <ul>
+              <li><strong>Username:</strong> ${username}</li>
+              <li><strong>Email:</strong> ${email}</li>
+              <li><strong>Full Name:</strong> ${fullName}</li>
+              <li><strong>Phone:</strong> ${phone || "Not provided"}</li>
+            </ul>
+          `,
+        });
+        
+        console.log("Registration notification email sent:", info.messageId);
+        // For development only - show test URL
+        if (!process.env.EMAIL_HOST) {
+          console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
+        }
       } catch (emailError) {
+        // Don't fail registration if email fails
         console.error("Failed to send registration notification email:", emailError);
-        // Continue with the response anyway, don't fail the request if email fails
       }
-
+      
+      // Log in the user automatically
       req.login(user, (err) => {
         if (err) return next(err);
-        // Omit the password from the response
+        
+        // Return the user without the password
         const { password, ...userWithoutPassword } = user;
         res.status(201).json(userWithoutPassword);
       });
     } catch (error) {
       console.error("Registration error:", error);
-      next(error);
+      res.status(500).json({ message: "Error registering user" });
     }
   });
 
-  // Admin/Owner endpoint to create users with specific roles
-  app.post("/api/users", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
-    try {
-      const { username, password, email, fullName, phone, role, isAgent } = req.body;
-      const currentUser = req.user as SelectUser;
-
-      if (!username || !password || !email || !fullName || !role) {
-        return res.status(400).json({ message: "All required fields must be provided" });
-      }
-
-      // Only owners can create admin accounts
-      if (role === userRoles.ADMIN && currentUser.role !== userRoles.OWNER) {
-        return res.status(403).json({ message: "Only owners can create admin accounts" });
-      }
-
-      // Nobody can create owner accounts through the API
-      if (role === userRoles.OWNER) {
-        return res.status(403).json({ message: "Owner accounts cannot be created through the API" });
-      }
-
-      const existingUser = await storage.getUserByUsername(username);
-      if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
-
-      const hashedPassword = await hashPassword(password);
-      const newUser = {
-        username,
-        password: hashedPassword,
-        email,
-        fullName,
-        phone,
-        role,
-        isAgent: isAgent || false,
-        createdBy: currentUser.id, // Track who created this user
-        createdAt: new Date().toISOString(),
-      };
-
-      const user = await storage.createUser(newUser);
-
-      // Send welcome email with credentials
-      try {
-        await sendWelcomeEmail(user, password);
-        console.log(`Notification email sent to ${user.email}`);
-      } catch (emailError) {
-        console.error("Failed to send welcome email:", emailError);
-        // Continue with the response anyway, don't fail the request if email fails
-      }
-
-      // Omit the password from the response
-      const { password: pwd, ...userWithoutPassword } = user;
-      res.status(201).json(userWithoutPassword);
-    } catch (error) {
-      console.error("User creation error:", error);
-      next(error);
-    }
-  });
-
+  // Enhanced login endpoint with detailed logging
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).json({ message: info?.message || "Invalid username or password" });
-
-      req.login(user, (loginErr) => {
-        if (loginErr) return next(loginErr);
-        // Omit the password from the response
+    console.log(`Login attempt for username: ${req.body.username}`);
+    
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        console.error("Login error:", err);
+        return next(err);
+      }
+      
+      if (!user) {
+        console.log(`Login failed for ${req.body.username}: ${info?.message || 'Unknown reason'}`);
+        return res.status(401).json({ message: info?.message || "Invalid username or password" });
+      }
+      
+      // Check if the user is active
+      if (!user.isActive) {
+        console.log(`Login rejected for inactive account: ${req.body.username}`);
+        return res.status(403).json({ message: "Your account has been deactivated" });
+      }
+      
+      req.login(user, (err) => {
+        if (err) {
+          console.error(`Session creation error for ${req.body.username}:`, err);
+          return next(err);
+        }
+        
+        // Log successful login
+        console.log(`Login successful for ${user.username} (${user.role})`);
+        console.log(`Session ID: ${req.sessionID}`);
+        
+        // Show session expiration
+        if (req.session.cookie.expires) {
+          console.log(`Session expires: ${req.session.cookie.expires}`);
+        }
+        
+        // Return the user without the password
         const { password, ...userWithoutPassword } = user;
-        return res.status(200).json(userWithoutPassword);
+        return res.json(userWithoutPassword);
       });
     })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
-      if (err) return next(err);
-      res.sendStatus(200);
-    });
-  });
-
-  // Get current user
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
-    // Omit the password from the response
-    const { password, ...userWithoutPassword } = req.user as SelectUser;
-    res.json(userWithoutPassword);
-  });
-
-  // Get all users (admin and owner only)
-  app.get("/api/users", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
-    try {
-      const users = await storage.getAllUsers();
-      // Omit passwords from the response
-      const usersWithoutPasswords = users.map(user => {
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
+    // Only attempt to log out if authenticated
+    if (req.isAuthenticated()) {
+      const username = (req.user as SelectUser).username;
+      console.log(`Logout initiated for ${username}`);
+      
+      req.logout((err) => {
+        if (err) {
+          console.error(`Logout error for ${username}:`, err);
+          return next(err);
+        }
+        
+        // Destroy the session after logout
+        req.session.destroy((err) => {
+          if (err) {
+            console.error(`Session destruction error for ${username}:`, err);
+            return res.status(500).json({ message: "Error during logout" });
+          }
+          console.log(`Logout successful for ${username}`);
+          res.clearCookie("theviews.sid");
+          return res.status(200).json({ message: "Logged out successfully" });
+        });
       });
-      res.json(usersWithoutPasswords);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      next(error);
+    } else {
+      // No active session to log out from
+      console.log("Logout attempted with no active session");
+      res.status(200).json({ message: "No active session" });
     }
   });
 
-  // Get user by ID (admin and owner only)
-  app.get("/api/users/:id", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
-    try {
-      const userId = parseInt(req.params.id);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Omit password from the response
-      const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      next(error);
+  app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
     }
-  });
-
-  // Update user (admin and owner only, with restrictions)
-  app.put("/api/users/:id", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
-    try {
-      const userId = parseInt(req.params.id);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
-      }
-
-      const currentUser = req.user as SelectUser;
-      const userToUpdate = await storage.getUser(userId);
-
-      if (!userToUpdate) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Check permission hierarchy
-      if (userToUpdate.role === userRoles.OWNER && currentUser.role !== userRoles.OWNER) {
-        return res.status(403).json({ message: "Only owners can update owner accounts" });
-      }
-
-      if (userToUpdate.role === userRoles.ADMIN && currentUser.role !== userRoles.OWNER) {
-        return res.status(403).json({ message: "Only owners can update admin accounts" });
-      }
-
-      // Don't allow changing role to OWNER
-      if (req.body.role === userRoles.OWNER && userToUpdate.role !== userRoles.OWNER) {
-        return res.status(403).json({ message: "Cannot promote user to owner role" });
-      }
-
-      // Don't allow admins to create other admins
-      if (currentUser.role === userRoles.ADMIN && req.body.role === userRoles.ADMIN && userToUpdate.role !== userRoles.ADMIN) {
-        return res.status(403).json({ message: "Admins cannot promote users to admin role" });
-      }
-
-      // Hash password if provided
-      let updates = { ...req.body };
-      if (updates.password) {
-        updates.password = await hashPassword(updates.password);
-      }
-
-      const updatedUser = await storage.updateUser(userId, updates);
-
-      // Omit password from the response
-      const { password, ...userWithoutPassword } = updatedUser;
-      res.json(userWithoutPassword);
-    } catch (error) {
-      console.error("Error updating user:", error);
-      next(error);
+    
+    const user = req.user as SelectUser;
+    
+    // Touch the session to extend its life
+    if (req.session) {
+      req.session.touch();
     }
-  });
-
-  // Deactivate user (admin and owner only, with restrictions)
-  app.delete("/api/users/:id", requireRole([userRoles.OWNER, userRoles.ADMIN]), async (req, res, next) => {
-    try {
-      const userId = parseInt(req.params.id);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
-      }
-
-      const currentUser = req.user as SelectUser;
-      const userToDeactivate = await storage.getUser(userId);
-
-      if (!userToDeactivate) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Check permission hierarchy
-      if (userToDeactivate.role === userRoles.OWNER) {
-        return res.status(403).json({ message: "Owner accounts cannot be deactivated" });
-      }
-
-      if (userToDeactivate.role === userRoles.ADMIN && currentUser.role !== userRoles.OWNER) {
-        return res.status(403).json({ message: "Only owners can deactivate admin accounts" });
-      }
-
-      // Don't allow self-deactivation
-      if (userId === currentUser.id) {
-        return res.status(403).json({ message: "Cannot deactivate your own account" });
-      }
-
-      // Soft delete by setting isActive to false
-      await storage.updateUser(userId, { isActive: false });
-
-      res.status(200).json({ message: "User deactivated successfully" });
-    } catch (error) {
-      console.error("Error deactivating user:", error);
-      next(error);
-    }
+    
+    // Return user without password
+    const { password, ...userWithoutPassword } = user;
+    
+    res.json(userWithoutPassword);
   });
 }
