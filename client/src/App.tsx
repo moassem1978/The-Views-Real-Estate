@@ -33,6 +33,7 @@ const Dashboard = lazy(() => import(/* webpackChunkName: "dashboard" */ "@/pages
 const Announcements = lazy(() => import(/* webpackChunkName: "announcements" */ "@/pages/Announcements"));
 const AnnouncementDetails = lazy(() => import(/* webpackChunkName: "announcement-details" */ "@/pages/AnnouncementDetails"));
 const UserManagement = lazy(() => import(/* webpackChunkName: "user-management" */ "@/pages/UserManagement"));
+const AuthTest = lazy(() => import(/* webpackChunkName: "auth-test" */ "@/pages/AuthTest"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -123,6 +124,13 @@ function Router() {
       <Route path="/announcements/:id">
         <Suspense fallback={<LoadingFallback />}>
           <AnnouncementDetails />
+        </Suspense>
+      </Route>
+      
+      {/* Authentication test page */}
+      <Route path="/auth-test">
+        <Suspense fallback={<LoadingFallback />}>
+          <AuthTest />
         </Suspense>
       </Route>
       
