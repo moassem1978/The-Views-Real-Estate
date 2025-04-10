@@ -745,7 +745,7 @@ export default function Dashboard() {
         setUploadProgress(0);
 
         // Split large files into smaller batches for more reliable uploading
-        const MAX_BATCH_SIZE = 2; // Only send 2 files at a time
+        const MAX_BATCH_SIZE = 1; // Send just 1 file at a time for maximum reliability
         const batches: File[][] = [];
 
         // Create batches of files
@@ -761,12 +761,25 @@ export default function Dashboard() {
         // Process each batch sequentially
         for (let i = 0; i < batches.length; i++) {
           const batch = batches[i];
-          const formData = new FormData();
+          
+          // Create a fresh FormData for each attempt
+          let formData = new FormData();
 
           // Add each file in this batch to FormData
           batch.forEach(file => {
-            formData.append('images', file, file.name);
-            console.log(`Batch ${i+1}/${batches.length}: Adding file to upload: ${file.name} (${file.type}, ${(file.size / 1024).toFixed(2)}KB)`);
+            // Rename file for better compatibility if necessary
+            let safeFileName = file.name.replace(/[^\w.-]/g, '_');
+            
+            // Add timestamp to filename to avoid conflicts
+            const fileExt = safeFileName.split('.').pop() || 'jpg';
+            const baseName = safeFileName.split('.')[0] || 'image';
+            const uniqueFileName = `${baseName}_${Date.now()}.${fileExt}`;
+            
+            // Add file to FormData with safe name
+            const modifiedFile = new File([file], uniqueFileName, { type: file.type });
+            formData.append('images', modifiedFile);
+            
+            console.log(`Batch ${i+1}/${batches.length}: Adding file to upload: ${uniqueFileName} (${file.type}, ${(file.size / 1024).toFixed(2)}KB)`);
           });
 
           console.log(`Uploading batch ${i+1} of ${batches.length} (${batch.length} files)`);
@@ -776,19 +789,36 @@ export default function Dashboard() {
 
           // Retry logic for each batch
           let retries = 0;
-          const MAX_RETRIES = 2;
+          const MAX_RETRIES = 3; // Increase max retries
           let success = false;
 
           while (!success && retries <= MAX_RETRIES) {
             try {
+              // Create fresh FormData for each retry attempt
+              if (retries > 0) {
+                formData = new FormData();
+                batch.forEach(file => {
+                  // Rename file for each retry with timestamp
+                  const fileExt = file.name.split('.').pop() || 'jpg';
+                  const baseName = file.name.split('.')[0] || 'image';
+                  const uniqueFileName = `${baseName}_${Date.now()}_retry${retries}.${fileExt}`;
+                  
+                  const modifiedFile = new File([file], uniqueFileName, { type: file.type });
+                  formData.append('images', modifiedFile);
+                  
+                  console.log(`Retry ${retries}: Adding file with new name: ${uniqueFileName}`);
+                });
+              }
+
               // Enhanced fetch request with improved error handling and credentials
               const response = await fetch('/api/upload/property-images', {
                 method: 'POST',
                 body: formData,
                 // Add cache-busting headers to prevent caching issues
                 headers: {
-                  'Cache-Control': 'no-cache',
-                  'Pragma': 'no-cache'
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
                 },
                 // Explicitly include credentials to ensure session cookies are sent
                 credentials: 'include'
@@ -796,15 +826,23 @@ export default function Dashboard() {
 
               // Better error handling
               if (!response.ok) {
-                const errorText = await response.text();
+                let errorText = '';
+                try {
+                  errorText = await response.text();
+                } catch (e) {
+                  errorText = 'Could not read error response';
+                }
+                
                 console.error(`Batch ${i+1} upload failed (attempt ${retries+1}): Status ${response.status}`);
                 console.error('Error response body:', errorText);
 
                 if (retries < MAX_RETRIES) {
                   retries++;
-                  // Add exponential backoff
-                  const delay = 1000 * Math.pow(2, retries);
-                  console.log(`Retrying batch ${i+1} in ${delay}ms...`);
+                  // Add exponential backoff with jitter
+                  const baseDelay = 1000 * Math.pow(2, retries);
+                  const jitter = Math.random() * 1000;
+                  const delay = baseDelay + jitter;
+                  console.log(`Retrying batch ${i+1} in ${delay.toFixed(0)}ms...`);
                   await new Promise(resolve => setTimeout(resolve, delay));
                 } else {
                   throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
@@ -813,16 +851,29 @@ export default function Dashboard() {
                 // Batch succeeded
                 const data = await response.json();
                 console.log(`Batch ${i+1} upload successful:`, data);
-                allImageUrls.push(...(data.imageUrls || []));
-                success = true;
+                
+                if (data.imageUrls && data.imageUrls.length > 0) {
+                  allImageUrls.push(...data.imageUrls);
+                  success = true;
+                } else {
+                  console.warn(`Batch ${i+1} succeeded but returned no image URLs`);
+                  if (retries < MAX_RETRIES) {
+                    retries++;
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                  } else {
+                    throw new Error('Upload succeeded but server returned no image URLs');
+                  }
+                }
               }
             } catch (err) {
               console.error(`Batch ${i+1} upload error (attempt ${retries+1}):`, err);
               if (retries < MAX_RETRIES) {
                 retries++;
-                // Add exponential backoff
-                const delay = 1000 * Math.pow(2, retries);
-                console.log(`Retrying batch ${i+1} in ${delay}ms...`);
+                // Add exponential backoff with jitter
+                const baseDelay = 1000 * Math.pow(2, retries);
+                const jitter = Math.random() * 1000;
+                const delay = baseDelay + jitter;
+                console.log(`Retrying batch ${i+1} in ${delay.toFixed(0)}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
               } else {
                 throw err;
@@ -835,13 +886,17 @@ export default function Dashboard() {
             // Update progress for the current batch - increment by a small amount to show activity
             setUploadProgress(Math.floor(((i + 0.5) / batches.length) * 100));
             console.log(`Batch ${i+1} complete. Adding delay before next batch. Progress: ${Math.floor(((i + 0.5) / batches.length) * 100)}%`);
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Longer delay
           }
         }
 
         // Upload completed
         setUploadProgress(100);
         setIsUploading(false);
+
+        // Log the final result
+        console.log(`Upload complete! Total images uploaded: ${allImageUrls.length}`);
+        console.log(`Image URLs:`, allImageUrls);
 
         return { imageUrls: allImageUrls, count: allImageUrls.length };
       } catch (err) {
