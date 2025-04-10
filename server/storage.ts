@@ -1021,7 +1021,20 @@ export class MemStorage implements IStorage {
   }
 }
 
+import NodeCache from 'node-cache';
+
+// Cache with 5 minute TTL
+const cache = new NodeCache({ stdTTL: 300 });
+
 export class DatabaseStorage implements IStorage {
+  private async getCached<T>(key: string, getter: () => Promise<T>): Promise<T> {
+    const cached = cache.get<T>(key);
+    if (cached) return cached;
+    
+    const data = await getter();
+    cache.set(key, data);
+    return data;
+  }
   // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));

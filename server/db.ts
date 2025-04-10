@@ -11,5 +11,41 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+
+import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+
+// Backup directory
+const BACKUP_DIR = './backups';
+
+// Create backup directory if it doesn't exist
+if (!fs.existsSync(BACKUP_DIR)) {
+  fs.mkdirSync(BACKUP_DIR);
+}
+
+// Backup function
+export async function backupDatabase() {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const filename = path.join(BACKUP_DIR, `backup-${timestamp}.sql`);
+  
+  const command = `pg_dump "${process.env.DATABASE_URL}" > "${filename}"`;
+  
+  return new Promise((resolve, reject) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Backup failed:', error);
+        reject(error);
+        return;
+      }
+      console.log(`Backup created at ${filename}`);
+      resolve(filename);
+    });
+  });
+}
+
+// Schedule daily backups
+setInterval(backupDatabase, 24 * 60 * 60 * 1000);
+
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle({ client: pool, schema });
