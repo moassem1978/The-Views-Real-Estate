@@ -801,6 +801,25 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Create the file URL relative to the server
       const fileUrl = `/uploads/logos/${req.file.filename}`;
+      
+      // Also ensure the file is properly saved to disk from memory storage
+      try {
+        // Ensure the destination directory exists
+        const publicDir = path.join(process.cwd(), 'public', 'uploads', 'logos');
+        if (!fs.existsSync(publicDir)) {
+          fs.mkdirSync(publicDir, { recursive: true, mode: 0o777 });
+          console.log(`Created directory: ${publicDir}`);
+        }
+        
+        // Write the file to disk from buffer in memory storage
+        if (req.file.buffer) {
+          const destPath = path.join(publicDir, req.file.filename);
+          fs.writeFileSync(destPath, req.file.buffer);
+          console.log(`Wrote file from buffer to ${destPath}`);
+        }
+      } catch (writeErr) {
+        console.error(`Error writing file from buffer:`, writeErr);
+      }
 
       // Update site settings with the new logo URL
       const updatedSettings = await dbStorage.updateSiteSettings({
@@ -863,6 +882,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Create the file URL relative to the server
       const fileUrl = `/uploads/announcements/${req.file.filename}`;
+      
+      // Also ensure the file is properly saved to disk from memory storage if needed
+      try {
+        // Check if we need to manually save from buffer (in case of memory storage)
+        if (req.file.buffer) {
+          const destPath = path.join(process.cwd(), 'public', 'uploads', 'announcements', req.file.filename);
+          fs.writeFileSync(destPath, req.file.buffer);
+          console.log(`Wrote file from buffer to ${destPath}`);
+        }
+      } catch (writeErr) {
+        console.error(`Error writing file from buffer:`, writeErr);
+      }
 
       res.json({ 
         message: "Announcement image uploaded successfully", 
