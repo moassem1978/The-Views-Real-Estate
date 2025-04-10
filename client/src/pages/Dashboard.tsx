@@ -810,8 +810,8 @@ export default function Dashboard() {
                 });
               }
 
-              // Enhanced fetch request with improved error handling and credentials
-              const response = await fetch('/api/upload/property-images', {
+              // Use our new simplified endpoint that has better error handling
+              const response = await fetch('/api/upload/property-images-simple', {
                 method: 'POST',
                 body: formData,
                 // Add cache-busting headers to prevent caching issues

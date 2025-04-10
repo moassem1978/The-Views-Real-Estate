@@ -925,8 +925,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.log(`Session ID: ${req.sessionID}`);
         console.log(`Session cookie maxAge: ${req.session.cookie.maxAge}`);
         console.log(`Session expires: ${req.session.cookie.expires ? new Date(req.session.cookie.expires).toISOString() : 'N/A'}`);
-      } else {
-        console.log("No session data available");
       }
 
       if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
@@ -936,130 +934,64 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       console.log(`Received ${Array.isArray(req.files) ? req.files.length : 0} files for upload`);
       
-      if (Array.isArray(req.files)) {
-        req.files.forEach((file, index) => {
-          console.log(`File ${index + 1}: ${file.originalname}, type: ${file.mimetype}, size: ${(file.size / 1024).toFixed(2)}KB`);
-        });
-      }
-
       // Use the Express.Multer.File type to correctly handle files
       const files = Array.isArray(req.files) 
         ? req.files as Express.Multer.File[]
         : [req.files as unknown as Express.Multer.File];
 
-      console.log(`Uploaded ${files.length} property images`);
-
-      // Ensure all essential directories exist with proper permissions
-      const dirPaths = [
-        path.join(process.cwd(), 'public'),
-        path.join(process.cwd(), 'public', 'uploads'),
-        path.join(process.cwd(), 'public', 'uploads', 'properties'),
-        path.join(process.cwd(), 'uploads'),
-        path.join(process.cwd(), 'uploads', 'properties')
-      ];
+      // Ensure the property uploads directory exists with proper permissions
+      const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+      fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
+      console.log(`Ensured uploads directory exists: ${publicUploadsDir}`);
       
-      // Create directories if they don't exist
-      for (const dirPath of dirPaths) {
-        try {
-          if (!fs.existsSync(dirPath)) {
-            fs.mkdirSync(dirPath, { recursive: true, mode: 0o777 });
-            console.log(`Created directory with full permissions: ${dirPath}`);
-          } else {
-            // Update permissions if directory exists
-            fs.chmodSync(dirPath, 0o777);
-            console.log(`Updated permissions for existing directory: ${dirPath}`);
-          }
-        } catch (dirError) {
-          console.error(`Error creating or updating directory ${dirPath}:`, dirError);
-        }
-      }
-      
-      // Process files individually with improved error handling
+      // A much simpler and more direct approach for saving files
       const fileUrls: string[] = [];
       
       for (const file of files) {
         try {
-          console.log(`Processing file: ${file.originalname} (${file.mimetype}) -> ${file.filename}, size: ${file.size}`);
+          console.log(`Processing file: ${file.originalname}, size: ${(file.size / 1024).toFixed(2)}KB`);
           
-          // First check the main expected location (public/uploads/properties)
-          const mainPath = path.join(process.cwd(), 'public', 'uploads', 'properties', file.filename);
-          const fallbackPath = path.join(process.cwd(), 'uploads', file.filename);
-          const legacyFallbackPath = path.join(process.cwd(), 'uploads', 'properties', file.filename);
+          const destPath = path.join(publicUploadsDir, file.filename);
           
-          // Create list of all possible paths to check
-          const possiblePaths = [
-            { path: mainPath, url: `/uploads/properties/${file.filename}` },
-            { path: fallbackPath, url: `/uploads/${file.filename}` },
-            { path: legacyFallbackPath, url: `/uploads/properties/${file.filename}` },
-            { path: path.join(process.cwd(), file.path), url: `/${file.path.replace(/\\/g, '/')}` }
-          ];
-          
-          // Check each possible location
-          let fileFound = false;
-          let fileUrl = '';
-          
-          for (const pathInfo of possiblePaths) {
-            if (fs.existsSync(pathInfo.path)) {
-              console.log(`File found at: ${pathInfo.path}`);
-              fileUrl = pathInfo.url;
-              fileFound = true;
-              
-              // Always copy to the primary location (for consistency)
-              if (pathInfo.path !== mainPath) {
-                try {
-                  // Ensure the directory exists
-                  const dir = path.dirname(mainPath);
-                  if (!fs.existsSync(dir)) {
-                    fs.mkdirSync(dir, { recursive: true, mode: 0o777 });
-                  }
-                  
-                  // Copy the file
-                  fs.copyFileSync(pathInfo.path, mainPath);
-                  console.log(`Copied file from ${pathInfo.path} to ${mainPath}`);
-                  
-                  // Use the main URL
-                  fileUrl = `/uploads/properties/${file.filename}`;
-                } catch (copyError) {
-                  console.error(`Failed to copy file to main location:`, copyError);
-                  // Keep using the found URL if copy fails
-                }
-              }
-              
-              break;
-            }
+          // Direct approach: if we have a buffer, write it to the destination
+          if (file.buffer) {
+            fs.writeFileSync(destPath, file.buffer);
+            console.log(`Wrote file directly from buffer to ${destPath}`);
+          } 
+          // If we have the file.path, copy it to the destination
+          else if (file.path && fs.existsSync(file.path)) {
+            fs.copyFileSync(file.path, destPath);
+            console.log(`Copied file from ${file.path} to ${destPath}`);
           }
-          
-          if (!fileFound) {
-            // File not found at any expected location - attempt to save the file manually
-            console.error(`WARNING: File not found at any expected location`);
-            console.log(`Attempting to manually save file data to ${mainPath}`);
+          // Double-check that the file exists at the expected location
+          else if (!fs.existsSync(destPath)) {
+            console.error(`File not found at ${destPath}, trying to recover`);
             
-            try {
-              // Ensure the directory exists
-              const dir = path.dirname(mainPath);
-              if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true, mode: 0o777 });
-              }
-              
-              // If file has buffer data, write it directly
-              if (file.buffer) {
-                fs.writeFileSync(mainPath, file.buffer);
-                console.log(`Successfully saved file buffer to ${mainPath}`);
-                fileUrl = `/uploads/properties/${file.filename}`;
-                fileFound = true;
-              } else {
-                // No buffer data available, use expected URL anyway
-                console.error(`No buffer data available to save file manually`);
-                fileUrl = `/uploads/properties/${file.filename}`;
-              }
-            } catch (saveError) {
-              console.error(`Failed to manually save file:`, saveError);
-              fileUrl = `/uploads/properties/${file.filename}`;
+            // Check if the file exists in the temp upload location
+            const tempPath = path.join(process.cwd(), 'uploads', 'properties', file.filename);
+            if (fs.existsSync(tempPath)) {
+              fs.copyFileSync(tempPath, destPath);
+              console.log(`Recovered file from ${tempPath} to ${destPath}`);
+            } else {
+              console.error(`File not found in any location, cannot recover`);
             }
           }
           
-          // Add the URL to our results
-          fileUrls.push(fileUrl);
+          // Verify file was successfully saved
+          if (fs.existsSync(destPath)) {
+            console.log(`File successfully saved at ${destPath}`);
+            
+            // Get file stats to verify
+            const stats = fs.statSync(destPath);
+            console.log(`File size on disk: ${stats.size} bytes`);
+            
+            // Add URL to results
+            const fileUrl = `/uploads/properties/${file.filename}`;
+            fileUrls.push(fileUrl);
+          } else {
+            console.error(`Failed to save file ${file.originalname}`);
+            throw new Error(`Failed to save file ${file.originalname}`);
+          }
           
           // Touch the session to keep it alive
           if (req.session) {
@@ -1067,19 +999,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         } catch (fileError) {
           console.error(`Error processing file ${file.originalname}:`, fileError);
-          // Continue with other files even if one fails
-          // Add a placeholder URL for the failed file to maintain proper count
-          fileUrls.push(`/uploads/properties/${file.filename}`);
+          return res.status(500).json({ 
+            message: `Error processing file ${file.originalname}`,
+            error: fileError instanceof Error ? fileError.message : 'Unknown error'
+          });
         }
-        
-        // Add a small delay between files to prevent system overload
-        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      // Touch the session one more time at the end
-      if (req.session) {
-        req.session.touch();
-        console.log("Session touched at end of upload processing");
+      if (fileUrls.length === 0) {
+        return res.status(500).json({ message: "No files were successfully processed" });
       }
 
       console.log(`Successfully processed ${fileUrls.length} images. Returning URLs to client.`);
@@ -1093,6 +1021,71 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.error('Error uploading property images:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(500).json({ message: `Failed to upload property images: ${errorMessage}` });
+    }
+  });
+  
+  // Add a simpler, more reliable alternative endpoint for property image uploads
+  app.post("/api/upload/property-images-simple", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Simple property images upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = req.user as Express.User;
+      console.log(`User ${user.username} (${user.role}) attempting simple property image upload`);
+      
+      if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+      
+      const files = Array.isArray(req.files) ? req.files : [req.files];
+      console.log(`Simple upload: Processing ${files.length} files`);
+
+      // Create output directory
+      const outputDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+      fs.mkdirSync(outputDir, { recursive: true });
+      
+      const fileUrls: string[] = [];
+      
+      for (const file of files) {
+        // Generate a unique filename with timestamp
+        const timestamp = Date.now();
+        const fileExt = path.extname(file.originalname);
+        const baseName = path.basename(file.originalname, fileExt).replace(/[^a-zA-Z0-9]/g, '_');
+        const newFilename = `${baseName}_${timestamp}${fileExt}`;
+        
+        // Save to public/uploads/properties
+        const outputPath = path.join(outputDir, newFilename);
+        
+        // Write file to disk - handle buffer properly
+        if (Buffer.isBuffer(file.buffer)) {
+          fs.writeFileSync(outputPath, file.buffer);
+          console.log(`Simple upload: Saved ${newFilename}`);
+        } else if (file.path && fs.existsSync(file.path)) {
+          // If we have a path instead of buffer, copy the file
+          fs.copyFileSync(file.path, outputPath);
+          console.log(`Simple upload: Copied from ${file.path} to ${outputPath}`);
+        } else {
+          throw new Error(`Cannot save file ${file.originalname}: No valid buffer or path`);
+        }
+        
+        // Add URL to result
+        fileUrls.push(`/uploads/properties/${newFilename}`);
+      }
+      
+      console.log(`Simple upload: Successfully processed ${fileUrls.length} files`);
+      res.json({ 
+        message: "Images uploaded successfully", 
+        imageUrls: fileUrls
+      });
+    } catch (error) {
+      console.error('Simple upload error:', error);
+      res.status(500).json({ 
+        message: "Upload failed", 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
   });
 
