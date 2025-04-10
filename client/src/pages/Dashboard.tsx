@@ -220,23 +220,39 @@ export default function Dashboard() {
         console.log("Creating property with data:", JSON.stringify(newProperty, null, 2));
 
         // Verify required fields
-        const requiredFields = ['title', 'description', 'price', 'city', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType'];
+        const requiredFields = ['title', 'description', 'price', 'city', 'bedrooms', 'bathrooms', 'builtUpArea', 'propertyType', 'images'];
         const missingFields = requiredFields.filter(field => {
           // Check if field is missing or empty
           const value = newProperty[field];
+          if (field === 'images') {
+            return !value || (Array.isArray(value) && value.length === 0);
+          }
           return value === undefined || value === null || 
                 (typeof value === 'string' && value.trim() === '') || 
-                (typeof value === 'number' && value <= 0);
+                (typeof value === 'number' && (isNaN(value) || value <= 0));
         });
 
         if (missingFields.length > 0) {
+          console.error(`Missing required fields: ${missingFields.join(', ')}`);
           throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
         }
 
+        console.log("All required fields validated, sending request to server");
+        
+        // Add timeout to prevent immediate responses
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         const response = await apiRequest('POST', '/api/properties', newProperty);
+        console.log("Server response received:", response.status);
 
         if (!response.ok) {
-          const errorText = await response.text();
+          let errorText = '';
+          try {
+            errorText = await response.text();
+          } catch (e) {
+            errorText = 'Could not read server response';
+          }
+          
           console.error('Property creation failed:', {
             status: response.status,
             statusText: response.statusText,
@@ -245,22 +261,27 @@ export default function Dashboard() {
           throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
         }
 
-        return await response.json();
+        const data = await response.json();
+        console.log("Property created successfully:", data);
+        return data;
       } catch (err) {
-        console.error('Property creation error:', err);
+        console.error('Property creation error (detailed):', err);
         // Include more details in the error
         throw new Error(err instanceof Error ? err.message : 'Failed to create property - check console for details');
       }
     },
     onSuccess: (data) => {
-      console.log("Property created successfully with ID:", data.id);
+      console.log("Property creation mutation succeeded with ID:", data.id);
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
       toast({
         title: "Success",
         description: "Property created successfully",
       });
-      setPropertyFormOpen(false);
-      resetForm();
+      // Use setTimeout to prevent immediate closing
+      setTimeout(() => {
+        setPropertyFormOpen(false);
+        resetForm();
+      }, 1000);
     },
     onError: (error: any) => {
       // Extract the error message for a better user experience
@@ -270,24 +291,58 @@ export default function Dashboard() {
         description: errorMessage,
         variant: "destructive",
       });
-      console.error("Error creating property:", error);
+      console.error("Error creating property (final):", error);
+      // Don't close the form on error
     }
   });
 
   // Update property mutation
   const updateProperty = useMutation({
     mutationFn: async ({ id, property }: { id: number; property: any }) => {
-      const response = await apiRequest('PUT', `/api/properties/${id}`, property);
-      return response.json();
+      try {
+        console.log(`Updating property ${id} with data:`, JSON.stringify(property, null, 2));
+        
+        // Add timeout to prevent immediate responses
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const response = await apiRequest('PUT', `/api/properties/${id}`, property);
+        
+        if (!response.ok) {
+          let errorText = '';
+          try {
+            errorText = await response.text();
+          } catch (e) {
+            errorText = 'Could not read server response';
+          }
+          
+          console.error('Property update failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText
+          });
+          throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log("Property updated successfully:", data);
+        return data;
+      } catch (err) {
+        console.error('Property update error (detailed):', err);
+        throw err;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Property update mutation succeeded with ID:", data.id);
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
       toast({
         title: "Success",
         description: "Property updated successfully",
       });
-      setPropertyFormOpen(false);
-      resetForm();
+      // Use setTimeout to prevent immediate closing
+      setTimeout(() => {
+        setPropertyFormOpen(false);
+        resetForm();
+      }, 1000);
     },
     onError: (error) => {
       toast({
@@ -295,7 +350,8 @@ export default function Dashboard() {
         description: "Failed to update property. Please try again.",
         variant: "destructive",
       });
-      console.error("Error updating property:", error);
+      console.error("Error updating property (final):", error);
+      // Don't close the form on error
     }
   });
 
