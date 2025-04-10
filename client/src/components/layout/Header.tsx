@@ -264,9 +264,14 @@ export default function Header() {
                       
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors"
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 font-medium hover:bg-red-50 transition-colors border-t border-copper/10 mt-1"
                       >
-                        Sign Out
+                        <div className="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Sign Out
+                        </div>
                       </button>
                     </div>
                   </div>
@@ -297,6 +302,23 @@ export default function Header() {
       <div className={`md:hidden bg-white border-t border-copper/10 ${mobileMenuOpen ? 'block animate-in' : 'hidden'}`}>
         <div className="container mx-auto px-4 py-3">
           <nav className="flex flex-col space-y-3">
+            {user && (
+              <div className="flex items-center justify-between py-2 mb-2 border-b border-copper/20">
+                <div>
+                  <p className="font-medium text-rich-black">{user.fullName || user.username}</p>
+                  <p className="text-xs text-rich-black-light">{user.role}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center px-4 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="font-medium">Logout</span>
+                </button>
+              </div>
+            )}
             <Link 
               href="/" 
               className={`py-2 font-medium ${location === "/" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
@@ -396,6 +418,9 @@ export default function Header() {
                     onClick={handleLogout}
                     className="inline-flex items-center px-4 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm"
                   >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
                     <span className="font-medium">Sign Out</span>
                   </button>
                 </>
