@@ -867,6 +867,13 @@ export default function Dashboard() {
                 });
               }
 
+              console.log(`Attempting to upload batch ${i+1}/${batches.length}`);
+              
+              // Debug what's in the form data
+              for (const pair of formData.entries()) {
+                console.log(`FormData contains: ${pair[0]} = ${pair[1]}`);
+              }
+              
               // Use our new simplified endpoint that has better error handling
               const response = await fetch('/api/upload/property-images-simple', {
                 method: 'POST',
@@ -880,6 +887,8 @@ export default function Dashboard() {
                 // Explicitly include credentials to ensure session cookies are sent
                 credentials: 'include'
               });
+              
+              console.log(`Upload response status: ${response.status} ${response.statusText}`);
 
               // Better error handling
               if (!response.ok) {
