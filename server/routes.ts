@@ -268,7 +268,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       if (!req.body.zipCode && req.body.city) {
         console.log("No zipCode provided, using default based on city");
         // Default zipCodes for common cities
-        const defaultZipCodes = {
+        const defaultZipCodes: Record<string, string> = {
           'Cairo': '11511',
           'Dubai': '00000',
           'London': 'SW1A 1AA',
@@ -278,8 +278,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           'Red Sea': '84712'
         };
         
-        req.body.zipCode = defaultZipCodes[req.body.city] || '00000';
-        console.log(`Using zipCode: ${req.body.zipCode} for city: ${req.body.city}`);
+        const cityName = req.body.city as string;
+        req.body.zipCode = (defaultZipCodes[cityName] || '00000');
+        console.log(`Using zipCode: ${req.body.zipCode} for city: ${cityName}`);
       }
       
       // Ensure required fields are present (including zipCode now)
@@ -306,7 +307,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       if (typeof req.body.images === 'string') {
         try {
           console.log("Converting images string to array");
-          req.body.images = req.body.images.split(',').map(url => url.trim()).filter(url => url.length > 0);
+          req.body.images = req.body.images.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
           console.log(`Processed ${req.body.images.length} image URLs`);
         } catch (error) {
           console.error("Error parsing images string:", error);
@@ -1178,11 +1179,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             return reject(new Error("No files uploaded"));
           }
           
-          const files = Array.isArray(req.files) ? req.files : [req.files];
-          console.log(`Processing ${files.length} uploaded files`);
+          // Safely handle the files array - typescript doesn't fully recognize multer's type here
+          const uploadedFiles = req.files as Express.Multer.File[];
+          console.log(`Processing ${uploadedFiles.length} uploaded files`);
           
           try {
-            const fileUrls = files.map(file => {
+            const fileUrls = uploadedFiles.map(file => {
               console.log(`File processed: ${file.originalname} -> ${file.filename} (${Math.round(file.size/1024)}KB)`);
               return `/uploads/properties/${file.filename}`;
             });
@@ -1236,8 +1238,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(400).json({ message: "No files uploaded" });
       }
       
-      const files = Array.isArray(req.files) ? req.files : [req.files];
-      console.log(`Simple upload: Processing ${files.length} files`);
+      // Use proper type for multer files
+      const uploadedFiles = req.files as Express.Multer.File[];
+      console.log(`Simple upload: Processing ${uploadedFiles.length} files`);
 
       // Create output directory
       const outputDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
@@ -1245,7 +1248,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       const fileUrls: string[] = [];
       
-      for (const file of files) {
+      for (const file of uploadedFiles) {
         // Generate a unique filename with timestamp
         const timestamp = Date.now();
         const fileExt = path.extname(file.originalname);
@@ -1264,7 +1267,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         `);
         
         // Write file to disk - handle buffer properly
-        if (Buffer.isBuffer(file.buffer)) {
+        if (file.buffer && Buffer.isBuffer(file.buffer)) {
           fs.writeFileSync(outputPath, file.buffer);
           console.log(`Simple upload: Saved ${newFilename} from buffer`);
         } else if (file.path && fs.existsSync(file.path)) {
