@@ -896,17 +896,28 @@ export default function Dashboard() {
               
               console.log(`Upload response status: ${response.status} ${response.statusText}`);
 
-              // Better error handling
+              // Enhanced error handling
               if (!response.ok) {
-                let errorText = '';
+                let errorInfo = '';
                 try {
-                  errorText = await response.text();
-                } catch (e) {
-                  errorText = 'Could not read error response';
+                  // Try to parse as JSON first
+                  const errorData = await response.json();
+                  console.error('Error response JSON:', errorData);
+                  errorInfo = errorData.message || errorData.error || JSON.stringify(errorData);
+                } catch (jsonError) {
+                  // If not JSON, read as text
+                  try {
+                    const errorText = await response.text();
+                    console.error('Error response text:', errorText);
+                    errorInfo = errorText;
+                  } catch (textError) {
+                    errorInfo = 'Could not read error response';
+                    console.error('Failed to read error response:', textError);
+                  }
                 }
                 
                 console.error(`Batch ${i+1} upload failed (attempt ${retries+1}): Status ${response.status}`);
-                console.error('Error response body:', errorText);
+                console.error('Error details:', errorInfo);
 
                 if (retries < MAX_RETRIES) {
                   retries++;
@@ -917,7 +928,11 @@ export default function Dashboard() {
                   console.log(`Retrying batch ${i+1} in ${delay.toFixed(0)}ms...`);
                   await new Promise(resolve => setTimeout(resolve, delay));
                 } else {
-                  throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
+                  // Make a friendlier error message
+                  const errorMessage = response.status === 413 
+                    ? "The file is too large. Please try smaller images or resize them before uploading."
+                    : `Server error: ${response.status} - ${errorInfo || response.statusText}`;
+                  throw new Error(errorMessage);
                 }
               } else {
                 // Batch succeeded
@@ -996,11 +1011,29 @@ export default function Dashboard() {
       }
     },
     onError: (error) => {
+      // Create a more helpful error message
+      let errorMessage = "Failed to upload images. Please try again with smaller files or different formats.";
+      
+      // Try to extract more specific error details if available
+      if (error instanceof Error) {
+        if (error.message.includes("too large") || error.message.includes("413")) {
+          errorMessage = "Images are too large. Please resize them or use smaller images (under 5MB each).";
+        } else if (error.message.includes("format")) {
+          errorMessage = "Unsupported image format. Please use JPG, PNG, or GIF images.";
+        } else if (error.message.includes("authenticated") || error.message.includes("401")) {
+          errorMessage = "Your session may have expired. Please refresh the page and log in again.";
+        } else if (error.message.length < 100) {
+          // Only use custom error if it's reasonably short (not a stack trace)
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to upload images. Please try again with smaller files or different formats.",
+        title: "Upload Failed",
+        description: errorMessage,
         variant: "destructive",
       });
+      
       console.error("Error uploading property images:", error);
     }
   });

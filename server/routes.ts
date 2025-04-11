@@ -1024,75 +1024,122 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
   
-  // Create a completely new property image upload endpoint
+  // Create a completely new property image upload endpoint with enhanced error handling
   app.post("/api/upload/property-images-new", async (req: Request, res: Response) => {
     console.log("==== NEW PROPERTY IMAGE UPLOAD ENDPOINT CALLED ====");
     
-    // Check if user is authenticated
-    if (!req.isAuthenticated()) {
-      console.error("Property images upload failed: User not authenticated");
-      return res.status(401).json({ message: "Authentication required" });
-    }
-    
-    const user = req.user as Express.User;
-    console.log(`User ${user.username} (${user.role}) attempting property image upload with new endpoint`);
-    
-    // Create a new multer instance just for this request
-    const singleUpload = multer({
-      storage: multer.diskStorage({
-        destination: function(req, file, cb) {
-          // Ensure the directory exists
-          const dir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-          console.log(`Ensuring directory exists: ${dir}`);
-          fs.mkdirSync(dir, { recursive: true });
-          cb(null, dir);
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Property images upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = req.user as Express.User;
+      console.log(`User ${user.username} (${user.role}) attempting property image upload with new endpoint`);
+      
+      // Create a new multer instance with more generous limits
+      const singleUpload = multer({
+        storage: multer.diskStorage({
+          destination: function(req, file, cb) {
+            // Ensure the directory exists
+            const dir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+            console.log(`Ensuring directory exists: ${dir}`);
+            fs.mkdirSync(dir, { recursive: true });
+            // Set permissions to ensure writability
+            try {
+              fs.chmodSync(dir, 0o777);
+              console.log(`Updated permissions for ${dir}`);
+            } catch (err) {
+              console.error(`Failed to update permissions for ${dir}:`, err);
+            }
+            cb(null, dir);
+          },
+          filename: function(req, file, cb) {
+            // Create a safe filename with timestamp
+            const timestamp = Date.now();
+            const fileExt = path.extname(file.originalname) || '.jpg';
+            const baseName = path.basename(file.originalname, fileExt)
+              .replace(/[^a-zA-Z0-9]/g, '_')
+              .substring(0, 40); // Limit filename length
+            const finalName = `${baseName}_${timestamp}${fileExt}`;
+            console.log(`Generated filename: ${finalName} for original: ${file.originalname}`);
+            cb(null, finalName);
+          }
+        }),
+        limits: { 
+          fileSize: 25 * 1024 * 1024, // 25MB limit per file
+          files: 20 // Allow up to 20 files
         },
-        filename: function(req, file, cb) {
-          // Create a safe filename with timestamp
-          const timestamp = Date.now();
-          const fileExt = path.extname(file.originalname) || '.jpg';
-          const baseName = path.basename(file.originalname, fileExt)
-            .replace(/[^a-zA-Z0-9]/g, '_')
-            .substring(0, 50); // Limit filename length
-          const finalName = `${baseName}_${timestamp}${fileExt}`;
-          console.log(`Generated filename: ${finalName} for original: ${file.originalname}`);
-          cb(null, finalName);
+        fileFilter: (req, file, cb) => {
+          // Accept only common image formats
+          const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+          if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+          } else {
+            console.log(`Rejected file ${file.originalname} with mime type ${file.mimetype}`);
+            cb(null, false);
+            // Don't throw error here, just skip this file
+          }
         }
-      }),
-      limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit per file
-    }).array('images', 10); // Process up to 10 files
-    
-    // Handle the upload
-    singleUpload(req, res, function(err) {
-      if (err) {
-        console.error('Multer upload error:', err);
-        return res.status(500).json({ message: `Upload error: ${err.message}` });
-      }
+      }).array('images', 20); // Process up to 20 files
       
-      console.log("Multer upload processing complete");
-      
-      // Check if files exist
-      if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
-        console.error('No files in request');
-        return res.status(400).json({ message: "No files uploaded" });
-      }
-      
-      const files = Array.isArray(req.files) ? req.files : [req.files];
-      console.log(`Processing ${files.length} uploaded files`);
-      
-      const fileUrls = files.map(file => {
-        console.log(`File processed: ${file.originalname} -> ${file.filename}`);
-        return `/uploads/properties/${file.filename}`;
+      // Handle the upload using a promise
+      const uploadPromise = new Promise<{fileUrls: string[], count: number}>((resolve, reject) => {
+        singleUpload(req, res, function(err) {
+          if (err) {
+            console.error('Multer upload error:', err);
+            return reject(err);
+          }
+          
+          console.log("Multer upload processing complete");
+          
+          // Check if files exist
+          if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+            console.error('No files in request');
+            return reject(new Error("No files uploaded"));
+          }
+          
+          const files = Array.isArray(req.files) ? req.files : [req.files];
+          console.log(`Processing ${files.length} uploaded files`);
+          
+          try {
+            const fileUrls = files.map(file => {
+              console.log(`File processed: ${file.originalname} -> ${file.filename} (${Math.round(file.size/1024)}KB)`);
+              return `/uploads/properties/${file.filename}`;
+            });
+            
+            // Return success response
+            console.log(`Upload complete. Returning ${fileUrls.length} URLs`);
+            resolve({
+              fileUrls: fileUrls,
+              count: fileUrls.length
+            });
+          } catch (processError) {
+            console.error('Error processing files after upload:', processError);
+            reject(processError);
+          }
+        });
       });
       
-      // Return success response
-      console.log(`Upload complete. Returning URLs: ${JSON.stringify(fileUrls)}`);
-      res.status(200).json({
+      // Wait for upload to complete and send response
+      const result = await uploadPromise;
+      return res.status(200).json({
         success: true,
-        imageUrls: fileUrls,
-        count: fileUrls.length
+        message: "Images uploaded successfully",
+        imageUrls: result.fileUrls,
+        count: result.count
       });
-    });
+      
+    } catch (error) {
+      console.error('Error in property images upload endpoint:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return res.status(500).json({ 
+        success: false,
+        message: "Failed to upload images. Please try again with smaller files or different formats.",
+        error: errorMessage
+      });
+    }
   });
   
   // Keep the existing endpoint for backward compatibility
