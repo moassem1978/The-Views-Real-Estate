@@ -1114,21 +1114,49 @@ export default function Dashboard() {
         try {
           // Create a form for our new direct endpoint
           const formData = new FormData();
-          propertyImages.forEach(img => {
-            formData.append('images', img.file);
+          
+          // Log what we're uploading
+          console.log(`Preparing to upload ${propertyImages.length} files`);
+          
+          // Add each file to the form data with detailed logging
+          propertyImages.forEach((img, index) => {
+            if (!img.file) {
+              console.error(`File at index ${index} is missing or invalid`);
+              return;
+            }
+            
+            console.log(`Adding file ${index + 1}: ${img.file.name}, type: ${img.file.type}, size: ${(img.file.size / 1024).toFixed(2)}KB`);
+            formData.append('images', img.file, img.file.name);
           });
+          
+          // Verify what's in the FormData
+          console.log(`FormData contains ${formData.getAll('images').length} files`);
           
           console.log(`Attempting direct upload of ${propertyImages.length} images to /api/upload/property-images-direct`);
           
           const response = await fetch('/api/upload/property-images-direct', {
             method: 'POST',
             body: formData,
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+              // Don't set Content-Type here - let browser set it with boundary for multipart/form-data
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
           });
           
           if (!response.ok) {
             console.error(`Direct upload failed with status ${response.status}`);
-            throw new Error('Direct upload failed');
+            // Try to get more error details
+            try {
+              const errorText = await response.text();
+              console.error('Server error response:', errorText);
+              throw new Error(`Upload failed: ${errorText || response.statusText}`);
+            } catch (readError) {
+              console.error('Could not read error response:', readError);
+              throw new Error(`Upload failed with status ${response.status}`);
+            }
           }
           
           const data = await response.json();
@@ -1157,9 +1185,21 @@ export default function Dashboard() {
         } catch (error) {
           console.error('Direct upload failed:', error);
           
-          // Fall back to the mutation approach
-          console.log('Falling back to normal upload...');
-          uploadPropertyImages.mutate(propertyImages.map(img => img.file));
+          // Show detailed error message to user
+          let errorMsg = "Image upload failed. ";
+          if (error instanceof Error) {
+            console.error('Error details:', error.message);
+            errorMsg += error.message;
+          }
+          
+          toast({
+            title: "Upload Failed",
+            description: errorMsg,
+            variant: "destructive",
+          });
+          
+          // Don't fall back to the mutation approach as it's likely to fail for the same reason
+          // Instead return false to indicate failure
           return false;
         }
       };

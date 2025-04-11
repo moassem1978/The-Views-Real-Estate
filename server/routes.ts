@@ -1327,6 +1327,16 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.log("==== DIRECT PROPERTY IMAGE UPLOAD CALLED ====");
       console.log(`User: ${(req.user as Express.User).username}`);
       
+      // Log the incoming request details for debugging
+      console.log("Content-Type:", req.headers['content-type']);
+      console.log("Request method:", req.method);
+      console.log("Query params:", req.query);
+      
+      // Try to log any form fields that might already be parsed
+      if (req.body) {
+        console.log("Request body keys:", Object.keys(req.body));
+      }
+      
       // Create upload directory if it doesn't exist
       const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
       if (!fs.existsSync(uploadDir)) {
@@ -1358,12 +1368,44 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
       });
       
+      // First check if there are any files in the request
+      if (!req.files && !req.file) {
+        console.log("No files found in the request");
+        
+        // Try to log the request content
+        try {
+          console.log("Request headers:", req.headers);
+          console.log("Request content type:", req.headers['content-type']);
+          console.log("Request body keys:", Object.keys(req.body || {}));
+        } catch (err) {
+          console.error("Error logging request details:", err);
+        }
+        
+        return res.status(400).json({
+          success: false,
+          message: "No files detected in the upload request. Ensure files are being sent correctly with field name 'images'."
+        });
+      }
+      
       // Use the upload middleware as a promise
       const uploadPromise = util.promisify((req: Request, res: Response, callback: (error: any) => void) => {
         upload.array('images', 20)(req, res, callback);
       });
       
-      await uploadPromise(req, res);
+      try {
+        console.log("Starting file upload process...");
+        await uploadPromise(req, res);
+        console.log("Upload process completed");
+      } catch (uploadError) {
+        console.error("Error during file upload:", uploadError);
+        throw new Error(`File upload process failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
+      }
+      
+      // Check if files array exists and has content after upload
+      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+        console.error("No files found after upload process");
+        throw new Error("File upload completed but no files were processed");
+      }
       
       // Files have been uploaded, extract file info
       const files = req.files as Express.Multer.File[];
