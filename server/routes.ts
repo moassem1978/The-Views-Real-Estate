@@ -8,6 +8,7 @@ import { fromZodError } from "zod-validation-error";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import util from "util";
 import { setupAuth } from "./auth";
 
 const searchFiltersSchema = z.object({
@@ -1315,6 +1316,76 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
     next();
   }, express.static(path.join(process.cwd(), 'uploads')));
+  
+  // New simplified property image upload endpoint - uses express middleware directly
+  app.post('/api/upload/property-images-direct', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      console.log("==== DIRECT PROPERTY IMAGE UPLOAD CALLED ====");
+      console.log(`User: ${(req.user as Express.User).username}`);
+      
+      // Create upload directory if it doesn't exist
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
+        console.log(`Created upload directory: ${uploadDir}`);
+      }
+      
+      // Force directory permissions
+      fs.chmodSync(uploadDir, 0o777);
+      
+      // Create a single-use multer instance
+      const upload = multer({
+        storage: multer.diskStorage({
+          destination: (req, file, cb) => {
+            cb(null, uploadDir);
+          },
+          filename: (req, file, cb) => {
+            const timestamp = Date.now();
+            const random = Math.round(Math.random() * 1000);
+            const ext = path.extname(file.originalname) || '.jpg';
+            const filename = `images-${timestamp}-${random}${ext}`;
+            console.log(`Generated filename: ${filename}`);
+            cb(null, filename);
+          }
+        }),
+        limits: {
+          fileSize: 25 * 1024 * 1024, // 25MB
+          files: 20
+        }
+      });
+      
+      // Use the upload middleware as a promise
+      const uploadPromise = util.promisify((req: Request, res: Response, callback: (error: any) => void) => {
+        upload.array('images', 20)(req, res, callback);
+      });
+      
+      await uploadPromise(req, res);
+      
+      // Files have been uploaded, extract file info
+      const files = req.files as Express.Multer.File[];
+      console.log(`Processed ${files.length} files`);
+      
+      const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
+      console.log("File URLs:", fileUrls);
+      
+      return res.status(200).json({
+        success: true,
+        message: `Successfully uploaded ${files.length} images`,
+        imageUrls: fileUrls
+      });
+    } catch (error) {
+      console.error("Direct upload error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Upload failed",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
   
   // Direct file access route as a last resort
   app.get('/uploads/*', (req, res) => {

@@ -1108,7 +1108,64 @@ export default function Dashboard() {
       });
       
       console.log(`Starting upload of ${propertyImages.length} images...`);
-      uploadPropertyImages.mutate(propertyImages.map(img => img.file));
+      
+      // First try the direct approach
+      const directUpload = async () => {
+        try {
+          // Create a form for our new direct endpoint
+          const formData = new FormData();
+          propertyImages.forEach(img => {
+            formData.append('images', img.file);
+          });
+          
+          console.log(`Attempting direct upload of ${propertyImages.length} images to /api/upload/property-images-direct`);
+          
+          const response = await fetch('/api/upload/property-images-direct', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+          });
+          
+          if (!response.ok) {
+            console.error(`Direct upload failed with status ${response.status}`);
+            throw new Error('Direct upload failed');
+          }
+          
+          const data = await response.json();
+          console.log('Direct upload successful:', data);
+          
+          if (!data.imageUrls || !Array.isArray(data.imageUrls)) {
+            throw new Error('Invalid response format');
+          }
+          
+          // Update form with image URLs
+          setFormData(prev => ({
+            ...prev,
+            images: data.imageUrls
+          }));
+          
+          // Clear image previews
+          setPropertyImages([]);
+          
+          // Show success message
+          toast({
+            title: "Upload Successful",
+            description: `Successfully uploaded ${data.imageUrls.length} images`,
+          });
+          
+          return true;
+        } catch (error) {
+          console.error('Direct upload failed:', error);
+          
+          // Fall back to the mutation approach
+          console.log('Falling back to normal upload...');
+          uploadPropertyImages.mutate(propertyImages.map(img => img.file));
+          return false;
+        }
+      };
+      
+      // Start the direct upload process
+      directUpload();
     } else {
       // Show an error message if no images are selected
       toast({
