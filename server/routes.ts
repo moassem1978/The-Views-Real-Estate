@@ -1024,7 +1024,78 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
   
-  // Add a simpler, more reliable alternative endpoint for property image uploads
+  // Create a completely new property image upload endpoint
+  app.post("/api/upload/property-images-new", async (req: Request, res: Response) => {
+    console.log("==== NEW PROPERTY IMAGE UPLOAD ENDPOINT CALLED ====");
+    
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
+      console.error("Property images upload failed: User not authenticated");
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    const user = req.user as Express.User;
+    console.log(`User ${user.username} (${user.role}) attempting property image upload with new endpoint`);
+    
+    // Create a new multer instance just for this request
+    const singleUpload = multer({
+      storage: multer.diskStorage({
+        destination: function(req, file, cb) {
+          // Ensure the directory exists
+          const dir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+          console.log(`Ensuring directory exists: ${dir}`);
+          fs.mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename: function(req, file, cb) {
+          // Create a safe filename with timestamp
+          const timestamp = Date.now();
+          const fileExt = path.extname(file.originalname) || '.jpg';
+          const baseName = path.basename(file.originalname, fileExt)
+            .replace(/[^a-zA-Z0-9]/g, '_')
+            .substring(0, 50); // Limit filename length
+          const finalName = `${baseName}_${timestamp}${fileExt}`;
+          console.log(`Generated filename: ${finalName} for original: ${file.originalname}`);
+          cb(null, finalName);
+        }
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit per file
+    }).array('images', 10); // Process up to 10 files
+    
+    // Handle the upload
+    singleUpload(req, res, function(err) {
+      if (err) {
+        console.error('Multer upload error:', err);
+        return res.status(500).json({ message: `Upload error: ${err.message}` });
+      }
+      
+      console.log("Multer upload processing complete");
+      
+      // Check if files exist
+      if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+        console.error('No files in request');
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+      
+      const files = Array.isArray(req.files) ? req.files : [req.files];
+      console.log(`Processing ${files.length} uploaded files`);
+      
+      const fileUrls = files.map(file => {
+        console.log(`File processed: ${file.originalname} -> ${file.filename}`);
+        return `/uploads/properties/${file.filename}`;
+      });
+      
+      // Return success response
+      console.log(`Upload complete. Returning URLs: ${JSON.stringify(fileUrls)}`);
+      res.status(200).json({
+        success: true,
+        imageUrls: fileUrls,
+        count: fileUrls.length
+      });
+    });
+  });
+  
+  // Keep the existing endpoint for backward compatibility
   app.post("/api/upload/property-images-simple", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
       // Check if user is authenticated
@@ -1059,10 +1130,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         // Save to public/uploads/properties
         const outputPath = path.join(outputDir, newFilename);
         
+        console.log(`Processing file ${file.originalname}:
+          - Size: ${file.size}
+          - MIME Type: ${file.mimetype}
+          - Has buffer: ${!!file.buffer}
+          - Has path: ${!!file.path}
+          - Output path: ${outputPath}
+        `);
+        
         // Write file to disk - handle buffer properly
         if (Buffer.isBuffer(file.buffer)) {
           fs.writeFileSync(outputPath, file.buffer);
-          console.log(`Simple upload: Saved ${newFilename}`);
+          console.log(`Simple upload: Saved ${newFilename} from buffer`);
         } else if (file.path && fs.existsSync(file.path)) {
           // If we have a path instead of buffer, copy the file
           fs.copyFileSync(file.path, outputPath);

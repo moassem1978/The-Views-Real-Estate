@@ -869,13 +869,19 @@ export default function Dashboard() {
 
               console.log(`Attempting to upload batch ${i+1}/${batches.length}`);
               
-              // Debug what's in the form data
-              for (const pair of formData.entries()) {
-                console.log(`FormData contains: ${pair[0]} = ${pair[1]}`);
-              }
+              // Debug form data contents
+              console.log(`Form data contains ${formData.getAll('images').length} images`);
               
-              // Use our new simplified endpoint that has better error handling
-              const response = await fetch('/api/upload/property-images-simple', {
+              // Log each image
+              formData.getAll('images').forEach((file, index) => {
+                if (file instanceof File) {
+                  console.log(`Image ${index+1}: ${file.name}, ${file.size} bytes, ${file.type}`);
+                }
+              });
+              
+              // Use our newly created endpoint
+              console.log("Using the new property image upload endpoint");
+              const response = await fetch('/api/upload/property-images-new', {
                 method: 'POST',
                 body: formData,
                 // Add cache-busting headers to prevent caching issues
@@ -2176,7 +2182,20 @@ export default function Dashboard() {
                           >
                             {uploadPropertyImages.isPending || isUploading ? 
                               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</> : 
-                              <><Upload className="mr-2 h-4 w-4" /> Upload Selected</>}
+                              <>
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  className="mr-2 h-4 w-4"
+                                  fill="none" 
+                                  viewBox="0 0 24 24" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                Upload Selected
+                              </>
+                            }
                           </Button>
                         </div>
                       </div>
