@@ -258,11 +258,32 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.log(`User attempting to create property: ${user.username} (Role: ${user.role})`);
       
       // All authenticated users can create properties
-      // Log the incoming data for debugging
-      console.log("Creating property with data:", JSON.stringify(req.body, null, 2));
+      // Logging only a subset of data to prevent polluting logs
+      console.log("Creating property with title:", req.body.title);
+      console.log("Property type:", req.body.propertyType);
+      console.log("City:", req.body.city);
+      console.log("Image count:", Array.isArray(req.body.images) ? req.body.images.length : 'unknown');
       
-      // Ensure required fields are present
-      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'images', 'bedrooms', 'bathrooms', 'builtUpArea'];
+      // Add zipCode from city if not provided
+      if (!req.body.zipCode && req.body.city) {
+        console.log("No zipCode provided, using default based on city");
+        // Default zipCodes for common cities
+        const defaultZipCodes = {
+          'Cairo': '11511',
+          'Dubai': '00000',
+          'London': 'SW1A 1AA',
+          'Sheikh Zayed': '12311',
+          'North coast': '23511',
+          'Gouna': '84513',
+          'Red Sea': '84712'
+        };
+        
+        req.body.zipCode = defaultZipCodes[req.body.city] || '00000';
+        console.log(`Using zipCode: ${req.body.zipCode} for city: ${req.body.city}`);
+      }
+      
+      // Ensure required fields are present (including zipCode now)
+      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'zipCode', 'images', 'bedrooms', 'bathrooms', 'builtUpArea'];
       const missingFields = requiredFields.filter(field => {
         // Check if field is missing or empty
         const value = req.body[field];
@@ -276,19 +297,50 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         });
       }
 
+      // Handle amenities if empty
+      if (!req.body.amenities) {
+        req.body.amenities = [];
+      }
+
+      // Format images field if it's a comma-separated string
+      if (typeof req.body.images === 'string') {
+        try {
+          console.log("Converting images string to array");
+          req.body.images = req.body.images.split(',').map(url => url.trim()).filter(url => url.length > 0);
+          console.log(`Processed ${req.body.images.length} image URLs`);
+        } catch (error) {
+          console.error("Error parsing images string:", error);
+        }
+      }
+      
+      // Make sure numeric fields are actually numbers
+      ['price', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize', 'floor', 'yearBuilt', 'agentId'].forEach(field => {
+        if (req.body[field] !== undefined && req.body[field] !== null && req.body[field] !== '') {
+          const val = parseFloat(req.body[field]);
+          if (!isNaN(val)) {
+            req.body[field] = val;
+          }
+        }
+      });
+      
+      // Convert boolean fields if they're strings
+      ['isFullCash', 'isGroundUnit', 'isFeatured', 'isNewListing', 'isHighlighted'].forEach(field => {
+        if (typeof req.body[field] === 'string') {
+          req.body[field] = req.body[field].toLowerCase() === 'true';
+        }
+      });
+
       let propertyData;
       try {
         propertyData = insertPropertySchema.parse(req.body);
+        console.log("Property data validation succeeded");
       } catch (parseError) {
         console.error("Property data validation failed:", parseError);
         return res.status(400).json({
-          message: "Invalid property data",
-          details: parseError
+          message: "Invalid property data. Please check all required fields.",
+          details: parseError instanceof Error ? parseError.message : String(parseError)
         });
       }
-      
-      // Log after validation success
-      console.log("Property data validated successfully");
       
       // Add createdBy field and status
       const propertyWithUser = {
@@ -297,6 +349,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         status: 'published', // Admin properties are published immediately
         createdAt: new Date().toISOString()
       };
+      
+      // Log property data just before creation
+      console.log("Attempting to create property with final data:", JSON.stringify({
+        title: propertyWithUser.title,
+        city: propertyWithUser.city,
+        images: Array.isArray(propertyWithUser.images) ? 
+          `${propertyWithUser.images.length} images` : 
+          propertyWithUser.images
+      }));
       
       const property = await dbStorage.createProperty(propertyWithUser);
       
@@ -310,11 +371,28 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
         console.error("Validation error details:", validationError);
-        res.status(400).json({ message: validationError.message });
+        return res.status(400).json({ 
+          message: "Validation error: Please check your property data and try again.",
+          details: validationError.message 
+        });
       } else {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("Database or server error:", errorMessage);
-        res.status(500).json({ message: `Failed to create property: ${errorMessage}` });
+        
+        // More specific error messages
+        if (errorMessage.includes("duplicate key")) {
+          return res.status(400).json({ 
+            message: "A property with this information already exists. Please modify your data." 
+          });
+        } else if (errorMessage.includes("foreign key")) {
+          return res.status(400).json({ 
+            message: "Invalid reference to another record (like agent ID). Please check your data." 
+          });
+        }
+        
+        return res.status(500).json({ 
+          message: "Failed to create property. Please try again with different data." 
+        });
       }
     }
   });
