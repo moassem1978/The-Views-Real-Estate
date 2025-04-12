@@ -1109,16 +1109,17 @@ export default function Dashboard() {
       
       console.log(`Starting upload of ${propertyImages.length} images...`);
       
-      // First try the direct approach
-      const directUpload = async () => {
+      // Use our new, very simplified upload approach
+      const simpleUpload = async () => {
         try {
-          // Create a form for our new direct endpoint
+          // Create a form for our super simple endpoint
           const formData = new FormData();
           
           // Log what we're uploading
           console.log(`Preparing to upload ${propertyImages.length} files`);
           
-          // Add each file to the form data with detailed logging
+          // Add each file to the form data with detailed logging - using 'files' as field name 
+          // because that's what our simple upload endpoint expects
           propertyImages.forEach((img, index) => {
             if (!img.file) {
               console.error(`File at index ${index} is missing or invalid`);
@@ -1126,29 +1127,30 @@ export default function Dashboard() {
             }
             
             console.log(`Adding file ${index + 1}: ${img.file.name}, type: ${img.file.type}, size: ${(img.file.size / 1024).toFixed(2)}KB`);
-            formData.append('images', img.file, img.file.name);
+            formData.append('files', img.file, img.file.name);
           });
           
-          // Verify what's in the FormData
-          console.log(`FormData contains ${formData.getAll('images').length} files`);
+          // Log FormData details for debugging
+          console.log(`FormData contains ${formData.getAll('files').length} files`);
           
-          console.log(`Attempting direct upload of ${propertyImages.length} images to /api/upload/property-images-direct`);
+          // Get field names in a way compatible with all TypeScript targets
+          const fieldNames: string[] = [];
+          formData.forEach((value, key) => {
+            if (!fieldNames.includes(key)) fieldNames.push(key);
+          });
+          console.log(`FormData field names: ${fieldNames.join(', ')}`);
           
-          const response = await fetch('/api/upload/property-images-direct', {
+          console.log(`Attempting simplified upload to /api/simple-upload`);
+          
+          // Use our new simple endpoint instead
+          const response = await fetch('/api/simple-upload', {
             method: 'POST',
-            body: formData,
-            credentials: 'include',
-            headers: {
-              // Don't set Content-Type here - let browser set it with boundary for multipart/form-data
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0'
-            }
+            body: formData
+            // No headers or credentials needed for this endpoint
           });
           
           if (!response.ok) {
-            console.error(`Direct upload failed with status ${response.status}`);
-            // Try to get more error details
+            console.error(`Simple upload failed with status ${response.status}`);
             try {
               const errorText = await response.text();
               console.error('Server error response:', errorText);
@@ -1160,16 +1162,20 @@ export default function Dashboard() {
           }
           
           const data = await response.json();
-          console.log('Direct upload successful:', data);
+          console.log('Simple upload response:', data);
           
-          if (!data.imageUrls || !Array.isArray(data.imageUrls)) {
-            throw new Error('Invalid response format');
+          // Extract URLs from the response - our simple endpoint uses 'urls' instead of 'imageUrls'
+          const imageUrls = data.urls || data.imageUrls;
+          
+          if (!imageUrls || !Array.isArray(imageUrls)) {
+            console.error('Invalid response format:', data);
+            throw new Error('Server response missing image URLs');
           }
           
           // Update form with image URLs
           setFormData(prev => ({
             ...prev,
-            images: data.imageUrls
+            images: imageUrls
           }));
           
           // Clear image previews
@@ -1178,34 +1184,80 @@ export default function Dashboard() {
           // Show success message
           toast({
             title: "Upload Successful",
-            description: `Successfully uploaded ${data.imageUrls.length} images`,
+            description: `Successfully uploaded ${imageUrls.length} images`,
           });
           
           return true;
         } catch (error) {
-          console.error('Direct upload failed:', error);
+          console.error('Simple upload failed:', error);
           
-          // Show detailed error message to user
-          let errorMsg = "Image upload failed. ";
-          if (error instanceof Error) {
-            console.error('Error details:', error.message);
-            errorMsg += error.message;
+          // Try the basic upload endpoint as a fallback
+          try {
+            console.log('Trying basic-upload endpoint as fallback...');
+            
+            // Create a fresh FormData for the basic endpoint
+            const fallbackFormData = new FormData();
+            propertyImages.forEach(img => {
+              if (img.file) {
+                fallbackFormData.append('files', img.file);
+              }
+            });
+            
+            const fallbackResponse = await fetch('/api/basic-upload', {
+              method: 'POST',
+              body: fallbackFormData
+            });
+            
+            if (!fallbackResponse.ok) {
+              console.error(`Fallback upload failed with status ${fallbackResponse.status}`);
+              throw new Error(`Fallback upload failed with status ${fallbackResponse.status}`);
+            }
+            
+            const fallbackData = await fallbackResponse.json();
+            console.log('Fallback upload successful:', fallbackData);
+            
+            if (fallbackData.imageUrls && Array.isArray(fallbackData.imageUrls)) {
+              // Update form with image URLs from fallback
+              setFormData(prev => ({
+                ...prev,
+                images: fallbackData.imageUrls
+              }));
+              
+              // Clear image previews
+              setPropertyImages([]);
+              
+              // Show success message
+              toast({
+                title: "Upload Successful (Fallback)",
+                description: `Successfully uploaded ${fallbackData.imageUrls.length} images`,
+              });
+              
+              return true;
+            } else {
+              throw new Error('Invalid fallback response format');
+            }
+          } catch (fallbackError) {
+            console.error('Fallback upload also failed:', fallbackError);
+            
+            // Show detailed error message to user after both methods failed
+            let errorMsg = "All upload methods failed. ";
+            if (error instanceof Error) {
+              errorMsg += error.message;
+            }
+            
+            toast({
+              title: "Upload Failed",
+              description: errorMsg,
+              variant: "destructive",
+            });
+            
+            return false;
           }
-          
-          toast({
-            title: "Upload Failed",
-            description: errorMsg,
-            variant: "destructive",
-          });
-          
-          // Don't fall back to the mutation approach as it's likely to fail for the same reason
-          // Instead return false to indicate failure
-          return false;
         }
       };
       
-      // Start the direct upload process
-      directUpload();
+      // Start the simple upload process
+      simpleUpload();
     } else {
       // Show an error message if no images are selected
       toast({
