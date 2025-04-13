@@ -1,29 +1,27 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Create a router
-const router = express.Router();
+const router = Router();
 
-// Ensure uploads directory exists
-const ensureDirectory = () => {
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
-    console.log(`Created upload directory: ${uploadDir}`);
-  }
-  return uploadDir;
-};
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
+  console.log(`Created upload directory: ${uploadDir}`);
+}
 
-// Configure storage
+// Force directory permissions
+fs.chmodSync(uploadDir, 0o777);
+
+// Configure multer for file uploads
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = ensureDirectory();
+  destination: function(req, file, cb) {
     cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
-    // Create a sanitized filename with timestamp
+  filename: function(req, file, cb) {
+    // Create a unique filename with original extension
     const timestamp = Date.now();
     const random = Math.round(Math.random() * 1000);
     const ext = path.extname(file.originalname) || '.jpg';
@@ -33,117 +31,110 @@ const storage = multer.diskStorage({
   }
 });
 
-// Create the multer upload instance
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: {
     fileSize: 25 * 1024 * 1024, // 25MB
-    files: 10 // Maximum 10 files at once
+    files: 10
   }
 });
 
-// Simple upload endpoint - doesn't require authentication
+// Basic upload endpoint
 router.post('/simple-upload', upload.array('files', 10), (req: Request, res: Response) => {
+  console.log('==== SIMPLE UPLOAD ENDPOINT CALLED ====');
+  console.log(`Content-Type: ${req.headers['content-type']}`);
+
   try {
-    console.log('==== SIMPLE UPLOAD ENDPOINT CALLED ====');
-    
-    // Log request details
-    console.log('Content-Type:', req.headers['content-type']);
-    console.log('Request method:', req.method);
-    
-    // No files received
+    // Check if files were uploaded
     if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-      console.log('No files found in request');
+      console.error('No files in request');
+      
+      // Try to log request details
+      console.log('Request headers:', req.headers);
+      console.log('Request body keys:', Object.keys(req.body || {}));
+      
       return res.status(400).json({
         success: false,
-        message: 'No files received. Please try again.'
+        message: 'No files were uploaded'
       });
     }
     
-    // Process the uploaded files
+    // Log the files we received
     const files = req.files as Express.Multer.File[];
-    console.log(`Successfully received ${files.length} files`);
+    console.log(`Received ${files.length} files:`);
+    files.forEach((file, index) => {
+      console.log(`File ${index + 1}: ${file.originalname}, size: ${Math.round(file.size/1024)}KB, saved as: ${file.filename}`);
+    });
     
-    // Create file URLs
-    const uploadedFiles = files.map(file => ({
-      originalName: file.originalname,
-      mimeType: file.mimetype,
-      size: file.size,
-      url: `/uploads/properties/${file.filename}`
-    }));
+    // Create URLs for the uploaded files
+    const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
     
-    // Generate the URLs for the files
-    const urls = uploadedFiles.map(file => file.url);
-    console.log('File URLs:', urls);
+    console.log('Image URLs:', imageUrls);
     
     // Return success response
     return res.status(200).json({
       success: true,
       message: `Successfully uploaded ${files.length} files`,
-      files: uploadedFiles,
-      urls: urls
+      imageUrls: imageUrls,
+      urls: imageUrls // Include both names for broader compatibility
     });
   } catch (error) {
-    console.error('Error in /simple-upload:', error);
-    res.status(500).json({
+    console.error('Error handling file upload:', error);
+    return res.status(500).json({
       success: false,
-      message: 'File upload failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      message: 'Server error while processing upload',
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
-// Even simpler upload endpoint with minimal processing
+// Ultra basic upload endpoint with minimal processing
 router.post('/basic-upload', (req: Request, res: Response) => {
-  try {
-    console.log('==== BASIC UPLOAD ENDPOINT CALLED ====');
-    
-    // Create upload handler
-    const uploadDir = ensureDirectory();
-    const basicUpload = upload.array('files', 10);
-    
-    // Use the upload middleware
-    basicUpload(req, res, (err) => {
-      if (err) {
-        console.error('Multer error:', err);
-        return res.status(500).json({
-          success: false,
-          message: 'Upload middleware error',
-          error: err.message
-        });
-      }
-      
-      // No files received
-      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-        console.log('No files found in request after processing');
-        return res.status(400).json({
-          success: false, 
-          message: 'No files received'
-        });
-      }
-      
-      // Process the uploaded files
-      const files = req.files as Express.Multer.File[];
-      console.log(`Successfully processed ${files.length} files in basic-upload`);
-      
-      // Generate URLs
-      const urls = files.map(file => `/uploads/properties/${file.filename}`);
-      
-      // Return success
-      return res.status(200).json({
-        success: true,
-        message: 'Files uploaded successfully',
-        imageUrls: urls
+  console.log('==== BASIC UPLOAD ENDPOINT CALLED ====');
+  console.log(`Content-Type: ${req.headers['content-type']}`);
+  
+  // Use multer only for this request
+  const basicUpload = multer({
+    dest: uploadDir,
+    limits: { fileSize: 25 * 1024 * 1024 } // 25MB
+  }).array('files', 10);
+  
+  basicUpload(req, res, function(err) {
+    if (err) {
+      console.error('Basic upload error:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Upload failed with error',
+        error: err.message
       });
+    }
+    
+    // Check if we have files
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      console.log('No files found in basic upload request');
+      console.log('Request headers:', req.headers);
+      
+      return res.status(400).json({
+        success: false,
+        message: 'No files were received'
+      });
+    }
+    
+    const files = req.files as Express.Multer.File[];
+    console.log(`Received ${files.length} files in basic upload`);
+    
+    // Create URLs for client response
+    const imageUrls = files.map(file => `/uploads/properties/${path.basename(file.path)}`);
+    
+    // Return success
+    return res.status(200).json({
+      success: true,
+      message: `Successfully uploaded ${files.length} files`,
+      imageUrls: imageUrls,
+      urls: imageUrls // Include both names for broader compatibility
     });
-  } catch (error) {
-    console.error('Error in /basic-upload:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Upload failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
+  });
 });
 
+// Export the router
 export default router;

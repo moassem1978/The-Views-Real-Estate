@@ -2,229 +2,256 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Upload Test</title>
+    <title>Direct Upload Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 20px;
+            line-height: 1.6;
         }
         h1 {
             color: #333;
         }
-        .upload-container {
-            border: 2px dashed #ccc;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .file-input {
-            margin-bottom: 10px;
-        }
-        .preview-container {
+        .container {
             display: flex;
+            gap: 20px;
             flex-wrap: wrap;
-            margin-top: 20px;
         }
-        .preview-item {
-            margin: 5px;
-            position: relative;
-        }
-        .preview-img {
-            max-width: 150px;
-            max-height: 150px;
+        .test-form {
             border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            width: 100%;
         }
-        .response {
+        .result {
             margin-top: 20px;
             padding: 10px;
-            background-color: #f5f5f5;
+            border: 1px solid #ddd;
             border-radius: 4px;
+            background-color: #f5f5f5;
+            min-height: 100px;
             white-space: pre-wrap;
         }
-        .btn {
-            padding: 8px 16px;
+        .success {
+            border-color: green;
+            background-color: #e8f5e9;
+        }
+        .error {
+            border-color: red;
+            background-color: #ffebee;
+        }
+        button {
+            padding: 10px 15px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            margin-top: 15px;
         }
-        .btn:hover {
+        button:hover {
             background-color: #45a049;
         }
-        .btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        .image-preview {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .image-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        a {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #2196F3;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <h1>File Upload Test Page</h1>
-    <p>Use this page to test file uploads directly without going through the main application.</p>
-    
-    <div>
-        <h2>Simple Upload Test</h2>
-        <div class="upload-container">
-            <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
-            <div class="preview-container" id="previewContainer"></div>
-            <button id="uploadBtn" class="btn">Upload Files</button>
-        </div>
-        <div>
-            <h3>Response:</h3>
-            <pre id="response" class="response">No response yet</pre>
-        </div>
+    <h1>Direct Upload Test</h1>
+    <p>This page tests various upload methods directly from HTML without any React components or complex state.</p>
+    <a href="/">Back to Main Website</a>
+
+    <div class="container">
+        <form class="test-form" id="form1">
+            <h2>Test 1: Basic Upload</h2>
+            <p>Uses the bypass endpoint with form enctype="multipart/form-data"</p>
+            <input type="file" name="files" multiple accept="image/*">
+            <div>
+                <button type="submit">Upload Files</button>
+            </div>
+            <div class="result" id="result1"></div>
+            <div class="image-preview" id="preview1"></div>
+        </form>
+
+        <form class="test-form" id="form2">
+            <h2>Test 2: Simple Upload</h2>
+            <p>Uses /api/simple-upload endpoint with FormData</p>
+            <input type="file" name="files" multiple accept="image/*">
+            <div>
+                <button type="submit">Upload Files</button>
+            </div>
+            <div class="result" id="result2"></div>
+            <div class="image-preview" id="preview2"></div>
+        </form>
+
+        <form class="test-form" id="form3">
+            <h2>Test 3: Basic Upload</h2>
+            <p>Uses /api/basic-upload endpoint with FormData</p>
+            <input type="file" name="files" multiple accept="image/*">
+            <div>
+                <button type="submit">Upload Files</button>
+            </div>
+            <div class="result" id="result3"></div>
+            <div class="image-preview" id="preview3"></div>
+        </form>
     </div>
-    
-    <div>
-        <h2>Basic Upload Test</h2>
-        <div class="upload-container">
-            <input type="file" id="basicFileInput" class="file-input" multiple accept="image/*">
-            <div class="preview-container" id="basicPreviewContainer"></div>
-            <button id="basicUploadBtn" class="btn">Upload with Basic Endpoint</button>
-        </div>
-        <div>
-            <h3>Response:</h3>
-            <pre id="basicResponse" class="response">No response yet</pre>
-        </div>
-    </div>
-    
+
     <script>
-        // Simple upload functionality
-        const fileInput = document.getElementById('fileInput');
-        const previewContainer = document.getElementById('previewContainer');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const responseElem = document.getElementById('response');
-        
-        // Basic upload functionality
-        const basicFileInput = document.getElementById('basicFileInput');
-        const basicPreviewContainer = document.getElementById('basicPreviewContainer');
-        const basicUploadBtn = document.getElementById('basicUploadBtn');
-        const basicResponseElem = document.getElementById('basicResponse');
-        
-        // Handle file selection and preview for simple upload
-        fileInput.addEventListener('change', function() {
-            previewContainer.innerHTML = '';
-            if (this.files.length > 0) {
-                Array.from(this.files).forEach(file => {
-                    if (file.type.match('image.*')) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const previewItem = document.createElement('div');
-                            previewItem.className = 'preview-item';
-                            
-                            const img = document.createElement('img');
-                            img.src = e.target.result;
-                            img.className = 'preview-img';
-                            
-                            previewItem.appendChild(img);
-                            previewContainer.appendChild(previewItem);
-                        }
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
-        });
-        
-        // Handle file selection and preview for basic upload
-        basicFileInput.addEventListener('change', function() {
-            basicPreviewContainer.innerHTML = '';
-            if (this.files.length > 0) {
-                Array.from(this.files).forEach(file => {
-                    if (file.type.match('image.*')) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const previewItem = document.createElement('div');
-                            previewItem.className = 'preview-item';
-                            
-                            const img = document.createElement('img');
-                            img.src = e.target.result;
-                            img.className = 'preview-img';
-                            
-                            previewItem.appendChild(img);
-                            basicPreviewContainer.appendChild(previewItem);
-                        }
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
-        });
-        
-        // Handle simple upload
-        uploadBtn.addEventListener('click', async function() {
-            if (fileInput.files.length === 0) {
-                alert('Please select files to upload');
-                return;
-            }
+        function logResult(elementId, message, isError = false) {
+            const resultElement = document.getElementById(elementId);
+            resultElement.textContent = message;
+            resultElement.className = isError ? 'result error' : 'result success';
+            console.log(isError ? `ERROR: ${message}` : message);
+        }
+
+        function displayImages(previewId, urls) {
+            const previewElement = document.getElementById(previewId);
+            previewElement.innerHTML = '';
             
-            // Disable button during upload
-            uploadBtn.disabled = true;
-            responseElem.textContent = 'Uploading...';
-            
-            const formData = new FormData();
-            Array.from(fileInput.files).forEach(file => {
-                formData.append('files', file);
+            urls.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'Uploaded image';
+                img.onerror = () => {
+                    img.alt = 'Failed to load image';
+                    img.style.border = '2px solid red';
+                };
+                previewElement.appendChild(img);
             });
+        }
+
+        // Test 1: Bypass Upload
+        document.getElementById('form1').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
             try {
+                const formData = new FormData(this);
+                const fileInput = this.querySelector('input[type="file"]');
+                
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    logResult('result1', 'Please select at least one file', true);
+                    return;
+                }
+                
+                logResult('result1', 'Uploading...');
+                
+                const response = await fetch('/api/upload/bypass', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
+                }
+                
+                const result = await response.json();
+                logResult('result1', `Upload successful! ${result.message || ''}\n\nURLs: ${(result.imageUrls || result.urls || []).join('\n')}`);
+                
+                if (result.imageUrls || result.urls) {
+                    displayImages('preview1', result.imageUrls || result.urls);
+                }
+            } catch (error) {
+                logResult('result1', `Error: ${error.message}`, true);
+            }
+        });
+
+        // Test 2: Simple Upload
+        document.getElementById('form2').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = new FormData(this);
+                const fileInput = this.querySelector('input[type="file"]');
+                
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    logResult('result2', 'Please select at least one file', true);
+                    return;
+                }
+                
+                logResult('result2', 'Uploading...');
+                
                 const response = await fetch('/api/simple-upload', {
                     method: 'POST',
-                    body: formData,
-                    // No need to set Content-Type - browser will set it with boundary
+                    body: formData
                 });
                 
-                const result = await response.json();
-                responseElem.textContent = JSON.stringify(result, null, 2);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
+                }
                 
-                // Display the URLs of uploaded images
-                if (result.success && result.urls) {
-                    console.log('Uploaded image URLs:', result.urls);
+                const result = await response.json();
+                logResult('result2', `Upload successful! ${result.message || ''}\n\nURLs: ${(result.imageUrls || result.urls || []).join('\n')}`);
+                
+                if (result.imageUrls || result.urls) {
+                    displayImages('preview2', result.imageUrls || result.urls);
                 }
             } catch (error) {
-                responseElem.textContent = `Error: ${error.message}`;
-                console.error('Upload error:', error);
-            } finally {
-                uploadBtn.disabled = false;
+                logResult('result2', `Error: ${error.message}`, true);
             }
         });
-        
-        // Handle basic upload
-        basicUploadBtn.addEventListener('click', async function() {
-            if (basicFileInput.files.length === 0) {
-                alert('Please select files to upload');
-                return;
-            }
-            
-            // Disable button during upload
-            basicUploadBtn.disabled = true;
-            basicResponseElem.textContent = 'Uploading...';
-            
-            const formData = new FormData();
-            Array.from(basicFileInput.files).forEach(file => {
-                formData.append('files', file);
-            });
+
+        // Test 3: Basic Upload
+        document.getElementById('form3').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
             try {
+                const formData = new FormData(this);
+                const fileInput = this.querySelector('input[type="file"]');
+                
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    logResult('result3', 'Please select at least one file', true);
+                    return;
+                }
+                
+                logResult('result3', 'Uploading...');
+                
                 const response = await fetch('/api/basic-upload', {
                     method: 'POST',
-                    body: formData,
-                    // No Content-Type header needed - browser will set it with boundary
+                    body: formData
                 });
                 
-                const result = await response.json();
-                basicResponseElem.textContent = JSON.stringify(result, null, 2);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
+                }
                 
-                // Display the URLs of uploaded images
-                if (result.success && result.imageUrls) {
-                    console.log('Uploaded image URLs (basic):', result.imageUrls);
+                const result = await response.json();
+                logResult('result3', `Upload successful! ${result.message || ''}\n\nURLs: ${(result.imageUrls || result.urls || []).join('\n')}`);
+                
+                if (result.imageUrls || result.urls) {
+                    displayImages('preview3', result.imageUrls || result.urls);
                 }
             } catch (error) {
-                basicResponseElem.textContent = `Error: ${error.message}`;
-                console.error('Basic upload error:', error);
-            } finally {
-                basicUploadBtn.disabled = false;
+                logResult('result3', `Error: ${error.message}`, true);
             }
         });
     </script>

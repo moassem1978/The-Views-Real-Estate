@@ -1100,172 +1100,189 @@ export default function Dashboard() {
   };
 
   const handleUploadPropertyImages = () => {
-    if (propertyImages.length > 0) {
-      // Show a toast to indicate upload is starting
-      toast({
-        title: "Upload Started",
-        description: `Uploading ${propertyImages.length} images to server...`,
-      });
-      
-      console.log(`Starting upload of ${propertyImages.length} images...`);
-      
-      // Use our new, very simplified upload approach
-      const simpleUpload = async () => {
-        try {
-          // Create a form for our super simple endpoint
-          const formData = new FormData();
-          
-          // Log what we're uploading
-          console.log(`Preparing to upload ${propertyImages.length} files`);
-          
-          // Add each file to the form data with detailed logging - using 'files' as field name 
-          // because that's what our simple upload endpoint expects
-          propertyImages.forEach((img, index) => {
-            if (!img.file) {
-              console.error(`File at index ${index} is missing or invalid`);
-              return;
-            }
-            
-            console.log(`Adding file ${index + 1}: ${img.file.name}, type: ${img.file.type}, size: ${(img.file.size / 1024).toFixed(2)}KB`);
-            formData.append('files', img.file, img.file.name);
-          });
-          
-          // Log FormData details for debugging
-          console.log(`FormData contains ${formData.getAll('files').length} files`);
-          
-          // Get field names in a way compatible with all TypeScript targets
-          const fieldNames: string[] = [];
-          formData.forEach((value, key) => {
-            if (!fieldNames.includes(key)) fieldNames.push(key);
-          });
-          console.log(`FormData field names: ${fieldNames.join(', ')}`);
-          
-          console.log(`Attempting simplified upload to /api/simple-upload`);
-          
-          // Try our new bypass endpoint with absolute minimum processing
-          const response = await fetch('/api/upload/bypass', {
-            method: 'POST',
-            body: formData
-            // No headers or credentials needed for this endpoint
-          });
-          
-          if (!response.ok) {
-            console.error(`Simple upload failed with status ${response.status}`);
-            try {
-              const errorText = await response.text();
-              console.error('Server error response:', errorText);
-              throw new Error(`Upload failed: ${errorText || response.statusText}`);
-            } catch (readError) {
-              console.error('Could not read error response:', readError);
-              throw new Error(`Upload failed with status ${response.status}`);
-            }
-          }
-          
-          const data = await response.json();
-          console.log('Simple upload response:', data);
-          
-          // Extract URLs from the response - our simple endpoint uses 'urls' instead of 'imageUrls'
-          const imageUrls = data.urls || data.imageUrls;
-          
-          if (!imageUrls || !Array.isArray(imageUrls)) {
-            console.error('Invalid response format:', data);
-            throw new Error('Server response missing image URLs');
-          }
-          
-          // Update form with image URLs
-          setFormData(prev => ({
-            ...prev,
-            images: imageUrls
-          }));
-          
-          // Clear image previews
-          setPropertyImages([]);
-          
-          // Show success message
-          toast({
-            title: "Upload Successful",
-            description: `Successfully uploaded ${imageUrls.length} images`,
-          });
-          
-          return true;
-        } catch (error) {
-          console.error('Simple upload failed:', error);
-          
-          // Try the basic upload endpoint as a fallback
-          try {
-            console.log('Trying basic-upload endpoint as fallback...');
-            
-            // Create a fresh FormData for the basic endpoint
-            const fallbackFormData = new FormData();
-            propertyImages.forEach(img => {
-              if (img.file) {
-                fallbackFormData.append('files', img.file);
-              }
-            });
-            
-            const fallbackResponse = await fetch('/api/upload/bypass', {
-              method: 'POST',
-              body: fallbackFormData
-            });
-            
-            if (!fallbackResponse.ok) {
-              console.error(`Fallback upload failed with status ${fallbackResponse.status}`);
-              throw new Error(`Fallback upload failed with status ${fallbackResponse.status}`);
-            }
-            
-            const fallbackData = await fallbackResponse.json();
-            console.log('Fallback upload successful:', fallbackData);
-            
-            if (fallbackData.imageUrls && Array.isArray(fallbackData.imageUrls)) {
-              // Update form with image URLs from fallback
-              setFormData(prev => ({
-                ...prev,
-                images: fallbackData.imageUrls
-              }));
-              
-              // Clear image previews
-              setPropertyImages([]);
-              
-              // Show success message
-              toast({
-                title: "Upload Successful (Fallback)",
-                description: `Successfully uploaded ${fallbackData.imageUrls.length} images`,
-              });
-              
-              return true;
-            } else {
-              throw new Error('Invalid fallback response format');
-            }
-          } catch (fallbackError) {
-            console.error('Fallback upload also failed:', fallbackError);
-            
-            // Show detailed error message to user after both methods failed
-            let errorMsg = "All upload methods failed. ";
-            if (error instanceof Error) {
-              errorMsg += error.message;
-            }
-            
-            toast({
-              title: "Upload Failed",
-              description: errorMsg,
-              variant: "destructive",
-            });
-            
-            return false;
-          }
-        }
-      };
-      
-      // Start the simple upload process
-      simpleUpload();
-    } else {
-      // Show an error message if no images are selected
+    if (propertyImages.length === 0) {
       toast({
         title: "No Images Selected",
         description: "Please select images to upload first",
         variant: "destructive",
       });
+      return;
     }
+
+    // Create a new form element to use for upload
+    const form = document.createElement('form');
+    form.enctype = 'multipart/form-data';
+    form.method = 'post';
+    form.style.display = 'none';
+    document.body.appendChild(form);
+
+    // Create an iframe to handle the response
+    const iframe = document.createElement('iframe');
+    iframe.name = 'upload_iframe_' + Date.now();
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    // Set form target to the iframe
+    form.target = iframe.name;
+    form.action = '/api/upload/bypass';
+
+    // Show a toast to indicate upload is starting
+    toast({
+      title: "Upload Started",
+      description: `Uploading ${propertyImages.length} images to server...`,
+    });
+    
+    console.log(`Starting basic upload of ${propertyImages.length} images...`);
+
+    // Create a promise to track the iframe load event
+    const uploadPromise = new Promise<string[]>((resolve, reject) => {
+      iframe.onload = () => {
+        try {
+          // Try to get the response from the iframe
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (!iframeDoc) {
+            reject(new Error("Could not access iframe document"));
+            return;
+          }
+
+          // Get the response text
+          const responseText = iframeDoc.body.textContent || "";
+          
+          console.log("Raw iframe response:", responseText);
+          
+          try {
+            // Try to parse the response as JSON
+            const response = JSON.parse(responseText);
+            
+            if (response.success && (response.imageUrls || response.urls)) {
+              const urls = response.imageUrls || response.urls;
+              resolve(urls);
+            } else {
+              reject(new Error(response.message || "Upload failed without error details"));
+            }
+          } catch (parseError) {
+            reject(new Error(`Could not parse response: ${responseText.substring(0, 100)}...`));
+          }
+        } catch (error) {
+          reject(error);
+        } finally {
+          // Clean up
+          setTimeout(() => {
+            document.body.removeChild(form);
+            document.body.removeChild(iframe);
+          }, 100);
+        }
+      };
+
+      iframe.onerror = () => {
+        reject(new Error("Iframe reported an error"));
+        document.body.removeChild(form);
+        document.body.removeChild(iframe);
+      };
+    });
+
+    // Add each file to the form
+    propertyImages.forEach((img, index) => {
+      if (!img.file) {
+        console.error(`File at index ${index} is missing or invalid`);
+        return;
+      }
+      
+      // Create a file input element
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.name = 'files';
+      input.style.display = 'none';
+      
+      // We can't directly set the files property, so we use the DataTransfer API
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(img.file);
+      input.files = dataTransfer.files;
+      
+      form.appendChild(input);
+      console.log(`Added file ${index + 1} to form: ${img.file.name}`);
+    });
+
+    // Submit the form
+    console.log("Submitting form...");
+    form.submit();
+
+    // Handle the result of the upload
+    uploadPromise
+      .then((imageUrls) => {
+        console.log('Upload successful:', imageUrls);
+        
+        // Update form with image URLs
+        setFormData(prev => ({
+          ...prev,
+          images: imageUrls
+        }));
+        
+        // Clear image previews
+        setPropertyImages([]);
+        
+        // Show success message
+        toast({
+          title: "Upload Successful",
+          description: `Successfully uploaded ${imageUrls.length} images`,
+        });
+      })
+      .catch((error) => {
+        console.error('Upload failed:', error);
+        
+        // If the iframe method fails, try a direct fetch as a fallback
+        console.log("Trying direct fetch as fallback...");
+        
+        const formData = new FormData();
+        propertyImages.forEach(img => {
+          if (img.file) {
+            formData.append('files', img.file);
+          }
+        });
+        
+        fetch('/api/upload/bypass', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Fallback fetch failed with status ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Fallback upload successful:', data);
+          const urls = data.imageUrls || data.urls || [];
+          
+          if (urls.length > 0) {
+            // Update form with image URLs
+            setFormData(prev => ({
+              ...prev,
+              images: urls
+            }));
+            
+            // Clear image previews
+            setPropertyImages([]);
+            
+            // Show success message
+            toast({
+              title: "Upload Successful (Fallback)",
+              description: `Successfully uploaded ${urls.length} images`,
+            });
+          } else {
+            throw new Error('No image URLs in response');
+          }
+        })
+        .catch(fallbackError => {
+          console.error('Fallback upload also failed:', fallbackError);
+          
+          toast({
+            title: "Upload Failed",
+            description: "All upload methods failed. Please try again later.",
+            variant: "destructive",
+          });
+        });
+      });
   };
 
   const removePropertyImage = (index: number) => {
