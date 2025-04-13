@@ -2448,7 +2448,7 @@ export default function Dashboard() {
                   <div className="space-y-2">
                     <div className="mb-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
                       <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternative</h4>
-                      <p className="text-xs text-gray-700 mb-2">If you're having trouble uploading images directly, use our <a href="/uploader.html" target="_blank" className="text-blue-600 underline">Standalone Image Uploader</a> and paste the URLs below.</p>
+                      <p className="text-xs text-gray-700 mb-2">If you're having trouble uploading images directly, try our <strong>extremely simple</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a> (uses 1990s-era HTML forms) and paste the URLs below.</p>
                     </div>
                     
                     <label htmlFor="images" className="text-sm font-medium">
@@ -2664,6 +2664,11 @@ export default function Dashboard() {
                 <label className="text-sm font-medium">
                   Announcement Image <span className="text-muted-foreground text-xs">(Optional)</span>
                 </label>
+                
+                <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternative</h4>
+                  <p className="text-xs text-gray-700">If you're having trouble uploading images directly, try our <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a> and paste the URL below.</p>
+                </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
@@ -2735,6 +2740,11 @@ export default function Dashboard() {
           <form onSubmit={handleLogoSubmit} className="space-y-6" encType="multipart/form-data">
             <div className="space-y-4">
               <div className="grid gap-2">
+                <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternative</h4>
+                  <p className="text-xs text-gray-700">If you're having trouble uploading the logo, try our <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a> and paste the URL in the company settings instead.</p>
+                </div>
+                
                 <label htmlFor="logo" className="text-sm font-medium">
                   Select Logo (Any Image Format)
                 </label>

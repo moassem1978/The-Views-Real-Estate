@@ -1321,6 +1321,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   app.post('/api/upload/bypass', async (req: Request, res: Response) => {
     try {
       console.log("==== BYPASS UPLOAD ENDPOINT ACCESSED ====");
+      console.log("Content-Type:", req.headers['content-type']);
+      console.log("Accept:", req.headers['accept']);
       
       // Create upload directory if it doesn't exist
       const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
@@ -1342,20 +1344,62 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       basicUpload(req, res, function(err) {
         if (err) {
           console.error("Basic upload error:", err);
-          return res.status(500).json({
-            success: false,
-            message: "Upload failed with error",
-            error: err.message
-          });
+          
+          // Check if this is a direct form submission
+          const wantsHtml = req.headers['accept']?.includes('text/html');
+          
+          if (wantsHtml) {
+            return res.status(500).send(`
+              <html><head><title>Upload Error</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
+                .error { color: red; }
+                a { color: #B87333; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+              </style>
+              </head><body>
+                <h1>Upload Error</h1>
+                <p class="error">${err.message}</p>
+                <p><a href="/basic-uploader.html">← Back to uploader</a></p>
+              </body></html>
+            `);
+          } else {
+            return res.status(500).json({
+              success: false,
+              message: "Upload failed with error",
+              error: err.message
+            });
+          }
         }
         
         // Check if we have files
         if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
           console.log("No files found in bypass upload request");
-          return res.status(400).json({
-            success: false,
-            message: "No files were received"
-          });
+          
+          // Check if this is a direct form submission
+          const wantsHtml = req.headers['accept']?.includes('text/html');
+          
+          if (wantsHtml) {
+            return res.status(400).send(`
+              <html><head><title>Upload Error</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
+                .error { color: red; }
+                a { color: #B87333; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+              </style>
+              </head><body>
+                <h1>Error</h1>
+                <p class="error">No files were received. Please select at least one file.</p>
+                <p><a href="/basic-uploader.html">← Back to uploader</a></p>
+              </body></html>
+            `);
+          } else {
+            return res.status(400).json({
+              success: false,
+              message: "No files were received"
+            });
+          }
         }
         
         const files = req.files as Express.Multer.File[];
@@ -1364,21 +1408,95 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         // Create URLs for client response
         const imageUrls = files.map(file => `/uploads/properties/${path.basename(file.path)}`);
         
-        // Return success
-        return res.status(200).json({
-          success: true,
-          message: `Successfully uploaded ${files.length} files`,
-          imageUrls: imageUrls,
-          urls: imageUrls // Include both names for broader compatibility
-        });
+        // Check if this is a direct form submission that expects HTML
+        const wantsHtml = req.headers['accept']?.includes('text/html');
+        
+        if (wantsHtml) {
+          // Return HTML response with the URLs and images displayed
+          const imagesHtml = imageUrls.map(url => `
+            <div class="img-container">
+              <img src="${url}" class="preview" alt="Uploaded image">
+              <div class="url">${url}</div>
+            </div>
+          `).join('');
+          
+          return res.status(200).send(`
+            <html><head><title>Upload Successful</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
+              .success { color: green; }
+              .images { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; }
+              .img-container { border: 1px solid #ddd; padding: 10px; border-radius: 5px; max-width: 220px; }
+              .preview { max-width: 200px; max-height: 200px; }
+              .url { font-size: 12px; word-break: break-all; margin-top: 5px; padding: 5px; background: #f5f5f5; }
+              .url-list { width: 100%; height: 100px; margin-top: 20px; font-family: monospace; }
+              a { color: #B87333; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+              .instructions { background-color: #fffde7; border-left: 4px solid #ffeb3b; padding: 15px; margin: 20px 0; }
+            </style>
+            </head><body>
+              <h1>Upload Successful!</h1>
+              <p class="success">Successfully uploaded ${files.length} file(s).</p>
+              
+              <div class="instructions">
+                <h3>Next Steps:</h3>
+                <ol>
+                  <li>Copy all image URLs from the text box below</li>
+                  <li>Go back to the property form</li>
+                  <li>Paste the URLs into the "Image URLs" field</li>
+                </ol>
+              </div>
+              
+              <h2>Image URLs</h2>
+              <textarea class="url-list" onclick="this.select()">${imageUrls.join(', ')}</textarea>
+              
+              <h2>Image Previews</h2>
+              <div class="images">${imagesHtml}</div>
+              
+              <p>
+                <a href="/basic-uploader.html">← Upload more images</a> | 
+                <a href="/">Return to main website</a>
+              </p>
+            </body></html>
+          `);
+        } else {
+          // Return JSON response for API clients
+          return res.status(200).json({
+            success: true,
+            message: `Successfully uploaded ${files.length} files`,
+            imageUrls: imageUrls,
+            urls: imageUrls // Include both names for broader compatibility
+          });
+        }
       });
     } catch (error) {
       console.error("Fatal error in bypass upload:", error);
-      return res.status(500).json({
-        success: false,
-        message: "A server error occurred during upload",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
+      
+      // Check if this is a direct form submission
+      const wantsHtml = req.headers['accept']?.includes('text/html');
+      
+      if (wantsHtml) {
+        return res.status(500).send(`
+          <html><head><title>Server Error</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
+            .error { color: red; }
+            a { color: #B87333; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+          </style>
+          </head><body>
+            <h1>Server Error</h1>
+            <p class="error">A server error occurred during upload: ${error instanceof Error ? error.message : "Unknown error"}</p>
+            <p><a href="/basic-uploader.html">← Back to uploader</a></p>
+          </body></html>
+        `);
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "A server error occurred during upload",
+          error: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
     }
   });
 
