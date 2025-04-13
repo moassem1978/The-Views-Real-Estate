@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Views - Standalone Image Uploader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #964B00;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #964B00;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #B87333;
+        }
+        #uploadResult {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 100px;
+            background-color: #f5f5f5;
+            white-space: pre-wrap;
+        }
+        .success {
+            color: green;
+            border-color: green;
+            background-color: #e8f5e9;
+        }
+        .error {
+            color: red;
+            border-color: red;
+            background-color: #ffebee;
+        }
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        a {
+            color: #B87333;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>The Views Real Estate - Standalone Image Uploader</h1>
+    <p>This tool helps you upload images for your properties. After uploading, copy the image URLs to use in the main application.</p>
+    
+    <div class="container">
+        <h2>Upload Images</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="imageInput" name="files" multiple accept="image/*">
+            <div class="controls">
+                <button type="submit" id="uploadButton">Upload Images</button>
+                <button type="button" id="clearButton">Clear</button>
+            </div>
+        </form>
+        <div id="uploadResult"></div>
+        <div class="image-container" id="imageContainer"></div>
+        <textarea id="urlList" placeholder="Image URLs will appear here after upload. Copy these to use in the main application."></textarea>
+    </div>
+    
+    <p><a href="/" id="backLink">Back to main application</a></p>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadForm = document.getElementById('uploadForm');
+            const imageInput = document.getElementById('imageInput');
+            const uploadButton = document.getElementById('uploadButton');
+            const clearButton = document.getElementById('clearButton');
+            const uploadResult = document.getElementById('uploadResult');
+            const imageContainer = document.getElementById('imageContainer');
+            const urlList = document.getElementById('urlList');
+            
+            // Handle form submission
+            uploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Validate input
+                if (!imageInput.files || imageInput.files.length === 0) {
+                    showResult('Please select at least one image file to upload.', true);
+                    return;
+                }
+                
+                // Prepare form data
+                const formData = new FormData();
+                
+                // Log files
+                console.log('Selected files:');
+                for (let i = 0; i < imageInput.files.length; i++) {
+                    const file = imageInput.files[i];
+                    console.log(`File ${i+1}: ${file.name}, type: ${file.type}, size: ${Math.round(file.size/1024)}KB`);
+                    formData.append('files', file);
+                }
+                
+                // Disable button during upload
+                uploadButton.disabled = true;
+                uploadButton.textContent = 'Uploading...';
+                
+                // Show progress
+                showResult('Uploading images, please wait...', false);
+                
+                // Send the request
+                fetch('/api/upload/bypass', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Upload failed with status ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Upload successful:', data);
+                    
+                    if (data.success && (data.imageUrls || data.urls)) {
+                        const urls = data.imageUrls || data.urls;
+                        showResult(`Successfully uploaded ${urls.length} images!`, false, true);
+                        displayImages(urls);
+                        populateUrlList(urls);
+                    } else {
+                        throw new Error('Invalid server response: missing image URLs');
+                    }
+                })
+                .catch(error => {
+                    console.error('Upload error:', error);
+                    showResult(`Error: ${error.message}`, true);
+                })
+                .finally(() => {
+                    // Re-enable button
+                    uploadButton.disabled = false;
+                    uploadButton.textContent = 'Upload Images';
+                });
+            });
+            
+            // Handle clear button
+            clearButton.addEventListener('click', function() {
+                imageInput.value = '';
+                uploadResult.innerHTML = '';
+                uploadResult.className = '';
+                imageContainer.innerHTML = '';
+                urlList.value = '';
+            });
+            
+            // Function to show result message
+            function showResult(message, isError, isSuccess) {
+                uploadResult.textContent = message;
+                uploadResult.className = isError ? 'error' : (isSuccess ? 'success' : '');
+            }
+            
+            // Function to display uploaded images
+            function displayImages(urls) {
+                imageContainer.innerHTML = '';
+                
+                urls.forEach(url => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.alt = 'Uploaded image';
+                    img.className = 'image-preview';
+                    img.onerror = () => {
+                        img.alt = 'Failed to load image';
+                        img.style.border = '2px solid red';
+                    };
+                    imageContainer.appendChild(img);
+                });
+            }
+            
+            // Function to populate URL list
+            function populateUrlList(urls) {
+                urlList.value = urls.join('\n');
+            }
+            
+            // Auto-select URL list text when clicked
+            urlList.addEventListener('click', function() {
+                this.select();
+            });
+        });
+    </script>
+</body>
+</html>

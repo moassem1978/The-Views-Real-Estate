@@ -2446,6 +2446,11 @@ export default function Dashboard() {
                   )}
 
                   <div className="space-y-2">
+                    <div className="mb-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                      <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternative</h4>
+                      <p className="text-xs text-gray-700 mb-2">If you're having trouble uploading images directly, use our <a href="/uploader.html" target="_blank" className="text-blue-600 underline">Standalone Image Uploader</a> and paste the URLs below.</p>
+                    </div>
+                    
                     <label htmlFor="images" className="text-sm font-medium">
                       Image URLs (comma separated)
                     </label>
@@ -2455,7 +2460,7 @@ export default function Dashboard() {
                       value={formData.images.join(", ")}
                       onChange={handleInputChange}
                     />
-                    <p className="text-xs text-gray-500">Enter URLs for property images or use the upload button above</p>
+                    <p className="text-xs text-gray-500">Enter image URLs here, either from uploads or from external sources</p>
                   </div>
 
                   {formData.images.length > 0 && (
