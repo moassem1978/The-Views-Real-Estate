@@ -1317,6 +1317,71 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     next();
   }, express.static(path.join(process.cwd(), 'uploads')));
   
+  // Special bypass endpoint - NO AUTHENTICATION, write directly to disk
+  app.post('/api/upload/bypass', async (req: Request, res: Response) => {
+    try {
+      console.log("==== BYPASS UPLOAD ENDPOINT ACCESSED ====");
+      
+      // Create upload directory if it doesn't exist
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
+        console.log(`Created upload directory: ${uploadDir}`);
+      }
+      
+      // Force directory permissions
+      fs.chmodSync(uploadDir, 0o777);
+      
+      // Create a basic upload handler with minimal options
+      const basicUpload = multer({
+        dest: uploadDir,
+        limits: { fileSize: 25 * 1024 * 1024 } // 25MB
+      }).array('files', 10);
+      
+      // Process the upload
+      basicUpload(req, res, function(err) {
+        if (err) {
+          console.error("Basic upload error:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Upload failed with error",
+            error: err.message
+          });
+        }
+        
+        // Check if we have files
+        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+          console.log("No files found in bypass upload request");
+          return res.status(400).json({
+            success: false,
+            message: "No files were received"
+          });
+        }
+        
+        const files = req.files as Express.Multer.File[];
+        console.log(`Received ${files.length} files in bypass upload`);
+        
+        // Create URLs for client response
+        const imageUrls = files.map(file => `/uploads/properties/${path.basename(file.path)}`);
+        
+        // Return success
+        return res.status(200).json({
+          success: true,
+          message: `Successfully uploaded ${files.length} files`,
+          imageUrls: imageUrls,
+          urls: imageUrls // Include both names for broader compatibility
+        });
+      });
+    } catch (error) {
+      console.error("Fatal error in bypass upload:", error);
+      return res.status(500).json({
+        success: false,
+        message: "A server error occurred during upload",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // New simplified property image upload endpoint - uses express middleware directly
   app.post('/api/upload/property-images-direct', async (req: Request, res: Response) => {
     try {

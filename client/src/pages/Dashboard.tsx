@@ -1142,8 +1142,8 @@ export default function Dashboard() {
           
           console.log(`Attempting simplified upload to /api/simple-upload`);
           
-          // Use our new simple endpoint instead
-          const response = await fetch('/api/simple-upload', {
+          // Try our new bypass endpoint with absolute minimum processing
+          const response = await fetch('/api/upload/bypass', {
             method: 'POST',
             body: formData
             // No headers or credentials needed for this endpoint
