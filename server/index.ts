@@ -119,6 +119,11 @@ app.get('/api/debug/images', (req, res) => {
   });
 });
 
+// Serve the test upload HTML file directly
+app.get('/test', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'test-upload.html'));
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
