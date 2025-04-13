@@ -1203,7 +1203,7 @@ export default function Dashboard() {
               }
             });
             
-            const fallbackResponse = await fetch('/api/basic-upload', {
+            const fallbackResponse = await fetch('/api/upload/bypass', {
               method: 'POST',
               body: fallbackFormData
             });
