@@ -1,112 +1,178 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Windows Chrome Property Uploader</title>
+  <title>Windows Property Image Uploader</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
       margin: 20px auto;
       padding: 20px;
       line-height: 1.6;
-      color: #333;
-    }
-    h1 {
-      color: #964B00;
-      margin-bottom: 20px;
-      text-align: center;
     }
     .box {
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      padding: 20px;
+      background: #fff3e0;
+      border: 1px solid #ffe0b2;
+      padding: 15px;
+      border-radius: 8px;
       margin-bottom: 20px;
-      background-color: #f9f9f9;
-    }
-    .success {
-      background-color: #d4edda;
-      border-color: #c3e6cb;
-      color: #155724;
-    }
-    .warning {
-      background-color: #fff3cd;
-      border-color: #ffeeba;
-      color: #856404;
     }
     form {
-      margin-top: 20px;
-    }
-    label {
-      display: block;
-      margin-bottom: 10px;
-      font-weight: bold;
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
     }
     input[type="file"] {
+      display: block;
       width: 100%;
-      padding: 8px;
-      margin-bottom: 20px;
+      padding: 10px;
+      margin: 10px 0;
       border: 1px solid #ddd;
       border-radius: 4px;
     }
     button {
-      background-color: #964B00;
+      background: #1976d2;
       color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 12px 24px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 16px;
     }
-    button:hover {
-      background-color: #B87333;
+    button:disabled {
+      background: #ccc;
     }
-    .image-preview {
+    .results {
       margin-top: 20px;
+      padding: 15px;
+      background: #e8f5e9;
+      border-radius: 8px;
+      display: none;
     }
-    .image-preview img {
-      max-width: 150px;
-      max-height: 150px;
-      margin: 5px;
-      border: 1px solid #ddd;
-    }
-    .url-box {
+    #urlList {
       width: 100%;
       height: 100px;
-      margin-top: 20px;
+      margin: 10px 0;
+      padding: 8px;
       font-family: monospace;
+    }
+    .error {
+      color: #d32f2f;
+      background: #ffebee;
       padding: 10px;
-      box-sizing: border-box;
+      border-radius: 4px;
+      margin: 10px 0;
+      display: none;
+    }
+    .progress {
+      display: none;
+      margin: 20px 0;
+    }
+    progress {
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <h1>Windows Chrome Property Uploader</h1>
+  <h1>Windows Property Image Uploader</h1>
   
-  <div class="box warning">
-    <h3>⚠️ Special Windows Chrome Uploader</h3>
-    <p>This uploader is optimized specifically for Windows Chrome/Edge browsers.</p>
-    <p><strong>Simple Instructions:</strong></p>
+  <div class="box">
+    <h3>⚠️ Optimized for Windows</h3>
+    <p>This uploader is specifically designed for Windows users to ensure reliable uploads.</p>
+    <p><strong>Simple Steps:</strong></p>
     <ol>
-      <li>Select images using the form below</li>
-      <li>Click "Upload Images" button</li>
-      <li>When upload completes, copy the URLs</li>
-      <li>Paste URLs into property form</li>
+      <li>Select your property images below (up to 10 files)</li>
+      <li>Click "Upload Images"</li>
+      <li>Wait for upload to complete</li>
+      <li>Copy the URLs and paste them into the property form</li>
     </ol>
   </div>
 
-  <!-- Ultra Basic Form with no JavaScript -->
-  <form action="/api/upload/bypass" method="POST" enctype="multipart/form-data">
-    <label for="files">Select Property Images (up to 10):</label>
-    <input type="file" name="files" id="files" multiple accept="image/*">
-    <button type="submit">Upload Images</button>
+  <form id="uploadForm">
+    <label for="files">Select Property Images:</label>
+    <input type="file" name="files" id="files" multiple accept="image/*" required>
+    <div class="error" id="error"></div>
+    <div class="progress" id="progress">
+      <p>Uploading... Please don't close this window.</p>
+      <progress id="progressBar" value="0" max="100"></progress>
+      <p id="progressText">0%</p>
+    </div>
+    <button type="submit" id="submitBtn">Upload Images</button>
   </form>
 
-  <!-- Success message will be shown by server redirect -->
-  
-  <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
-    <a href="/" style="color: #964B00; text-decoration: none;">← Back to Website</a>
+  <div class="results" id="results">
+    <h3>✅ Upload Successful!</h3>
+    <p>Copy these URLs and paste them into the property form:</p>
+    <textarea id="urlList" onclick="this.select()" readonly></textarea>
+    <button onclick="copyUrls()">Copy All URLs</button>
   </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const error = document.getElementById('error');
+    const progress = document.getElementById('progress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const results = document.getElementById('results');
+    const urlList = document.getElementById('urlList');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      error.style.display = 'none';
+      results.style.display = 'none';
+      
+      const files = document.getElementById('files').files;
+      if (!files.length) {
+        error.textContent = 'Please select at least one image';
+        error.style.display = 'block';
+        return;
+      }
+
+      const formData = new FormData();
+      for (let file of files) {
+        formData.append('files', file);
+      }
+
+      submitBtn.disabled = true;
+      progress.style.display = 'block';
+      
+      try {
+        const response = await fetch('/api/upload/bypass', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.imageUrls?.length) {
+          results.style.display = 'block';
+          urlList.value = data.imageUrls.join(', ');
+        } else {
+          throw new Error('Upload response missing image URLs');
+        }
+      } catch (err) {
+        error.textContent = err.message || 'Upload failed. Please try again.';
+        error.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        progress.style.display = 'none';
+      }
+    };
+
+    function copyUrls() {
+      urlList.select();
+      document.execCommand('copy');
+      alert('URLs copied to clipboard!');
+    }
+  </script>
 </body>
 </html>
