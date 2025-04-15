@@ -20,112 +20,83 @@ const DirectUploader: React.FC<DirectUploaderProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files);
-      
-      // Check if we're exceeding the maximum number of files
+
       if (selectedFiles.length > maxFiles) {
         toast({
           title: "Too Many Files",
-          description: `You can only upload a maximum of ${maxFiles} files at once.`,
+          description: `Maximum ${maxFiles} files allowed`,
           variant: "destructive",
         });
         return;
       }
-      
-      // Log info about the selected files
-      console.log(`Selected ${selectedFiles.length} files for upload`);
-      selectedFiles.forEach((file, index) => {
-        console.log(`File ${index + 1}: ${file.name}, size: ${Math.round(file.size/1024)}KB, type: ${file.type}`);
-      });
-      
+
       setFiles(selectedFiles);
     }
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('files', file);
+
+    const response = await fetch('/api/upload/bypass', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    if (!result.imageUrls?.[0]) {
+      throw new Error('No URL returned from server');
+    }
+
+    return result.imageUrls[0];
   };
 
   const handleUpload = async () => {
     if (files.length === 0) {
       toast({
         title: "No Files Selected",
-        description: "Please select at least one file to upload.",
+        description: "Please select files to upload",
         variant: "destructive",
       });
       return;
     }
 
     setIsUploading(true);
-    
+    const urls: string[] = [];
+    let failedUploads = 0;
+
     try {
-      // Create a FormData object to send the files
-      const formData = new FormData();
-      
-      // Add each file to the FormData
-      files.forEach(file => {
-        formData.append('files', file);
-      });
-      
-      console.log(`Uploading ${files.length} files via DirectUploader`);
-      
-      // Try each endpoint in sequence until one works
-      const endpoints = [
-        '/api/upload/bypass',
-        '/api/simple-upload',
-        '/api/basic-upload'
-      ];
-      
-      let uploadSuccessful = false;
-      let imageUrls: string[] = [];
-      
-      for (const endpoint of endpoints) {
-        if (uploadSuccessful) break;
-        
+      for (const file of files) {
         try {
-          console.log(`Trying upload to ${endpoint}...`);
-          
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            body: formData,
-          });
-          
-          if (!response.ok) {
-            console.error(`Upload to ${endpoint} failed with status ${response.status}`);
-            const errorText = await response.text();
-            console.error(`Error details: ${errorText}`);
-            continue; // Try the next endpoint
-          }
-          
-          const result = await response.json();
-          console.log(`Upload to ${endpoint} succeeded:`, result);
-          
-          if (result.imageUrls || result.urls) {
-            imageUrls = result.imageUrls || result.urls;
-            uploadSuccessful = true;
-            
-            // Call the callback with the image URLs
-            onUploadSuccess(imageUrls);
-            
-            toast({
-              title: "Upload Successful",
-              description: `Successfully uploaded ${imageUrls.length} images`,
-            });
-          } else {
-            console.error(`${endpoint} response missing image URLs:`, result);
-          }
+          const url = await uploadFile(file);
+          urls.push(url);
         } catch (error) {
-          console.error(`Error with ${endpoint}:`, error);
+          console.error(`Failed to upload ${file.name}:`, error);
+          failedUploads++;
         }
       }
-      
-      if (!uploadSuccessful) {
-        throw new Error("All upload methods failed");
+
+      if (urls.length > 0) {
+        onUploadSuccess(urls);
+        setFiles([]);
+
+        toast({
+          title: "Upload Complete",
+          description: `Successfully uploaded ${urls.length} files${failedUploads ? ` (${failedUploads} failed)` : ''}`,
+          variant: failedUploads ? "warning" : "default",
+        });
+      } else {
+        throw new Error("All uploads failed");
       }
-      
-      // Clear the file input after successful upload
-      setFiles([]);
     } catch (error) {
-      console.error('Upload failed:', error);
-      
+      console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
+        description: error instanceof Error ? error.message : "Failed to upload files",
         variant: "destructive",
       });
     } finally {
@@ -136,7 +107,7 @@ const DirectUploader: React.FC<DirectUploaderProps> = ({
   return (
     <div className="p-4 border rounded-md">
       <h3 className="text-lg font-medium mb-2">{label}</h3>
-      
+
       <div className="mb-4">
         <input
           type="file"
@@ -156,7 +127,7 @@ const DirectUploader: React.FC<DirectUploaderProps> = ({
           </p>
         )}
       </div>
-      
+
       <Button 
         onClick={handleUpload}
         disabled={isUploading || files.length === 0}

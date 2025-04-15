@@ -15,18 +15,20 @@ if (!fs.existsSync(uploadDir)) {
 // Force directory permissions
 fs.chmodSync(uploadDir, 0o777);
 
-// Configure multer for file uploads
+// Configure multer for reliable file uploads
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
+    // Ensure upload directory exists
+    fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
     cb(null, uploadDir);
   },
   filename: function(req, file, cb) {
-    // Create a unique filename with original extension
     const timestamp = Date.now();
-    const random = Math.round(Math.random() * 1000);
-    const ext = path.extname(file.originalname) || '.jpg';
-    const filename = `simple-${timestamp}-${random}${ext}`;
-    console.log(`Generated filename: ${filename}`);
+    const random = Math.round(Math.random() * 1E9);
+    const safeFilename = file.originalname.replace(/[^a-zA-Z0-9]/g, '_');
+    const ext = path.extname(safeFilename) || '.jpg';
+    const filename = `images-${timestamp}-${random}${ext}`;
+    console.log(`Generated filename: ${filename} for ${file.originalname}`);
     cb(null, filename);
   }
 });
