@@ -2447,14 +2447,21 @@ export default function Dashboard() {
 
                   <div className="space-y-2">
                     <div className="mb-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                      <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternatives</h4>
-                      <p className="text-xs text-gray-700 mb-1">If you're having trouble with image uploads, try one of these alternatives:</p>
+                      <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Property Image Uploaders</h4>
+                      <p className="text-xs text-gray-700 mb-1">For reliable image uploading, use our new universal uploader:</p>
+                      <div className="text-xs text-gray-700 ml-4 mb-2">
+                        <a href="/property-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
+                          ✓ RECOMMENDED: Universal Property Uploader
+                          <span className="block text-xs mt-1 font-normal">Works across all browsers and devices</span>
+                        </a>
+                      </div>
+                      <p className="text-xs text-gray-700 mb-1">If you still have issues, try one of these alternatives:</p>
                       <ol className="text-xs text-gray-700 ml-4 list-decimal">
                         <li className="mb-1">
-                          <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a> (simple 1990s-style)
+                          <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
                         </li>
                         <li>
-                          <strong>For Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a> (drag-and-drop support)
+                          <strong>For Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a>
                         </li>
                       </ol>
                       <p className="text-xs text-gray-700 mt-1">After uploading images, copy the URLs and paste them below.</p>
@@ -2675,8 +2682,15 @@ export default function Dashboard() {
                 </label>
                 
                 <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternatives</h4>
-                  <p className="text-xs text-gray-700 mb-1">If you're having trouble with image uploads, try one of these alternatives:</p>
+                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Uploaders</h4>
+                  <p className="text-xs text-gray-700 mb-1">For reliable image uploading, use our new universal uploader:</p>
+                  <div className="text-xs text-gray-700 ml-4 mb-2">
+                    <a href="/property-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
+                      ✓ RECOMMENDED: Universal Property Uploader
+                      <span className="block text-xs mt-1 font-normal">Works across all browsers and devices</span>
+                    </a>
+                  </div>
+                  <p className="text-xs text-gray-700 mb-1">Or try one of these alternatives:</p>
                   <ol className="text-xs text-gray-700 ml-4 list-decimal">
                     <li className="mb-1">
                       <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
@@ -2759,8 +2773,15 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="grid gap-2">
                 <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternatives</h4>
-                  <p className="text-xs text-gray-700 mb-1">If you're having trouble with logo upload, try one of these alternatives:</p>
+                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Uploaders</h4>
+                  <p className="text-xs text-gray-700 mb-1">For reliable image uploading, use our new universal uploader:</p>
+                  <div className="text-xs text-gray-700 ml-4 mb-2">
+                    <a href="/property-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
+                      ✓ RECOMMENDED: Universal Property Uploader
+                      <span className="block text-xs mt-1 font-normal">Works across all browsers and devices</span>
+                    </a>
+                  </div>
+                  <p className="text-xs text-gray-700 mb-1">Or try one of these alternatives:</p>
                   <ol className="text-xs text-gray-700 ml-4 list-decimal">
                     <li className="mb-1">
                       <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
