@@ -5,6 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import simpleUploadRouter from "./simple-upload"; // Import our simple upload router
+import unifiedUploader from "./unified-uploader"; // Import our new unified uploader
 
 // Create and prepare all upload directories with proper permissions
 function prepareUploadDirectories() {
@@ -95,6 +96,9 @@ app.use(express.urlencoded({ extended: false }));
 
 // Register our simple upload router - this comes before other route registrations
 app.use('/api', simpleUploadRouter);
+
+// Register our new unified uploader - provides a more robust upload solution
+app.use('/api/unified', unifiedUploader);
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(uploadsDir));
