@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Property Image Uploader - The Views Real Estate</title>
+    <style>
+        body {
+            font-family: 'Tahoma', sans-serif;
+            background-color: #f8f8f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-family: 'Playfair Display', serif;
+            color: #B87333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .upload-area {
+            border: 3px dashed #B87333;
+            padding: 40px;
+            text-align: center;
+            background-color: #fcfaf7;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .upload-area:hover {
+            background-color: #f8f3ed;
+        }
+        .upload-area.highlight {
+            background-color: #efe8e0;
+        }
+        .choose-files-btn {
+            background-color: #B87333;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            display: block;
+            margin: 20px auto;
+            width: 200px;
+        }
+        .choose-files-btn:hover {
+            background-color: #9E6B30;
+        }
+        .upload-btn {
+            background-color: #964B00;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .upload-btn:hover {
+            background-color: #7A3C00;
+        }
+        .upload-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-list {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
+        }
+        .file-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #f5f5f5;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-item:last-child {
+            margin-bottom: 0;
+        }
+        .file-name {
+            flex-grow: 1;
+            margin-right: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .remove-file {
+            color: #ff6666;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 2px solid #B87333;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #B87333;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .links-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .dashboard-link {
+            display: inline-block;
+            background-color: #333;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .dashboard-link:hover {
+            background-color: #555;
+        }
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #777;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>The Views Real Estate<br>Universal Property Image Uploader</h1>
+        
+        <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
+            <div id="uploadArea" class="upload-area">
+                <p>Drag and drop property images here</p>
+                <p>or</p>
+                <button type="button" class="choose-files-btn">Choose Files</button>
+                <input type="file" id="fileInput" class="file-input" name="images" multiple accept="image/*">
+            </div>
+            
+            <div id="fileList" class="file-list" style="display: none;">
+                <p>Selected files:</p>
+                <div id="fileItems"></div>
+            </div>
+            
+            <div id="previewContainer" class="preview-container"></div>
+            
+            <div id="progressContainer" class="progress-container">
+                <div class="progress-bar">
+                    <div id="progressBar" class="progress">0%</div>
+                </div>
+            </div>
+            
+            <button type="submit" id="uploadBtn" class="upload-btn" disabled>Upload Images</button>
+        </form>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div id="resultContainer" style="display: none; margin-top: 20px;">
+            <h3>Upload Results:</h3>
+            <ul id="resultList"></ul>
+        </div>
+        
+        <div class="links-container">
+            <a href="/" class="dashboard-link">Return to Dashboard</a>
+        </div>
+    </div>
+    
+    <footer>
+        &copy; 2025 The Views Real Estate. All rights reserved.
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const form = document.getElementById('uploadForm');
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const fileList = document.getElementById('fileList');
+            const fileItems = document.getElementById('fileItems');
+            const uploadArea = document.getElementById('uploadArea');
+            const previewContainer = document.getElementById('previewContainer');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const statusElement = document.getElementById('status');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultList = document.getElementById('resultList');
+            const chooseFilesBtn = document.querySelector('.choose-files-btn');
+            
+            // Selected files storage
+            let selectedFiles = [];
+            
+            // Initialize event listeners
+            initializeEventListeners();
+            
+            function initializeEventListeners() {
+                // Trigger file input when choose files button is clicked
+                chooseFilesBtn.addEventListener('click', () => {
+                    fileInput.click();
+                });
+                
+                // Handle file selection
+                fileInput.addEventListener('change', handleFileSelection);
+                
+                // Handle form submission
+                form.addEventListener('submit', handleFormSubmission);
+                
+                // Drag and drop event listeners
+                uploadArea.addEventListener('dragover', handleDragOver);
+                uploadArea.addEventListener('dragleave', handleDragLeave);
+                uploadArea.addEventListener('drop', handleDrop);
+            }
+            
+            function handleFileSelection(event) {
+                const files = event.target.files;
+                if (files.length > 0) {
+                    processSelectedFiles(files);
+                }
+            }
+            
+            function handleDragOver(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                uploadArea.classList.add('highlight');
+            }
+            
+            function handleDragLeave(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                uploadArea.classList.remove('highlight');
+            }
+            
+            function handleDrop(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                uploadArea.classList.remove('highlight');
+                
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    processSelectedFiles(files);
+                }
+            }
+            
+            function processSelectedFiles(files) {
+                // Convert FileList to Array and add to selectedFiles
+                Array.from(files).forEach(file => {
+                    // Only add image files
+                    if (file.type.startsWith('image/')) {
+                        selectedFiles.push(file);
+                    }
+                });
+                
+                updateFileList();
+                createImagePreviews();
+                updateUploadButton();
+            }
+            
+            function updateFileList() {
+                // Clear current list
+                fileItems.innerHTML = '';
+                
+                // Add each file to the list
+                selectedFiles.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-size">(${formatFileSize(file.size)})</span>
+                        <span class="remove-file" data-index="${index}">×</span>
+                    `;
+                    fileItems.appendChild(fileItem);
+                });
+                
+                // Show file list if there are files
+                fileList.style.display = selectedFiles.length > 0 ? 'block' : 'none';
+                
+                // Add click handlers for remove buttons
+                document.querySelectorAll('.remove-file').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        removeFile(index);
+                    });
+                });
+            }
+            
+            function createImagePreviews() {
+                // Clear current previews
+                previewContainer.innerHTML = '';
+                
+                // Create preview for each image file
+                selectedFiles.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'image-preview';
+                            previewContainer.appendChild(img);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            function removeFile(index) {
+                selectedFiles.splice(index, 1);
+                updateFileList();
+                createImagePreviews();
+                updateUploadButton();
+            }
+            
+            function updateUploadButton() {
+                uploadBtn.disabled = selectedFiles.length === 0;
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' bytes';
+                else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                else return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+            
+            function handleFormSubmission(event) {
+                event.preventDefault();
+                
+                if (selectedFiles.length === 0) {
+                    showStatus('error', 'Please select at least one image file to upload.');
+                    return;
+                }
+                
+                uploadFiles();
+            }
+            
+            function uploadFiles() {
+                // Create FormData and append files
+                const formData = new FormData();
+                selectedFiles.forEach(file => {
+                    formData.append('images', file);
+                });
+                
+                // Disable form elements during upload
+                uploadBtn.disabled = true;
+                fileInput.disabled = true;
+                
+                // Show progress bar
+                progressContainer.style.display = 'block';
+                
+                // Hide any previous status messages
+                statusElement.style.display = 'none';
+                
+                // Create and configure the XHR request
+                const xhr = new XMLHttpRequest();
+                
+                // Alternate endpoints to try if the first fails
+                const endpoints = [
+                    '/api/upload/property-images-direct',
+                    '/api/upload/property-images',
+                    '/api/upload/property-images-simple'
+                ];
+                
+                // Track current endpoint index
+                let currentEndpoint = 0;
+                
+                // Function to try uploading with current endpoint
+                function tryUpload() {
+                    // Reset progress
+                    progressBar.style.width = '0%';
+                    progressBar.textContent = '0%';
+                    
+                    const endpoint = endpoints[currentEndpoint];
+                    console.log(`Trying upload with endpoint: ${endpoint}`);
+                    
+                    xhr.open('POST', endpoint, true);
+                    
+                    // Set up event listeners for the request
+                    xhr.upload.addEventListener('progress', updateProgress);
+                    xhr.addEventListener('load', handleUploadComplete);
+                    xhr.addEventListener('error', handleUploadError);
+                    xhr.addEventListener('abort', handleUploadAbort);
+                    
+                    // Start the upload
+                    xhr.send(formData);
+                }
+                
+                function updateProgress(event) {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressBar.textContent = percent + '%';
+                    }
+                }
+                
+                function handleUploadComplete(event) {
+                    // Check if the upload was successful
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            
+                            if (response.success === false) {
+                                // API returned error status, try next endpoint
+                                currentEndpoint++;
+                                if (currentEndpoint < endpoints.length) {
+                                    console.log(`Upload failed with endpoint ${endpoints[currentEndpoint-1]}, trying next endpoint...`);
+                                    tryUpload();
+                                    return;
+                                } else {
+                                    // All endpoints failed
+                                    showStatus('error', `Upload failed: ${response.message}`);
+                                }
+                            } else {
+                                // Success!
+                                handleSuccessfulUpload(response);
+                            }
+                        } catch (error) {
+                            // Parsing error or other issue
+                            currentEndpoint++;
+                            if (currentEndpoint < endpoints.length) {
+                                console.log(`Error processing response from ${endpoints[currentEndpoint-1]}, trying next endpoint...`);
+                                tryUpload();
+                                return;
+                            } else {
+                                showStatus('error', 'Error processing server response. Please try again.');
+                            }
+                        }
+                    } else {
+                        // HTTP error, try next endpoint
+                        currentEndpoint++;
+                        if (currentEndpoint < endpoints.length) {
+                            console.log(`Upload failed with status ${xhr.status} on endpoint ${endpoints[currentEndpoint-1]}, trying next endpoint...`);
+                            tryUpload();
+                            return;
+                        } else {
+                            // All endpoints failed
+                            showStatus('error', `Server error: ${xhr.status} ${xhr.statusText}`);
+                        }
+                    }
+                    
+                    // Re-enable form elements
+                    uploadBtn.disabled = selectedFiles.length === 0;
+                    fileInput.disabled = false;
+                }
+                
+                function handleUploadError() {
+                    // Network error, try next endpoint
+                    currentEndpoint++;
+                    if (currentEndpoint < endpoints.length) {
+                        console.log(`Network error on endpoint ${endpoints[currentEndpoint-1]}, trying next endpoint...`);
+                        tryUpload();
+                        return;
+                    } else {
+                        // All endpoints failed
+                        showStatus('error', 'Network error occurred during upload. Please check your connection and try again.');
+                        uploadBtn.disabled = selectedFiles.length === 0;
+                        fileInput.disabled = false;
+                    }
+                }
+                
+                function handleUploadAbort() {
+                    showStatus('error', 'Upload was aborted.');
+                    uploadBtn.disabled = selectedFiles.length === 0;
+                    fileInput.disabled = false;
+                }
+                
+                function handleSuccessfulUpload(response) {
+                    // Success message
+                    showStatus('success', 'Images uploaded successfully!');
+                    
+                    // Display results
+                    resultContainer.style.display = 'block';
+                    resultList.innerHTML = '';
+                    
+                    const imageUrls = response.imageUrls || [];
+                    if (imageUrls.length > 0) {
+                        imageUrls.forEach(url => {
+                            const li = document.createElement('li');
+                            li.textContent = url;
+                            resultList.appendChild(li);
+                        });
+                    } else {
+                        const li = document.createElement('li');
+                        li.textContent = 'No image URLs returned from server';
+                        resultList.appendChild(li);
+                    }
+                    
+                    // Clear selected files
+                    selectedFiles = [];
+                    updateFileList();
+                    createImagePreviews();
+                    updateUploadButton();
+                }
+                
+                // Start the upload process with the first endpoint
+                tryUpload();
+            }
+            
+            function showStatus(type, message) {
+                statusElement.textContent = message;
+                statusElement.className = `status ${type}`;
+                statusElement.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
