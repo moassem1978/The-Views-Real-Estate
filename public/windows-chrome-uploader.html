@@ -42,6 +42,7 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 16px;
+      width: 100%;
     }
     button:disabled {
       background: #ccc;
@@ -74,6 +75,19 @@
     }
     progress {
       width: 100%;
+      height: 20px;
+    }
+    .preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .preview img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -81,9 +95,8 @@
   <h1>Windows Property Image Uploader</h1>
   
   <div class="box">
-    <h3>⚠️ Optimized for Windows</h3>
+    <h3>⚠️ Windows Upload Instructions</h3>
     <p>This uploader is specifically designed for Windows users to ensure reliable uploads.</p>
-    <p><strong>Simple Steps:</strong></p>
     <ol>
       <li>Select your property images below (up to 10 files)</li>
       <li>Click "Upload Images"</li>
@@ -95,6 +108,7 @@
   <form id="uploadForm">
     <label for="files">Select Property Images:</label>
     <input type="file" name="files" id="files" multiple accept="image/*" required>
+    <div class="preview" id="preview"></div>
     <div class="error" id="error"></div>
     <div class="progress" id="progress">
       <p>Uploading... Please don't close this window.</p>
@@ -113,35 +127,55 @@
 
   <script>
     const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('files');
+    const preview = document.getElementById('preview');
     const error = document.getElementById('error');
     const progress = document.getElementById('progress');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
     const results = document.getElementById('results');
     const urlList = document.getElementById('urlList');
     const submitBtn = document.getElementById('submitBtn');
+
+    // Show image previews
+    fileInput.onchange = () => {
+      preview.innerHTML = '';
+      if (fileInput.files.length > 10) {
+        error.textContent = 'Maximum 10 files allowed';
+        error.style.display = 'block';
+        fileInput.value = '';
+        return;
+      }
+      
+      for (let file of fileInput.files) {
+        if (!file.type.startsWith('image/')) {
+          continue;
+        }
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        preview.appendChild(img);
+      }
+    };
 
     form.onsubmit = async (e) => {
       e.preventDefault();
       error.style.display = 'none';
       results.style.display = 'none';
       
-      const files = document.getElementById('files').files;
+      const files = fileInput.files;
       if (!files.length) {
         error.textContent = 'Please select at least one image';
         error.style.display = 'block';
         return;
       }
 
-      const formData = new FormData();
-      for (let file of files) {
-        formData.append('files', file);
-      }
-
       submitBtn.disabled = true;
       progress.style.display = 'block';
       
       try {
+        const formData = new FormData();
+        for (let file of files) {
+          formData.append('files', file);
+        }
+
         const response = await fetch('/api/upload/bypass', {
           method: 'POST',
           body: formData
@@ -155,7 +189,9 @@
         
         if (data.success && data.imageUrls?.length) {
           results.style.display = 'block';
-          urlList.value = data.imageUrls.join(', ');
+          urlList.value = data.imageUrls.join('\n');
+          fileInput.value = '';
+          preview.innerHTML = '';
         } else {
           throw new Error('Upload response missing image URLs');
         }
