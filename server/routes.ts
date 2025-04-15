@@ -1412,7 +1412,14 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         const wantsHtml = req.headers['accept']?.includes('text/html');
         
         if (wantsHtml) {
-          // Return HTML response with the URLs and images displayed
+          // Check if this is from our cross-platform uploader
+          const referer = req.headers['referer'] || '';
+          if (referer.includes('cross-platform-uploader.html')) {
+            // Redirect back to the cross-platform uploader with the URLs as parameters
+            return res.redirect(`/cross-platform-uploader.html?success=true&urls=${imageUrls.join(',')}`);
+          }
+          
+          // Standard HTML response for other uploaders
           const imagesHtml = imageUrls.map(url => `
             <div class="img-container">
               <img src="${url}" class="preview" alt="Uploaded image">
@@ -1476,6 +1483,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const wantsHtml = req.headers['accept']?.includes('text/html');
       
       if (wantsHtml) {
+        // Check if this is from our cross-platform uploader
+        const referer = req.headers['referer'] || '';
+        if (referer.includes('cross-platform-uploader.html')) {
+          // Redirect back to the cross-platform uploader with error message
+          return res.redirect(`/cross-platform-uploader.html?error=true&message=${encodeURIComponent(error instanceof Error ? error.message : "Unknown error")}`);
+        }
+        
         return res.status(500).send(`
           <html><head><title>Server Error</title>
           <style>
