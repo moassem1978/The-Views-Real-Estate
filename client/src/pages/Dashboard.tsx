@@ -2447,8 +2447,17 @@ export default function Dashboard() {
 
                   <div className="space-y-2">
                     <div className="mb-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                      <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternative</h4>
-                      <p className="text-xs text-gray-700 mb-2">If you're having trouble uploading images directly, try our <strong>extremely simple</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a> (uses 1990s-era HTML forms) and paste the URLs below.</p>
+                      <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternatives</h4>
+                      <p className="text-xs text-gray-700 mb-1">If you're having trouble with image uploads, try one of these alternatives:</p>
+                      <ol className="text-xs text-gray-700 ml-4 list-decimal">
+                        <li className="mb-1">
+                          <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a> (simple 1990s-style)
+                        </li>
+                        <li>
+                          <strong>For Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a> (drag-and-drop support)
+                        </li>
+                      </ol>
+                      <p className="text-xs text-gray-700 mt-1">After uploading images, copy the URLs and paste them below.</p>
                     </div>
                     
                     <label htmlFor="images" className="text-sm font-medium">
@@ -2666,8 +2675,17 @@ export default function Dashboard() {
                 </label>
                 
                 <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternative</h4>
-                  <p className="text-xs text-gray-700">If you're having trouble uploading images directly, try our <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a> and paste the URL below.</p>
+                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternatives</h4>
+                  <p className="text-xs text-gray-700 mb-1">If you're having trouble with image uploads, try one of these alternatives:</p>
+                  <ol className="text-xs text-gray-700 ml-4 list-decimal">
+                    <li className="mb-1">
+                      <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
+                    </li>
+                    <li>
+                      <strong>For Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a>
+                    </li>
+                  </ol>
+                  <p className="text-xs text-gray-700 mt-1">After uploading, copy the URL and paste it below.</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -2741,8 +2759,17 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="grid gap-2">
                 <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternative</h4>
-                  <p className="text-xs text-gray-700">If you're having trouble uploading the logo, try our <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a> and paste the URL in the company settings instead.</p>
+                  <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Upload Alternatives</h4>
+                  <p className="text-xs text-gray-700 mb-1">If you're having trouble with logo upload, try one of these alternatives:</p>
+                  <ol className="text-xs text-gray-700 ml-4 list-decimal">
+                    <li className="mb-1">
+                      <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
+                    </li>
+                    <li>
+                      <strong>For Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a>
+                    </li>
+                  </ol>
+                  <p className="text-xs text-gray-700 mt-1">After uploading, copy the URL and paste it in the company settings.</p>
                 </div>
                 
                 <label htmlFor="logo" className="text-sm font-medium">

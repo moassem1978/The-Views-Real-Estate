@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Views - Chrome/Edge Image Uploader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #964B00;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #964B00;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #B87333;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            width: 100%;
+            padding: 40px 0;
+            margin: 20px 0;
+            text-align: center;
+            background-color: #f8f8f8;
+            transition: background-color 0.3s;
+        }
+        #drop-area.highlight {
+            background-color: #f0f8ff;
+            border-color: #964B00;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+        }
+        .success {
+            color: green;
+            border-color: green;
+            background-color: #e8f5e9;
+        }
+        .error {
+            color: #d32f2f;
+            border-color: #d32f2f;
+            background-color: #ffebee;
+        }
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .image-preview {
+            position: relative;
+            width: 150px;
+            margin-bottom: 15px;
+        }
+        .image-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #d32f2f;
+            color: white;
+            font-size: 14px;
+            line-height: 24px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            margin-top: 10px;
+            font-family: monospace;
+            padding: 8px;
+        }
+        .hidden {
+            display: none;
+        }
+        a {
+            color: #B87333;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .note {
+            background-color: #fffde7;
+            border-left: 4px solid #ffeb3b;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #964B00;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        #gallery {
+            margin-top: 20px;
+        }
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        #progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        progress {
+            width: 100%;
+            height: 20px;
+        }
+        #progress-text {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chrome/Edge Special Image Uploader</h1>
+    <p>This uploader is specifically designed to work in Chrome and Edge browsers.</p>
+    
+    <div class="note">
+        <p><strong>Instructions:</strong></p>
+        <ol>
+            <li>Drag and drop images onto the drop area below or click to select files</li>
+            <li>Review your selected images in the preview area</li>
+            <li>Click "Upload Selected Images" to start the upload</li>
+            <li>After successful upload, copy the URLs that appear and paste them into the property form</li>
+        </ol>
+    </div>
+    
+    <div class="container">
+        <h2>Upload Images</h2>
+        
+        <div id="drop-area">
+            <p>Drag images here or</p>
+            <input type="file" id="fileElem" multiple accept="image/*" class="hidden">
+            <button id="browse-btn">Select Images</button>
+        </div>
+        
+        <div id="preview-area" class="image-container"></div>
+        
+        <div id="progress-container">
+            <p>Uploading...</p>
+            <progress id="progress-bar" max="100" value="0"></progress>
+            <div id="progress-text">0%</div>
+        </div>
+        
+        <button id="upload-btn" disabled>Upload Selected Images</button>
+    </div>
+    
+    <div id="result-container" class="hidden">
+        <h2>Upload Results</h2>
+        <div id="result-message"></div>
+        
+        <div id="url-container" class="hidden">
+            <h3>Image URLs (Copy these)</h3>
+            <textarea id="url-list" onclick="this.select()" readonly></textarea>
+            <button onclick="copyUrls()">Copy All URLs</button>
+        </div>
+        
+        <div id="gallery"></div>
+    </div>
+    
+    <a href="/">Return to Main Website</a>
+    
+    <script>
+        // Elements
+        const dropArea = document.getElementById('drop-area');
+        const fileElem = document.getElementById('fileElem');
+        const browseBtn = document.getElementById('browse-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const previewArea = document.getElementById('preview-area');
+        const resultContainer = document.getElementById('result-container');
+        const resultMessage = document.getElementById('result-message');
+        const urlContainer = document.getElementById('url-container');
+        const urlList = document.getElementById('url-list');
+        const gallery = document.getElementById('gallery');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        
+        // Global variables
+        let selectedFiles = [];
+        
+        // Event Listeners
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        dropArea.addEventListener('drop', handleDrop, false);
+        browseBtn.addEventListener('click', () => fileElem.click());
+        fileElem.addEventListener('change', handleFiles);
+        uploadBtn.addEventListener('click', uploadFiles);
+        
+        // Functions
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function highlight() {
+            dropArea.classList.add('highlight');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('highlight');
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles({ target: { files } });
+        }
+        
+        function handleFiles(e) {
+            const newFiles = [...e.target.files];
+            
+            // Add only image files
+            const imageFiles = newFiles.filter(file => file.type.startsWith('image/'));
+            
+            // Add files to our array
+            selectedFiles = [...selectedFiles, ...imageFiles];
+            
+            // Update the UI
+            updateFilePreviews();
+            
+            // Enable upload button if we have files
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+        
+        function updateFilePreviews() {
+            // Clear preview area
+            previewArea.innerHTML = '';
+            
+            // Add preview for each file
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'image-preview';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.title = file.name;
+                    
+                    const removeBtn = document.createElement('div');
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.textContent = '×';
+                    removeBtn.addEventListener('click', () => removeFile(index));
+                    
+                    const fileInfo = document.createElement('div');
+                    fileInfo.className = 'file-info';
+                    fileInfo.textContent = `${file.name} (${formatFileSize(file.size)})`;
+                    
+                    preview.appendChild(img);
+                    preview.appendChild(removeBtn);
+                    preview.appendChild(fileInfo);
+                    previewArea.appendChild(preview);
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFilePreviews();
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+        
+        function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+            
+            // Show progress
+            progressContainer.style.display = 'block';
+            uploadBtn.disabled = true;
+            
+            // Create FormData object
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            // Create and configure the request
+            const xhr = new XMLHttpRequest();
+            
+            // Setup progress tracking
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    progressBar.value = percentComplete;
+                    progressText.textContent = percentComplete + '%';
+                }
+            });
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    progressContainer.style.display = 'none';
+                    
+                    if (xhr.status === 200) {
+                        displaySuccess(xhr.responseText);
+                    } else {
+                        displayError(xhr);
+                    }
+                    
+                    // Reset file selection
+                    selectedFiles = [];
+                    updateFilePreviews();
+                    uploadBtn.disabled = true;
+                }
+            };
+            
+            // Send the request
+            xhr.open('POST', '/api/upload/bypass', true);
+            xhr.send(formData);
+        }
+        
+        function displaySuccess(response) {
+            let data;
+            
+            // Check if response is JSON or HTML
+            try {
+                data = JSON.parse(response);
+                
+                // It's JSON
+                resultContainer.classList.remove('hidden');
+                resultMessage.innerHTML = `<div class="result success">
+                    <p>✓ Successfully uploaded ${data.imageUrls.length} images!</p>
+                </div>`;
+                
+                // Show URLs
+                urlContainer.classList.remove('hidden');
+                urlList.value = data.imageUrls.join(', ');
+                
+                // Show gallery
+                gallery.innerHTML = '<h3>Preview</h3><div class="image-container">' + 
+                    data.imageUrls.map(url => `
+                        <div class="image-preview">
+                            <img src="${url}" alt="Uploaded image">
+                            <div class="file-info">${url.split('/').pop()}</div>
+                        </div>
+                    `).join('') + '</div>';
+                
+            } catch (e) {
+                // It's HTML, extract what we need using a temporary element
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = response;
+                
+                const urlsTextarea = tempDiv.querySelector('.url-list');
+                const imagesDiv = tempDiv.querySelector('.images');
+                
+                if (urlsTextarea && imagesDiv) {
+                    resultContainer.classList.remove('hidden');
+                    resultMessage.innerHTML = `<div class="result success">
+                        <p>✓ Upload successful!</p>
+                    </div>`;
+                    
+                    // Extract and show URLs
+                    urlContainer.classList.remove('hidden');
+                    urlList.value = urlsTextarea.textContent;
+                    
+                    // Show gallery (simplified version)
+                    gallery.innerHTML = '<h3>Preview</h3>';
+                    gallery.appendChild(imagesDiv.cloneNode(true));
+                } else {
+                    // Couldn't parse the HTML response properly
+                    resultContainer.classList.remove('hidden');
+                    resultMessage.innerHTML = `<div class="result success">
+                        <p>Upload appears successful, but couldn't parse the response.</p>
+                        <p>Please check the server response for image URLs.</p>
+                    </div>`;
+                }
+            }
+        }
+        
+        function displayError(xhr) {
+            resultContainer.classList.remove('hidden');
+            resultMessage.innerHTML = `<div class="result error">
+                <p>Error uploading files: ${xhr.status} ${xhr.statusText}</p>
+                <p>${xhr.responseText || 'No additional error information available'}</p>
+            </div>`;
+            
+            urlContainer.classList.add('hidden');
+            gallery.innerHTML = '';
+        }
+        
+        function copyUrls() {
+            urlList.select();
+            document.execCommand('copy');
+            alert('URLs copied to clipboard!');
+        }
+    </script>
+</body>
+</html>
