@@ -1177,7 +1177,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getHighlightedProperties(limit = 3): Promise<Property[]> {
+  async getHighlightedProperties(limit = 10): Promise<Property[]> {
     console.log(`DEBUG: Fetching highlighted properties with limit: ${limit}`);
     // Get all properties first to debug
     const allProps = await db.select().from(properties);
@@ -1189,6 +1189,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(properties)
       .where(eq(properties.isHighlighted, true))
+      .orderBy(desc(properties.createdAt)) // Most recent properties first
       .limit(limit);
     
     console.log(`DEBUG: Query returned ${results.length} highlighted properties`);
@@ -1463,7 +1464,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async getHighlightedAnnouncements(limit = 3): Promise<Announcement[]> {
+  async getHighlightedAnnouncements(limit = 10): Promise<Announcement[]> {
     console.log(`DEBUG: Fetching highlighted announcements with limit: ${limit}`);
     // Get all announcements first to debug
     const allAnnouncements = await db.select().from(announcements);
@@ -1475,6 +1476,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(announcements)
       .where(eq(announcements.isHighlighted, true))
+      .orderBy(desc(announcements.createdAt))
       .limit(limit);
     
     console.log(`DEBUG: Query returned ${results.length} highlighted announcements`);
