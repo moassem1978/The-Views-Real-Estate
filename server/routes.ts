@@ -1608,6 +1608,44 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
   
+  // Super simple image uploader - no authentication, no error handling
+  app.post('/api/simple-upload', (req, res) => {
+    const upload = multer({
+      storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+          // Save to public/uploads/properties for direct access
+          const dir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true, mode: 0o777 });
+          }
+          cb(null, dir);
+        },
+        filename: (req, file, cb) => {
+          const uniqueName = 'image_' + Date.now() + path.extname(file.originalname);
+          cb(null, uniqueName);
+        }
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 }
+    }).array('images', 10);
+    
+    upload(req, res, (err) => {
+      if (err) {
+        console.error('Simple upload error:', err);
+        return res.status(400).json({ success: false, error: err.message });
+      }
+      
+      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+        return res.status(400).json({ success: false, error: 'No files uploaded' });
+      }
+      
+      const urls = (req.files as Express.Multer.File[]).map(file => {
+        return `/uploads/properties/${file.filename}`;
+      });
+      
+      res.json({ success: true, urls });
+    });
+  });
+
   // Direct file access route as a last resort
   app.get('/uploads/*', (req, res) => {
     // This is our last fallback if the static middleware doesn't find the file
