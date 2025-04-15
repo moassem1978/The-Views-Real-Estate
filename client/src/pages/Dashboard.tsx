@@ -2461,7 +2461,7 @@ export default function Dashboard() {
                           <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
                         </li>
                         <li>
-                          <strong>For Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a>
+                          <strong>For Windows Chrome/Edge:</strong> <a href="/windows-chrome-uploader.html" target="_blank" className="text-blue-600 underline">Windows Chrome Uploader</a>
                         </li>
                       </ol>
                       <p className="text-xs text-gray-700 mt-1">After uploading images, copy the URLs and paste them below.</p>
@@ -2696,7 +2696,7 @@ export default function Dashboard() {
                       <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
                     </li>
                     <li>
-                      <strong>For Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a>
+                      <strong>For Windows Chrome/Edge:</strong> <a href="/windows-chrome-uploader.html" target="_blank" className="text-blue-600 underline">Windows Chrome Uploader</a>
                     </li>
                   </ol>
                   <p className="text-xs text-gray-700 mt-1">After uploading, copy the URL and paste it below.</p>
@@ -2787,7 +2787,7 @@ export default function Dashboard() {
                       <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
                     </li>
                     <li>
-                      <strong>For Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a>
+                      <strong>For Windows Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a>
                     </li>
                   </ol>
                   <p className="text-xs text-gray-700 mt-1">After uploading, copy the URL and paste it in the company settings.</p>
