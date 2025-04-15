@@ -2685,8 +2685,8 @@ export default function Dashboard() {
                   <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Uploaders</h4>
                   <p className="text-xs text-gray-700 mb-1">For reliable image uploading, use our new universal uploader:</p>
                   <div className="text-xs text-gray-700 ml-4 mb-2">
-                    <a href="/simple-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
-                      ✓ RECOMMENDED: Simple Property Uploader
+                    <a href="/cross-platform-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
+                      ✓ RECOMMENDED: Cross-Platform Uploader
                       <span className="block text-xs mt-1 font-normal">Works across all browsers and devices</span>
                     </a>
                   </div>
@@ -2776,9 +2776,9 @@ export default function Dashboard() {
                   <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Uploaders</h4>
                   <p className="text-xs text-gray-700 mb-1">For reliable image uploading, use our new universal uploader:</p>
                   <div className="text-xs text-gray-700 ml-4 mb-2">
-                    <a href="/simple-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
-                      ✓ RECOMMENDED: Universal Property Uploader
-                      <span className="block text-xs mt-1 font-normal">Works across all browsers and devices</span>
+                    <a href="/cross-platform-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
+                      ✓ RECOMMENDED: Cross-Platform Uploader
+                      <span className="block text-xs mt-1 font-normal">Works on both Windows and iOS devices - guaranteed!</span>
                     </a>
                   </div>
                   <p className="text-xs text-gray-700 mb-1">Or try one of these alternatives:</p>
