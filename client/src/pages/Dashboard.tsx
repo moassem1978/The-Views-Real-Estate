@@ -2448,20 +2448,34 @@ export default function Dashboard() {
                   <div className="space-y-2">
                     <div className="mb-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
                       <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Property Image Uploaders</h4>
-                      <p className="text-xs text-gray-700 mb-1">For reliable image uploading, use our new universal uploader:</p>
-                      <div className="text-xs text-gray-700 ml-4 mb-2">
-                        <a href="/cross-platform-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
-                          ✓ RECOMMENDED: Cross-Platform Uploader
-                          <span className="block text-xs mt-1 font-normal">Works on both Windows and iOS devices - guaranteed!</span>
-                        </a>
+                      <p className="text-xs text-gray-700 mb-1">Choose the right uploader for your device:</p>
+                      
+                      {/* Windows uploader box */}
+                      <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                        <p className="text-xs font-medium text-blue-800 mb-1">Windows Users:</p>
+                        <div className="text-xs text-gray-700 ml-2 mb-1">
+                          <a href="/windows-uploader.html" target="_blank" className="block px-3 py-2 bg-blue-100 border border-blue-300 rounded-md text-blue-800 font-semibold hover:bg-blue-200 transition-colors">
+                            ✓ RECOMMENDED FOR WINDOWS: Ultra Simple Uploader
+                            <span className="block text-xs mt-1 font-normal">Special version for Windows Chrome/Edge</span>
+                          </a>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-700 mb-1">If you still have issues, try one of these alternatives:</p>
-                      <ol className="text-xs text-gray-700 ml-4 list-decimal">
+                      
+                      {/* iOS uploader box */}
+                      <div className="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-md">
+                        <p className="text-xs font-medium text-rose-800 mb-1">iOS Users (iPhone/iPad):</p>
+                        <div className="text-xs text-gray-700 ml-2 mb-1">
+                          <a href="/basic-uploader.html" target="_blank" className="block px-3 py-2 bg-rose-100 border border-rose-300 rounded-md text-rose-800 font-semibold hover:bg-rose-200 transition-colors">
+                            ✓ RECOMMENDED FOR iOS: Basic HTML Uploader
+                            <span className="block text-xs mt-1 font-normal">Optimized for iPhone and iPad</span>
+                          </a>
+                        </div>
+                      </div>
+                      
+                      <p className="text-xs text-gray-700 mb-1">Other options:</p>
+                      <ol className="text-xs text-gray-700 ml-4 list-disc">
                         <li className="mb-1">
-                          <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
-                        </li>
-                        <li>
-                          <strong>For Windows Chrome/Edge:</strong> <a href="/windows-chrome-uploader.html" target="_blank" className="text-blue-600 underline">Windows Chrome Uploader</a>
+                          <a href="/cross-platform-uploader.html" target="_blank" className="text-blue-600 underline">Universal Uploader</a> (may work on some devices)
                         </li>
                       </ol>
                       <p className="text-xs text-gray-700 mt-1">After uploading images, copy the URLs and paste them below.</p>
@@ -2683,22 +2697,30 @@ export default function Dashboard() {
                 
                 <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
                   <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Uploaders</h4>
-                  <p className="text-xs text-gray-700 mb-1">For reliable image uploading, use our new universal uploader:</p>
-                  <div className="text-xs text-gray-700 ml-4 mb-2">
-                    <a href="/cross-platform-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
-                      ✓ RECOMMENDED: Cross-Platform Uploader
-                      <span className="block text-xs mt-1 font-normal">Works across all browsers and devices</span>
-                    </a>
+                  <p className="text-xs text-gray-700 mb-1">Choose the right uploader for your device:</p>
+                  
+                  {/* Windows uploader box */}
+                  <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-xs font-medium text-blue-800 mb-1">Windows Users:</p>
+                    <div className="text-xs text-gray-700 ml-2 mb-1">
+                      <a href="/windows-uploader.html" target="_blank" className="block px-3 py-2 bg-blue-100 border border-blue-300 rounded-md text-blue-800 font-semibold hover:bg-blue-200 transition-colors">
+                        ✓ RECOMMENDED FOR WINDOWS: Ultra Simple Uploader
+                        <span className="block text-xs mt-1 font-normal">Special version for Windows Chrome/Edge</span>
+                      </a>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-700 mb-1">Or try one of these alternatives:</p>
-                  <ol className="text-xs text-gray-700 ml-4 list-decimal">
-                    <li className="mb-1">
-                      <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
-                    </li>
-                    <li>
-                      <strong>For Windows Chrome/Edge:</strong> <a href="/windows-chrome-uploader.html" target="_blank" className="text-blue-600 underline">Windows Chrome Uploader</a>
-                    </li>
-                  </ol>
+                  
+                  {/* iOS uploader box */}
+                  <div className="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-md">
+                    <p className="text-xs font-medium text-rose-800 mb-1">iOS Users (iPhone/iPad):</p>
+                    <div className="text-xs text-gray-700 ml-2 mb-1">
+                      <a href="/basic-uploader.html" target="_blank" className="block px-3 py-2 bg-rose-100 border border-rose-300 rounded-md text-rose-800 font-semibold hover:bg-rose-200 transition-colors">
+                        ✓ RECOMMENDED FOR iOS: Basic HTML Uploader
+                        <span className="block text-xs mt-1 font-normal">Optimized for iPhone and iPad</span>
+                      </a>
+                    </div>
+                  </div>
+                  
                   <p className="text-xs text-gray-700 mt-1">After uploading, copy the URL and paste it below.</p>
                 </div>
 
@@ -2774,22 +2796,30 @@ export default function Dashboard() {
               <div className="grid gap-2">
                 <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
                   <h4 className="text-sm font-medium text-amber-800 mb-1">⚠️ Image Uploaders</h4>
-                  <p className="text-xs text-gray-700 mb-1">For reliable image uploading, use our new universal uploader:</p>
-                  <div className="text-xs text-gray-700 ml-4 mb-2">
-                    <a href="/cross-platform-uploader.html" target="_blank" className="block mb-2 px-3 py-2 bg-amber-100 border border-amber-300 rounded-md text-amber-800 font-semibold hover:bg-amber-200 transition-colors">
-                      ✓ RECOMMENDED: Cross-Platform Uploader
-                      <span className="block text-xs mt-1 font-normal">Works on both Windows and iOS devices - guaranteed!</span>
-                    </a>
+                  <p className="text-xs text-gray-700 mb-1">Choose the right uploader for your device:</p>
+                  
+                  {/* Windows uploader box */}
+                  <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-xs font-medium text-blue-800 mb-1">Windows Users:</p>
+                    <div className="text-xs text-gray-700 ml-2 mb-1">
+                      <a href="/windows-uploader.html" target="_blank" className="block px-3 py-2 bg-blue-100 border border-blue-300 rounded-md text-blue-800 font-semibold hover:bg-blue-200 transition-colors">
+                        ✓ RECOMMENDED FOR WINDOWS: Ultra Simple Uploader
+                        <span className="block text-xs mt-1 font-normal">Special version for Windows Chrome/Edge</span>
+                      </a>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-700 mb-1">Or try one of these alternatives:</p>
-                  <ol className="text-xs text-gray-700 ml-4 list-decimal">
-                    <li className="mb-1">
-                      <strong>For iPad/iPhone:</strong> <a href="/basic-uploader.html" target="_blank" className="text-blue-600 underline">Basic HTML Uploader</a>
-                    </li>
-                    <li>
-                      <strong>For Windows Chrome/Edge:</strong> <a href="/chrome-uploader.html" target="_blank" className="text-blue-600 underline">Chrome Special Uploader</a>
-                    </li>
-                  </ol>
+                  
+                  {/* iOS uploader box */}
+                  <div className="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-md">
+                    <p className="text-xs font-medium text-rose-800 mb-1">iOS Users (iPhone/iPad):</p>
+                    <div className="text-xs text-gray-700 ml-2 mb-1">
+                      <a href="/basic-uploader.html" target="_blank" className="block px-3 py-2 bg-rose-100 border border-rose-300 rounded-md text-rose-800 font-semibold hover:bg-rose-200 transition-colors">
+                        ✓ RECOMMENDED FOR iOS: Basic HTML Uploader
+                        <span className="block text-xs mt-1 font-normal">Optimized for iPhone and iPad</span>
+                      </a>
+                    </div>
+                  </div>
+                  
                   <p className="text-xs text-gray-700 mt-1">After uploading, copy the URL and paste it in the company settings.</p>
                 </div>
                 
