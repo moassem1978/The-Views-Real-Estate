@@ -1500,15 +1500,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // New simplified property image upload endpoint - uses express middleware directly
+  // New simplified property image upload endpoint - NO AUTHENTICATION REQUIRED
   app.post('/api/upload/property-images-direct', async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
       console.log("==== DIRECT PROPERTY IMAGE UPLOAD CALLED ====");
-      console.log(`User: ${(req.user as Express.User).username}`);
+      console.log("Public upload endpoint - no authentication required");
       
       // Log the incoming request details for debugging
       console.log("Content-Type:", req.headers['content-type']);

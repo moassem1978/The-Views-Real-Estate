@@ -57,8 +57,8 @@ const upload = multer({
   }
 });
 
-// Main universal upload endpoint
-router.post('/upload', requireAuth, (req: Request, res: Response) => {
+// Main universal upload endpoint - allowing direct access without authentication
+router.post('/upload', (req: Request, res: Response) => {
   // Use upload.array for multiple files with 'images' as the field name
   upload.array('images', 20)(req, res, (err) => {
     if (err) {
