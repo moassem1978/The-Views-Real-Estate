@@ -1349,18 +1349,29 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           const wantsHtml = req.headers['accept']?.includes('text/html');
           
           if (wantsHtml) {
+            // Check referer to determine which uploader was used
+            const referer = req.headers['referer'] || '';
+            let backLink = '/basic-uploader.html';
+            
+            if (referer.includes('windows-uploader.html')) {
+              backLink = '/windows-uploader.html';
+            } else if (referer.includes('cross-platform-uploader.html')) {
+              backLink = '/cross-platform-uploader.html';
+            }
+            
             return res.status(500).send(`
               <html><head><title>Upload Error</title>
               <style>
                 body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
-                .error { color: red; }
-                a { color: #B87333; text-decoration: none; }
+                .error { color: red; background: #ffebee; padding: 15px; border-radius: 4px; }
+                a { color: #964B00; text-decoration: none; }
                 a:hover { text-decoration: underline; }
+                h1 { color: #964B00; }
               </style>
               </head><body>
                 <h1>Upload Error</h1>
                 <p class="error">${err.message}</p>
-                <p><a href="/basic-uploader.html">← Back to uploader</a></p>
+                <p><a href="${backLink}">← Back to uploader</a></p>
               </body></html>
             `);
           } else {
@@ -1380,18 +1391,29 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           const wantsHtml = req.headers['accept']?.includes('text/html');
           
           if (wantsHtml) {
+            // Check referer to determine which uploader was used
+            const referer = req.headers['referer'] || '';
+            let backLink = '/basic-uploader.html';
+            
+            if (referer.includes('windows-uploader.html')) {
+              backLink = '/windows-uploader.html';
+            } else if (referer.includes('cross-platform-uploader.html')) {
+              backLink = '/cross-platform-uploader.html';
+            }
+            
             return res.status(400).send(`
               <html><head><title>Upload Error</title>
               <style>
                 body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
-                .error { color: red; }
-                a { color: #B87333; text-decoration: none; }
+                .error { color: red; background: #ffebee; padding: 15px; border-radius: 4px; }
+                a { color: #964B00; text-decoration: none; }
                 a:hover { text-decoration: underline; }
+                h1 { color: #964B00; }
               </style>
               </head><body>
-                <h1>Error</h1>
+                <h1>Upload Error</h1>
                 <p class="error">No files were received. Please select at least one file.</p>
-                <p><a href="/basic-uploader.html">← Back to uploader</a></p>
+                <p><a href="${backLink}">← Back to uploader</a></p>
               </body></html>
             `);
           } else {
@@ -1412,11 +1434,69 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         const wantsHtml = req.headers['accept']?.includes('text/html');
         
         if (wantsHtml) {
-          // Check if this is from our cross-platform uploader
+          // Check referer to determine which uploader was used
           const referer = req.headers['referer'] || '';
+          
+          // Special handling for cross-platform uploader - redirect back with params
           if (referer.includes('cross-platform-uploader.html')) {
             // Redirect back to the cross-platform uploader with the URLs as parameters
             return res.redirect(`/cross-platform-uploader.html?success=true&urls=${imageUrls.join(',')}`);
+          }
+          
+          // Special handling for Windows uploader
+          if (referer.includes('windows-uploader.html')) {
+            return res.status(200).send(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <title>Upload Success</title>
+                <style>
+                  body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                  .success { color: #2e7d32; background: #e8f5e9; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+                  .url-box { background: #f5f5f5; padding: 10px; border-radius: 4px; margin-bottom: 10px; word-break: break-all; }
+                  .copy-btn { background: #964B00; color: white; border: none; padding: 5px 10px; cursor: pointer; margin-top: 5px; }
+                  .image-preview { margin-top: 10px; border: 1px solid #ddd; padding: 5px; max-width: 150px; max-height: 150px; }
+                  a { color: #964B00; text-decoration: none; }
+                  a:hover { text-decoration: underline; }
+                  .divider { margin: 20px 0; border-top: 1px solid #eee; }
+                  h1, h2 { color: #964B00; }
+                  .url-list { width: 100%; height: 100px; margin-top: 20px; font-family: monospace; }
+                </style>
+              </head>
+              <body>
+                <h1>Upload Successful!</h1>
+                <div class="success">Successfully uploaded ${files.length} images.</div>
+                
+                <div class="instructions" style="background-color: #fffde7; border-left: 4px solid #ffeb3b; padding: 15px; margin: 20px 0;">
+                  <h3>Next Steps:</h3>
+                  <ol>
+                    <li>Copy all image URLs from the text box below</li>
+                    <li>Go back to the property form</li>
+                    <li>Paste the URLs into the "Image URLs" field</li>
+                  </ol>
+                </div>
+                
+                <h2>Copy All URLs</h2>
+                <textarea class="url-list" onclick="this.select()">${imageUrls.join(', ')}</textarea>
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(document.querySelector('.url-list').value)">
+                  Copy All URLs
+                </button>
+                
+                <h2>Individual Image URLs</h2>
+                ${imageUrls.map((url, index) => `
+                  <div>
+                    <div class="url-box">${url}</div>
+                    <button class="copy-btn" onclick="navigator.clipboard.writeText('${url}')">Copy URL</button>
+                    <img src="${url}" alt="Uploaded image ${index+1}" class="image-preview">
+                    <div class="divider"></div>
+                  </div>
+                `).join('')}
+                
+                <p style="margin-top: 20px;"><a href="/windows-uploader.html">← Upload More Images</a></p>
+                <p><a href="/">← Back to Main Site</a></p>
+              </body>
+              </html>
+            `);
           }
           
           // Standard HTML response for other uploaders
@@ -1483,9 +1563,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const wantsHtml = req.headers['accept']?.includes('text/html');
       
       if (wantsHtml) {
-        // Check if this is from our cross-platform uploader
+        // Check referer to determine which uploader was used
         const referer = req.headers['referer'] || '';
-        if (referer.includes('cross-platform-uploader.html')) {
+        let backLink = '/basic-uploader.html';
+        
+        if (referer.includes('windows-uploader.html')) {
+          backLink = '/windows-uploader.html';
+        } else if (referer.includes('cross-platform-uploader.html')) {
           // Redirect back to the cross-platform uploader with error message
           return res.redirect(`/cross-platform-uploader.html?error=true&message=${encodeURIComponent(error instanceof Error ? error.message : "Unknown error")}`);
         }
@@ -1494,14 +1578,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           <html><head><title>Server Error</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
-            .error { color: red; }
-            a { color: #B87333; text-decoration: none; }
+            .error { color: red; background: #ffebee; padding: 15px; border-radius: 4px; }
+            a { color: #964B00; text-decoration: none; }
             a:hover { text-decoration: underline; }
+            h1 { color: #964B00; }
           </style>
           </head><body>
             <h1>Server Error</h1>
             <p class="error">A server error occurred during upload: ${error instanceof Error ? error.message : "Unknown error"}</p>
-            <p><a href="/basic-uploader.html">← Back to uploader</a></p>
+            <p><a href="${backLink}">← Back to uploader</a></p>
           </body></html>
         `);
       } else {
