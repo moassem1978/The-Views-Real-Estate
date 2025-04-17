@@ -200,9 +200,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // New endpoint to get unique cities (locations)
   app.get("/api/properties/unique-cities", async (_req: Request, res: Response) => {
     try {
-      const uniqueCities = await dbStorage.getUniqueCities();
-      console.log(`Returning ${uniqueCities.length} unique cities`);
-      res.json(uniqueCities);
+      const cities = await dbStorage.getUniqueCities();
+      console.log(`Returning ${cities.length} unique cities`);
+      res.json(cities);
     } catch (error) {
       console.error("Error fetching unique cities:", error);
       res.status(500).json({ message: "Failed to fetch unique cities" });

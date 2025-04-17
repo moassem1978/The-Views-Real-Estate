@@ -1,5 +1,6 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { SearchFilters } from "@/types";
 
 export default function PropertySearch() {
@@ -8,6 +9,12 @@ export default function PropertySearch() {
   const [priceRange, setPriceRange] = useState("");
   const [bedrooms, setBedrooms] = useState("");
   const [, navigate] = useLocation();
+  
+  // Fetch unique cities from the API
+  const { data: cities = [] } = useQuery({
+    queryKey: ["/api/properties/unique-cities"],
+    initialData: [],
+  });
 
   const handleFilterChange = (filters: SearchFilters) => {
     // Update form state based on filters
@@ -92,13 +99,18 @@ export default function PropertySearch() {
             <div className="relative">
               <label className="block text-sm font-medium text-gray-600 mb-1">Location</label>
               <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="City, State, or ZIP" 
-                  className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors"
+                <select 
+                  className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                />
+                >
+                  <option value="">Any Location</option>
+                  {cities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </select>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
