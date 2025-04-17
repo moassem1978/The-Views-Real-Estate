@@ -114,12 +114,13 @@ export default function PropertySearch() {
                 onChange={(e) => setPropertyType(e.target.value)}
               >
                 <option value="">All Property Types</option>
-                <option value="house">House</option>
-                <option value="condo">Condominium</option>
-                <option value="apartment">Apartment</option>
-                <option value="villa">Villa</option>
-                <option value="estate">Estate</option>
-                <option value="penthouse">Penthouse</option>
+                <option value="Penthouse">Penthouse</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Chalet">Chalet</option>
+                <option value="Twinhouse">Twinhouse</option>
+                <option value="Villa">Villa</option>
+                <option value="Office">Office</option>
+                <option value="Townhouse">Townhouse</option>
               </select>
             </div>
             
