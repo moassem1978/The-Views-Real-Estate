@@ -196,6 +196,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: "Failed to fetch project names" });
     }
   });
+  
+  // New endpoint to get unique cities (locations)
+  app.get("/api/properties/unique-cities", async (_req: Request, res: Response) => {
+    try {
+      const uniqueCities = await dbStorage.getUniqueCities();
+      console.log(`Returning ${uniqueCities.length} unique cities`);
+      res.json(uniqueCities);
+    } catch (error) {
+      console.error("Error fetching unique cities:", error);
+      res.status(500).json({ message: "Failed to fetch unique cities" });
+    }
+  });
 
   app.get("/api/properties/featured", async (req: Request, res: Response) => {
     try {

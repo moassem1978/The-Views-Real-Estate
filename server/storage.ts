@@ -42,6 +42,7 @@ export interface IStorage {
   searchProperties(filters: Partial<PropertySearchFilters>, page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
   getPropertyCount(): Promise<number>;
   getUniqueProjectNames(): Promise<string[]>; // Added this method to get unique project names
+  getUniqueCities(): Promise<string[]>; // Method to get unique cities for location dropdown
   
   // Testimonial operations
   getAllTestimonials(page?: number, pageSize?: number): Promise<PaginatedResult<Testimonial>>;
@@ -93,6 +94,22 @@ export class MemStorage implements IStorage {
     });
     
     return Array.from(uniqueProjects).sort();
+  }
+  
+  /**
+   * Returns a list of unique cities from the properties collection
+   */
+  async getUniqueCities(): Promise<string[]> {
+    const allProperties = Array.from(this.properties.values());
+    const uniqueCities = new Set<string>();
+    
+    allProperties.forEach(property => {
+      if (property.city) {
+        uniqueCities.add(property.city);
+      }
+    });
+    
+    return Array.from(uniqueCities).sort();
   }
   private users: Map<number, User>;
   private properties: Map<number, Property>;
@@ -1066,6 +1083,32 @@ export class DatabaseStorage implements IStorage {
       return projectNames;
     } catch (error) {
       console.error('Error fetching unique project names:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Get a list of unique cities from the properties table
+   * Used for populating location dropdown search
+   */
+  async getUniqueCities(): Promise<string[]> {
+    try {
+      // Use distinct to get only unique cities
+      const result = await db
+        .selectDistinct({ city: properties.city })
+        .from(properties)
+        .where(sql`${properties.city} IS NOT NULL`);
+      
+      // Map the results to an array of strings and sort them
+      const cities = result
+        .map(row => row.city)
+        .filter((city): city is string => city !== null) // Filter out null values and type assertion
+        .sort();
+      
+      console.log(`Found ${cities.length} unique cities`);
+      return cities;
+    } catch (error) {
+      console.error('Error fetching unique cities:', error);
       return [];
     }
   }
