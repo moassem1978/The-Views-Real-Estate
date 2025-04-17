@@ -185,6 +185,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // Get a list of unique project names for dropdown selection
+  app.get("/api/properties/project-names", async (_req: Request, res: Response) => {
+    try {
+      const projectNames = await dbStorage.getUniqueProjectNames();
+      console.log(`Returning ${projectNames.length} unique project names`);
+      res.json(projectNames);
+    } catch (error) {
+      console.error("Error fetching project names:", error);
+      res.status(500).json({ message: "Failed to fetch project names" });
+    }
+  });
+
   app.get("/api/properties/featured", async (req: Request, res: Response) => {
     try {
       // Get pagination parameters if provided, otherwise use defaults
@@ -493,18 +505,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.error("Error deleting property:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({ message: `Failed to delete property: ${errorMessage}` });
-    }
-  });
-
-  // Get a list of unique project names for dropdown selection
-  app.get("/api/properties/project-names", async (_req: Request, res: Response) => {
-    try {
-      const projectNames = await dbStorage.getUniqueProjectNames();
-      console.log(`Returning ${projectNames.length} unique project names`);
-      res.json(projectNames);
-    } catch (error) {
-      console.error("Error fetching project names:", error);
-      res.status(500).json({ message: "Failed to fetch project names" });
     }
   });
 

@@ -1946,14 +1946,13 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select property type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Apartment">Apartment</SelectItem>
-                    <SelectItem value="Duplex">Duplex</SelectItem>
                     <SelectItem value="Penthouse">Penthouse</SelectItem>
+                    <SelectItem value="Apartment">Apartment</SelectItem>
                     <SelectItem value="Chalet">Chalet</SelectItem>
-                    <SelectItem value="Townhouse">Townhouse</SelectItem>
-                    <SelectItem value="Twin house">Twin house</SelectItem>
+                    <SelectItem value="Twinhouse">Twinhouse</SelectItem>
                     <SelectItem value="Villa">Villa</SelectItem>
-                    <SelectItem value="Administrative office">Administrative office</SelectItem>
+                    <SelectItem value="Office">Office</SelectItem>
+                    <SelectItem value="Townhouse">Townhouse</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -2157,7 +2156,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Floor field - only for vertical building units */}
-                  {['Apartment', 'Studio', 'Penthouse', 'Chalet'].includes(formData.propertyType) && !formData.isGroundUnit && (
+                  {['Apartment', 'Penthouse', 'Chalet', 'Office'].includes(formData.propertyType) && !formData.isGroundUnit && (
                     <div className="space-y-2">
                       <label htmlFor="floor" className="text-sm font-medium flex items-center">
                         Floor
@@ -2180,7 +2179,7 @@ export default function Dashboard() {
                     <div className="space-y-2">
                       <label htmlFor="plotSize" className="text-sm font-medium flex items-center">
                         Plot Size (m²)
-                        {!['Apartment', 'Studio', 'Chalet', 'Penthouse'].includes(formData.propertyType) && (
+                        {!['Apartment', 'Penthouse', 'Chalet', 'Office'].includes(formData.propertyType) && (
                           <span className="text-red-500 ml-1">*</span>
                         )}
                       </label>
@@ -2190,7 +2189,7 @@ export default function Dashboard() {
                         type="number"
                         value={formData.plotSize?.toString() || ""}
                         onChange={handleInputChange}
-                        required={!['Apartment', 'Studio', 'Chalet', 'Penthouse'].includes(formData.propertyType) && !formData.isGroundUnit}
+                        required={!['Apartment', 'Penthouse', 'Chalet', 'Office'].includes(formData.propertyType) && !formData.isGroundUnit}
                       />
                       <span className="text-xs text-gray-500">Plot Size in square meters</span>
                     </div>

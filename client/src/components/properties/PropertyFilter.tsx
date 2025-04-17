@@ -154,12 +154,13 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
   // Property types
   const propertyTypes = [
     { value: "", label: "All Property Types" },
-    { value: "House", label: "House" },
-    { value: "Condominium", label: "Condominium" },
+    { value: "Penthouse", label: "Penthouse" },
     { value: "Apartment", label: "Apartment" },
+    { value: "Chalet", label: "Chalet" },
+    { value: "Twinhouse", label: "Twinhouse" },
     { value: "Villa", label: "Villa" },
-    { value: "Estate", label: "Estate" },
-    { value: "Penthouse", label: "Penthouse" }
+    { value: "Office", label: "Office" },
+    { value: "Townhouse", label: "Townhouse" }
   ];
   
   // Listing types
