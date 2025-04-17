@@ -14,10 +14,15 @@ import { setupAuth } from "./auth";
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
   propertyType: z.string().optional(),
+  listingType: z.string().optional(),
+  projectName: z.string().optional(),
+  developerName: z.string().optional(),
   minPrice: z.coerce.number().optional(),
   maxPrice: z.coerce.number().optional(),
   minBedrooms: z.coerce.number().optional(),
   minBathrooms: z.coerce.number().optional(),
+  isFullCash: z.coerce.boolean().optional(),
+  hasInstallments: z.coerce.boolean().optional(),
 });
 
 // Configure multer for file uploads

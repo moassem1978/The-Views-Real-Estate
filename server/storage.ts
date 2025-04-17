@@ -41,6 +41,7 @@ export interface IStorage {
   deleteProperty(id: number): Promise<boolean>;
   searchProperties(filters: Partial<PropertySearchFilters>, page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
   getPropertyCount(): Promise<number>;
+  getUniqueProjectNames(): Promise<string[]>; // Added this method to get unique project names
   
   // Testimonial operations
   getAllTestimonials(page?: number, pageSize?: number): Promise<PaginatedResult<Testimonial>>;

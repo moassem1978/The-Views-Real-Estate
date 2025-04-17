@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ultra Simple Windows Uploader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #964B00;
+      text-align: center;
+    }
+    form {
+      background: #f8f9fa;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .note {
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+    }
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+    }
+    input[type="submit"] {
+      background: #964B00;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+    a {
+      color: #964B00;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ultra Simple Windows Uploader</h1>
+  
+  <div class="note">
+    <strong>Important:</strong> This is a special uploader optimized for Windows computers. 
+    It uses the most basic HTML possible for maximum compatibility.
+  </div>
+  
+  <form action="/api/simple-upload" method="post" enctype="multipart/form-data">
+    <h3>Select Images (up to 10)</h3>
+    <input type="file" name="images" multiple accept="image/*">
+    <p><small>Select multiple files by holding CTRL while clicking</small></p>
+    <input type="submit" value="Upload Images">
+  </form>
+  
+  <p><a href="/">← Back to main site</a></p>
+</body>
+</html>
