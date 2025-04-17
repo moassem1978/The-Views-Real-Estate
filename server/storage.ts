@@ -78,6 +78,22 @@ export interface PropertySearchFilters {
 }
 
 export class MemStorage implements IStorage {
+  /**
+   * Returns a list of unique project names from the properties collection
+   */
+  async getUniqueProjectNames(): Promise<string[]> {
+    // Filter out null/undefined project names, then get unique values
+    const allProperties = Array.from(this.properties.values());
+    const uniqueProjects = new Set<string>();
+    
+    allProperties.forEach(property => {
+      if (property.projectName) {
+        uniqueProjects.add(property.projectName);
+      }
+    });
+    
+    return Array.from(uniqueProjects).sort();
+  }
   private users: Map<number, User>;
   private properties: Map<number, Property>;
   private testimonials: Map<number, Testimonial>;
@@ -1028,6 +1044,31 @@ import NodeCache from 'node-cache';
 const cache = new NodeCache({ stdTTL: 300 });
 
 export class DatabaseStorage implements IStorage {
+  /**
+   * Get a list of unique project names from the properties table
+   * Used for populating dropdown search
+   */
+  async getUniqueProjectNames(): Promise<string[]> {
+    try {
+      // Use distinct to get only unique project names
+      const result = await db
+        .selectDistinct({ projectName: properties.projectName })
+        .from(properties)
+        .where(sql`${properties.projectName} IS NOT NULL`);
+      
+      // Map the results to an array of strings and sort them
+      const projectNames = result
+        .map(row => row.projectName)
+        .filter((name): name is string => name !== null) // Filter out null values and type assertion
+        .sort();
+      
+      console.log(`Found ${projectNames.length} unique project names`);
+      return projectNames;
+    } catch (error) {
+      console.error('Error fetching unique project names:', error);
+      return [];
+    }
+  }
   private async getCached<T>(key: string, getter: () => Promise<T>): Promise<T> {
     const cached = cache.get<T>(key);
     if (cached) return cached;
