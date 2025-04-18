@@ -251,19 +251,19 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
           
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Bedrooms</label>
-            <select 
-              className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+            <StyledSelect
               value={bedrooms}
               onChange={(e) => setBedrooms(e.target.value)}
-            >
-              <option value="">Any</option>
-              <option value="1">1+</option>
-              <option value="2">2+</option>
-              <option value="3">3+</option>
-              <option value="4">4+</option>
-              <option value="5">5+</option>
-              <option value="6">6+</option>
-            </select>
+              options={[
+                { value: "", label: "Any" },
+                { value: "1", label: "1+" },
+                { value: "2", label: "2+" },
+                { value: "3", label: "3+" },
+                { value: "4", label: "4+" },
+                { value: "5", label: "5+" },
+                { value: "6", label: "6+" }
+              ]}
+            />
           </div>
           
           <div>
@@ -296,62 +296,54 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
             {/* Listing Type */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Listing Type</label>
-              <select 
-                className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+              <StyledSelect
                 value={listingType}
                 onChange={(e) => setListingType(e.target.value)}
-              >
-                {listingTypes.map((type) => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
-                ))}
-              </select>
+                options={listingTypes}
+              />
             </div>
             
             {/* Project */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Project</label>
-              <select 
-                className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+              <StyledSelect
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
-              >
-                <option value="">Any Project</option>
-                {availableProjects.map((project) => (
-                  <option key={project} value={project}>{project}</option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "Any Project" },
+                  ...availableProjects.map(project => ({ value: project, label: project }))
+                ]}
+              />
             </div>
             
             {/* Developer */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Developer</label>
-              <select 
-                className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+              <StyledSelect
                 value={developerName}
                 onChange={(e) => setDeveloperName(e.target.value)}
-              >
-                <option value="">Any Developer</option>
-                {availableDevelopers.map((developer) => (
-                  <option key={developer} value={developer}>{developer}</option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "Any Developer" },
+                  ...availableDevelopers.map(developer => ({ value: developer, label: developer }))
+                ]}
+              />
             </div>
             
             {/* Bathrooms */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Bathrooms</label>
-              <select 
-                className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+              <StyledSelect
                 value={bathrooms}
                 onChange={(e) => setBathrooms(e.target.value)}
-              >
-                <option value="">Any</option>
-                <option value="1">1+</option>
-                <option value="2">2+</option>
-                <option value="3">3+</option>
-                <option value="4">4+</option>
-                <option value="5">5+</option>
-              </select>
+                options={[
+                  { value: "", label: "Any" },
+                  { value: "1", label: "1+" },
+                  { value: "2", label: "2+" },
+                  { value: "3", label: "3+" },
+                  { value: "4", label: "4+" },
+                  { value: "5", label: "5+" }
+                ]}
+              />
             </div>
             
             {/* Payment Options */}

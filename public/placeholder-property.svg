@@ -1,25 +1,26 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <svg width="800px" height="600px" viewBox="0 0 800 600" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <title>Property Placeholder</title>
+    <title>The Views Real Estate Placeholder</title>
     <defs>
-        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
-            <stop stop-color="#F9F6F2" offset="0%"></stop>
-            <stop stop-color="#E6DFD6" offset="100%"></stop>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="propertyGradient">
+            <stop stop-color="#F5F0E6" offset="0%"></stop>
+            <stop stop-color="#E8DACB" offset="100%"></stop>
         </linearGradient>
     </defs>
-    <g id="Property-Placeholder" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <rect id="Background" fill="url(#linearGradient-1)" x="0" y="0" width="800" height="600"></rect>
-        <g id="House" transform="translate(200.000000, 120.000000)" fill-rule="nonzero">
-            <path d="M400,120 L200,0 L0,120 L0,360 L400,360 L400,120 Z" id="House-Shape" fill="#B87333" opacity="0.25"></path>
-            <path d="M160,240 L240,240 L240,360 L160,360 L160,240 Z" id="Door" fill="#B87333" opacity="0.35"></path>
-            <path d="M80,160 L120,160 L120,200 L80,200 L80,160 Z" id="Window-1" fill="#B87333" opacity="0.35"></path>
-            <path d="M280,160 L320,160 L320,200 L280,200 L280,160 Z" id="Window-2" fill="#B87333" opacity="0.35"></path>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="url(#propertyGradient)" x="0" y="0" width="800" height="600"></rect>
+        <g transform="translate(250.000000, 175.000000)">
+            <path d="M150,0 L300,100 L300,250 L0,250 L0,100 L150,0 Z" fill="#B87333" opacity="0.2"></path>
+            <path d="M150,40 L260,110 L260,210 L40,210 L40,110 L150,40 Z" fill="#FFFFFF"></path>
+            <rect fill="#B87333" opacity="0.3" x="120" y="170" width="60" height="40"></rect>
+            <rect fill="#B87333" opacity="0.5" x="70" y="120" width="40" height="40"></rect>
+            <rect fill="#B87333" opacity="0.5" x="190" y="120" width="40" height="40"></rect>
         </g>
-        <text id="The-Views-Real-Estate" font-family="Playfair Display, serif" font-size="36" font-weight="normal" fill="#B87333">
-            <tspan x="230" y="520">The Views</tspan>
+        <text font-family="Playfair Display, serif" font-size="32" font-weight="600" fill="#964B00" text-anchor="middle" x="400" y="460">
+            The Views Real Estate
         </text>
-        <text id="Real-Estate" font-family="Tahoma, sans-serif" font-size="24" font-weight="normal" fill="#333333">
-            <tspan x="320" y="560">Real Estate</tspan>
+        <text font-family="Tahoma, sans-serif" font-size="18" font-weight="400" fill="#666666" text-anchor="middle" x="400" y="490">
+            Property image loading...
         </text>
     </g>
 </svg>
