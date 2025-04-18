@@ -6,17 +6,25 @@ import { SearchFilters } from "@/types";
 export default function PropertySearch() {
   const [location, setLocation] = useState("");
   const [propertyType, setPropertyType] = useState("");
+  const [projectName, setProjectName] = useState("");
   const [priceRange, setPriceRange] = useState("");
   const [bedrooms, setBedrooms] = useState("");
   const [, navigate] = useLocation();
   
   // Use predefined locations as specified
   const locations = ["Cairo", "Zayed", "North coast", "Red Sea"];
+  
+  // Fetch projects from the API
+  const { data: projects = [] } = useQuery({
+    queryKey: ["/api/properties/project-names"],
+    initialData: [],
+  });
 
   const handleFilterChange = (filters: SearchFilters) => {
     // Update form state based on filters
     setLocation(filters.location || "");
     setPropertyType(filters.propertyType || "");
+    setProjectName(filters.projectName || "");
     
     if (filters.minBedrooms) {
       setBedrooms(filters.minBedrooms.toString());
@@ -69,6 +77,7 @@ export default function PropertySearch() {
     
     if (location) filters.location = location;
     if (propertyType) filters.propertyType = propertyType;
+    if (projectName) filters.projectName = projectName;
     
     if (priceRange) {
       const [min, max] = priceRange.split('-').map(val => parseInt(val.replace(/\D/g, '')));
@@ -92,7 +101,7 @@ export default function PropertySearch() {
             <p className="text-gray-600">Refined search for exceptional homes</p>
           </div>
           
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="relative">
               <label className="block text-sm font-medium text-gray-600 mb-1">Location</label>
               <div className="relative">
@@ -113,6 +122,22 @@ export default function PropertySearch() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Project Name</label>
+              <select 
+                className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+              >
+                <option value="">Any Project</option>
+                {projects.map((project) => (
+                  <option key={project} value={project}>
+                    {project}
+                  </option>
+                ))}
+              </select>
             </div>
             
             <div>
@@ -141,11 +166,11 @@ export default function PropertySearch() {
                 onChange={(e) => setPriceRange(e.target.value)}
               >
                 <option value="">Any Price</option>
-                <option value="500000-1000000">$500,000 - $1,000,000</option>
-                <option value="1000000-2000000">$1,000,000 - $2,000,000</option>
-                <option value="2000000-5000000">$2,000,000 - $5,000,000</option>
-                <option value="5000000-10000000">$5,000,000 - $10,000,000</option>
-                <option value="10000000-100000000">$10,000,000+</option>
+                <option value="500000-1000000">500,000 - 1,000,000 L.E</option>
+                <option value="1000000-2000000">1,000,000 - 2,000,000 L.E</option>
+                <option value="2000000-5000000">2,000,000 - 5,000,000 L.E</option>
+                <option value="5000000-10000000">5,000,000 - 10,000,000 L.E</option>
+                <option value="10000000-100000000">10,000,000+ L.E</option>
               </select>
             </div>
             
