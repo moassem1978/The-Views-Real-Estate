@@ -1987,28 +1987,14 @@ export default function Dashboard() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Cairo">Cairo</SelectItem>
-                        <SelectItem value="Sheikh Zayed">Sheikh Zayed</SelectItem>
-                        <SelectItem value="North Coast">North Coast</SelectItem>
-                        <SelectItem value="Gouna">Gouna</SelectItem>
+                        <SelectItem value="Zayed">Zayed</SelectItem>
+                        <SelectItem value="North coast">North coast</SelectItem>
                         <SelectItem value="Red Sea">Red Sea</SelectItem>
                         <SelectItem value="Dubai">Dubai</SelectItem>
                         <SelectItem value="London">London</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="state" className="text-sm font-medium">District/Governorate</label>
-                    <Input
-                      id="state"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-
-
 
                   <div className="space-y-2">
                     <label htmlFor="projectName" className="text-sm font-medium flex items-center">
@@ -2023,6 +2009,7 @@ export default function Dashboard() {
                       required
                       placeholder="Enter the project name instead of address"
                     />
+                    <span className="text-xs text-gray-500">Project name is mandatory and will appear in search filters</span>
                   </div>
 
                 </div>

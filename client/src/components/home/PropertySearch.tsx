@@ -10,11 +10,8 @@ export default function PropertySearch() {
   const [bedrooms, setBedrooms] = useState("");
   const [, navigate] = useLocation();
   
-  // Fetch unique cities from the API
-  const { data: cities = [] } = useQuery({
-    queryKey: ["/api/properties/unique-cities"],
-    initialData: [],
-  });
+  // Use predefined locations as specified
+  const locations = ["Cairo", "Zayed", "North coast", "Red Sea"];
 
   const handleFilterChange = (filters: SearchFilters) => {
     // Update form state based on filters
@@ -105,9 +102,9 @@ export default function PropertySearch() {
                   onChange={(e) => setLocation(e.target.value)}
                 >
                   <option value="">Any Location</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
+                  {locations.map((location) => (
+                    <option key={location} value={location}>
+                      {location}
                     </option>
                   ))}
                 </select>
