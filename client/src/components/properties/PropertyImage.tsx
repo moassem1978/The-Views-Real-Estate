@@ -35,7 +35,7 @@ export default function PropertyImage({
     // Format the source URL
     if (!src) {
       // Use a default placeholder image for missing sources
-      setFormattedSrc('/uploads/default-property.svg');
+      setFormattedSrc('/placeholder-property.svg');
       return;
     }
     
@@ -48,6 +48,14 @@ export default function PropertyImage({
       const filename = src.split('/').pop();
       const fallbackPath = `/uploads/${filename}`;
       setFormattedSrc(`${fallbackPath}${cacheBuster}`);
+      return;
+    }
+    
+    // Additional fallback paths to try for iOS - check both with and without public prefix
+    if (src.startsWith('/public/uploads/') && useFallbackPath) {
+      // Try without the public prefix
+      const pathWithoutPublic = src.replace('/public/', '/');
+      setFormattedSrc(`${pathWithoutPublic}${cacheBuster}`);
       return;
     }
     
@@ -65,6 +73,12 @@ export default function PropertyImage({
       return;
     }
     
+    // If the source is a complete URL (including http/https), use it directly with cache busting
+    if (src.startsWith('http')) {
+      setFormattedSrc(`${src}${src.includes('?') ? '&' : '?'}cb=${Date.now()}`);
+      return;
+    }
+    
     // Use our utility function for other types of URLs
     const imageUrl = getImageUrl(src);
     setFormattedSrc(`${imageUrl}${cacheBuster}`);
@@ -78,14 +92,25 @@ export default function PropertyImage({
   const handleError = () => {
     console.log(`Image failed to load: ${formattedSrc}`);
     
-    // First try the fallback path if we're using a /uploads/properties/ path
-    if (src.startsWith('/uploads/properties/') && !useFallbackPath) {
+    // First try the fallback paths for various scenarios
+    if ((src.startsWith('/uploads/properties/') || src.startsWith('/public/uploads/')) && !useFallbackPath) {
       console.log(`Trying fallback path for: ${src}`);
       setUseFallbackPath(true);
       return;
     }
     
-    // Then try retrying the image a couple times
+    // Try a direct CDN approach for deployment URLs (for replit.app domains)
+    if (window.location.hostname.includes('replit.app') && retryCount === 1) {
+      const filename = src.split('/').pop();
+      if (filename) {
+        // Try a direct path to the file assuming it's in the public folder
+        setFormattedSrc(`/uploads/${filename}?force=${Date.now()}`);
+        setRetryCount(prev => prev + 1);
+        return;
+      }
+    }
+    
+    // Then try retrying the image a couple times with cache busting
     if (retryCount < 3) {
       console.log(`Retrying image load (attempt ${retryCount + 1})`);
       setRetryCount(prev => prev + 1);
@@ -97,9 +122,7 @@ export default function PropertyImage({
     setIsError(true);
     
     // Fall back to placeholder on error after retries
-    if (!formattedSrc.includes('/uploads/default-property.svg')) {
-      setFormattedSrc('/uploads/default-property.svg');
-    }
+    setFormattedSrc('/placeholder-property.svg');
   };
   
   return (
@@ -119,7 +142,7 @@ export default function PropertyImage({
       )}
       
       {/* Error state */}
-      {isError && !formattedSrc.includes('/uploads/default-property.svg') && (
+      {isError && !formattedSrc.includes('/placeholder-property.svg') && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
           <svg className="h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

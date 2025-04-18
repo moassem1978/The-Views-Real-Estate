@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Property } from "../../types";
 import { ArrowRight, BedDouble, Bath, Grid2X2, ChevronRight } from "lucide-react";
 import { formatPrice, getImageUrl } from "@/lib/utils";
+import PropertyImage from "@/components/properties/PropertyImage";
 
 // Simple loading skeleton component separate from main component
 const LoadingSkeleton = () => (
@@ -42,13 +43,13 @@ const PropertyCard = memo(({ property }: { property: Property }) => {
   return (
     <Card className="overflow-hidden transition-shadow hover:shadow-lg">
       <div className="h-56 overflow-hidden relative">
-        <img
+        <PropertyImage
           src={property.images && property.images.length > 0 ? 
-            getImageUrl(property.images[0]) : 
-            '/uploads/default-property.svg'}
+            (typeof property.images[0] === 'string' ? property.images[0] : '') : 
+            '/placeholder-property.svg'}
           alt={property.title}
-          className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
-          loading="lazy"
+          className="h-full"
+          priority={property.isFeatured}
         />
         {property.isNewListing && (
           <Badge className="absolute top-3 left-3 bg-green-600 text-white">

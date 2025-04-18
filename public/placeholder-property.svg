@@ -1,16 +1,25 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg width="800px" height="600px" viewBox="0 0 800 600" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <title>Property Placeholder</title>
-    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <rect fill="#F5F5F5" x="0" y="0" width="800" height="600"></rect>
-        <g transform="translate(250.000000, 150.000000)" fill="#CCCCCC">
-            <path d="M150,0 L300,100 L300,300 L0,300 L0,100 L150,0 Z M30,120 L30,270 L270,270 L270,120 L150,40 L30,120 Z"></path>
-            <rect x="60" y="150" width="60" height="120"></rect>
-            <rect x="180" y="150" width="60" height="90"></rect>
-            <rect x="150" y="210" width="30" height="30"></rect>
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#F9F6F2" offset="0%"></stop>
+            <stop stop-color="#E6DFD6" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Property-Placeholder" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Background" fill="url(#linearGradient-1)" x="0" y="0" width="800" height="600"></rect>
+        <g id="House" transform="translate(200.000000, 120.000000)" fill-rule="nonzero">
+            <path d="M400,120 L200,0 L0,120 L0,360 L400,360 L400,120 Z" id="House-Shape" fill="#B87333" opacity="0.25"></path>
+            <path d="M160,240 L240,240 L240,360 L160,360 L160,240 Z" id="Door" fill="#B87333" opacity="0.35"></path>
+            <path d="M80,160 L120,160 L120,200 L80,200 L80,160 Z" id="Window-1" fill="#B87333" opacity="0.35"></path>
+            <path d="M280,160 L320,160 L320,200 L280,200 L280,160 Z" id="Window-2" fill="#B87333" opacity="0.35"></path>
         </g>
-        <text font-family="Arial" font-size="24" font-weight="normal" fill="#999999">
-            <tspan x="290" y="500">The Views Real Estate</tspan>
+        <text id="The-Views-Real-Estate" font-family="Playfair Display, serif" font-size="36" font-weight="normal" fill="#B87333">
+            <tspan x="230" y="520">The Views</tspan>
+        </text>
+        <text id="Real-Estate" font-family="Tahoma, sans-serif" font-size="24" font-weight="normal" fill="#333333">
+            <tspan x="320" y="560">Real Estate</tspan>
         </text>
     </g>
 </svg>
