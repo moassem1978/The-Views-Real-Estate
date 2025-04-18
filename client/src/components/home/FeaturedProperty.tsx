@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Property } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import PropertyImage from "@/components/properties/PropertyImage";
 
 export default function FeaturedProperty() {
   const { data: featuredProperties, isLoading, error } = useQuery<Property[]>({
@@ -85,12 +86,16 @@ export default function FeaturedProperty() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row gap-12">
           <div className="md:w-1/2 relative">
-            <div className="relative overflow-hidden rounded-lg shadow-xl">
-              <img 
-                src={parseJsonArray(featuredProperty.images as unknown as string)[0] || "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"} 
-                alt={featuredProperty.title} 
-                className="w-full h-full object-cover"
-                loading="lazy"
+            <div className="relative overflow-hidden rounded-lg shadow-xl h-[400px]">
+              <PropertyImage 
+                src={featuredProperty.images && 
+                  (Array.isArray(featuredProperty.images) 
+                    ? featuredProperty.images[0] 
+                    : parseJsonArray(featuredProperty.images as unknown as string)[0]
+                  ) || '/placeholder-property.svg'} 
+                alt={featuredProperty.title}
+                className="w-full h-full"
+                priority={true}
               />
             </div>
             <div className="hidden md:block absolute -bottom-8 -right-8 bg-white rounded-lg shadow-lg p-4 max-w-xs">
@@ -129,7 +134,7 @@ export default function FeaturedProperty() {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-gray-600">Property Size</p>
-                    <p className="font-semibold text-gray-800">{(featuredProperty.builtUpArea || featuredProperty.squareFeet || 0).toLocaleString()} sq ft</p>
+                    <p className="font-semibold text-gray-800">{(featuredProperty.builtUpArea || featuredProperty.plotSize || 0).toLocaleString()} m²</p>
                   </div>
                 </div>
               </div>

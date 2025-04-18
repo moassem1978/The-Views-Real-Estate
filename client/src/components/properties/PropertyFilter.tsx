@@ -1,6 +1,46 @@
 import { useState, useEffect } from "react";
-import { SearchFilters, FormattedPriceRange } from "@/types";
+import { SearchFilters } from "@/types";
 import { Separator } from "@/components/ui/separator";
+
+// Define the FormattedPriceRange interface locally
+interface FormattedPriceRange {
+  value: string;
+  label: string;
+  min?: number;
+  max?: number;
+}
+
+// iOS-compatible styled select component
+const StyledSelect = ({ value, onChange, options, className = "" }: {
+  value: string,
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void,
+  options: { value: string, label: string }[] | string[],
+  className?: string
+}) => {
+  return (
+    <div className="relative">
+      <select 
+        className={`w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white ${className}`}
+        style={{ WebkitAppearance: "menulist-button" }}
+        value={value}
+        onChange={onChange}
+      >
+        {options.map((option) => {
+          if (typeof option === 'string') {
+            return <option key={option} value={option}>{option}</option>;
+          } else {
+            return <option key={option.value} value={option.value}>{option.label}</option>;
+          }
+        })}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+        </svg>
+      </div>
+    </div>
+  );
+};
 
 interface PropertyFilterProps {
   currentFilters: SearchFilters;
@@ -193,28 +233,20 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
           
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Property Type</label>
-            <select 
-              className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+            <StyledSelect
               value={propertyType}
               onChange={(e) => setPropertyType(e.target.value)}
-            >
-              {propertyTypes.map((type) => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </select>
+              options={propertyTypes}
+            />
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Price Range</label>
-            <select 
-              className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
+            <StyledSelect
               value={priceRange}
               onChange={(e) => setPriceRange(e.target.value)}
-            >
-              {priceRanges.map((range) => (
-                <option key={range.value} value={range.value}>{range.label}</option>
-              ))}
-            </select>
+              options={priceRanges}
+            />
           </div>
           
           <div>
