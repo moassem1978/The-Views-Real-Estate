@@ -109,6 +109,7 @@ export default function PropertySearch() {
                   className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                  style={{WebkitAppearance: "menulist-button"}}
                 >
                   <option value="">Any Location</option>
                   {locations.map((location) => (
@@ -130,6 +131,7 @@ export default function PropertySearch() {
                 className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
+                style={{WebkitAppearance: "menulist-button"}}
               >
                 <option value="">Any Project</option>
                 {projects.map((project) => (
@@ -146,6 +148,7 @@ export default function PropertySearch() {
                 className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
                 value={propertyType}
                 onChange={(e) => setPropertyType(e.target.value)}
+                style={{WebkitAppearance: "menulist-button"}}
               >
                 <option value="">All Property Types</option>
                 <option value="Penthouse">Penthouse</option>
@@ -164,6 +167,7 @@ export default function PropertySearch() {
                 className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
                 value={priceRange}
                 onChange={(e) => setPriceRange(e.target.value)}
+                style={{WebkitAppearance: "menulist-button"}}
               >
                 <option value="">Any Price</option>
                 <option value="500000-1000000">500,000 - 1,000,000 L.E</option>
@@ -180,6 +184,7 @@ export default function PropertySearch() {
                 className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none bg-white"
                 value={bedrooms}
                 onChange={(e) => setBedrooms(e.target.value)}
+                style={{WebkitAppearance: "menulist-button"}}
               >
                 <option value="">Any</option>
                 <option value="1">1+</option>

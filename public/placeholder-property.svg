@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800px" height="600px" viewBox="0 0 800 600" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Property Placeholder</title>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="#F5F5F5" x="0" y="0" width="800" height="600"></rect>
+        <g transform="translate(250.000000, 150.000000)" fill="#CCCCCC">
+            <path d="M150,0 L300,100 L300,300 L0,300 L0,100 L150,0 Z M30,120 L30,270 L270,270 L270,120 L150,40 L30,120 Z"></path>
+            <rect x="60" y="150" width="60" height="120"></rect>
+            <rect x="180" y="150" width="60" height="90"></rect>
+            <rect x="150" y="210" width="30" height="30"></rect>
+        </g>
+        <text font-family="Arial" font-size="24" font-weight="normal" fill="#999999">
+            <tspan x="290" y="500">The Views Real Estate</tspan>
+        </text>
+    </g>
+</svg>
