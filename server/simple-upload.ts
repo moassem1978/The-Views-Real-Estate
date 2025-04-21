@@ -37,9 +37,18 @@ const upload = multer({
   storage: storage,
   limits: {
     fileSize: 25 * 1024 * 1024, // 25MB
-    files: 10
+    files: 10,
+    fieldSize: 25 * 1024 * 1024 // Match file size limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+    }
   }
-});
+}).array('files', 10);
 
 // Basic upload endpoint
 router.post('/simple-upload', upload.array('files', 10), (req: Request, res: Response) => {
