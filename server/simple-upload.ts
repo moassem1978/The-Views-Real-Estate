@@ -48,7 +48,7 @@ const upload = multer({
       cb(null, false);
     }
   }
-}).array('files', 10);
+});
 
 // Basic upload endpoint
 router.post('/simple-upload', upload.array('files', 10), (req: Request, res: Response) => {
