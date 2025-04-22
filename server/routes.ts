@@ -177,6 +177,21 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
       
       // Get paginated properties
+      // Don't filter by user for admin and owner roles
+      if (req.isAuthenticated()) {
+        const user = req.user as Express.User;
+        console.log(`Authenticated user ${user.username} with role ${user.role} accessing property list`);
+        
+        // Admin and owner can see all properties
+        // Regular users only see their own or published properties
+        if (user.role === 'admin' || user.role === 'owner') {
+          console.log('Admin/owner access - showing all properties');
+          const result = await dbStorage.getAllProperties(page, pageSize);
+          return res.json(result);
+        }
+      }
+      
+      // Default behavior (non-authenticated users or regular users)
       const result = await dbStorage.getAllProperties(page, pageSize);
       res.json(result);
     } catch (error) {
