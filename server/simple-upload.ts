@@ -12,8 +12,16 @@ if (!fs.existsSync(uploadDir)) {
   console.log(`Created upload directory: ${uploadDir}`);
 }
 
+// Ensure the directory exists in new location too (for fallback)
+const altUploadDir = path.join(process.cwd(), 'uploads', 'properties');
+if (!fs.existsSync(altUploadDir)) {
+  fs.mkdirSync(altUploadDir, { recursive: true, mode: 0o777 });
+  console.log(`Created alternative upload directory: ${altUploadDir}`);
+}
+
 // Force directory permissions
 fs.chmodSync(uploadDir, 0o777);
+fs.chmodSync(altUploadDir, 0o777);
 
 // Configure multer for reliable file uploads
 const storage = multer.diskStorage({
@@ -78,7 +86,22 @@ router.post('/simple-upload', upload.array('files', 10), (req: Request, res: Res
     });
     
     // Create URLs for the uploaded files
-    const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
+    const imageUrls = files.map(file => {
+      // Also save a copy to the alternative location for better compatibility
+      try {
+        const sourcePath = path.join(uploadDir, file.filename);
+        const destPath = path.join(altUploadDir, file.filename);
+        if (fs.existsSync(sourcePath)) {
+          fs.copyFileSync(sourcePath, destPath);
+          console.log(`Copied uploaded file to fallback location: ${destPath}`);
+          fs.chmodSync(destPath, 0o666); // Ensure file permissions
+        }
+      } catch (copyError) {
+        console.error(`Error copying to fallback location:`, copyError);
+      }
+      
+      return `/uploads/properties/${file.filename}`;
+    });
     
     console.log('Image URLs:', imageUrls);
     
