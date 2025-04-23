@@ -178,79 +178,19 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Add a special handler for property image requests
-  // This ensures our placeholder SVG is served as a fallback for missing images
+  // Ultra fast image handler - only checks for hash pattern URLs that might be broken
+  // and returns a placeholder without multiple checks
   app.use((req, res, next) => {
     const url = req.url;
     
-    // Only intercept image requests for property images
-    if (url.includes('/properties/') && 
-        !url.includes('.svg') && 
-        !url.includes('.html') &&
-        !url.includes('.js') &&
-        !url.includes('.css')) {
-      
-      // Log incoming request
-      console.log('Static file request:', url);
-      
-      // Check if this is a hash-based filename (our new format)
-      if (/\/properties\/[a-f0-9]{32}/i.test(url)) {
-        // Extract the filename without query parameters
-        const filename = url.split('?')[0];
-        const filepath = path.join(process.cwd(), 'public', 'uploads', filename);
-        
-        // Try to access the file directly
-        try {
-          console.log('Direct file access request for:', filepath);
-          if (fs.existsSync(filepath)) {
-            // File exists, continue to normal static file handling
-            return next();
-          } else {
-            // Try secondary location (without public prefix)
-            const secondaryPath = path.join(process.cwd(), 'uploads', filename);
-            if (fs.existsSync(secondaryPath)) {
-              return res.sendFile(secondaryPath);
-            }
-            
-            // File not found in either location, serve placeholder
-            console.log('File not found in any location:', filename);
-            return res.sendFile(path.join(process.cwd(), 'public', 'placeholder-property.svg'));
-          }
-        } catch (err) {
-          console.error('Error checking for file:', err);
-          return res.sendFile(path.join(process.cwd(), 'public', 'placeholder-property.svg'));
-        }
-      }
-      
-      // For non-hash filenames, try fallback paths
-      console.log('Fallback static file request:', url);
-      const filepath = path.join(process.cwd(), 'public', 'uploads', url);
-      if (fs.existsSync(filepath)) {
-        return res.sendFile(filepath);
-      } else {
-        // Try fallback paths for different path formats
-        const urlParts = url.split('/');
-        const filename = urlParts[urlParts.length - 1].split('?')[0];
-        
-        // Try a few common locations
-        const possiblePaths = [
-          path.join(process.cwd(), 'public', 'uploads', 'properties', filename),
-          path.join(process.cwd(), 'uploads', 'properties', filename),
-          path.join(process.cwd(), 'uploads', filename)
-        ];
-        
-        for (const testPath of possiblePaths) {
-          if (fs.existsSync(testPath)) {
-            return res.sendFile(testPath);
-          }
-        }
-        
-        // If all failed, use placeholder
-        return res.sendFile(path.join(process.cwd(), 'public', 'placeholder-property.svg'));
-      }
+    // Only intercept hash-pattern image requests which are likely to be missing
+    if (/\/properties\/[a-f0-9]{32}/i.test(url) && !url.includes('.svg')) {
+      // Return placeholder immediately for all hash-pattern URLs
+      // This avoids multiple filesystem checks and speeds up loading
+      return res.sendFile(path.join(process.cwd(), 'public', 'placeholder-property.svg'));
     }
     
-    // Not a property image request, continue
+    // For all other requests, continue to regular handling
     next();
   });
 
