@@ -9,6 +9,13 @@ interface PropertyImageProps {
   onClick?: () => void;
 }
 
+// Keep a record of image URLs that are known to fail
+// This avoids unnecessary network requests for images we know don't exist
+const knownFailedImages = new Set<string>();
+
+// Keep track of hash patterns that look like our new upload format
+const hashPattern = /[a-f0-9]{32}/i;
+
 export default function PropertyImage({ 
   src, 
   alt, 
@@ -34,12 +41,38 @@ export default function PropertyImage({
       setFallbackStrategy(0);
     }
     
-    // Format the source URL
+    // Handle empty or invalid sources directly
     if (!src || src === 'undefined' || src === 'null') {
-      // Use a default placeholder image for missing sources
       setFormattedSrc('/placeholder-property.svg');
       setIsLoaded(true); // Assume placeholder is always available
       return;
+    }
+    
+    // Remove any extra quotes that might be from JSON serialization
+    const cleanSrc = src.replace(/"/g, '').replace(/\\/g, '/');
+    
+    // Check if this image is already known to fail
+    if (knownFailedImages.has(cleanSrc)) {
+      console.log(`Using placeholder for known failed image: ${cleanSrc}`);
+      setFormattedSrc('/placeholder-property.svg');
+      setIsLoaded(true);
+      return;
+    }
+    
+    // Check if the image has a hash-only filename (our new upload format)
+    // These files may be missing due to the Windows upload issue
+    if (hashPattern.test(cleanSrc)) {
+      const parts = cleanSrc.split('/');
+      const lastPart = parts[parts.length - 1];
+      
+      // If it contains a hash pattern and we haven't tried to load it before, 
+      // assume it might fail and provide a placeholder immediately
+      if (hashPattern.test(lastPart) && !src.includes('placeholder')) {
+        console.log(`Using placeholder for hash-style image that might not exist: ${cleanSrc}`);
+        setFormattedSrc('/placeholder-property.svg');
+        setIsLoaded(true);
+        return;
+      }
     }
     
     // First - check for placeholder SVG which never needs cache-busting or special processing
@@ -47,6 +80,7 @@ export default function PropertyImage({
         src.includes('placeholder-property.svg') ||
         src === '/uploads/default-property.svg') {
       setFormattedSrc(src);
+      setIsLoaded(true); // Assume placeholder is always available
       return;
     }
     
@@ -72,30 +106,38 @@ export default function PropertyImage({
           // Strategy 1: Try direct filename without path
           {
             const filename = normalizedSrc.split('/').pop();
-            setFormattedSrc(`/uploads/properties/${filename}${cacheBuster}`);
+            if (filename) {
+              setFormattedSrc(`/uploads/properties/${filename}${cacheBuster}`);
+            } else {
+              setFormattedSrc('/placeholder-property.svg');
+            }
           }
           break;
         case 2:
           // Strategy 2: Try with just uploads folder
           {
             const filename = normalizedSrc.split('/').pop();
-            setFormattedSrc(`/uploads/${filename}${cacheBuster}`);
+            if (filename) {
+              setFormattedSrc(`/uploads/${filename}${cacheBuster}`);
+            } else {
+              setFormattedSrc('/placeholder-property.svg');
+            }
           }
           break;
         case 3:
-          // Strategy 3: Try without upload prefix
-          {
-            const filename = normalizedSrc.split('/').pop();
-            setFormattedSrc(`/${filename}${cacheBuster}`);
-          }
-          break;
-        case 4:
-          // Strategy 4: Last resort - use placeholder image
+          // Strategy 3: Use a placeholder immediately
           setFormattedSrc('/placeholder-property.svg');
+          setIsLoaded(true);
+          
+          // Add this image to the list of known failures to avoid trying again
+          if (src) {
+            knownFailedImages.add(src.replace(/"/g, '').replace(/\\/g, '/'));
+          }
           break;
         default:
           // Default to placeholder if all strategies fail
           setFormattedSrc('/placeholder-property.svg');
+          setIsLoaded(true);
       }
       return;
     }
@@ -112,7 +154,7 @@ export default function PropertyImage({
     // This handles Windows paths, missing slashes, and adds cache busters
     const imageUrl = getImageUrl(normalizedSrc);
     setFormattedSrc(imageUrl);
-  }, [src, retryCount, useFallbackPath, fallbackStrategy]); // Add dependencies
+  }, [src, retryCount, useFallbackPath, fallbackStrategy]);
   
   const handleLoad = () => {
     setIsLoaded(true);
@@ -129,16 +171,23 @@ export default function PropertyImage({
     
     console.log(`Image failed to load: ${formattedSrc}`);
     
-    // Try a different fallback strategy
-    if (fallbackStrategy < 4) {
+    // Try a different fallback strategy - but limit to fewer attempts for better performance
+    if (fallbackStrategy < 3) {
       setFallbackStrategy(prev => prev + 1);
       return;
     }
     
-    // Then try retrying the original source with different cache busting
-    if (retryCount < 2 && fallbackStrategy === 0) {
-      setRetryCount(prev => prev + 1);
+    // Don't bother with multiple retries if we've already tried a fallback
+    if (retryCount === 0 && fallbackStrategy === 0) {
+      setRetryCount(1);
       return;
+    }
+    
+    // Add this to known failed images to avoid future attempts
+    if (src) {
+      const cleanSrc = src.replace(/"/g, '').replace(/\\/g, '/');
+      knownFailedImages.add(cleanSrc);
+      console.log(`Added to known failed images: ${cleanSrc}`);
     }
     
     // Finally, give up and use placeholder
