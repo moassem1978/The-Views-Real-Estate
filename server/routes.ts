@@ -1851,12 +1851,20 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
       
       // Ensure required fields are present
-      const requiredFields = ['name', 'description', 'location', 'gallery', 'unitTypes', 'developerInfo'];
+      const requiredFields = [
+        { key: 'projectName', column: 'project_name' }, 
+        { key: 'description', column: 'description' }, 
+        { key: 'location', column: 'location' }, 
+        { key: 'images', column: 'images' }, 
+        { key: 'unitTypes', column: 'unit_types' }, 
+        { key: 'aboutDeveloper', column: 'about_developer' }
+      ];
+      
       const missingFields = requiredFields.filter(field => {
         // Check if field is missing or empty
-        const value = req.body[field];
+        const value = req.body[field.key];
         return value === undefined || value === null || (Array.isArray(value) && value.length === 0) || value === '';
-      });
+      }).map(field => field.key);
       
       if (missingFields.length > 0) {
         console.error(`Project creation failed: Missing required fields: ${missingFields.join(', ')}`);
