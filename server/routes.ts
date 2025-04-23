@@ -2083,29 +2083,81 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Direct file access route as a last resort
+  // Enhanced file access route with advanced file matching
   app.get('/uploads/*', (req, res) => {
-    // This is our last fallback if the static middleware doesn't find the file
-    console.log(`Direct file access request for: ${req.path}`);
+    console.log(`Enhanced file access request for: ${req.path}`);
     
-    // Try to look in all possible locations
+    // Clean up the path and remove the '/uploads/' prefix
     const relativePath = req.path.substring(8); // remove '/uploads/'
-    const possiblePaths = [
-      path.join(process.cwd(), 'public', 'uploads', relativePath),
-      path.join(process.cwd(), 'uploads', relativePath),
-      path.join(process.cwd(), relativePath)
+    
+    // Get the base directories where uploads might be stored
+    const baseDirectories = [
+      path.join(process.cwd(), 'public', 'uploads'),
+      path.join(process.cwd(), 'uploads'),
+      path.join(process.cwd())
     ];
     
-    // Check each path
-    for (const filePath of possiblePaths) {
-      if (fs.existsSync(filePath)) {
-        console.log(`File found at: ${filePath}`);
-        return res.sendFile(filePath);
+    // First try the exact path (standard behavior)
+    for (const baseDir of baseDirectories) {
+      const exactPath = path.join(baseDir, relativePath);
+      if (fs.existsSync(exactPath)) {
+        console.log(`File found at exact path: ${exactPath}`);
+        return res.sendFile(exactPath);
       }
     }
     
-    // If we get here, the file wasn't found
+    // If we couldn't find the exact file, try to find it by filename only (without subdir)
+    const filename = path.basename(relativePath);
+    const subdirs = ['properties', 'announcements', 'projects', 'logos', ''];
+    
+    // Check each possible subdirectory
+    for (const baseDir of baseDirectories) {
+      for (const subdir of subdirs) {
+        const alternativePath = path.join(baseDir, subdir, filename);
+        if (fs.existsSync(alternativePath)) {
+          console.log(`File found using filename match: ${alternativePath}`);
+          return res.sendFile(alternativePath);
+        }
+      }
+    }
+
+    // Try fuzzy matching for property images with hash names (Windows-uploaded)
+    // This is for cases where the URL has a cleaned filename but the actual file has a hash
+    try {
+      for (const baseDir of baseDirectories) {
+        for (const subdir of subdirs) {
+          const subdirPath = path.join(baseDir, subdir);
+          if (fs.existsSync(subdirPath)) {
+            const files = fs.readdirSync(subdirPath);
+            // Try to find a file with a similar name or containing parts of the requested filename
+            for (const file of files) {
+              // If the filename contains any part of the requested file, it's likely a match
+              if (filename.length > 8 && (file.includes(filename.substring(0, 8)) || 
+                  filename.includes(file.substring(0, 8)))) {
+                console.log(`Possible match found using partial hash: ${file}`);
+                const matchPath = path.join(subdirPath, file);
+                console.log(`Serving file from: ${matchPath}`);
+                return res.sendFile(matchPath);
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error searching for fuzzy file matches:", err);
+    }
+    
+    // If we get here, the file wasn't found with any method
     console.error(`File not found in any location: ${relativePath}`);
+    
+    // Serve a placeholder image instead of 404
+    const placeholderPath = path.join(process.cwd(), 'public', 'placeholder-property.svg');
+    if (fs.existsSync(placeholderPath)) {
+      console.log(`Serving placeholder image at: ${placeholderPath}`);
+      return res.sendFile(placeholderPath);
+    }
+    
+    // Last resort, return 404
     res.status(404).send('File not found');
   });
 
