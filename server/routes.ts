@@ -55,6 +55,7 @@ ensureDir(uploadsDir);
 ensureDir(path.join(uploadsDir, 'logos'));
 ensureDir(path.join(uploadsDir, 'properties'));
 ensureDir(path.join(uploadsDir, 'announcements'));
+ensureDir(path.join(uploadsDir, 'projects'));
 
 // Create a more permissive file filter
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {

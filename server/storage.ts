@@ -1607,6 +1607,81 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return result.length > 0;
   }
+  
+  // Project operations
+  async getAllProjects(page = 1, pageSize = 10): Promise<PaginatedResult<Project>> {
+    const offset = (page - 1) * pageSize;
+    
+    const [countResult] = await db
+      .select({ count: sql`count(*)` })
+      .from(projects);
+    
+    const totalCount = Number(countResult?.count || 0);
+    const pageCount = Math.ceil(totalCount / pageSize);
+    
+    const data = await db
+      .select()
+      .from(projects)
+      .orderBy(desc(projects.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+    
+    return {
+      data,
+      totalCount,
+      pageCount,
+      page,
+      pageSize
+    };
+  }
+  
+  async getProjectById(id: number): Promise<Project | undefined> {
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, id));
+    
+    return project;
+  }
+  
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const [project] = await db
+      .insert(projects)
+      .values(insertProject)
+      .returning();
+    
+    return project;
+  }
+  
+  async updateProject(id: number, updates: Partial<Project>): Promise<Project | undefined> {
+    // Remove non-updatable fields
+    const { id: _id, createdAt, updatedAt, ...updatableFields } = updates as any;
+    
+    const [updatedProject] = await db
+      .update(projects)
+      .set({
+        ...updatableFields,
+        updatedAt: new Date()
+      })
+      .where(eq(projects.id, id))
+      .returning();
+    
+    return updatedProject;
+  }
+  
+  async deleteProject(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(projects)
+        .where(eq(projects.id, id))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      return false;
+    }
+  }
 
   // Site settings operations using file persistence
   private defaultSiteSettings: SiteSettings = {
