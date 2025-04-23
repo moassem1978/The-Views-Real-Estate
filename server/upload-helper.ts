@@ -32,7 +32,11 @@ export class UploadHelper {
     },
     
     filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      // Generate a unique hash for the file
+      const crypto = require('crypto');
+      const hash = crypto.createHash('md5')
+        .update(file.originalname + Date.now() + Math.random().toString())
+        .digest('hex');
       
       // Get original extension or use a default
       let ext = path.extname(file.originalname).toLowerCase();
@@ -50,19 +54,19 @@ export class UploadHelper {
         }
       }
       
-      // Create appropriate filename based on endpoint
-      let filename;
-      if (req.path.includes('property')) {
-        filename = 'images-' + uniqueSuffix + ext;
-      } else if (req.path.includes('announcement')) {
-        filename = 'announcement-' + uniqueSuffix + ext;
-      } else if (req.path.includes('logo')) {
-        filename = 'logo-' + uniqueSuffix + ext;
-      } else {
-        filename = 'upload-' + uniqueSuffix + ext;
+      // Use just the hash as filename (no prefix, no extension)
+      // This is more compatible across platforms and avoids path issues
+      const filename = hash;
+      
+      console.log(`Generated filename hash: ${filename} (original: ${file.originalname})`);
+      
+      // Always create a copy in the secondary directory as well
+      const secondaryDir = path.join(process.cwd(), 'uploads', 'properties');
+      if (!fs.existsSync(secondaryDir)) {
+        fs.mkdirSync(secondaryDir, { recursive: true, mode: 0o777 });
       }
       
-      console.log(`Generated filename: ${filename}`);
+      // Return just the hash as the filename
       cb(null, filename);
     }
   });
@@ -213,6 +217,7 @@ export class UploadHelper {
   
   /**
    * Process uploaded files to return proper URLs and handle response
+   * Additionally creates copies of files in secondary locations for redundancy
    */
   public static handleUploadResponse(req: Request, res: Response) {
     try {
@@ -224,14 +229,52 @@ export class UploadHelper {
       }
       
       // Use proper type for multer files
-      const uploadedFiles = Array.isArray(req.files) ? req.files : [req.files];
+      const uploadedFiles = Array.isArray(req.files) 
+        ? req.files as Express.Multer.File[]
+        : [req.files as unknown as Express.Multer.File];
       
-      // Create URLs for all uploaded files
+      // Create URLs for all uploaded files and handle secondary locations
       const fileUrls = uploadedFiles.map(file => {
         // Extract upload type from path (e.g., properties, logos, announcements)
-        const uploadType = file.destination.includes('properties') 
+        const destinationPath = typeof file.destination === 'string' ? file.destination : '';
+        const uploadType = destinationPath.includes('properties') 
           ? 'properties' 
-          : (file.destination.includes('logos') ? 'logos' : 'announcements');
+          : (destinationPath.includes('logos') ? 'logos' : 'announcements');
+        
+        // Create secondary copies of files for redundancy and cross-OS compatibility
+        try {
+          // Copy file to additional locations to ensure it's available from multiple paths
+          const primaryPath = typeof file.path === 'string' ? file.path : '';
+          const filename = typeof file.filename === 'string' ? file.filename : '';
+          
+          if (primaryPath && filename) {
+            // Path without 'public' prefix - for direct server access
+            const secondaryPath = path.join(
+              process.cwd(), 
+              'uploads',
+              uploadType, 
+              filename
+            );
+            
+            // Ensure secondary directory exists
+            const secondaryDir = path.dirname(secondaryPath);
+            if (!fs.existsSync(secondaryDir)) {
+              fs.mkdirSync(secondaryDir, { recursive: true, mode: 0o777 });
+            }
+            
+            // Copy from primary to secondary location if they're not the same file
+            if (primaryPath !== secondaryPath && fs.existsSync(primaryPath)) {
+              fs.copyFileSync(primaryPath, secondaryPath);
+              console.log(`Created backup copy at ${secondaryPath}`);
+              
+              // Make sure backup is readable
+              fs.chmodSync(secondaryPath, 0o644);
+            }
+          }
+        } catch (copyError) {
+          // Log but don't fail if copy fails - we'll still have the primary copy
+          console.error('Error creating file backup:', copyError);
+        }
         
         // Generate a URL that will map correctly to our static files
         return `/uploads/${uploadType}/${file.filename}`;
