@@ -2,7 +2,7 @@ import express, { type Express, Request, Response, NextFunction } from "express"
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { z } from "zod";
-import { insertPropertySchema, insertTestimonialSchema, insertAnnouncementSchema } from "@shared/schema";
+import { insertPropertySchema, insertTestimonialSchema, insertAnnouncementSchema, insertProjectSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import multer from "multer";
@@ -78,6 +78,8 @@ const diskStorage = multer.diskStorage({
       uploadPath = path.join(uploadsDir, 'properties');
     } else if (req.path.includes('/api/upload/announcement-image')) {
       uploadPath = path.join(uploadsDir, 'announcements');
+    } else if (req.path.includes('/api/upload/project-images')) {
+      uploadPath = path.join(uploadsDir, 'projects');
     }
     
     // Make sure the directory exists with proper permissions
@@ -134,6 +136,8 @@ const diskStorage = multer.diskStorage({
       filename = 'images-' + uniqueSuffix + ext;
     } else if (req.path.includes('announcement-image')) {
       filename = 'announcement-' + uniqueSuffix + ext;
+    } else if (req.path.includes('project-images')) {
+      filename = 'project-' + uniqueSuffix + ext;
     } else {
       filename = 'logo-' + uniqueSuffix + ext;
     }
@@ -1788,6 +1792,293 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       res.json({ success: true, urls });
     });
+  });
+  
+  // ====== PROJECT ROUTES ======
+  // Get all projects with pagination
+  app.get("/api/projects", async (req: Request, res: Response) => {
+    try {
+      // Extract pagination parameters from query
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
+      
+      // Get paginated projects
+      const result = await dbStorage.getAllProjects(page, pageSize);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      res.status(500).json({ message: "Failed to fetch projects" });
+    }
+  });
+  
+  // Get project by ID
+  app.get("/api/projects/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+
+      const project = await dbStorage.getProjectById(id);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      res.json(project);
+    } catch (error) {
+      console.error("Error fetching project:", error);
+      res.status(500).json({ message: "Failed to fetch project" });
+    }
+  });
+  
+  // Create a new project
+  app.post("/api/projects", async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Project creation failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to create projects" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to create project: ${user.username} (Role: ${user.role})`);
+      
+      // Only admins and owners can create projects
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        console.error("Project creation failed: Insufficient permissions");
+        return res.status(403).json({ message: "You do not have permission to create projects" });
+      }
+      
+      // Ensure required fields are present
+      const requiredFields = ['name', 'description', 'location', 'gallery', 'unitTypes', 'developerInfo'];
+      const missingFields = requiredFields.filter(field => {
+        // Check if field is missing or empty
+        const value = req.body[field];
+        return value === undefined || value === null || (Array.isArray(value) && value.length === 0) || value === '';
+      });
+      
+      if (missingFields.length > 0) {
+        console.error(`Project creation failed: Missing required fields: ${missingFields.join(', ')}`);
+        return res.status(400).json({
+          message: `Missing required fields: ${missingFields.join(', ')}`
+        });
+      }
+      
+      // Format gallery field if it's a comma-separated string
+      if (typeof req.body.gallery === 'string') {
+        try {
+          console.log("Converting gallery string to array");
+          req.body.gallery = req.body.gallery.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
+          console.log(`Processed ${req.body.gallery.length} image URLs`);
+        } catch (error) {
+          console.error("Error parsing gallery string:", error);
+        }
+      }
+      
+      // Format unitTypes field if it's a comma-separated string
+      if (typeof req.body.unitTypes === 'string') {
+        try {
+          console.log("Converting unitTypes string to array");
+          req.body.unitTypes = req.body.unitTypes.split(',').map((type: string) => type.trim()).filter((type: string) => type.length > 0);
+          console.log(`Processed ${req.body.unitTypes.length} unit types`);
+        } catch (error) {
+          console.error("Error parsing unitTypes string:", error);
+        }
+      }
+      
+      let projectData;
+      try {
+        projectData = insertProjectSchema.parse(req.body);
+        console.log("Project data validation succeeded");
+      } catch (parseError) {
+        console.error("Project data validation failed:", parseError);
+        return res.status(400).json({
+          message: "Invalid project data. Please check all required fields.",
+          details: parseError instanceof Error ? parseError.message : String(parseError)
+        });
+      }
+      
+      // Add createdBy field and dates
+      const projectWithUser = {
+        ...projectData,
+        createdBy: user.id,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Create the project
+      const project = await dbStorage.createProject(projectWithUser);
+      res.status(201).json(project);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        console.error("Validation error details:", validationError);
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: validationError.message 
+        });
+      }
+      
+      res.status(500).json({ message: "Failed to create project" });
+    }
+  });
+  
+  // Update an existing project
+  app.put("/api/projects/:id", async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Project update failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to update projects" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to update project: ${user.username} (Role: ${user.role})`);
+      
+      // Only admins and owners can update projects
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        console.error("Project update failed: Insufficient permissions");
+        return res.status(403).json({ message: "You do not have permission to update projects" });
+      }
+      
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      
+      // Check if the project exists
+      const existingProject = await dbStorage.getProjectById(id);
+      if (!existingProject) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Format gallery field if it's a comma-separated string
+      if (typeof req.body.gallery === 'string') {
+        try {
+          console.log("Converting gallery string to array");
+          req.body.gallery = req.body.gallery.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
+          console.log(`Processed ${req.body.gallery.length} image URLs`);
+        } catch (error) {
+          console.error("Error parsing gallery string:", error);
+        }
+      }
+      
+      // Format unitTypes field if it's a comma-separated string
+      if (typeof req.body.unitTypes === 'string') {
+        try {
+          console.log("Converting unitTypes string to array");
+          req.body.unitTypes = req.body.unitTypes.split(',').map((type: string) => type.trim()).filter((type: string) => type.length > 0);
+          console.log(`Processed ${req.body.unitTypes.length} unit types`);
+        } catch (error) {
+          console.error("Error parsing unitTypes string:", error);
+        }
+      }
+      
+      // Update the project
+      const updatedProject = await dbStorage.updateProject(id, {
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      });
+      
+      if (updatedProject) {
+        res.json(updatedProject);
+      } else {
+        res.status(500).json({ message: "Failed to update project" });
+      }
+    } catch (error) {
+      console.error("Error updating project:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Delete a project
+  app.delete("/api/projects/:id", async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Project deletion failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to delete projects" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to delete project: ${user.username} (Role: ${user.role})`);
+      
+      // Only admins and owners can delete projects
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        console.error("Project deletion failed: Insufficient permissions");
+        return res.status(403).json({ message: "You do not have permission to delete projects" });
+      }
+      
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      
+      // Check if the project exists
+      const project = await dbStorage.getProjectById(id);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Delete the project
+      const success = await dbStorage.deleteProject(id);
+      if (success) {
+        res.json({ message: "Project deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete project" });
+      }
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Project image upload route
+  app.post("/api/upload/project-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Project image upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to upload project images" });
+      }
+      
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to upload project images: ${user.username} (Role: ${user.role})`);
+      
+      // Only admins and owners can upload project images
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        console.error("Project image upload failed: Insufficient permissions");
+        return res.status(403).json({ message: "You do not have permission to upload project images" });
+      }
+      
+      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+        return res.status(400).json({ message: "No files were uploaded" });
+      }
+      
+      console.log(`Received ${req.files.length} project image files`);
+      
+      // Process uploaded files
+      const imageUrls = req.files.map(file => {
+        // Create both public and internal URLs
+        const publicUrl = `/uploads/projects/${file.filename}`;
+        
+        console.log(`Successfully processed project image: ${file.originalname} -> ${publicUrl}`);
+        return publicUrl;
+      });
+      
+      res.json({ 
+        message: "Project images uploaded successfully",
+        imageUrls: imageUrls 
+      });
+    } catch (error) {
+      console.error('Error uploading project images:', error);
+      res.status(500).json({ message: "Failed to upload project images" });
+    }
   });
 
   // Direct file access route as a last resort
