@@ -1831,6 +1831,36 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
   
+  // Get properties associated with a specific project
+  app.get("/api/projects/:id/properties", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      
+      // First check if the project exists
+      const project = await dbStorage.getProjectById(id);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      console.log(`Fetching properties for project: ${project.projectName}`);
+      
+      // Search for properties with matching project name
+      const properties = await dbStorage.searchProperties({
+        projectName: project.projectName
+      });
+      
+      console.log(`Found ${properties.data.length} properties for project: ${project.projectName}`);
+      
+      res.json(properties);
+    } catch (error) {
+      console.error("Error fetching project properties:", error);
+      res.status(500).json({ message: "Failed to fetch project properties" });
+    }
+  });
+  
   // Create a new project
   app.post("/api/projects", async (req: Request, res: Response) => {
     try {
@@ -2124,17 +2154,83 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     // Try fuzzy matching for property images with hash names (Windows-uploaded)
     // This is for cases where the URL has a cleaned filename but the actual file has a hash
     try {
+      console.log(`Attempting enhanced fuzzy matching for: ${filename}`);
+      
+      // First try direct hash match for known Windows MD5 hash pattern (32 char hexadecimal)
+      const hashMatch = filename.match(/([a-f0-9]{32})/i);
+      if (hashMatch) {
+        const hash = hashMatch[1];
+        console.log(`Found hash pattern in filename: ${hash}`);
+        
+        // Look for any file containing this hash
+        for (const baseDir of baseDirectories) {
+          for (const subdir of subdirs) {
+            const subdirPath = path.join(baseDir, subdir);
+            if (fs.existsSync(subdirPath)) {
+              const files = fs.readdirSync(subdirPath);
+              console.log(`Scanning ${files.length} files in ${subdirPath} for hash ${hash}`);
+              
+              for (const file of files) {
+                if (file.includes(hash)) {
+                  console.log(`Exact hash match found: ${file}`);
+                  const matchPath = path.join(subdirPath, file);
+                  console.log(`Serving file from: ${matchPath}`);
+                  return res.sendFile(matchPath);
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // If no hash match, try listing all files and look for partial matches
+      console.log("No exact hash match found, trying partial matching");
+      
+      // Special case for common Windows image hashes - look for files with MD5 hash patterns
       for (const baseDir of baseDirectories) {
         for (const subdir of subdirs) {
           const subdirPath = path.join(baseDir, subdir);
           if (fs.existsSync(subdirPath)) {
             const files = fs.readdirSync(subdirPath);
-            // Try to find a file with a similar name or containing parts of the requested filename
+            console.log(`Checking ${files.length} files in ${subdirPath}`);
+            
+            // First try finding recent files (last modified) as they're most likely to be what we want
+            const fileStats = files.map(file => {
+              const fullPath = path.join(subdirPath, file);
+              try {
+                const stats = fs.statSync(fullPath);
+                return { file, stats, fullPath };
+              } catch (err) {
+                return null;
+              }
+            }).filter(item => item !== null);
+            
+            // Sort by last modified date, most recent first
+            fileStats.sort((a, b) => b.stats.mtimeMs - a.stats.mtimeMs);
+            
+            // Check the 5 most recent files first
+            const recentFiles = fileStats.slice(0, 5);
+            for (const fileInfo of recentFiles) {
+              console.log(`Checking recent file: ${fileInfo.file}`);
+              if (fileInfo.file.match(/[a-f0-9]{8,32}/i)) {  // Has a hash-like pattern
+                console.log(`Recent file appears to be a hash match: ${fileInfo.file}`);
+                return res.sendFile(fileInfo.fullPath);
+              }
+            }
+            
+            // If that fails, try matching by name fragments
             for (const file of files) {
-              // If the filename contains any part of the requested file, it's likely a match
-              if (filename.length > 8 && (file.includes(filename.substring(0, 8)) || 
-                  filename.includes(file.substring(0, 8)))) {
-                console.log(`Possible match found using partial hash: ${file}`);
+              // Split the filenames into parts and look for common segments
+              const fileParts = file.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(' ').filter(p => p.length > 3);
+              const requestedParts = filename.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(' ').filter(p => p.length > 3);
+              
+              // See if any meaningful part matches
+              const hasCommonPart = fileParts.some(part => 
+                requestedParts.some(reqPart => part.includes(reqPart) || reqPart.includes(part))
+              );
+              
+              if (hasCommonPart) {
+                console.log(`Found matching name parts in: ${file}`);
                 const matchPath = path.join(subdirPath, file);
                 console.log(`Serving file from: ${matchPath}`);
                 return res.sendFile(matchPath);
