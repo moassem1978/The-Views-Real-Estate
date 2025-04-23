@@ -134,6 +134,32 @@ export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
 export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
 export type Announcement = typeof announcements.$inferSelect;
 
+// Projects table for development project entries
+export const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  projectName: text("project_name").notNull(),
+  description: text("description").notNull(),
+  location: text("location").notNull(),
+  unitTypes: jsonb("unit_types").notNull(), // JSON array containing unit types and areas
+  aboutDeveloper: text("about_developer").notNull(),
+  images: jsonb("images").notNull(), // Gallery photos
+  status: text("status").notNull().default(publicationStatus.DRAFT),
+  createdBy: integer("created_by").default(1),
+  approvedBy: integer("approved_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at"),
+});
+
+export const insertProjectSchema = createInsertSchema(projects).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  approvedBy: true,
+});
+
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+export type Project = typeof projects.$inferSelect;
+
 // Define SiteSettings interface
 export interface SiteSettings {
   companyLogo?: string;

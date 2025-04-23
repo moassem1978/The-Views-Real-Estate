@@ -1,7 +1,7 @@
 import { 
-  users, properties, testimonials, announcements,
-  type User, type Property, type Testimonial, type Announcement,
-  type InsertUser, type InsertProperty, type InsertTestimonial, type InsertAnnouncement,
+  users, properties, testimonials, announcements, projects,
+  type User, type Property, type Testimonial, type Announcement, type Project,
+  type InsertUser, type InsertProperty, type InsertTestimonial, type InsertAnnouncement, type InsertProject,
   type SiteSettings
 } from "@shared/schema";
 import { faker } from '@faker-js/faker';
@@ -43,6 +43,13 @@ export interface IStorage {
   getPropertyCount(): Promise<number>;
   getUniqueProjectNames(): Promise<string[]>; // Added this method to get unique project names
   getUniqueCities(): Promise<string[]>; // Method to get unique cities for location dropdown
+  
+  // Project operations
+  getAllProjects(page?: number, pageSize?: number): Promise<PaginatedResult<Project>>;
+  getProjectById(id: number): Promise<Project | undefined>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: number, project: Partial<Project>): Promise<Project | undefined>;
+  deleteProject(id: number): Promise<boolean>;
   
   // Testimonial operations
   getAllTestimonials(page?: number, pageSize?: number): Promise<PaginatedResult<Testimonial>>;
