@@ -157,34 +157,57 @@ export function getResizedImageUrl(path: string | undefined, size: 'thumbnail' |
 /**
  * Returns a proper URL for an image path, handling both relative and absolute paths
  * Uses caching for better performance, but also adds cache-busting for local uploads
+ * Enhanced to handle Windows-style paths and various other path formats
  * 
  * @param path - The image path from the API
  * @returns Full URL to the image
  */
 export function getImageUrl(path: string | undefined): string {
   // Handle missing path
-  if (!path) return "/uploads/default-announcement.svg";
+  if (!path) return "/placeholder-property.svg";
   
-  // For default images, don't add cache-busting or use cache
+  // For well-known default images, don't add cache-busting
   if (path === '/uploads/default-announcement.svg' || 
-      path === '/uploads/default-property.svg') {
+      path === '/uploads/default-property.svg' ||
+      path === '/placeholder-property.svg') {
     return path;
   }
   
   // Handle external URLs as-is
   if (path.startsWith('http')) {
     return path;
-  } 
+  }
   
-  // Handle uploaded images with cache-busting to prevent stale images
-  if (path.startsWith('/uploads/')) {
-    // Add a timestamp cache-buster to force fresh image
-    const cacheBuster = `?t=${Date.now()}`;
-    return `${path}${cacheBuster}`;
-  } 
+  // Fix Windows-style backslashes if present 
+  let normalizedPath = path.replace(/\\/g, '/');
   
-  // Fallback for any other path format
-  return path;
+  // If path has double quotes (from DB JSON), remove them
+  normalizedPath = normalizedPath.replace(/"/g, '');
+  
+  // Make sure path always starts with / for proper URL formatting
+  if (!normalizedPath.startsWith('/')) {
+    normalizedPath = `/${normalizedPath}`;
+  }
+  
+  // Additional check for common paths to ensure consistency
+  // Often DB might have paths without the /uploads prefix
+  if (!normalizedPath.includes('/uploads/') && 
+      !normalizedPath.startsWith('/placeholder') && 
+      !normalizedPath.startsWith('/public/')) {
+    
+    // Check if it's a property image with filename pattern
+    if (/^\/[a-f0-9]{32}$/i.test(normalizedPath)) {
+      normalizedPath = `/uploads/properties${normalizedPath}`;
+    }
+    // Check if it's just a properties filename
+    else if (/^\/properties\/[a-f0-9]{32}$/i.test(normalizedPath)) {
+      normalizedPath = `/uploads${normalizedPath}`;
+    }
+  }
+  
+  // Add a timestamp cache-buster to force fresh image & prevent caching issues
+  const cacheBuster = `?t=${Date.now()}-${Math.floor(Math.random() * 10)}`;
+  return `${normalizedPath}${cacheBuster}`;
 }
 
 /**

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getImageUrl } from "@/lib/utils";
 
 interface PropertyImageProps {
-  src: string;
+  src?: string;
   alt: string;
   priority?: boolean;
   className?: string;
@@ -21,68 +21,98 @@ export default function PropertyImage({
   const [formattedSrc, setFormattedSrc] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const [useFallbackPath, setUseFallbackPath] = useState(false);
+  const [fallbackStrategy, setFallbackStrategy] = useState(0);
   
   // Reset state and format URL when src changes
   useEffect(() => {
     setIsLoaded(false);
     setIsError(false);
     
-    // Reset useFallbackPath when src changes, but not on retry attempts
+    // Reset fallback strategy when src changes, but not on retry attempts
     if (retryCount === 0) {
       setUseFallbackPath(false);
+      setFallbackStrategy(0);
     }
     
     // Format the source URL
-    if (!src) {
+    if (!src || src === 'undefined' || src === 'null') {
       // Use a default placeholder image for missing sources
       setFormattedSrc('/placeholder-property.svg');
+      setIsLoaded(true); // Assume placeholder is always available
       return;
     }
+    
+    // First - check for placeholder SVG which never needs cache-busting or special processing
+    if (src === '/placeholder-property.svg' || 
+        src.includes('placeholder-property.svg') ||
+        src === '/uploads/default-property.svg') {
+      setFormattedSrc(src);
+      return;
+    }
+    
+    // Fix Windows-style paths with backslashes
+    let normalizedSrc = src.replace(/\\/g, '/');
+    
+    // Remove any double quotes from JSON string serialization
+    normalizedSrc = normalizedSrc.replace(/"/g, '');
     
     // Generate a unique cache buster for each retry attempt
-    const cacheBuster = `?t=${Date.now()}-${retryCount}`;
+    const cacheBuster = `?t=${Date.now()}-${retryCount}-${Math.floor(Math.random() * 10)}`;
     
-    // Handle path issues where images might be in /uploads directly instead of /uploads/properties
-    if (src.startsWith('/uploads/properties/') && useFallbackPath) {
-      // Try an alternative path if the original failed
-      const filename = src.split('/').pop();
-      const fallbackPath = `/uploads/${filename}`;
-      setFormattedSrc(`${fallbackPath}${cacheBuster}`);
-      return;
+    // Add initial forward slash if missing
+    if (!normalizedSrc.startsWith('/') && !normalizedSrc.startsWith('http')) {
+      normalizedSrc = `/${normalizedSrc}`;
     }
     
-    // Additional fallback paths to try for iOS - check both with and without public prefix
-    if (src.startsWith('/public/uploads/') && useFallbackPath) {
-      // Try without the public prefix
-      const pathWithoutPublic = src.replace('/public/', '/');
-      setFormattedSrc(`${pathWithoutPublic}${cacheBuster}`);
+    // Handle different fallback strategies
+    if (fallbackStrategy > 0) {
+      // Try different path combinations based on fallback strategy number
+      switch (fallbackStrategy) {
+        case 1:
+          // Strategy 1: Try direct filename without path
+          {
+            const filename = normalizedSrc.split('/').pop();
+            setFormattedSrc(`/uploads/properties/${filename}${cacheBuster}`);
+          }
+          break;
+        case 2:
+          // Strategy 2: Try with just uploads folder
+          {
+            const filename = normalizedSrc.split('/').pop();
+            setFormattedSrc(`/uploads/${filename}${cacheBuster}`);
+          }
+          break;
+        case 3:
+          // Strategy 3: Try without upload prefix
+          {
+            const filename = normalizedSrc.split('/').pop();
+            setFormattedSrc(`/${filename}${cacheBuster}`);
+          }
+          break;
+        case 4:
+          // Strategy 4: Last resort - use placeholder image
+          setFormattedSrc('/placeholder-property.svg');
+          break;
+        default:
+          // Default to placeholder if all strategies fail
+          setFormattedSrc('/placeholder-property.svg');
+      }
       return;
     }
     
     // Handle already formatted URLs (from previous cache busting)
-    if (src.includes('?')) {
+    if (normalizedSrc.includes('?')) {
       // Strip the old cache buster and add a new one
-      const baseSrc = src.split('?')[0];
+      const baseSrc = normalizedSrc.split('?')[0];
       setFormattedSrc(`${baseSrc}${cacheBuster}`);
       return;
     }
     
-    // Use direct path to server for uploads directory (without getImageUrl processing)
-    if (src.startsWith('/uploads/')) {
-      setFormattedSrc(`${src}${cacheBuster}`);
-      return;
-    }
-    
-    // If the source is a complete URL (including http/https), use it directly with cache busting
-    if (src.startsWith('http')) {
-      setFormattedSrc(`${src}${src.includes('?') ? '&' : '?'}cb=${Date.now()}`);
-      return;
-    }
-    
-    // Use our utility function for other types of URLs
-    const imageUrl = getImageUrl(src);
-    setFormattedSrc(`${imageUrl}${cacheBuster}`);
-  }, [src, retryCount, useFallbackPath]); // Add dependencies
+    // Use our enhanced utility function for proper URL formatting
+    // This handles Windows paths, missing slashes, and adds cache busters
+    const imageUrl = getImageUrl(normalizedSrc);
+    setFormattedSrc(imageUrl);
+  }, [src, retryCount, useFallbackPath, fallbackStrategy]); // Add dependencies
   
   const handleLoad = () => {
     setIsLoaded(true);
@@ -90,39 +120,32 @@ export default function PropertyImage({
   };
   
   const handleError = () => {
-    console.log(`Image failed to load: ${formattedSrc}`);
-    
-    // First try the fallback paths for various scenarios
-    if ((src.startsWith('/uploads/properties/') || src.startsWith('/public/uploads/')) && !useFallbackPath) {
-      console.log(`Trying fallback path for: ${src}`);
-      setUseFallbackPath(true);
+    // If we're already using the placeholder, stop retrying
+    if (formattedSrc.includes('placeholder-property.svg')) {
+      setIsLoaded(true); // Assume placeholder always loads
+      setIsError(false);
       return;
     }
     
-    // Try a direct CDN approach for deployment URLs (for replit.app domains)
-    if (window.location.hostname.includes('replit.app') && retryCount === 1) {
-      const filename = src.split('/').pop();
-      if (filename) {
-        // Try a direct path to the file assuming it's in the public folder
-        setFormattedSrc(`/uploads/${filename}?force=${Date.now()}`);
-        setRetryCount(prev => prev + 1);
-        return;
-      }
+    console.log(`Image failed to load: ${formattedSrc}`);
+    
+    // Try a different fallback strategy
+    if (fallbackStrategy < 4) {
+      setFallbackStrategy(prev => prev + 1);
+      return;
     }
     
-    // Then try retrying the image a couple times with cache busting
-    if (retryCount < 3) {
-      console.log(`Retrying image load (attempt ${retryCount + 1})`);
+    // Then try retrying the original source with different cache busting
+    if (retryCount < 2 && fallbackStrategy === 0) {
       setRetryCount(prev => prev + 1);
       return;
     }
     
-    // Finally, give up and show the error state
-    console.error(`Failed to load image after multiple attempts: ${src}`);
-    setIsError(true);
-    
-    // Fall back to placeholder on error after retries
+    // Finally, give up and use placeholder
+    console.log(`Using placeholder after all fallback strategies failed for: ${src}`);
     setFormattedSrc('/placeholder-property.svg');
+    setIsLoaded(true); // Assume placeholder always loads
+    setIsError(false); // We're showing a placeholder so it's not an error state
   };
   
   return (
@@ -138,16 +161,6 @@ export default function PropertyImage({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-        </div>
-      )}
-      
-      {/* Error state */}
-      {isError && !formattedSrc.includes('/placeholder-property.svg') && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
-          <svg className="h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <p className="mt-2 text-sm text-gray-500">Failed to load image</p>
         </div>
       )}
       
