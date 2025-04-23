@@ -1850,21 +1850,23 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(403).json({ message: "You do not have permission to create projects" });
       }
       
-      // Ensure required fields are present
-      const requiredFields = [
-        { key: 'projectName', column: 'project_name' }, 
-        { key: 'description', column: 'description' }, 
-        { key: 'location', column: 'location' }, 
-        { key: 'images', column: 'images' }, 
-        { key: 'unitTypes', column: 'unit_types' }, 
-        { key: 'aboutDeveloper', column: 'about_developer' }
-      ];
+      // Create a new request body with camelCase fields matching the schema
+      const formattedBody = {
+        projectName: req.body.projectName,
+        description: req.body.description,
+        location: req.body.location,
+        images: req.body.images || [],
+        unitTypes: req.body.unitTypes || [],
+        aboutDeveloper: req.body.aboutDeveloper,
+        status: req.body.status || 'draft',
+        createdBy: user.id
+      };
       
+      // Ensure required fields are present
+      const requiredFields = ['projectName', 'description', 'location', 'aboutDeveloper'];
       const missingFields = requiredFields.filter(field => {
-        // Check if field is missing or empty
-        const value = req.body[field.key];
-        return value === undefined || value === null || (Array.isArray(value) && value.length === 0) || value === '';
-      }).map(field => field.key);
+        return !formattedBody[field];
+      });
       
       if (missingFields.length > 0) {
         console.error(`Project creation failed: Missing required fields: ${missingFields.join(', ')}`);
@@ -1873,49 +1875,31 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         });
       }
       
-      // Format gallery field if it's a comma-separated string
-      if (typeof req.body.gallery === 'string') {
+      // Format images field if it's a comma-separated string
+      if (typeof formattedBody.images === 'string') {
         try {
-          console.log("Converting gallery string to array");
-          req.body.gallery = req.body.gallery.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
-          console.log(`Processed ${req.body.gallery.length} image URLs`);
+          console.log("Converting images string to array");
+          formattedBody.images = formattedBody.images.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
+          console.log(`Processed ${formattedBody.images.length} image URLs`);
         } catch (error) {
-          console.error("Error parsing gallery string:", error);
+          console.error("Error parsing images string:", error);
         }
       }
       
       // Format unitTypes field if it's a comma-separated string
-      if (typeof req.body.unitTypes === 'string') {
+      if (typeof formattedBody.unitTypes === 'string') {
         try {
           console.log("Converting unitTypes string to array");
-          req.body.unitTypes = req.body.unitTypes.split(',').map((type: string) => type.trim()).filter((type: string) => type.length > 0);
-          console.log(`Processed ${req.body.unitTypes.length} unit types`);
+          formattedBody.unitTypes = formattedBody.unitTypes.split(',').map((type: string) => type.trim()).filter((type: string) => type.length > 0);
+          console.log(`Processed ${formattedBody.unitTypes.length} unit types`);
         } catch (error) {
           console.error("Error parsing unitTypes string:", error);
         }
       }
       
-      let projectData;
-      try {
-        projectData = insertProjectSchema.parse(req.body);
-        console.log("Project data validation succeeded");
-      } catch (parseError) {
-        console.error("Project data validation failed:", parseError);
-        return res.status(400).json({
-          message: "Invalid project data. Please check all required fields.",
-          details: parseError instanceof Error ? parseError.message : String(parseError)
-        });
-      }
-      
-      // Add createdBy field and dates
-      const projectWithUser = {
-        ...projectData,
-        createdBy: user.id,
-        createdAt: new Date().toISOString()
-      };
-      
       // Create the project
-      const project = await dbStorage.createProject(projectWithUser);
+      console.log("Creating project with data:", formattedBody);
+      const project = await dbStorage.createProject(formattedBody);
       res.status(201).json(project);
     } catch (error) {
       console.error("Error creating project:", error);
@@ -1963,33 +1947,43 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(404).json({ message: "Project not found" });
       }
       
-      // Format gallery field if it's a comma-separated string
-      if (typeof req.body.gallery === 'string') {
+      // Create a new request body with camelCase fields matching the schema
+      const formattedBody = {
+        projectName: req.body.projectName,
+        description: req.body.description,
+        location: req.body.location,
+        images: req.body.images || existingProject.images,
+        unitTypes: req.body.unitTypes || existingProject.unitTypes,
+        aboutDeveloper: req.body.aboutDeveloper,
+        status: req.body.status || existingProject.status,
+        updatedAt: new Date()
+      };
+      
+      // Format images field if it's a comma-separated string
+      if (typeof formattedBody.images === 'string') {
         try {
-          console.log("Converting gallery string to array");
-          req.body.gallery = req.body.gallery.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
-          console.log(`Processed ${req.body.gallery.length} image URLs`);
+          console.log("Converting images string to array");
+          formattedBody.images = formattedBody.images.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
+          console.log(`Processed ${formattedBody.images.length} image URLs`);
         } catch (error) {
-          console.error("Error parsing gallery string:", error);
+          console.error("Error parsing images string:", error);
         }
       }
       
       // Format unitTypes field if it's a comma-separated string
-      if (typeof req.body.unitTypes === 'string') {
+      if (typeof formattedBody.unitTypes === 'string') {
         try {
           console.log("Converting unitTypes string to array");
-          req.body.unitTypes = req.body.unitTypes.split(',').map((type: string) => type.trim()).filter((type: string) => type.length > 0);
-          console.log(`Processed ${req.body.unitTypes.length} unit types`);
+          formattedBody.unitTypes = formattedBody.unitTypes.split(',').map((type: string) => type.trim()).filter((type: string) => type.length > 0);
+          console.log(`Processed ${formattedBody.unitTypes.length} unit types`);
         } catch (error) {
           console.error("Error parsing unitTypes string:", error);
         }
       }
       
       // Update the project
-      const updatedProject = await dbStorage.updateProject(id, {
-        ...req.body,
-        updatedAt: new Date().toISOString()
-      });
+      console.log("Updating project with data:", formattedBody);
+      const updatedProject = await dbStorage.updateProject(id, formattedBody);
       
       if (updatedProject) {
         res.json(updatedProject);
