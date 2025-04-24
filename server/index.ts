@@ -100,16 +100,20 @@ app.use('/api', simpleUploadRouter);
 // Register our new unified uploader - provides a more robust upload solution
 app.use('/api/unified', unifiedUploader);
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(uploadsDir));
+// Consolidated static file serving with caching
+const staticOptions = {
+  maxAge: '1d',
+  etag: true,
+  lastModified: true
+};
 
-// Serve static files from public/uploads directory for newer uploads
-const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads');
-if (fs.existsSync(publicUploadsDir)) {
-  // Use a different path for public uploads to avoid conflicts
-  app.use(express.static('public'));
-  console.log('Serving public static files from:', publicUploadsDir);
-}
+// Serve all static files from public directory
+app.use(express.static('public', staticOptions));
+
+// Redirect old upload paths to new location
+app.use('/uploads', (req, res) => {
+  res.redirect(`/public/uploads${req.path}`);
+});
 
 // Debug endpoint to check image paths
 app.get('/api/debug/images', (req, res) => {
