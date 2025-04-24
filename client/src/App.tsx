@@ -36,6 +36,7 @@ const UserManagement = lazy(() => import(/* webpackChunkName: "user-management" 
 const AuthTest = lazy(() => import(/* webpackChunkName: "auth-test" */ "@/pages/AuthTest"));
 const Projects = lazy(() => import(/* webpackChunkName: "projects" */ "@/pages/Projects"));
 const ProjectDetails = lazy(() => import(/* webpackChunkName: "project-details" */ "@/pages/ProjectDetails"));
+const ProjectManagement = lazy(() => import(/* webpackChunkName: "project-management" */ "@/pages/ProjectManagement"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -166,6 +167,16 @@ function Router() {
         component={() => (
           <Suspense fallback={<LoadingFallback />}>
             <UserManagement />
+          </Suspense>
+        )}
+        requiredRole={['owner', 'admin']}
+      />
+      
+      <ProtectedRoute 
+        path="/project-management" 
+        component={() => (
+          <Suspense fallback={<LoadingFallback />}>
+            <ProjectManagement />
           </Suspense>
         )}
         requiredRole={['owner', 'admin']}

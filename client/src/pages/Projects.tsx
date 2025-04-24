@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 import ProjectsList from "@/components/projects/ProjectsList";
 import Paginator from "@/components/ui/paginator";
 
@@ -29,6 +32,11 @@ interface PaginatedProjects {
 const Projects: React.FC = () => {
   const [page, setPage] = useState(1);
   const pageSize = 12;
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  
+  // Check if user has permission to manage projects
+  const canManageProjects = user && (user.role === "owner" || user.role === "admin");
 
   const { data, isLoading, error } = useQuery<PaginatedProjects, Error>({
     queryKey: ["/api/projects", page, pageSize],
@@ -60,12 +68,22 @@ const Projects: React.FC = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col space-y-6">
-        <div className="text-center mb-8">
+        <div className="flex flex-col items-center mb-8">
           <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">Our Development Projects</h1>
-          <p className="text-gray-600 max-w-3xl mx-auto">
+          <p className="text-gray-600 max-w-3xl mx-auto mb-4">
             Explore our exclusive selection of premier real estate development projects, each offering unique 
             living experiences with exceptional amenities, locations, and design.
           </p>
+          
+          {canManageProjects && (
+            <Button 
+              onClick={() => setLocation("/project-management")}
+              className="mt-4 bg-[#964B00] hover:bg-[#B87333] text-white"
+            >
+              <Plus className="mr-2 h-4 w-4" /> 
+              Manage Projects
+            </Button>
+          )}
         </div>
 
         {projects.length === 0 ? (
