@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import PropertyCard from "@/components/properties/PropertyCard";
-import Paginator from "@/components/common/Paginator";
+import Paginator from "@/components/ui/paginator";
 import { formatDate } from "@/lib/utils";
 
 // Type definitions for projects and properties

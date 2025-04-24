@@ -1,11 +1,8 @@
 import React, { useState } from "react";
-import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import Paginator from "@/components/common/Paginator";
+import ProjectCard from "@/components/projects/ProjectCard";
+import Paginator from "@/components/ui/paginator";
 
 // Type definitions for projects
 interface Project {
@@ -87,53 +84,7 @@ const Projects: React.FC = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map((project) => (
-                <Card key={project.id} className="overflow-hidden h-full flex flex-col hover:shadow-lg transition-shadow">
-                  <div className="h-60 overflow-hidden relative">
-                    {project.images && project.images.length > 0 ? (
-                      <img
-                        src={project.images[0]}
-                        alt={project.projectName}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder-property.svg";
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src="/placeholder-property.svg"
-                        alt="Placeholder"
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                      <Badge className="bg-primary hover:bg-primary">{project.location}</Badge>
-                    </div>
-                  </div>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="font-serif text-xl">{project.projectName}</CardTitle>
-                    <CardDescription className="line-clamp-1">
-                      {project.location}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <p className="text-gray-700 line-clamp-3 mb-3">{project.description}</p>
-                    <div className="mt-2">
-                      <div className="flex flex-wrap gap-1">
-                        {project.unitTypes.map((type, idx) => (
-                          <Badge key={idx} variant="outline" className="bg-gray-100">
-                            {type}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-0">
-                    <Link href={`/projects/${project.id}`}>
-                      <Button className="w-full bg-primary hover:bg-primary/90">View Project</Button>
-                    </Link>
-                  </CardFooter>
-                </Card>
+                <ProjectCard key={project.id} project={project} />
               ))}
             </div>
 
