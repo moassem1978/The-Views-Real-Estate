@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,13 +34,12 @@ const locationOptions = [
   "Red Sea"
 ];
 
-// Form schema for project entry - EXACTLY as specified
+// Simplified schema for project entry
 const projectSchema = z.object({
   projectName: z.string().min(3, "Project name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   location: z.string().min(1, "Please select a location"),
-  unitTypes: z.string().min(3, "Unit types must be at least 3 characters"),
-  aboutDeveloper: z.string().min(10, "About developer must be at least 10 characters"),
+  developerName: z.string().min(3, "Developer name must be at least 3 characters"),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -62,15 +62,13 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Initialize form with default values
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
       projectName: initialData?.projectName || "",
       description: initialData?.description || "",
       location: initialData?.location || "",
-      unitTypes: initialData?.unitTypes || "",
-      aboutDeveloper: initialData?.aboutDeveloper || "",
+      developerName: initialData?.developerName || "",
     },
   });
 
@@ -112,12 +110,10 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
     }
   };
 
-  // Remove image from uploaded images
   const removeImage = (index: number) => {
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Create or update project mutation
   const mutation = useMutation({
     mutationFn: async (data: ProjectFormValues) => {
       const payload = {
@@ -147,7 +143,6 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
     },
   });
 
-  // Form submission handler
   const onSubmit = (data: ProjectFormValues) => {
     mutation.mutate(data);
   };
@@ -228,37 +223,15 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
             )}
           />
 
-          {/* Unit Types - Changed to simple text input */}
+          {/* Developer Name */}
           <FormField
             control={form.control}
-            name="unitTypes"
+            name="developerName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Unit Types *</FormLabel>
+                <FormLabel>Developer Name *</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="e.g. apartments, villas, offices" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* About Developer */}
-          <FormField
-            control={form.control}
-            name="aboutDeveloper"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>About Developer *</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    placeholder="Enter information about the developer" 
-                    className="min-h-32" 
-                    {...field} 
-                  />
+                  <Input placeholder="Enter developer name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
