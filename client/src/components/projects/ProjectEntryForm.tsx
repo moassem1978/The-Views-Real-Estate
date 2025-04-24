@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,16 +17,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { apiRequest } from "@/lib/queryClient";
+import DirectUploader from "../DirectUploader";
 
-// Simplified schema for project entry
 const projectSchema = z.object({
   projectName: z.string().min(3, "Project name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  developerName: z.string().min(3, "Developer name must be at least 3 characters"),
-  location: z.string().min(1, "Please select a location"),
+  location: z.string().min(1, "Location is required"),
   startDate: z.string().min(1, "Start date is required"),
   completionDate: z.string().optional(),
   status: z.string().min(1, "Project status is required"),
+  developer: z.string().min(3, "Developer name is required"),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -47,57 +46,25 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>(
+    initialData?.images || []
+  );
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
       projectName: initialData?.projectName || "",
       description: initialData?.description || "",
-      developerName: initialData?.developerName || "",
       location: initialData?.location || "",
       startDate: initialData?.startDate || "",
       completionDate: initialData?.completionDate || "",
       status: initialData?.status || "upcoming",
+      developer: initialData?.developer || "",
     },
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    
-    setIsUploading(true);
-    const formData = new FormData();
-    
-    Array.from(e.target.files).forEach((file) => {
-      formData.append("images", file);
-    });
-    
-    try {
-      const response = await fetch("/api/upload/project-images", {
-        method: "POST",
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to upload images");
-      }
-      
-      const data = await response.json();
-      setUploadedImages((prev) => [...prev, ...data.paths]);
-      toast({
-        title: "Images uploaded successfully",
-        description: `${data.paths.length} image(s) uploaded.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Image upload failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-    }
+  const handleUploadSuccess = (urls: string[]) => {
+    setUploadedImages((prev) => [...prev, ...urls]);
   };
 
   const removeImage = (index: number) => {
@@ -110,13 +77,13 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
         ...data,
         images: uploadedImages,
       };
-      
+
       const url = isEdit ? `/api/projects/${initialData.id}` : "/api/projects";
       const method = isEdit ? "PUT" : "POST";
-      
+
       return apiRequest(method, url, payload);
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast({
         title: `Project ${isEdit ? "updated" : "created"} successfully`,
       });
@@ -170,10 +137,10 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
 
           <FormField
             control={form.control}
-            name="developerName"
+            name="developer"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Developer Name *</FormLabel>
+                <FormLabel>Developer *</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter developer name" {...field} />
                 </FormControl>
@@ -247,30 +214,14 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
             )}
           />
 
-          {/* Image Upload */}
+          {/* Project Gallery */}
           <div className="space-y-2">
             <FormLabel>Project Gallery</FormLabel>
-            <div className="flex items-center gap-2">
-              <label
-                htmlFor="image-upload"
-                className="cursor-pointer flex items-center justify-center w-full h-12 px-4 transition-colors bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                <span>Upload Images</span>
-                <input
-                  id="image-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={isUploading}
-                />
-              </label>
-              {isUploading && (
-                <Loader2 className="h-4 w-4 animate-spin text-primary ml-2" />
-              )}
-            </div>
+            <DirectUploader
+              onUploadSuccess={handleUploadSuccess}
+              maxFiles={10}
+              label="Upload Project Images"
+            />
 
             {/* Image Preview */}
             {uploadedImages.length > 0 && (
