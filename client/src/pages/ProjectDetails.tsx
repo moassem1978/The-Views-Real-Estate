@@ -13,7 +13,7 @@ interface Project {
   projectName: string;
   description: string;
   location: string;
-  unitTypes: string[];
+  unitTypes: string;
   aboutDeveloper: string;
   images: string[];
   status: string;
@@ -194,11 +194,9 @@ const ProjectDetails: React.FC = () => {
             <div className="mb-4">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Unit Types</h4>
               <div className="flex flex-wrap gap-1">
-                {project.unitTypes.map((type, index) => (
-                  <Badge key={index} variant="outline" className="capitalize">
-                    {type}
-                  </Badge>
-                ))}
+                <Badge variant="outline" className="capitalize">
+                  {project.unitTypes}
+                </Badge>
               </div>
             </div>
 

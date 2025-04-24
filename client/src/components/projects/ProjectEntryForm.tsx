@@ -25,20 +25,6 @@ import {
 } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 
-// Define unit type options
-const unitTypeOptions = [
-  "apartment",
-  "penthouse",
-  "duplex",
-  "chalet",
-  "townhouse",
-  "twinhouse",
-  "villa",
-  "office",
-  "retail",
-  "studio"
-];
-
 // Location options
 const locationOptions = [
   "Cairo",
@@ -47,12 +33,12 @@ const locationOptions = [
   "Red Sea"
 ];
 
-// Form schema for project entry
+// Form schema for project entry - EXACTLY as specified
 const projectSchema = z.object({
   projectName: z.string().min(3, "Project name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   location: z.string().min(1, "Please select a location"),
-  unitTypes: z.array(z.string()).min(1, "Select at least one unit type"),
+  unitTypes: z.string().min(3, "Unit types must be at least 3 characters"),
   aboutDeveloper: z.string().min(10, "About developer must be at least 10 characters"),
 });
 
@@ -83,7 +69,7 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
       projectName: initialData?.projectName || "",
       description: initialData?.description || "",
       location: initialData?.location || "",
-      unitTypes: initialData?.unitTypes || [],
+      unitTypes: initialData?.unitTypes || "",
       aboutDeveloper: initialData?.aboutDeveloper || "",
     },
   });
@@ -242,52 +228,19 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
             )}
           />
 
-          {/* Unit Types */}
+          {/* Unit Types - Changed to simple text input */}
           <FormField
             control={form.control}
             name="unitTypes"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>Unit Types *</FormLabel>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {unitTypeOptions.map((type) => (
-                    <FormField
-                      key={type}
-                      control={form.control}
-                      name="unitTypes"
-                      render={({ field }) => {
-                        return (
-                          <FormItem
-                            key={type}
-                            className="flex flex-row items-center space-x-2 space-y-0"
-                          >
-                            <input
-                              type="checkbox"
-                              id={type}
-                              checked={field.value?.includes(type) || false}
-                              onChange={(e) => {
-                                const isChecked = e.target.checked;
-                                const updatedValue = isChecked
-                                  ? [...(field.value || []), type]
-                                  : (field.value || []).filter(
-                                      (val) => val !== type
-                                    );
-                                field.onChange(updatedValue);
-                              }}
-                              className="form-checkbox h-4 w-4 text-primary border-gray-300 rounded"
-                            />
-                            <label
-                              htmlFor={type}
-                              className="text-sm font-medium text-gray-700 capitalize"
-                            >
-                              {type}
-                            </label>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
-                </div>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g. apartments, villas, offices" 
+                    {...field} 
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

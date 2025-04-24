@@ -15,7 +15,7 @@ interface Project {
   projectName: string;
   description: string;
   location: string;
-  unitTypes: string[];
+  unitTypes: string;
   aboutDeveloper: string;
   images: string[];
   status?: string;
@@ -79,13 +79,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
           </div>
         </div>
         
-        {project.unitTypes && project.unitTypes.length > 0 && (
-          <div className="flex flex-wrap gap-1 my-2">
-            {project.unitTypes.map((type, index) => (
-              <Badge key={index} variant="outline" className="capitalize bg-gray-50">
-                {type}
-              </Badge>
-            ))}
+        {project.unitTypes && (
+          <div className="my-2">
+            <Badge variant="outline" className="capitalize bg-gray-50">
+              {project.unitTypes}
+            </Badge>
           </div>
         )}
         
