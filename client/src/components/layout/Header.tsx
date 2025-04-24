@@ -166,7 +166,7 @@ export default function Header() {
                 <Link href="/properties?type=Resale" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
                   Resale
                 </Link>
-                <Link href="/properties?international=true" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
+                <Link href="/international" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
                   International
                 </Link>
               </div>
@@ -352,7 +352,7 @@ export default function Header() {
               <div className="pl-4 mt-2 space-y-2 border-l-2 border-copper/20">
                 <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors">Primary</Link>
                 <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors">Resale</Link>
-                <Link href="/properties?international=true" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
+                <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
               </div>
             </div>
             <div className="py-2">

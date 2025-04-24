@@ -45,9 +45,10 @@ const StyledSelect = ({ value, onChange, options, className = "" }: {
 interface PropertyFilterProps {
   currentFilters: SearchFilters;
   onFilterChange: (filters: SearchFilters) => void;
+  hideInternationalFilter?: boolean;
 }
 
-export default function PropertyFilter({ currentFilters, onFilterChange }: PropertyFilterProps) {
+export default function PropertyFilter({ currentFilters, onFilterChange, hideInternationalFilter = false }: PropertyFilterProps) {
   const [location, setLocation] = useState(currentFilters.location || "");
   const [propertyType, setPropertyType] = useState(currentFilters.propertyType || "");
   const [listingType, setListingType] = useState(currentFilters.listingType || "");
@@ -132,6 +133,11 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
     
     const filters: SearchFilters = {};
     
+    // If on international page, always set international filter
+    if (hideInternationalFilter) {
+      filters.international = true;
+    }
+    
     if (location) filters.location = location;
     if (propertyType) filters.propertyType = propertyType;
     if (listingType) filters.listingType = listingType;
@@ -174,7 +180,13 @@ export default function PropertyFilter({ currentFilters, onFilterChange }: Prope
     setBathrooms("");
     setIsFullCash(undefined);
     setHasInstallments(undefined);
-    onFilterChange({});
+    
+    // If we're on the international page, we need to maintain the international filter
+    if (hideInternationalFilter) {
+      onFilterChange({ international: true });
+    } else {
+      onFilterChange({});
+    }
   };
   
   const toggleAdvanced = () => {
