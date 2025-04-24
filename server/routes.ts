@@ -23,6 +23,7 @@ const searchFiltersSchema = z.object({
   minBathrooms: z.coerce.number().optional(),
   isFullCash: z.coerce.boolean().optional(),
   hasInstallments: z.coerce.boolean().optional(),
+  international: z.coerce.boolean().optional(),
 });
 
 // Configure multer for file uploads
@@ -274,6 +275,22 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     } catch (error) {
       console.error("Error fetching new listings:", error);
       res.status(500).json({ message: "Failed to fetch new listings" });
+    }
+  });
+  
+  // New endpoint for international properties
+  app.get("/api/properties/international", async (req: Request, res: Response) => {
+    try {
+      // Get pagination parameters if provided, otherwise use defaults
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
+      
+      // Search with international filter set to true
+      const result = await dbStorage.searchProperties({ international: true }, page, pageSize);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching international properties:", error);
+      res.status(500).json({ message: "Failed to fetch international properties" });
     }
   });
 

@@ -1466,6 +1466,21 @@ export class DatabaseStorage implements IStorage {
       dataQuery = dataQuery.where(installmentFilter);
     }
     
+    // Filter by country (international properties)
+    if (filters.international !== undefined) {
+      if (filters.international) {
+        // International: properties outside Egypt
+        const internationalFilter = sql`${properties.country} IS NOT NULL AND ${properties.country} != 'Egypt'`;
+        countQuery = countQuery.where(internationalFilter);
+        dataQuery = dataQuery.where(internationalFilter);
+      } else {
+        // Domestic: properties in Egypt
+        const domesticFilter = sql`${properties.country} IS NULL OR ${properties.country} = 'Egypt'`;
+        countQuery = countQuery.where(domesticFilter);
+        dataQuery = dataQuery.where(domesticFilter);
+      }
+    }
+    
     // Calculate pagination parameters
     const offset = (page - 1) * pageSize;
     

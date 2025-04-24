@@ -24,6 +24,8 @@ const LoadingFallback = () => (
 const Home = lazy(() => import(/* webpackChunkName: "home" */ "@/pages/Home"));
 const Properties = lazy(() => import(/* webpackChunkName: "properties" */ "@/pages/Properties"));
 const PropertyDetails = lazy(() => import(/* webpackChunkName: "property-details" */ "@/pages/PropertyDetails"));
+// International properties page using the same component as regular properties
+const International = lazy(() => import(/* webpackChunkName: "international" */ "@/pages/Properties"));
 const Contact = lazy(() => import(/* webpackChunkName: "contact" */ "@/pages/Contact"));
 const About = lazy(() => import(/* webpackChunkName: "about" */ "@/pages/About"));
 const Services = lazy(() => import(/* webpackChunkName: "services" */ "@/pages/Services"));
@@ -42,6 +44,7 @@ const routes = [
   { path: "/", Component: Home },
   { path: "/properties", Component: Properties },
   { path: "/properties/:id", Component: PropertyDetails },
+  { path: "/international", Component: International },
   { path: "/contact", Component: Contact },
   { path: "/about", Component: About },
   { path: "/services", Component: Services },
@@ -90,6 +93,11 @@ function Router() {
       <Route path="/properties/:id">
         <Suspense fallback={<LoadingFallback />}>
           <PropertyDetails />
+        </Suspense>
+      </Route>
+      <Route path="/international">
+        <Suspense fallback={<LoadingFallback />}>
+          <International />
         </Suspense>
       </Route>
       <Route path="/contact">
