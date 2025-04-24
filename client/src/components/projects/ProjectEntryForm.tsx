@@ -94,10 +94,10 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
       }
       
       const data = await response.json();
-      setUploadedImages((prev) => [...prev, ...data.paths]);
+      setUploadedImages((prev) => [...prev, ...data.imageUrls]);
       toast({
         title: "Images uploaded successfully",
-        description: `${data.paths.length} image(s) uploaded.`,
+        description: `${data.imageUrls.length} image(s) uploaded.`,
       });
     } catch (error) {
       toast({
@@ -149,15 +149,6 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-serif font-bold">
-          {isEdit ? "Edit Project" : "Add New Project"}
-        </h2>
-        <p className="text-gray-500">
-          Enter the project details below. Fields marked with * are required.
-        </p>
-      </div>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Project Name */}
