@@ -17,29 +17,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
-
-// Location options
-const locationOptions = [
-  "Cairo",
-  "Zayed",
-  "North coast",
-  "Red Sea"
-];
 
 // Simplified schema for project entry
 const projectSchema = z.object({
   projectName: z.string().min(3, "Project name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  location: z.string().min(1, "Please select a location"),
   developerName: z.string().min(3, "Developer name must be at least 3 characters"),
+  location: z.string().min(1, "Please select a location"),
+  startDate: z.string().min(1, "Start date is required"),
+  completionDate: z.string().optional(),
+  status: z.string().min(1, "Project status is required"),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -67,12 +55,14 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
     defaultValues: {
       projectName: initialData?.projectName || "",
       description: initialData?.description || "",
-      location: initialData?.location || "",
       developerName: initialData?.developerName || "",
+      location: initialData?.location || "",
+      startDate: initialData?.startDate || "",
+      completionDate: initialData?.completionDate || "",
+      status: initialData?.status || "upcoming",
     },
   });
 
-  // Handle image upload
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     
@@ -94,10 +84,10 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
       }
       
       const data = await response.json();
-      setUploadedImages((prev) => [...prev, ...data.imageUrls]);
+      setUploadedImages((prev) => [...prev, ...data.paths]);
       toast({
         title: "Images uploaded successfully",
-        description: `${data.imageUrls.length} image(s) uploaded.`,
+        description: `${data.paths.length} image(s) uploaded.`,
       });
     } catch (error) {
       toast({
@@ -119,7 +109,6 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
       const payload = {
         ...data,
         images: uploadedImages,
-        status: "published",
       };
       
       const url = isEdit ? `/api/projects/${initialData.id}` : "/api/projects";
@@ -143,15 +132,10 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
     },
   });
 
-  const onSubmit = (data: ProjectFormValues) => {
-    mutation.mutate(data);
-  };
-
   return (
     <div className="space-y-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Project Name */}
+        <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-6">
           <FormField
             control={form.control}
             name="projectName"
@@ -166,7 +150,6 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
             )}
           />
 
-          {/* Description */}
           <FormField
             control={form.control}
             name="description"
@@ -185,36 +168,6 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
             )}
           />
 
-          {/* Location */}
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Location *</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {locationOptions.map((location) => (
-                      <SelectItem key={location} value={location}>
-                        {location}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Developer Name */}
           <FormField
             control={form.control}
             name="developerName"
@@ -223,6 +176,71 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
                 <FormLabel>Developer Name *</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter developer name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter project location" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date *</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="completionDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expected Completion Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Project Status *</FormLabel>
+                <FormControl>
+                  <select 
+                    className="w-full p-2 border rounded-md"
+                    {...field}
+                  >
+                    <option value="upcoming">Upcoming</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
