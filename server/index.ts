@@ -6,6 +6,7 @@ import path from "path";
 import fs from "fs";
 import simpleUploadRouter from "./simple-upload"; // Import our simple upload router
 import unifiedUploader from "./unified-uploader"; // Import our new unified uploader
+import { imageMatcher } from './image-matcher'; // Import our enhanced image matcher
 
 // Create and prepare all upload directories with proper permissions
 function prepareUploadDirectories() {
@@ -43,7 +44,8 @@ function prepareUploadDirectories() {
   const publicDirs = [
     path.join(publicUploadsDir, "logos"),
     path.join(publicUploadsDir, "properties"),
-    path.join(publicUploadsDir, "announcements")
+    path.join(publicUploadsDir, "announcements"),
+    path.join(publicUploadsDir, "projects")
   ];
   
   publicDirs.forEach(dir => {
@@ -110,15 +112,44 @@ const staticOptions = {
 // Serve all static files from public directory
 app.use(express.static('public', staticOptions));
 
-// Redirect old upload paths to new location
-app.use('/uploads', (req, res) => {
-  res.redirect(`/public/uploads${req.path}`);
+// Enhanced handler for uploaded images with special handling for Windows uploads
+app.use('/uploads', async (req, res, next) => {
+  // Try direct access to the public directory first (fastest path)
+  const publicPath = path.join('public', 'uploads', req.path);
+  if (fs.existsSync(publicPath)) {
+    return res.sendFile(path.resolve(publicPath));
+  }
+  
+  console.log(`Enhanced file access request for: ${req.path}`);
+  
+  try {
+    // Use our robust image matcher for finding the actual file
+    const actualPath = await imageMatcher.findActualImagePath(req.path);
+    
+    if (actualPath && fs.existsSync(actualPath)) {
+      console.log(`Enhanced matching found file at: ${actualPath}`);
+      return res.sendFile(path.resolve(actualPath));
+    }
+    
+    // If still not found, try the legacy redirect approach as fallback
+    console.log(`No match found, redirecting to: /public/uploads${req.path}`);
+    return res.redirect(`/public/uploads${req.path}`);
+  } catch (error) {
+    console.error('Error in enhanced file matching:', error);
+    // Fallback to standard redirect
+    return res.redirect(`/public/uploads${req.path}`);
+  }
 });
 
 // Debug endpoint to check image paths
 app.get('/api/debug/images', (req, res) => {
-  const images = fs.readdirSync(path.join(publicUploadsDir, 'properties'))
-    .filter(file => file.endsWith('.jpeg') || file.endsWith('.jpg') || file.endsWith('.png'));
+  const publicUploadsDir = path.join(process.cwd(), "public", "uploads");
+  const propertiesDir = path.join(publicUploadsDir, 'properties');
+  
+  const images = fs.existsSync(propertiesDir) 
+    ? fs.readdirSync(propertiesDir)
+      .filter(file => file.endsWith('.jpeg') || file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.webp'))
+    : [];
   
   res.json({
     uploadsDir,
