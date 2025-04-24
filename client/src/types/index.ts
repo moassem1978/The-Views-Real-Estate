@@ -46,6 +46,7 @@ export interface Property {
   longitude?: number;
   createdAt: string;
   agentId: number;
+  country?: string; // Used to identify international properties (any property not in Egypt)
 }
 
 export interface Testimonial {
@@ -97,4 +98,6 @@ export interface SearchFilters {
   minBathrooms?: number;
   isFullCash?: boolean;
   hasInstallments?: boolean;
+  type?: string; // Primary or Resale
+  international?: boolean; // For properties outside Egypt
 }

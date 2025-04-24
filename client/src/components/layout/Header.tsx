@@ -163,8 +163,11 @@ export default function Header() {
                 <Link href="/properties?type=Primary" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
                   Primary
                 </Link>
-                <Link href="/properties?type=Resale" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
+                <Link href="/properties?type=Resale" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
                   Resale
+                </Link>
+                <Link href="/properties?international=true" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
+                  International
                 </Link>
               </div>
             </div>
@@ -176,11 +179,14 @@ export default function Header() {
                 </svg>
               </button>
               <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden transform scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 origin-top-left z-50 gold-border">
-                <Link href="/services/buying" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
-                  Buying
+                <Link href="/services/buyer-representation" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+                  Buyer Representation
                 </Link>
-                <Link href="/services/selling" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
-                  Selling
+                <Link href="/services/seller-representation" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+                  Seller Representation
+                </Link>
+                <Link href="/services/investment" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+                  Investment
                 </Link>
 
               </div>
@@ -346,6 +352,7 @@ export default function Header() {
               <div className="pl-4 mt-2 space-y-2 border-l-2 border-copper/20">
                 <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors">Primary</Link>
                 <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors">Resale</Link>
+                <Link href="/properties?international=true" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
               </div>
             </div>
             <div className="py-2">
@@ -356,9 +363,9 @@ export default function Header() {
                 </svg>
               </button>
               <div className="pl-4 mt-2 space-y-2 border-l-2 border-copper/20">
-                <Link href="/services/buying" className="block py-1 text-rich-black hover:text-copper transition-colors">Buying</Link>
-                <Link href="/services/selling" className="block py-1 text-rich-black hover:text-copper transition-colors">Selling</Link>
-
+                <Link href="/services/buyer-representation" className="block py-1 text-rich-black hover:text-copper transition-colors">Buyer Representation</Link>
+                <Link href="/services/seller-representation" className="block py-1 text-rich-black hover:text-copper transition-colors">Seller Representation</Link>
+                <Link href="/services/investment" className="block py-1 text-rich-black hover:text-copper transition-colors">Investment</Link>
               </div>
             </div>
             <Link 
