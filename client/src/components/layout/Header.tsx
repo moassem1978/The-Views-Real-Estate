@@ -207,6 +207,14 @@ export default function Header() {
             >
               Contact
             </Link>
+            <Link 
+              href="/projects" 
+              className={`py-2 font-medium ${location === "/projects" 
+                ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
+                : "text-rich-black hover:text-copper"} transition-colors`}
+            >
+              Projects
+            </Link>
           </nav>
         </div>
 
@@ -270,13 +278,22 @@ export default function Header() {
                       
                       {/* Show User Management only for owner or admin roles */}
                       {(user.role === 'owner' || user.role === 'admin') && (
-                        <Link 
-                          href="/user-management" 
-                          className="block px-4 py-2 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          User Management
-                        </Link>
+                        <>
+                          <Link 
+                            href="/user-management" 
+                            className="block px-4 py-2 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            User Management
+                          </Link>
+                          <Link 
+                            href="/project-management" 
+                            className="block px-4 py-2 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            Project Management
+                          </Link>
+                        </>
                       )}
                       
                       <button
@@ -380,6 +397,12 @@ export default function Header() {
             >
               Contact
             </Link>
+            <Link 
+              href="/projects" 
+              className={`py-2 font-medium ${location === "/projects" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+            >
+              Projects
+            </Link>
             {user && (
               <>
                 <Link 
@@ -390,12 +413,20 @@ export default function Header() {
                 </Link>
                 
                 {(user.role === 'owner' || user.role === 'admin') && (
-                  <Link 
-                    href="/user-management" 
-                    className={`py-2 font-medium ${location === "/user-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
-                  >
-                    User Management
-                  </Link>
+                  <>
+                    <Link 
+                      href="/user-management" 
+                      className={`py-2 font-medium ${location === "/user-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                    >
+                      User Management
+                    </Link>
+                    <Link 
+                      href="/project-management" 
+                      className={`py-2 font-medium ${location === "/project-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                    >
+                      Project Management
+                    </Link>
+                  </>
                 )}
               </>
             )}
@@ -428,9 +459,14 @@ export default function Header() {
               ) : (
                 <>
                   {(user.role === 'owner' || user.role === 'admin') && (
-                    <Link href="/user-management" className="inline-flex items-center px-4 py-2 rounded border border-copper/20 text-rich-black hover:border-copper hover:text-copper transition-colors">
-                      <span className="font-medium">User Management</span>
-                    </Link>
+                    <>
+                      <Link href="/user-management" className="inline-flex items-center px-4 py-2 rounded border border-copper/20 text-rich-black hover:border-copper hover:text-copper transition-colors">
+                        <span className="font-medium">User Management</span>
+                      </Link>
+                      <Link href="/project-management" className="inline-flex items-center px-4 py-2 rounded border border-copper/20 text-rich-black hover:border-copper hover:text-copper transition-colors">
+                        <span className="font-medium">Project Management</span>
+                      </Link>
+                    </>
                   )}
                   <button
                     onClick={handleLogout}
