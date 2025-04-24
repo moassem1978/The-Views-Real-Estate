@@ -34,6 +34,8 @@ const Announcements = lazy(() => import(/* webpackChunkName: "announcements" */ 
 const AnnouncementDetails = lazy(() => import(/* webpackChunkName: "announcement-details" */ "@/pages/AnnouncementDetails"));
 const UserManagement = lazy(() => import(/* webpackChunkName: "user-management" */ "@/pages/UserManagement"));
 const AuthTest = lazy(() => import(/* webpackChunkName: "auth-test" */ "@/pages/AuthTest"));
+const Projects = lazy(() => import(/* webpackChunkName: "projects" */ "@/pages/Projects"));
+const ProjectDetails = lazy(() => import(/* webpackChunkName: "project-details" */ "@/pages/ProjectDetails"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -48,7 +50,9 @@ const routes = [
   { path: "/signin", Component: SignIn },
   { path: "/dashboard", Component: Dashboard },
   { path: "/announcements", Component: Announcements },
-  { path: "/announcements/:id", Component: AnnouncementDetails }
+  { path: "/announcements/:id", Component: AnnouncementDetails },
+  { path: "/projects", Component: Projects },
+  { path: "/projects/:id", Component: ProjectDetails }
 ];
 
 function Router() {
@@ -124,6 +128,18 @@ function Router() {
       <Route path="/announcements/:id">
         <Suspense fallback={<LoadingFallback />}>
           <AnnouncementDetails />
+        </Suspense>
+      </Route>
+
+      <Route path="/projects">
+        <Suspense fallback={<LoadingFallback />}>
+          <Projects />
+        </Suspense>
+      </Route>
+
+      <Route path="/projects/:id">
+        <Suspense fallback={<LoadingFallback />}>
+          <ProjectDetails />
         </Suspense>
       </Route>
       
