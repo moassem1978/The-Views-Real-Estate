@@ -83,6 +83,7 @@ export interface PropertySearchFilters {
   minBathrooms?: number;
   isFullCash?: boolean;
   hasInstallments?: boolean;
+  international?: boolean; // For filtering properties outside Egypt
 }
 
 export class MemStorage implements IStorage {
@@ -461,7 +462,7 @@ export class MemStorage implements IStorage {
       const location = filters.location.toLowerCase();
       results = results.filter(property => 
         property.city.toLowerCase().includes(location) || 
-        property.state.toLowerCase().includes(location) || 
+        property.state?.toLowerCase().includes(location) || 
         property.zipCode.toLowerCase().includes(location)
       );
     }
@@ -492,6 +493,15 @@ export class MemStorage implements IStorage {
       const developerName = filters.developerName.toLowerCase();
       results = results.filter(property => 
         property.developerName?.toLowerCase().includes(developerName)
+      );
+    }
+    
+    // Filter by country (international properties)
+    if (filters.international !== undefined) {
+      results = results.filter(property => 
+        filters.international
+          ? (property.country && property.country !== "Egypt") // International: Not in Egypt
+          : (!property.country || property.country === "Egypt") // Domestic: In Egypt
       );
     }
     
