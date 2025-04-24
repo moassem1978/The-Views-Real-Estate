@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import ProjectCard from "@/components/projects/ProjectCard";
+import ProjectsList from "@/components/projects/ProjectsList";
 import Paginator from "@/components/ui/paginator";
 
 // Type definitions for projects
@@ -45,14 +45,6 @@ const Projects: React.FC = () => {
     setPage(newPage);
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto flex items-center justify-center min-h-[40vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="container mx-auto p-4">
@@ -82,11 +74,7 @@ const Projects: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </div>
+            <ProjectsList projects={projects} isLoading={isLoading} />
 
             {data && data.pageCount > 1 && (
               <div className="mt-8 flex justify-center">

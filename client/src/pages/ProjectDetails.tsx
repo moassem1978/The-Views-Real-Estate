@@ -13,7 +13,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import PropertyCard from "@/components/properties/PropertyCard";
+import SimplePropertyCard from "@/components/projects/SimplePropertyCard";
 import Paginator from "@/components/ui/paginator";
 import { formatDate } from "@/lib/utils";
 
@@ -37,6 +37,8 @@ interface Property {
   description: string;
   address: string;
   city: string;
+  state: string;
+  zipCode: string;
   price: number;
   downPayment: number;
   listingType: string;
@@ -48,6 +50,19 @@ interface Property {
   images: string[];
   status: string;
   createdAt: string;
+  isFullCash: boolean;
+  isGroundUnit: boolean;
+  installmentAmount: number | null;
+  installmentPeriod: number | null;
+  plotSize: number | null;
+  gardenSize: number | null;
+  floor: number | null;
+  isFeatured: boolean;
+  isNewListing: boolean;
+  isHighlighted: boolean;
+  yearBuilt: string | null;
+  views: number | null;
+  amenities: string[];
 }
 
 interface PaginatedProperties {
@@ -241,7 +256,7 @@ const ProjectDetails: React.FC = () => {
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {properties.map((property) => (
-                      <PropertyCard key={property.id} property={property} />
+                      <SimplePropertyCard key={property.id} property={property} />
                     ))}
                   </div>
 
