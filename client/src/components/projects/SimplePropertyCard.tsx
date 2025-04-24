@@ -14,7 +14,7 @@ interface Property {
   city: string;
   state: string;
   price: number;
-  downPayment: number | null;
+  downPayment: number;
   propertyType: string;
   bedrooms: number;
   bathrooms: number;
