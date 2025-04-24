@@ -1,23 +1,13 @@
-import React, { useState } from "react";
-import { useRoute, Link } from "wouter";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ArrowLeft, User, Calendar, MapPin, Building, Home } from "lucide-react";
+import { useRoute, useLocation } from "wouter";
+import { Loader2, ArrowLeft, Building, MapPin, Home } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import SimplePropertyCard from "@/components/projects/SimplePropertyCard";
-import Paginator from "@/components/ui/paginator";
-import { formatDate } from "@/lib/utils";
+import { parseJsonArray } from "@/lib/utils";
 
-// Type definitions for projects and properties
 interface Project {
   id: number;
   projectName: string;
@@ -34,246 +24,240 @@ interface Project {
 interface Property {
   id: number;
   title: string;
-  description: string;
   address: string;
   city: string;
   state: string;
-  zipCode: string;
   price: number;
   downPayment: number;
-  listingType: string;
-  projectName: string;
+  propertyType: string;
   bedrooms: number;
   bathrooms: number;
   builtUpArea: number;
-  propertyType: string;
+  listingType: string;
   images: string[];
-  status: string;
-  createdAt: string;
-  isFullCash: boolean;
-  isGroundUnit: boolean;
-  installmentAmount: number | null;
-  installmentPeriod: number | null;
-  plotSize: number | null;
-  gardenSize: number | null;
-  floor: number | null;
-  isFeatured: boolean;
-  isNewListing: boolean;
-  isHighlighted: boolean;
-  yearBuilt: string | null;
-  views: number | null;
-  amenities: string[];
-}
-
-interface PaginatedProperties {
-  data: Property[];
-  totalCount: number;
-  pageCount: number;
-  page: number;
-  pageSize: number;
 }
 
 const ProjectDetails: React.FC = () => {
-  const [, params] = useRoute("/projects/:id");
-  const projectId = params?.id ? parseInt(params.id) : 0;
-  const [page, setPage] = useState(1);
-  const pageSize = 9;
+  const [match, params] = useRoute<{ id: string }>("/projects/:id");
+  const [, setLocation] = useLocation();
+  const [selectedImage, setSelectedImage] = useState<string>("");
 
-  const { data: project, isLoading: isLoadingProject, error: projectError } = useQuery<Project, Error>({
-    queryKey: ["/api/projects", projectId],
+  // Fetch project details
+  const {
+    data: project,
+    isLoading: isLoadingProject,
+    error: projectError
+  } = useQuery<Project>({
+    queryKey: ["/api/projects", params?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}`);
+      if (!params?.id) throw new Error("No project ID provided");
+      const response = await fetch(`/api/projects/${params.id}`);
       if (!response.ok) {
         throw new Error("Failed to fetch project details");
       }
       return response.json();
     },
-    enabled: !!projectId,
+    enabled: !!params?.id,
   });
 
-  const { data: propertiesData, isLoading: isLoadingProperties, error: propertiesError } = useQuery<PaginatedProperties, Error>({
-    queryKey: ["/api/projects", projectId, "properties", page, pageSize],
+  // Fetch properties associated with this project
+  const {
+    data: properties,
+    isLoading: isLoadingProperties,
+    error: propertiesError
+  } = useQuery<Property[]>({
+    queryKey: ["/api/projects", params?.id, "properties"],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/properties?page=${page}&pageSize=${pageSize}`);
+      if (!params?.id) throw new Error("No project ID provided");
+      const response = await fetch(`/api/projects/${params.id}/properties`);
       if (!response.ok) {
-        throw new Error("Failed to fetch properties for this project");
+        throw new Error("Failed to fetch associated properties");
       }
       return response.json();
     },
-    enabled: !!projectId,
+    enabled: !!params?.id,
   });
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+  // Handle image selection
+  useEffect(() => {
+    if (project) {
+      const images = parseJsonArray(project.images);
+      if (images.length > 0) {
+        setSelectedImage(images[0]);
+      }
+    }
+  }, [project]);
+
+  const handleImageClick = (image: string) => {
+    setSelectedImage(image);
   };
 
-  if (isLoadingProject || isLoadingProperties) {
+  // Handle back navigation
+  const handleBack = () => {
+    setLocation("/projects");
+  };
+
+  if (isLoadingProject) {
     return (
-      <div className="container mx-auto flex items-center justify-center min-h-[40vh]">
+      <div className="container mx-auto p-4 flex justify-center items-center min-h-[40vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (projectError) {
+  if (projectError || !project) {
     return (
       <div className="container mx-auto p-4">
         <div className="bg-red-50 p-4 rounded-md text-red-700">
-          <p>Error loading project: {projectError.message}</p>
+          <p>Error loading project details: {projectError instanceof Error ? projectError.message : "Unknown error"}</p>
+          <Button onClick={handleBack} variant="outline" className="mt-4">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects
+          </Button>
         </div>
       </div>
     );
   }
 
-  if (!project) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="text-center p-12 border rounded-md">
-          <p className="text-gray-500">Project not found.</p>
-          <Link href="/projects">
-            <Button variant="outline" className="mt-4">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const properties = propertiesData?.data || [];
+  // Parse images array
+  const images = parseJsonArray(project.images) || [];
+  const hasProperties = properties && properties.length > 0;
 
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
-        <Link href="/projects">
-          <Button variant="ghost" className="pl-0">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects
-          </Button>
-        </Link>
+        <Button onClick={handleBack} variant="outline">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Project Details */}
-        <div className="lg:col-span-3">
-          <div className="flex flex-col space-y-4">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-              <div>
-                <h1 className="text-3xl font-serif font-bold text-gray-900">{project.projectName}</h1>
-                <div className="flex items-center mt-2 text-gray-600">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  <span>{project.location}</span>
-                </div>
+      {/* Project Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">{project.projectName}</h1>
+        <div className="flex items-center text-gray-600 mb-4">
+          <MapPin className="h-5 w-5 mr-2" />
+          <span>{project.location}</span>
+        </div>
+      </div>
+
+      {/* Project Gallery */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-8">
+        <div className="lg:col-span-4">
+          <div className="relative h-[400px] mb-2 bg-gray-100 rounded-md overflow-hidden">
+            {selectedImage ? (
+              <img
+                src={selectedImage}
+                alt={project.projectName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder-property.svg";
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-gray-100">
+                <Building className="h-16 w-16 text-gray-300" />
               </div>
-              <div className="flex flex-wrap gap-2">
-                {project.unitTypes.map((type, idx) => (
-                  <Badge key={idx} className="bg-primary hover:bg-primary/90">
+            )}
+          </div>
+
+          {/* Thumbnails */}
+          {images.length > 1 && (
+            <div className="grid grid-cols-5 gap-2">
+              {images.map((image, index) => (
+                <div
+                  key={index}
+                  className={`relative h-20 cursor-pointer ${
+                    selectedImage === image ? "ring-2 ring-primary" : ""
+                  }`}
+                  onClick={() => handleImageClick(image)}
+                >
+                  <img
+                    src={image}
+                    alt={`Thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover rounded-sm"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/placeholder-property.svg";
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Project Info */}
+        <div className="lg:col-span-1">
+          <Card className="p-4 h-full">
+            <h3 className="font-semibold text-lg mb-3 font-serif">Project Details</h3>
+            {/* Unit Types */}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Unit Types</h4>
+              <div className="flex flex-wrap gap-1">
+                {project.unitTypes.map((type, index) => (
+                  <Badge key={index} variant="outline" className="capitalize">
                     {type}
                   </Badge>
                 ))}
               </div>
             </div>
 
-            {/* Project Gallery */}
-            <div className="mt-6">
-              {project.images && project.images.length > 0 ? (
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {project.images.map((image, index) => (
-                      <CarouselItem key={index}>
-                        <div className="h-[400px] w-full overflow-hidden rounded-lg">
-                          <img
-                            src={image}
-                            alt={`${project.projectName} - Image ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = "/placeholder-property.svg";
-                            }}
-                          />
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="left-2" />
-                  <CarouselNext className="right-2" />
-                </Carousel>
-              ) : (
-                <div className="h-[400px] w-full overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
-                  <img
-                    src="/placeholder-property.svg"
-                    alt="Placeholder"
-                    className="w-full h-full object-cover"
-                  />
+            {/* Developer */}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Developer</h4>
+              <div className="flex items-start">
+                <Building className="h-4 w-4 mr-1 mt-0.5 text-gray-500" />
+                <p className="text-sm text-gray-600">{project.aboutDeveloper || "Information not available"}</p>
+              </div>
+            </div>
+
+            {/* Property Count */}
+            {!isLoadingProperties && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Available Units</h4>
+                <div className="flex items-center">
+                  <Home className="h-4 w-4 mr-1 text-gray-500" />
+                  <p className="text-sm font-medium">
+                    {properties ? properties.length : 0} Properties
+                  </p>
                 </div>
-              )}
-            </div>
-
-            {/* Project Description */}
-            <div className="mt-8">
-              <h2 className="text-2xl font-serif font-semibold text-gray-900 mb-4">Project Overview</h2>
-              <p className="text-gray-700 whitespace-pre-line">{project.description}</p>
-            </div>
-
-            {/* About Developer */}
-            {project.aboutDeveloper && (
-              <div className="mt-8">
-                <h2 className="text-2xl font-serif font-semibold text-gray-900 mb-4">About the Developer</h2>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-4">
-                      <div className="bg-primary/10 p-3 rounded-full">
-                        <Building className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-gray-700 whitespace-pre-line">{project.aboutDeveloper}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             )}
-
-            <Separator className="my-8" />
-
-            {/* Property Listings in this Project */}
-            <div>
-              <h2 className="text-2xl font-serif font-semibold text-gray-900 mb-6">Properties in {project.projectName}</h2>
-              
-              {isLoadingProperties ? (
-                <div className="flex justify-center p-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : propertiesError ? (
-                <div className="bg-red-50 p-4 rounded-md text-red-700">
-                  <p>Error loading properties: {propertiesError.message}</p>
-                </div>
-              ) : properties.length === 0 ? (
-                <div className="text-center p-12 border rounded-md">
-                  <Home className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                  <p className="text-gray-500">No properties available in this project yet.</p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {properties.map((property) => (
-                      <SimplePropertyCard key={property.id} property={property} />
-                    ))}
-                  </div>
-
-                  {propertiesData && propertiesData.pageCount > 1 && (
-                    <div className="mt-8 flex justify-center">
-                      <Paginator
-                        currentPage={page}
-                        totalPages={propertiesData.pageCount}
-                        onPageChange={handlePageChange}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+          </Card>
         </div>
+      </div>
+
+      {/* Project Description */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-serif font-semibold mb-4">About this Project</h2>
+        <div className="prose max-w-none">
+          <p className="text-gray-700 whitespace-pre-line">{project.description}</p>
+        </div>
+      </div>
+
+      {/* Properties Section */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-serif font-semibold mb-2">Properties in this Project</h2>
+        {isLoadingProperties ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : propertiesError ? (
+          <div className="bg-red-50 p-4 rounded-md text-red-700">
+            <p>Error loading properties: {propertiesError instanceof Error ? propertiesError.message : "Unknown error"}</p>
+          </div>
+        ) : !hasProperties ? (
+          <div className="text-center py-12 border rounded-md">
+            <Home className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+            <p className="text-gray-500">No properties listed for this project yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            {properties.map((property) => (
+              <SimplePropertyCard key={property.id} property={property} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

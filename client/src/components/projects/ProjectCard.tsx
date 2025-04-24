@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "wouter";
-import { Badge } from "@/components/ui/badge";
+import { useLocation } from "wouter";
+import { Building, MapPin } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { parseJsonArray } from "@/lib/utils";
 
 interface Project {
@@ -13,9 +18,9 @@ interface Project {
   unitTypes: string[];
   aboutDeveloper: string;
   images: string[];
-  status: string;
-  createdAt: string;
-  updatedAt: string | null;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string | null;
 }
 
 interface ProjectCardProps {
@@ -23,30 +28,35 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
-  const [mainImage, setMainImage] = useState<string>('');
+  const [, setLocation] = useLocation();
+  const [mainImage, setMainImage] = useState<string>("");
 
   useEffect(() => {
     // Set the main image when the project data loads
     const images = getImages() || [];
-    const firstImage = images.length > 0 ? images[0] : '/placeholder-property.svg';
+    const firstImage = images.length > 0 ? images[0] : "/placeholder-property.svg";
     setMainImage(firstImage);
   }, [project]);
 
   // Parse images from JSON string if necessary
   const getImages = () => {
-    // Use our utility function to safely parse the images array
     return parseJsonArray(project.images);
   };
 
-  // Truncate description to a certain length
-  const truncateDescription = (text: string, maxLength: number = 100) => {
+  // Get a truncated description
+  const truncateDescription = (text: string, maxLength: number = 120) => {
     if (text.length <= maxLength) return text;
-    return text.substr(0, maxLength) + '...';
+    return text.substring(0, maxLength) + "...";
+  };
+
+  // Handle view details click
+  const handleViewDetails = () => {
+    setLocation(`/projects/${project.id}`);
   };
 
   return (
-    <Card className="overflow-hidden h-full flex flex-col hover:shadow-lg transition-shadow">
-      <div className="h-60 overflow-hidden relative">
+    <Card className="overflow-hidden flex flex-col h-full hover:shadow-lg transition-shadow duration-300">
+      <div className="relative h-52">
         <img
           src={mainImage}
           alt={project.projectName}
@@ -56,34 +66,48 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             target.src = "/placeholder-property.svg";
           }}
         />
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-          <Badge className="bg-primary hover:bg-primary">{project.location}</Badge>
-        </div>
       </div>
-      <CardHeader className="pb-2">
-        <CardTitle className="font-serif text-xl">{project.projectName}</CardTitle>
-        <CardDescription className="line-clamp-1">
-          {project.location}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <p className="text-gray-700 line-clamp-3 mb-3">
-          {truncateDescription(project.description)}
-        </p>
-        <div className="mt-2">
-          <div className="flex flex-wrap gap-1">
-            {Array.isArray(project.unitTypes) && project.unitTypes.map((type, idx) => (
-              <Badge key={idx} variant="outline" className="bg-gray-100">
+      
+      <CardContent className="flex-grow flex flex-col p-4">
+        <div className="mb-3">
+          <h3 className="text-xl font-serif font-semibold text-gray-900 mb-1">
+            {project.projectName}
+          </h3>
+          <div className="flex items-center text-gray-500 text-sm mb-2">
+            <MapPin className="h-4 w-4 mr-1" />
+            <span>{project.location}</span>
+          </div>
+        </div>
+        
+        {project.unitTypes && project.unitTypes.length > 0 && (
+          <div className="flex flex-wrap gap-1 my-2">
+            {project.unitTypes.map((type, index) => (
+              <Badge key={index} variant="outline" className="capitalize bg-gray-50">
                 {type}
               </Badge>
             ))}
           </div>
+        )}
+        
+        <p className="text-gray-600 text-sm my-3">
+          {truncateDescription(project.description)}
+        </p>
+        
+        <div className="mt-auto">
+          <div className="flex items-center text-sm text-gray-500 mb-2">
+            <Building className="h-4 w-4 mr-1" />
+            <span>By {project.aboutDeveloper ? truncateDescription(project.aboutDeveloper, 40) : "Developer"}</span>
+          </div>
         </div>
       </CardContent>
-      <CardFooter className="pt-0">
-        <Link href={`/projects/${project.id}`}>
-          <Button className="w-full bg-[#964B00] hover:bg-[#B87333]">View Project</Button>
-        </Link>
+      
+      <CardFooter className="p-4 pt-0">
+        <Button 
+          onClick={handleViewDetails} 
+          className="w-full bg-[#964B00] hover:bg-[#B87333] text-white"
+        >
+          View Project
+        </Button>
       </CardFooter>
     </Card>
   );
