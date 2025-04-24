@@ -30,11 +30,13 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
   };
   
   const handlePrevious = () => {
-    setActiveImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    const imageCount = processedImages.length > 0 ? processedImages.length : images.length;
+    setActiveImage((prev) => (prev === 0 ? imageCount - 1 : prev - 1));
   };
   
   const handleNext = () => {
-    setActiveImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    const imageCount = processedImages.length > 0 ? processedImages.length : images.length;
+    setActiveImage((prev) => (prev === imageCount - 1 ? 0 : prev + 1));
   };
   
   const toggleFullscreen = () => {
@@ -66,7 +68,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
       {/* Main Image */}
       <div className={`relative ${isFullscreen ? 'h-full' : 'property-image-gallery'}`}>
         <PropertyImage 
-          src={images[activeImage]} 
+          src={processedImages[activeImage] || images[activeImage]} 
           alt={`${title} - Image ${activeImage + 1}`} 
           priority={activeImage === 0}
           className={`w-full ${isFullscreen ? 'h-full' : 'h-[500px]'} object-cover`}
@@ -113,7 +115,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
         
         {/* Image counter */}
         <div className="absolute bottom-4 left-4 px-3 py-1 bg-black/60 text-white text-sm rounded-md">
-          {activeImage + 1} / {images.length}
+          {activeImage + 1} / {processedImages.length || images.length}
         </div>
       </div>
       
@@ -122,7 +124,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
         <div className="container mx-auto px-4 -mt-12 relative z-10">
           <div className="bg-white shadow-md rounded-md p-3">
             <div className="flex space-x-2 overflow-x-auto pb-2">
-              {images.map((image, index) => (
+              {(processedImages.length > 0 ? processedImages : images).map((image, index) => (
                 <div 
                   key={index}
                   onClick={() => handleThumbnailClick(index)}
