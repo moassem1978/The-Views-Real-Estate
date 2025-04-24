@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PropertyImage from "./PropertyImage";
 
 interface PropertyGalleryProps {
@@ -9,6 +9,21 @@ interface PropertyGalleryProps {
 export default function PropertyGallery({ images, title }: PropertyGalleryProps) {
   const [activeImage, setActiveImage] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [processedImages, setProcessedImages] = useState<string[]>([]);
+  
+  // Process and normalize all images when the component first renders
+  // This ensures we're using the same path format for all images
+  useEffect(() => {
+    if (!images || images.length === 0) return;
+    
+    // Process all image paths to ensure uniform format
+    const normalizedImages = images.map(img => {
+      // Remove quotes and normalize slashes
+      return img.replace(/"/g, '').replace(/\\/g, '/');
+    });
+    
+    setProcessedImages(normalizedImages);
+  }, [images]);
   
   const handleThumbnailClick = (index: number) => {
     setActiveImage(index);

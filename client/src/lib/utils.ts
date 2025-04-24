@@ -146,12 +146,15 @@ export function getResizedImageUrl(path: string | undefined, size: 'thumbnail' |
   // For non-upload paths or external URLs, return as is
   if (!path.startsWith('/uploads/') || path.startsWith('http')) return path;
   
+  // Simple normalization for Windows path separators and quotes
+  const normalizedPath = path.replace(/\\/g, '/').replace(/"/g, '');
+  
   // Add cache-busting timestamp parameter to prevent browser caching
   // This helps with images that have been re-uploaded with the same name
   const cacheBuster = `?t=${Date.now()}`;
   
   // For server-side image, we add the cache buster to ensure fresh images
-  return `${path}${cacheBuster}`;
+  return `${normalizedPath}${cacheBuster}`;
 }
 
 /**
@@ -168,12 +171,8 @@ export function getImageUrl(path: string | undefined): string {
   if (path === '/placeholder-property.svg') return path;
   if (path.startsWith('http')) return path;
   
-  // Check for hash-pattern filenames and return placeholder
-  // This avoids trying to load files that don't exist
-  const hashPattern = /[a-f0-9]{32}/i;
-  if (hashPattern.test(path)) {
-    return '/placeholder-property.svg';
-  }
+  // Note: We removed the hash-pattern check here since we now have a robust server-side
+  // image matcher that can handle these Windows-uploaded images correctly
   
   // Very basic normalization
   const normalizedPath = path.replace(/\\/g, '/').replace(/"/g, '');

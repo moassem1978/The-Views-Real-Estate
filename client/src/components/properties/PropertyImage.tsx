@@ -10,10 +10,12 @@ interface PropertyImageProps {
 }
 
 // Keep a record of image URLs that are known to fail
-// This avoids unnecessary network requests for images we know don't exist
+// This avoids unnecessary network requests for images we know don't exist after retry
+// Only populated after the server-side image matcher has already tried
 const knownFailedImages = new Set<string>();
 
-// Keep track of hash patterns that look like our new upload format
+// We keep this but don't use it for skipping image loading now
+// Our server-side image matcher can handle these patterns
 const hashPattern = /[a-f0-9]{32}/i;
 
 export default function PropertyImage({ 
@@ -57,12 +59,9 @@ export default function PropertyImage({
       return;
     }
     
-    // For hash-pattern files (which we know might fail), use placeholder immediately
-    if (hashPattern.test(cleanSrc)) {
-      setFormattedSrc('/placeholder-property.svg');
-      setIsLoaded(true);
-      return;
-    }
+    // We previously had special handling for hash-pattern files here,
+    // but now that we have a robust server-side image matcher, we'll
+    // allow all paths to be processed normally
     
     // For any other image, use a simple URL with timestamp to avoid caching
     // but without multiple retry strategies
