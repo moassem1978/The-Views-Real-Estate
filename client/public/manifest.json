@@ -12,10 +12,19 @@
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
     }
   ],
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#D4AF37",
-  "background_color": "#F9F6F2"
+  "background_color": "#F9F6F2",
+  "orientation": "portrait",
+  "description": "Discover exceptional luxury properties",
+  "apple-mobile-web-app-capable": "yes",
+  "apple-mobile-web-app-status-bar-style": "black-translucent"
 }
