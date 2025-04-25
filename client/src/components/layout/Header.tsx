@@ -22,6 +22,8 @@ interface SiteSettings {
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [location] = useLocation();
   const userMenuRef = useRef<HTMLDivElement>(null);
   
@@ -360,26 +362,32 @@ export default function Header() {
               Home
             </Link>
             <div className="py-2">
-              <button className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full">
+              <button 
+                className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
+                onClick={() => setMobilePropertiesOpen(!mobilePropertiesOpen)}
+              >
                 Properties
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${mobilePropertiesOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className="pl-4 mt-2 space-y-2 border-l-2 border-copper/20">
+              <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobilePropertiesOpen ? 'block' : 'hidden'}`}>
                 <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors">Primary</Link>
                 <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors">Resale</Link>
                 <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
               </div>
             </div>
             <div className="py-2">
-              <button className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full">
+              <button 
+                className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
+                onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
+              >
                 Services
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${mobileServicesOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className="pl-4 mt-2 space-y-2 border-l-2 border-copper/20">
+              <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobileServicesOpen ? 'block' : 'hidden'}`}>
                 <Link href="/services/buyer-representation" className="block py-1 text-rich-black hover:text-copper transition-colors">Buyer Representation</Link>
                 <Link href="/services/seller-representation" className="block py-1 text-rich-black hover:text-copper transition-colors">Seller Representation</Link>
                 <Link href="/services/investment" className="block py-1 text-rich-black hover:text-copper transition-colors">Investment</Link>
@@ -431,8 +439,27 @@ export default function Header() {
               </>
             )}
             
+            {/* Sign In / Dashboard prominent link */}
+            <div className="py-4 border-t border-copper/10">
+              {!user ? (
+                <Link href="/signin" className="flex items-center px-4 py-2 font-medium text-copper hover:text-copper-dark transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="text-lg">Sign In</span>
+                </Link>
+              ) : (
+                <Link href="/dashboard" className="flex items-center px-4 py-2 font-medium text-copper hover:text-copper-dark transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  <span className="text-lg">Dashboard</span>
+                </Link>
+              )}
+            </div>
+            
             {/* Mobile contact info */}
-            <div className="pt-4 border-t border-copper/10 space-y-3 text-sm">
+            <div className="pt-2 space-y-3 text-sm">
               {settings?.contactPhone && (
                 <a href={`tel:${settings.contactPhone}`} className="flex items-center text-rich-black hover:text-copper transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
