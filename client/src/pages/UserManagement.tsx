@@ -7,6 +7,8 @@ import { User } from '@/types';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { useLocation } from 'wouter';
+import { Home } from 'lucide-react';
 
 // Components from shadcn
 import {

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Building, Plus, Edit, Trash2, ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
+import { Building, Plus, Edit, Trash2, ArrowLeft, AlertCircle, Loader2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -162,6 +162,14 @@ const ProjectManagement: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setLocation("/")}
+              className="bg-cream hover:bg-cream-dark text-copper"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Back to Website
+            </Button>
             <Button
               variant="outline"
               onClick={() => setLocation("/projects")}
