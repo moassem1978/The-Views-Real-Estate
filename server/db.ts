@@ -28,9 +28,10 @@ if (!fs.existsSync(BACKUP_DIR)) {
 export async function backupDatabase() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const filename = path.join(BACKUP_DIR, `backup-${timestamp}.sql`);
-  
-  const command = `pg_dump --no-owner --no-acl "${process.env.DATABASE_URL}" > "${filename}"`;
-  
+
+  // Use --no-owner and --no-acl for better compatibility
+  const command = `PGSSLMODE=require pg_dump --no-owner --no-acl -h ${process.env.PGHOST} -U ${process.env.PGUSER} -d ${process.env.PGDATABASE} > "${filename}"`;
+
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -58,9 +59,9 @@ export async function restoreDatabase(timestamp: string) {
   if (!fs.existsSync(backupFile)) {
     throw new Error(`Backup file ${backupFile} not found`);
   }
-  
+
   const command = `psql "${process.env.DATABASE_URL}" < "${backupFile}"`;
-  
+
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {
       if (error) {
