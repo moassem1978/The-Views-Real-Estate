@@ -27,7 +27,12 @@ const projectSchema = z.object({
   completionDate: z.string().optional(),
   status: z.string().min(1, "Project status is required"),
   developer: z.string().min(3, "Developer name is required"),
-  numberOfUnits: z.number().optional().nullable(), // Added number of units field
+  numberOfUnits: z.string().min(1, "Number of units is required"),
+  unitTypes: z.array(z.object({
+    type: z.string(),
+    area: z.string(),
+    count: z.string()
+  })).default([]),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -216,20 +221,72 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
             )}
           />
 
-          {/* Number of Units */}
+          {/* Total Number of Units */}
           <FormField
             control={form.control}
             name="numberOfUnits"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Number of Units</FormLabel>
+                <FormLabel>Total Number of Units *</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input type="text" placeholder="e.g. 100" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {/* Unit Types */}
+          <div className="space-y-4 border p-4 rounded-md">
+            <h3 className="font-medium">Unit Types</h3>
+            {form.watch('unitTypes')?.map((_, index) => (
+              <div key={index} className="grid grid-cols-3 gap-2">
+                <FormField
+                  control={form.control}
+                  name={`unitTypes.${index}.type`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="Type (e.g. 2BR)" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`unitTypes.${index}.area`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="Area (m²)" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`unitTypes.${index}.count`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="Count" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const currentTypes = form.getValues('unitTypes') || [];
+                form.setValue('unitTypes', [...currentTypes, { type: '', area: '', count: '' }]);
+              }}
+            >
+              Add Unit Type
+            </Button>
+          </div>
 
 
           {/* Project Gallery */}
