@@ -44,6 +44,9 @@ export async function backupDatabase() {
   });
 }
 
+// Trigger immediate backup
+backupDatabase();
+
 // Schedule daily backups
 setInterval(backupDatabase, 24 * 60 * 60 * 1000);
 
