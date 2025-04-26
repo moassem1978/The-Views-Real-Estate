@@ -239,7 +239,7 @@ export default function PropertiesByType() {
               disabled={primaryProperties.length === 0}
               className="data-[state=active]:bg-[#B87333] data-[state=active]:text-white"
             >
-              Primary Units
+              Primary Projects
             </TabsTrigger>
             <TabsTrigger 
               value="resale"
@@ -260,7 +260,7 @@ export default function PropertiesByType() {
           
           <TabsContent value="resale" className="mt-0">
             <PropertyTabContent 
-              properties={resaleProperties} 
+              properties={properties.filter(p => p.listingType === "Resale")}
               displayCount={displayCount} 
               loadMore={loadMore} 
             />
