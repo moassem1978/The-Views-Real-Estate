@@ -29,7 +29,7 @@ export async function backupDatabase() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const filename = path.join(BACKUP_DIR, `backup-${timestamp}.sql`);
   
-  const command = `pg_dump "${process.env.DATABASE_URL}" > "${filename}"`;
+  const command = `pg_dump --no-owner --no-acl "${process.env.DATABASE_URL}" > "${filename}"`;
   
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {
@@ -52,3 +52,24 @@ setInterval(backupDatabase, 24 * 60 * 60 * 1000);
 
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle({ client: pool, schema });
+// Restore function
+export async function restoreDatabase(timestamp: string) {
+  const backupFile = path.join(BACKUP_DIR, `backup-${timestamp}.sql`);
+  if (!fs.existsSync(backupFile)) {
+    throw new Error(`Backup file ${backupFile} not found`);
+  }
+  
+  const command = `psql "${process.env.DATABASE_URL}" < "${backupFile}"`;
+  
+  return new Promise((resolve, reject) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Restore failed:', error);
+        reject(error);
+        return;
+      }
+      console.log(`Restore completed from ${backupFile}`);
+      resolve(true);
+    });
+  });
+}
