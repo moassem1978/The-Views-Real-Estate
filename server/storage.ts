@@ -29,7 +29,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User>;
   deactivateUser(id: number): Promise<boolean>;
-  
+
   // Property operations
   getAllProperties(page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
   getFeaturedProperties(limit?: number, page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
@@ -43,19 +43,19 @@ export interface IStorage {
   getPropertyCount(): Promise<number>;
   getUniqueProjectNames(): Promise<string[]>; // Added this method to get unique project names
   getUniqueCities(): Promise<string[]>; // Method to get unique cities for location dropdown
-  
+
   // Project operations
   getAllProjects(page?: number, pageSize?: number): Promise<PaginatedResult<Project>>;
   getProjectById(id: number): Promise<Project | undefined>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: number, project: Partial<Project>): Promise<Project | undefined>;
   deleteProject(id: number): Promise<boolean>;
-  
+
   // Testimonial operations
   getAllTestimonials(page?: number, pageSize?: number): Promise<PaginatedResult<Testimonial>>;
   getTestimonialById(id: number): Promise<Testimonial | undefined>;
   createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
-  
+
   // Announcement operations
   getAllAnnouncements(page?: number, pageSize?: number): Promise<PaginatedResult<Announcement>>;
   getFeaturedAnnouncements(limit?: number): Promise<Announcement[]>;
@@ -65,7 +65,7 @@ export interface IStorage {
   updateAnnouncement(id: number, announcement: Partial<Announcement>): Promise<Announcement | undefined>;
   deleteAnnouncement(id: number): Promise<boolean>;
   getAnnouncementCount(): Promise<number>;
-  
+
   // Site settings operations
   getSiteSettings(): Promise<SiteSettings>;
   updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings>;
@@ -94,29 +94,29 @@ export class MemStorage implements IStorage {
     // Filter out null/undefined project names, then get unique values
     const allProperties = Array.from(this.properties.values());
     const uniqueProjects = new Set<string>();
-    
+
     allProperties.forEach(property => {
       if (property.projectName) {
         uniqueProjects.add(property.projectName);
       }
     });
-    
+
     return Array.from(uniqueProjects).sort();
   }
-  
+
   /**
    * Returns a list of unique cities from the properties collection
    */
   async getUniqueCities(): Promise<string[]> {
     const allProperties = Array.from(this.properties.values());
     const uniqueCities = new Set<string>();
-    
+
     allProperties.forEach(property => {
       if (property.city) {
         uniqueCities.add(property.city);
       }
     });
-    
+
     return Array.from(uniqueCities).sort();
   }
   private users: Map<number, User>;
@@ -140,7 +140,7 @@ export class MemStorage implements IStorage {
     this.propertyCurrentId = 1;
     this.testimonialCurrentId = 1;
     this.announcementCurrentId = 1;
-    
+
     // Initialize default site settings
     this.siteSettings = {
       companyName: "The Views Real Estate",
@@ -154,13 +154,13 @@ export class MemStorage implements IStorage {
         linkedin: "https://linkedin.com/company/theviewsrealestate"
       }
     };
-    
+
     // Try to load data from disk
     this.loadFromDisk();
-    
+
     // Only seed the admin user if needed
     const needsUserSeed = this.users.size === 0;
-    
+
     // Only seed user data if missing
     if (needsUserSeed) {
       console.log('Seeding admin user data');
@@ -179,12 +179,23 @@ export class MemStorage implements IStorage {
     );
   }
 
-  // Save data to disk
+  // Save data to disk with backup and validation
   private saveToDisk() {
     try {
-      // Check and enforce size limits before saving
-      this.enforceSizeLimits();
-      
+      // Create backups directory if it doesn't exist
+      if (!fs.existsSync('backups')) {
+        fs.mkdirSync('backups');
+      }
+
+      // Create backup before saving
+      if (fs.existsSync(this.persistencePath)) {
+        fs.copyFileSync(this.persistencePath, `backups/data-store-${Date.now()}.json`);
+      }
+
+      // Validate data before saving
+      const propertiesCount = this.properties.size;
+      console.log(`Saving ${propertiesCount} properties`);
+
       const data = {
         users: Array.from(this.users.entries()),
         properties: Array.from(this.properties.entries()),
@@ -196,14 +207,27 @@ export class MemStorage implements IStorage {
         testimonialCurrentId: this.testimonialCurrentId,
         announcementCurrentId: this.announcementCurrentId
       };
-      
+
       fs.writeFileSync(this.persistencePath, JSON.stringify(data, null, 2));
-      console.log('Data saved to disk');
+
+      // Verify save was successful
+      const savedData = fs.readFileSync(this.persistencePath, 'utf8');
+      const parsed = JSON.parse(savedData);
+      if (!parsed.properties || parsed.properties.length === 0) {
+        throw new Error('Data validation failed after save');
+      }
     } catch (error) {
-      console.error('Failed to save data to disk:', error);
+      console.error('Error saving data:', error);
+      // Restore from latest backup if save fails
+      const backups = fs.readdirSync('backups').sort().reverse();
+      if (backups.length > 0) {
+        fs.copyFileSync(`backups/${backups[0]}`, this.persistencePath);
+        console.log('Restored from backup after failed save');
+      }
+      throw error;
     }
   }
-  
+
   /**
    * Enforces size limits on the data store to keep app size under control.
    * This ensures we don't exceed maximum listings, and limits image data.
@@ -213,25 +237,25 @@ export class MemStorage implements IStorage {
     const MAX_PROPERTIES = 100; // Maximum number of properties to store
     const MAX_TESTIMONIALS = 50; // Maximum number of testimonials
     const MAX_IMAGES_PER_PROPERTY = 8; // Limit number of images per property
-    
+
     // If we have too many properties, remove the oldest non-featured ones first
     if (this.properties.size > MAX_PROPERTIES) {
       console.log(`Enforcing property limit: ${this.properties.size} -> ${MAX_PROPERTIES}`);
-      
+
       // Sort properties by creation date (oldest first) and featured status
       const sortedProperties = Array.from(this.properties.values())
         .sort((a, b) => {
           // First sort by featured status (keep featured properties)
           if (a.isFeatured && !b.isFeatured) return 1;
           if (!a.isFeatured && b.isFeatured) return -1;
-          
+
           // Then sort by creation date (oldest first)
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         });
-      
+
       // Remove oldest properties until we're under the limit
       const propertiesToRemove = sortedProperties.slice(0, sortedProperties.length - MAX_PROPERTIES);
-      
+
       for (const property of propertiesToRemove) {
         // Clean up any image files associated with this property
         this.removePropertyImages(property.images);
@@ -239,50 +263,50 @@ export class MemStorage implements IStorage {
         this.properties.delete(property.id);
       }
     }
-    
+
     // Limit the number of images per property
     for (const property of this.properties.values()) {
       if (property.images && property.images.length > MAX_IMAGES_PER_PROPERTY) {
         console.log(`Property ${property.id}: Reducing images from ${property.images.length} to ${MAX_IMAGES_PER_PROPERTY}`);
-        
+
         // Remove excess images, keeping the first MAX_IMAGES_PER_PROPERTY
         const imagesToRemove = property.images.slice(MAX_IMAGES_PER_PROPERTY);
         property.images = property.images.slice(0, MAX_IMAGES_PER_PROPERTY);
-        
+
         // Clean up removed image files
         this.removePropertyImages(imagesToRemove);
       }
     }
-    
+
     // Similar limit for testimonials
     if (this.testimonials.size > MAX_TESTIMONIALS) {
       console.log(`Enforcing testimonial limit: ${this.testimonials.size} -> ${MAX_TESTIMONIALS}`);
-      
+
       const sortedTestimonials = Array.from(this.testimonials.values())
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-      
+
       const testimonialsToRemove = sortedTestimonials.slice(0, sortedTestimonials.length - MAX_TESTIMONIALS);
-      
+
       for (const testimonial of testimonialsToRemove) {
         this.testimonials.delete(testimonial.id);
       }
     }
   }
-  
+
   /**
    * Removes image files from the filesystem to free up space
    * @param imagePaths Array of image paths to remove
    */
   private removePropertyImages(imagePaths: string[]) {
     if (!imagePaths || !Array.isArray(imagePaths)) return;
-    
+
     for (const imagePath of imagePaths) {
       try {
         // Get the base filename without size suffix or extension
         const parts = imagePath.split('/');
         const filename = parts[parts.length - 1];
         const basePath = path.join(process.cwd(), 'public', 'uploads', 'properties');
-        
+
         // Try to remove all size variants
         const baseFilename = filename.split('-')[0];
         const possibleVariants = [
@@ -291,7 +315,7 @@ export class MemStorage implements IStorage {
           `${baseFilename}-medium.webp`,
           `${baseFilename}-large.webp`
         ];
-        
+
         possibleVariants.forEach(variant => {
           const fullPath = path.join(basePath, variant);
           if (fs.existsSync(fullPath)) {
@@ -304,26 +328,26 @@ export class MemStorage implements IStorage {
       }
     }
   }
-  
+
   // Load data from disk
   private loadFromDisk() {
     try {
       if (fs.existsSync(this.persistencePath)) {
         const data = JSON.parse(fs.readFileSync(this.persistencePath, 'utf8'));
-        
+
         // Restore collections
         this.users = new Map(data.users);
         this.properties = new Map(data.properties);
         this.testimonials = new Map(data.testimonials);
         this.announcements = new Map(data.announcements || []);
-        
+
         // Restore settings and counters
         this.siteSettings = data.siteSettings;
         this.userCurrentId = data.userCurrentId;
         this.propertyCurrentId = data.propertyCurrentId;
         this.testimonialCurrentId = data.testimonialCurrentId;
         this.announcementCurrentId = data.announcementCurrentId || 1;
-        
+
         console.log('Data loaded from disk successfully');
       } else {
         console.log('No saved data found, initializing with defaults');
@@ -335,7 +359,7 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
-    
+
     // Create a complete user object with all required fields
     const user: User = { 
       id,
@@ -347,7 +371,7 @@ export class MemStorage implements IStorage {
       isAgent: insertUser.isAgent ?? false,
       createdAt: insertUser.createdAt
     };
-    
+
     this.users.set(id, user);
     this.saveToDisk(); // Save after changes
     return user;
@@ -362,7 +386,7 @@ export class MemStorage implements IStorage {
       .filter(property => property.isFeatured)
       .slice(0, limit);
   }
-  
+
   async getHighlightedProperties(limit = 3): Promise<Property[]> {
     return Array.from(this.properties.values())
       .filter(property => property.isHighlighted)
@@ -381,7 +405,7 @@ export class MemStorage implements IStorage {
 
   async createProperty(insertProperty: InsertProperty): Promise<Property> {
     const id = this.propertyCurrentId++;
-    
+
     // Create a complete property object with all required fields
     const property: Property = {
       id,
@@ -427,7 +451,7 @@ export class MemStorage implements IStorage {
       createdAt: insertProperty.createdAt,
       agentId: insertProperty.agentId
     };
-    
+
     this.properties.set(id, property);
     this.saveToDisk(); // Save after changes
     return property;
@@ -435,15 +459,15 @@ export class MemStorage implements IStorage {
 
   async updateProperty(id: number, updates: Partial<Property>): Promise<Property | undefined> {
     const property = this.properties.get(id);
-    
+
     if (!property) {
       return undefined;
     }
-    
+
     const updatedProperty = { ...property, ...updates };
     this.properties.set(id, updatedProperty);
     this.saveToDisk(); // Save after changes
-    
+
     return updatedProperty;
   }
 
@@ -457,7 +481,7 @@ export class MemStorage implements IStorage {
 
   async searchProperties(filters: Partial<PropertySearchFilters>): Promise<Property[]> {
     let results = Array.from(this.properties.values());
-    
+
     if (filters.location) {
       const location = filters.location.toLowerCase();
       results = results.filter(property => 
@@ -466,20 +490,20 @@ export class MemStorage implements IStorage {
         property.zipCode.toLowerCase().includes(location)
       );
     }
-    
+
     if (filters.propertyType && filters.propertyType !== "all") {
       results = results.filter(property => 
         property.propertyType.toLowerCase() === filters.propertyType?.toLowerCase()
       );
     }
-    
+
     // Filter by listing type (Primary or Resale)
     if (filters.listingType && filters.listingType !== "all") {
       results = results.filter(property => 
         property.listingType === filters.listingType
       );
     }
-    
+
     // Filter by project name
     if (filters.projectName) {
       const projectName = filters.projectName.toLowerCase();
@@ -487,7 +511,7 @@ export class MemStorage implements IStorage {
         property.projectName?.toLowerCase().includes(projectName)
       );
     }
-    
+
     // Filter by developer name
     if (filters.developerName) {
       const developerName = filters.developerName.toLowerCase();
@@ -495,7 +519,7 @@ export class MemStorage implements IStorage {
         property.developerName?.toLowerCase().includes(developerName)
       );
     }
-    
+
     // Filter by country (international properties)
     if (filters.international !== undefined) {
       results = results.filter(property => 
@@ -504,28 +528,28 @@ export class MemStorage implements IStorage {
           : (!property.country || property.country === "Egypt") // Domestic: In Egypt
       );
     }
-    
+
     if (filters.minPrice !== undefined) {
       results = results.filter(property => property.price >= filters.minPrice!);
     }
-    
+
     if (filters.maxPrice !== undefined) {
       results = results.filter(property => property.price <= filters.maxPrice!);
     }
-    
+
     if (filters.minBedrooms !== undefined) {
       results = results.filter(property => property.bedrooms >= filters.minBedrooms!);
     }
-    
+
     if (filters.minBathrooms !== undefined) {
       results = results.filter(property => property.bathrooms >= filters.minBathrooms!);
     }
-    
+
     // Filter by full cash option
     if (filters.isFullCash !== undefined) {
       results = results.filter(property => property.isFullCash === filters.isFullCash);
     }
-    
+
     // Filter by installments availability
     if (filters.hasInstallments !== undefined) {
       results = results.filter(property => 
@@ -534,7 +558,7 @@ export class MemStorage implements IStorage {
           : property.installmentAmount === null || property.installmentPeriod === null
       );
     }
-    
+
     return results;
   }
 
@@ -548,7 +572,7 @@ export class MemStorage implements IStorage {
 
   async createTestimonial(insertTestimonial: InsertTestimonial): Promise<Testimonial> {
     const id = this.testimonialCurrentId++;
-    
+
     // Create a complete testimonial object with all required fields
     const testimonial: Testimonial = {
       id,
@@ -559,30 +583,30 @@ export class MemStorage implements IStorage {
       initials: insertTestimonial.initials,
       createdAt: insertTestimonial.createdAt
     };
-    
+
     this.testimonials.set(id, testimonial);
     this.saveToDisk(); // Save after changes
     return testimonial;
   }
-  
+
   // Announcement operations
   async getAllAnnouncements(): Promise<Announcement[]> {
     return Array.from(this.announcements.values());
   }
-  
+
   async getFeaturedAnnouncements(limit?: number): Promise<Announcement[]> {
     const announcements = Array.from(this.announcements.values())
       .filter(announcement => announcement.isActive && announcement.isFeatured)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
+
     return limit ? announcements.slice(0, limit) : announcements;
   }
-  
+
   async getHighlightedAnnouncements(limit?: number): Promise<Announcement[]> {
     const announcements = Array.from(this.announcements.values())
       .filter(announcement => announcement.isActive && announcement.isHighlighted)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
+
     return limit ? announcements.slice(0, limit) : announcements;
   }
 
@@ -592,7 +616,7 @@ export class MemStorage implements IStorage {
 
   async createAnnouncement(insertAnnouncement: InsertAnnouncement): Promise<Announcement> {
     const id = this.announcementCurrentId++;
-    
+
     // Create a complete announcement object
     const announcement: Announcement = {
       id,
@@ -606,7 +630,7 @@ export class MemStorage implements IStorage {
       isHighlighted: insertAnnouncement.isHighlighted ?? false,
       createdAt: new Date().toISOString()
     };
-    
+
     this.announcements.set(id, announcement);
     this.saveToDisk(); // Save after changes
     return announcement;
@@ -614,15 +638,15 @@ export class MemStorage implements IStorage {
 
   async updateAnnouncement(id: number, updates: Partial<Announcement>): Promise<Announcement | undefined> {
     const announcement = this.announcements.get(id);
-    
+
     if (!announcement) {
       return undefined;
     }
-    
+
     const updatedAnnouncement = { ...announcement, ...updates };
     this.announcements.set(id, updatedAnnouncement);
     this.saveToDisk(); // Save after changes
-    
+
     return updatedAnnouncement;
   }
 
@@ -633,12 +657,12 @@ export class MemStorage implements IStorage {
     }
     return result;
   }
-  
+
   // Site settings operations
   async getSiteSettings(): Promise<SiteSettings> {
     return { ...this.siteSettings };
   }
-  
+
   async updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
     // Update social links if they exist in the settings
     if (settings.socialLinks) {
@@ -646,7 +670,7 @@ export class MemStorage implements IStorage {
         ...this.siteSettings.socialLinks,
         ...settings.socialLinks
       };
-      
+
       // Remove socialLinks from settings to avoid overwriting the merged object
       const { socialLinks, ...restSettings } = settings;
       this.siteSettings = { ...this.siteSettings, ...restSettings };
@@ -654,7 +678,7 @@ export class MemStorage implements IStorage {
       // Just update the rest of the settings
       this.siteSettings = { ...this.siteSettings, ...settings };
     }
-    
+
     this.saveToDisk(); // Save after changes
     return { ...this.siteSettings };
   }
@@ -671,7 +695,7 @@ export class MemStorage implements IStorage {
       isAgent: true,
       createdAt: formatISO(new Date()),
     };
-    
+
     // Add to storage
     this.users.set(1, {
       id: 1,
@@ -683,11 +707,11 @@ export class MemStorage implements IStorage {
       isAgent: adminUser.isAgent ?? false,
       createdAt: adminUser.createdAt
     });
-    
+
     this.userCurrentId = 2; // Set for next user
     console.log('Admin user seeded');
   }
-  
+
   // Seed only the properties
   private seedProperties() {
     // Sample luxury properties
@@ -773,7 +797,7 @@ export class MemStorage implements IStorage {
         agentId: 1
       }
     ];
-    
+
     // Add properties to storage
     let nextId = 1;
     featuredProperties.forEach(property => {
@@ -813,15 +837,15 @@ export class MemStorage implements IStorage {
         createdAt: property.createdAt,
         agentId: property.agentId
       };
-      
+
       this.properties.set(nextId, fullProperty);
       nextId++;
     });
-    
+
     this.propertyCurrentId = nextId; // Set for next property
     console.log('Properties seeded');
   }
-  
+
   // Seed only the testimonials
   private seedTestimonials() {
     // Sample testimonials
@@ -832,7 +856,7 @@ export class MemStorage implements IStorage {
         rating: 5,
         testimonial: "The Views Real Estate helped me find my dream home in record time. Their attention to detail and understanding of my needs was exceptional.",
         initials: "AI",
-        createdAt: formatISO(new Date(Date.now() - 45 * 24 * 60 * 60 * 1000)), // 45 days ago
+        createdAt: formatISO(new Date(Date.now() - 45 * 24 * 60 * 60 * 1000)), // 45days ago
       },
       {
         clientName: "Layla Hassan",
@@ -851,7 +875,7 @@ export class MemStorage implements IStorage {
         createdAt: formatISO(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)), // 30 days ago
       }
     ];
-    
+
     // Add testimonials to storage
     let nextId = 1;
     testimonials.forEach(testimonial => {
@@ -861,7 +885,7 @@ export class MemStorage implements IStorage {
       });
       nextId++;
     });
-    
+
     this.testimonialCurrentId = nextId; // Set for next testimonial
     console.log('Testimonials seeded');
   }
@@ -879,7 +903,7 @@ export class MemStorage implements IStorage {
         isAgent: true,
         createdAt: formatISO(new Date()),
       };
-      
+
       // Create admin user
       this.users.set(1, {
         id: 1,
@@ -891,10 +915,10 @@ export class MemStorage implements IStorage {
         isAgent: adminUser.isAgent ?? false,
         createdAt: adminUser.createdAt
       });
-      
+
       this.userCurrentId = 2;
     }
-    
+
     if (seedProperties) {
       // Seed some featured properties
       const featuredProperties: InsertProperty[] = [
@@ -979,7 +1003,7 @@ export class MemStorage implements IStorage {
           agentId: 1
         }
       ];
-      
+
       // Add featured properties to storage
       let nextId = 1;
       featuredProperties.forEach(property => {
@@ -1021,10 +1045,10 @@ export class MemStorage implements IStorage {
         });
         nextId++;
       });
-      
+
       this.propertyCurrentId = nextId;
     }
-    
+
     if (seedTestimonials) {
       // Seed some testimonials
       const testimonials: InsertTestimonial[] = [
@@ -1053,7 +1077,7 @@ export class MemStorage implements IStorage {
           createdAt: formatISO(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)), // 30 days ago
         }
       ];
-      
+
       // Add testimonials to storage
       let nextId = 1;
       testimonials.forEach(testimonial => {
@@ -1063,10 +1087,10 @@ export class MemStorage implements IStorage {
         });
         nextId++;
       });
-      
+
       this.testimonialCurrentId = nextId;
     }
-    
+
     // Save all seeded data
     this.saveToDisk();
   }
@@ -1089,13 +1113,13 @@ export class DatabaseStorage implements IStorage {
         .selectDistinct({ projectName: properties.projectName })
         .from(properties)
         .where(sql`${properties.projectName} IS NOT NULL`);
-      
+
       // Map the results to an array of strings and sort them
       const projectNames = result
         .map(row => row.projectName)
         .filter((name): name is string => name !== null) // Filter out null values and type assertion
         .sort();
-      
+
       console.log(`Found ${projectNames.length} unique project names`);
       return projectNames;
     } catch (error) {
@@ -1103,7 +1127,7 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
-  
+
   /**
    * Get a list of unique cities from the properties table
    * Used for populating location dropdown search
@@ -1115,13 +1139,13 @@ export class DatabaseStorage implements IStorage {
         .selectDistinct({ city: properties.city })
         .from(properties)
         .where(sql`${properties.city} IS NOT NULL`);
-      
+
       // Map the results to an array of strings and sort them
       const cities = result
         .map(row => row.city)
         .filter((city): city is string => city !== null) // Filter out null values and type assertion
         .sort();
-      
+
       console.log(`Found ${cities.length} unique cities`);
       return cities;
     } catch (error) {
@@ -1132,7 +1156,7 @@ export class DatabaseStorage implements IStorage {
   private async getCached<T>(key: string, getter: () => Promise<T>): Promise<T> {
     const cached = cache.get<T>(key);
     if (cached) return cached;
-    
+
     const data = await getter();
     cache.set(key, data);
     return data;
@@ -1158,14 +1182,14 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(page = 1, pageSize = 20): Promise<User[]> {
     const offset = (page - 1) * pageSize;
-    
+
     const usersList = await db
       .select()
       .from(users)
       .orderBy(desc(users.id))
       .limit(pageSize)
       .offset(offset);
-      
+
     return usersList;
   }
 
@@ -1180,17 +1204,17 @@ export class DatabaseStorage implements IStorage {
   async updateUser(id: number, updates: Partial<User>): Promise<User> {
     // Remove id from updates if present
     const { id: _, ...updatesWithoutId } = updates;
-    
+
     const [updatedUser] = await db
       .update(users)
       .set(updatesWithoutId)
       .where(eq(users.id, id))
       .returning();
-      
+
     if (!updatedUser) {
       throw new Error(`User with ID ${id} not found`);
     }
-      
+
     return updatedUser;
   }
 
@@ -1200,7 +1224,7 @@ export class DatabaseStorage implements IStorage {
       .set({ isActive: false })
       .where(eq(users.id, id))
       .returning({ id: users.id });
-      
+
     return result.length > 0;
   }
 
@@ -1214,14 +1238,14 @@ export class DatabaseStorage implements IStorage {
     const offset = (page - 1) * pageSize;
     const totalCount = await this.getPropertyCount();
     const pageCount = Math.ceil(totalCount / pageSize);
-    
+
     const data = await db
       .select()
       .from(properties)
       .orderBy(desc(properties.createdAt))
       .limit(pageSize)
       .offset(offset);
-    
+
     return {
       data,
       totalCount,
@@ -1233,16 +1257,16 @@ export class DatabaseStorage implements IStorage {
 
   async getFeaturedProperties(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
     const offset = (page - 1) * pageSize;
-    
+
     // Get total count for featured properties
     const countResult = await db
       .select({ count: sql`count(*)` })
       .from(properties)
       .where(eq(properties.isFeatured, true));
-    
+
     const totalCount = Number(countResult[0].count);
     const pageCount = Math.ceil(totalCount / pageSize);
-    
+
     // If limit is provided, use it instead of pagination
     if (limit > 0) {
       const data = await db
@@ -1251,7 +1275,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(properties.isFeatured, true))
         .orderBy(desc(properties.createdAt))
         .limit(limit);
-      
+
       return {
         data,
         totalCount,
@@ -1260,7 +1284,7 @@ export class DatabaseStorage implements IStorage {
         pageSize: limit
       };
     }
-    
+
     // Otherwise use pagination
     const data = await db
       .select()
@@ -1269,7 +1293,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(properties.createdAt))
       .limit(pageSize)
       .offset(offset);
-    
+
     return {
       data,
       totalCount,
@@ -1285,7 +1309,7 @@ export class DatabaseStorage implements IStorage {
     const allProps = await db.select().from(properties);
     console.log(`DEBUG: Total properties in database: ${allProps.length}`);
     console.log(`DEBUG: Properties with isHighlighted=true: ${allProps.filter(p => p.isHighlighted).length}`);
-    
+
     // Perform the actual query
     const results = await db
       .select()
@@ -1293,31 +1317,31 @@ export class DatabaseStorage implements IStorage {
       .where(eq(properties.isHighlighted, true))
       .orderBy(desc(properties.createdAt)) // Most recent properties first
       .limit(limit);
-    
+
     console.log(`DEBUG: Query returned ${results.length} highlighted properties`);
-    
+
     // Log each property for debugging
     if (results.length > 0) {
       results.forEach(p => {
         console.log(`DEBUG: Highlighted property: ID ${p.id}, Title: ${p.title}, isHighlighted: ${p.isHighlighted}`);
       });
     }
-    
+
     return results;
   }
 
   async getNewListings(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
     const offset = (page - 1) * pageSize;
-    
+
     // Get total count for new listings
     const countResult = await db
       .select({ count: sql`count(*)` })
       .from(properties)
       .where(eq(properties.isNewListing, true));
-    
+
     const totalCount = Number(countResult[0].count);
     const pageCount = Math.ceil(totalCount / pageSize);
-    
+
     // If limit is provided, use it instead of pagination
     if (limit > 0) {
       const data = await db
@@ -1326,7 +1350,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(properties.isNewListing, true))
         .orderBy(desc(properties.createdAt))
         .limit(limit);
-      
+
       return {
         data,
         totalCount,
@@ -1335,7 +1359,7 @@ export class DatabaseStorage implements IStorage {
         pageSize: limit
       };
     }
-    
+
     // Otherwise use pagination
     const data = await db
       .select()
@@ -1344,7 +1368,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(properties.createdAt))
       .limit(pageSize)
       .offset(offset);
-    
+
     return {
       data,
       totalCount,
@@ -1390,9 +1414,9 @@ export class DatabaseStorage implements IStorage {
   async searchProperties(filters: Partial<PropertySearchFilters>, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
     let countQuery = db.select({ count: sql`count(*)` }).from(properties);
     let dataQuery = db.select().from(properties);
-    
+
     // Apply all filters to both queries
-    
+
     // Filter by location (city, state, zip)
     if (filters.location) {
       const locationTerm = `%${filters.location}%`;
@@ -1402,19 +1426,19 @@ export class DatabaseStorage implements IStorage {
       countQuery = countQuery.where(locationFilter);
       dataQuery = dataQuery.where(locationFilter);
     }
-    
+
     // Filter by property type
     if (filters.propertyType && filters.propertyType !== "all") {
       countQuery = countQuery.where(eq(properties.propertyType, filters.propertyType));
       dataQuery = dataQuery.where(eq(properties.propertyType, filters.propertyType));
     }
-    
+
     // Filter by listing type (Primary or Resale)
     if (filters.listingType && filters.listingType !== "all") {
       countQuery = countQuery.where(eq(properties.listingType, filters.listingType));
       dataQuery = dataQuery.where(eq(properties.listingType, filters.listingType));
     }
-    
+
     // Filter by project name
     if (filters.projectName) {
       const projectTerm = `%${filters.projectName}%`;
@@ -1422,7 +1446,7 @@ export class DatabaseStorage implements IStorage {
       countQuery = countQuery.where(projectFilter);
       dataQuery = dataQuery.where(projectFilter);
     }
-    
+
     // Filter by developer name
     if (filters.developerName) {
       const developerTerm = `%${filters.developerName}%`;
@@ -1430,42 +1454,42 @@ export class DatabaseStorage implements IStorage {
       countQuery = countQuery.where(developerFilter);
       dataQuery = dataQuery.where(developerFilter);
     }
-    
+
     // Filter by price range
     if (filters.minPrice) {
       countQuery = countQuery.where(gte(properties.price, filters.minPrice));
       dataQuery = dataQuery.where(gte(properties.price, filters.minPrice));
     }
-    
+
     if (filters.maxPrice) {
       countQuery = countQuery.where(lte(properties.price, filters.maxPrice));
       dataQuery = dataQuery.where(lte(properties.price, filters.maxPrice));
     }
-    
+
     // Filter by bedrooms
     if (filters.minBedrooms) {
       countQuery = countQuery.where(gte(properties.bedrooms, filters.minBedrooms));
       dataQuery = dataQuery.where(gte(properties.bedrooms, filters.minBedrooms));
     }
-    
+
     // Filter by bathrooms
     if (filters.minBathrooms) {
       countQuery = countQuery.where(gte(properties.bathrooms, filters.minBathrooms));
       dataQuery = dataQuery.where(gte(properties.bathrooms, filters.minBathrooms));
     }
-    
+
     // Filter by payment options
     if (filters.isFullCash === true) {
       countQuery = countQuery.where(eq(properties.isFullCash, true));
       dataQuery = dataQuery.where(eq(properties.isFullCash, true));
     }
-    
+
     if (filters.hasInstallments === true) {
       const installmentFilter = sql`${properties.installmentAmount} IS NOT NULL`;
       countQuery = countQuery.where(installmentFilter);
       dataQuery = dataQuery.where(installmentFilter);
     }
-    
+
     // Filter by country (international properties)
     if (filters.international !== undefined) {
       if (filters.international) {
@@ -1480,21 +1504,21 @@ export class DatabaseStorage implements IStorage {
         dataQuery = dataQuery.where(domesticFilter);
       }
     }
-    
+
     // Calculate pagination parameters
     const offset = (page - 1) * pageSize;
-    
+
     // Get total count
     const countResult = await countQuery;
     const totalCount = Number(countResult[0].count);
     const pageCount = Math.ceil(totalCount / pageSize);
-    
+
     // Get paginated data
     const data = await dataQuery
       .orderBy(desc(properties.createdAt))
       .limit(pageSize)
       .offset(offset);
-    
+
     return {
       data,
       totalCount,
@@ -1507,12 +1531,12 @@ export class DatabaseStorage implements IStorage {
   // Testimonial operations
   async getAllTestimonials(page = 1, pageSize = 10): Promise<PaginatedResult<Testimonial>> {
     const offset = (page - 1) * pageSize;
-    
+
     // Get total count
     const countResult = await db.select({ count: sql`count(*)` }).from(testimonials);
     const totalCount = Number(countResult[0].count);
     const pageCount = Math.ceil(totalCount / pageSize);
-    
+
     // Get paginated data
     const data = await db
       .select()
@@ -1520,7 +1544,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(testimonials.createdAt))
       .limit(pageSize)
       .offset(offset);
-    
+
     return {
       data,
       totalCount,
@@ -1551,19 +1575,19 @@ export class DatabaseStorage implements IStorage {
     const result = await db.select({ count: sql`count(*)` }).from(announcements);
     return Number(result[0].count);
   }
-  
+
   async getAllAnnouncements(page = 1, pageSize = 10): Promise<PaginatedResult<Announcement>> {
     const offset = (page - 1) * pageSize;
     const totalCount = await this.getAnnouncementCount();
     const pageCount = Math.ceil(totalCount / pageSize);
-    
+
     const data = await db
       .select()
       .from(announcements)
       .orderBy(desc(announcements.createdAt))
       .limit(pageSize)
       .offset(offset);
-    
+
     return {
       data,
       totalCount,
@@ -1587,7 +1611,7 @@ export class DatabaseStorage implements IStorage {
     const allAnnouncements = await db.select().from(announcements);
     console.log(`DEBUG: Total announcements in database: ${allAnnouncements.length}`);
     console.log(`DEBUG: Announcements with isHighlighted=true: ${allAnnouncements.filter(a => a.isHighlighted).length}`);
-    
+
     // Perform the actual query
     const results = await db
       .select()
@@ -1595,7 +1619,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(announcements.isHighlighted, true))
       .orderBy(desc(announcements.createdAt))
       .limit(limit);
-    
+
     console.log(`DEBUG: Query returned ${results.length} highlighted announcements`);
     return results;
   }
@@ -1632,25 +1656,25 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return result.length > 0;
   }
-  
+
   // Project operations
   async getAllProjects(page = 1, pageSize = 10): Promise<PaginatedResult<Project>> {
     const offset = (page - 1) * pageSize;
-    
+
     const [countResult] = await db
       .select({ count: sql`count(*)` })
       .from(projects);
-    
+
     const totalCount = Number(countResult?.count || 0);
     const pageCount = Math.ceil(totalCount / pageSize);
-    
+
     const data = await db
       .select()
       .from(projects)
       .orderBy(desc(projects.createdAt))
       .limit(pageSize)
       .offset(offset);
-    
+
     return {
       data,
       totalCount,
@@ -1659,29 +1683,29 @@ export class DatabaseStorage implements IStorage {
       pageSize
     };
   }
-  
+
   async getProjectById(id: number): Promise<Project | undefined> {
     const [project] = await db
       .select()
       .from(projects)
       .where(eq(projects.id, id));
-    
+
     return project;
   }
-  
+
   async createProject(insertProject: InsertProject): Promise<Project> {
     const [project] = await db
       .insert(projects)
       .values(insertProject)
       .returning();
-    
+
     return project;
   }
-  
+
   async updateProject(id: number, updates: Partial<Project>): Promise<Project | undefined> {
     // Remove non-updatable fields
     const { id: _id, createdAt, updatedAt, ...updatableFields } = updates as any;
-    
+
     const [updatedProject] = await db
       .update(projects)
       .set({
@@ -1690,17 +1714,17 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(projects.id, id))
       .returning();
-    
+
     return updatedProject;
   }
-  
+
   async deleteProject(id: number): Promise<boolean> {
     try {
       const result = await db
         .delete(projects)
         .where(eq(projects.id, id))
         .returning();
-      
+
       return result.length > 0;
     } catch (error) {
       console.error('Error deleting project:', error);
@@ -1722,7 +1746,7 @@ export class DatabaseStorage implements IStorage {
       linkedin: "https://linkedin.com/company/theviewsrealestate"
     }
   };
-  
+
   private siteSettingsPath = './site-settings.json';
   private currentSettings: SiteSettings | null = null;
 
@@ -1736,7 +1760,7 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Failed to load site settings from file:', error);
     }
-    
+
     // If we couldn't load from the file, return default settings
     return { ...this.defaultSiteSettings };
   }
@@ -1755,7 +1779,7 @@ export class DatabaseStorage implements IStorage {
     if (this.currentSettings) {
       return { ...this.currentSettings };
     }
-    
+
     // Otherwise, load from file and cache
     this.currentSettings = this.loadSettingsFromFile();
     return { ...this.currentSettings };
@@ -1764,20 +1788,20 @@ export class DatabaseStorage implements IStorage {
   async updateSiteSettings(updates: Partial<SiteSettings>): Promise<SiteSettings> {
     // Get current settings
     const currentSettings = await this.getSiteSettings();
-    
+
     // Prepare the updates, handling socialLinks specially
     let updatedSettings: SiteSettings;
-    
+
     if (updates.socialLinks && currentSettings.socialLinks) {
       // Create a new object with properly merged socialLinks
       const mergedSocialLinks = {
         ...currentSettings.socialLinks,
         ...updates.socialLinks
       };
-      
+
       // Remove socialLinks from updates to avoid duplicate merging
       const { socialLinks, ...restUpdates } = updates;
-      
+
       // Merge with current settings
       updatedSettings = {
         ...currentSettings,
@@ -1791,11 +1815,11 @@ export class DatabaseStorage implements IStorage {
         ...updates
       };
     }
-    
+
     // Save to file and update the cache
     this.saveSettingsToFile(updatedSettings);
     this.currentSettings = updatedSettings;
-    
+
     // Return the updated settings
     return { ...this.currentSettings };
   }

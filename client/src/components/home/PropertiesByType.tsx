@@ -17,7 +17,7 @@ const LoadingSkeleton = () => (
       <div className="flex justify-center mb-8">
         <div className="h-10 w-56 bg-gray-200 animate-pulse rounded"></div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {[1, 2, 3].map((i) => (
           <div key={i} className="bg-[#F9F6F2] rounded-lg shadow-md overflow-hidden">
@@ -60,7 +60,7 @@ const PropertyCard = memo(({ property }: { property: Property }) => {
           {property.listingType}
         </Badge>
       </div>
-      
+
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <Badge variant="outline" className="bg-[#F9F6F2] text-gray-700">
@@ -77,7 +77,7 @@ const PropertyCard = memo(({ property }: { property: Property }) => {
           {property.address}, {property.city}
         </p>
       </CardHeader>
-      
+
       <CardContent className="pb-2">
         <div className="flex justify-between text-gray-700">
           <div className="flex items-center gap-1">
@@ -96,7 +96,7 @@ const PropertyCard = memo(({ property }: { property: Property }) => {
           </div>
         </div>
       </CardContent>
-      
+
       <CardFooter>
         <Button
           asChild
@@ -128,7 +128,7 @@ const PropertyTabContent = memo(({
           <PropertyCard key={property.id} property={property} />
         ))}
       </div>
-      
+
       {properties.length > displayCount && (
         <div className="mt-10 text-center">
           <Button 
@@ -146,7 +146,7 @@ const PropertyTabContent = memo(({
 
 export default function PropertiesByType() {
   const [displayCount, setDisplayCount] = useState(3); // Reduced initial load
-  
+
   // Define the paginated response type
   interface PaginatedResponse {
     data: Property[];
@@ -155,7 +155,7 @@ export default function PropertiesByType() {
     page: number;
     pageSize: number;
   }
-  
+
   // Optimized query with increased stale time
   const { data: propertiesResponse, isLoading } = useQuery<PaginatedResponse>({
     queryKey: ['/api/properties'],
@@ -166,7 +166,7 @@ export default function PropertiesByType() {
   const { primaryProperties, resaleProperties } = useMemo(() => {
     // Extract the actual properties array from the response
     const properties = propertiesResponse?.data;
-    
+
     if (!properties || !Array.isArray(properties)) {
       return { primaryProperties: [], resaleProperties: [] };
     }
@@ -179,7 +179,7 @@ export default function PropertiesByType() {
         // Sort by newest first
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
-    
+
     const resale = properties
       .filter((property: Property) => 
         property.listingType === "Resale" && property.isFeatured
@@ -188,7 +188,7 @@ export default function PropertiesByType() {
         // Sort by newest first
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
-    
+
     return { primaryProperties: primary, resaleProperties: resale };
   }, [propertiesResponse]);
 
@@ -201,7 +201,7 @@ export default function PropertiesByType() {
   }
 
   const allFeaturedCount = primaryProperties.length + resaleProperties.length;
-  
+
   if (allFeaturedCount === 0) {
     return null;
   }
@@ -220,7 +220,7 @@ export default function PropertiesByType() {
               Exclusive Properties
             </h3>
           </div>
-          
+
           <Button
             asChild
             variant="outline"
@@ -231,7 +231,7 @@ export default function PropertiesByType() {
             </Link>
           </Button>
         </div>
-        
+
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 mb-8">
             <TabsTrigger 
@@ -249,7 +249,7 @@ export default function PropertiesByType() {
               Resale Units
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="primary" className="mt-0">
             <PropertyTabContent 
               properties={primaryProperties} 
@@ -257,10 +257,12 @@ export default function PropertiesByType() {
               loadMore={loadMore} 
             />
           </TabsContent>
-          
+
           <TabsContent value="resale" className="mt-0">
             <PropertyTabContent 
-              properties={properties.filter(p => p.listingType === "Resale")}
+              properties={propertiesResponse?.data.filter(property => 
+                property.listingType === "Resale" && property.isFeatured
+              )}
               displayCount={displayCount} 
               loadMore={loadMore} 
             />
