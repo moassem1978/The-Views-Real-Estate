@@ -24,19 +24,13 @@ export default function InternationalProperties() {
     if (params.has('maxPrice')) newFilters.maxPrice = parseInt(params.get('maxPrice') || '0');
     if (params.has('minBedrooms')) newFilters.minBedrooms = parseInt(params.get('minBedrooms') || '0');
     if (params.has('minBathrooms')) newFilters.minBathrooms = parseInt(params.get('minBathrooms') || '0');
+    if (params.has('type')) newFilters.type = params.get('type') || undefined;
     
-    // Handle both 'type' and 'listingType' parameters for backward compatibility
+    // Special case for type param (Primary/Resale)
     if (params.has('type')) {
       const typeValue = params.get('type');
       if (typeValue === 'Primary' || typeValue === 'Resale') {
-        newFilters.listingType = typeValue;
-        console.log("Setting listing type from 'type' parameter:", typeValue);
-      }
-    } else if (params.has('listingType')) {
-      const listingTypeValue = params.get('listingType');
-      if (listingTypeValue === 'Primary' || listingTypeValue === 'Resale') {
-        newFilters.listingType = listingTypeValue;
-        console.log("Setting listing type from 'listingType' parameter:", listingTypeValue);
+        newFilters.type = typeValue;
       }
     }
     
