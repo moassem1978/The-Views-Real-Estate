@@ -239,7 +239,7 @@ export default function PropertiesByType() {
               disabled={primaryProperties.length === 0}
               className="data-[state=active]:bg-[#B87333] data-[state=active]:text-white"
             >
-              Primary Projects
+              Primary Units
             </TabsTrigger>
             <TabsTrigger 
               value="resale"
