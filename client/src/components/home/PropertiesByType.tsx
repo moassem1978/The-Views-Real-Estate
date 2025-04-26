@@ -260,9 +260,7 @@ export default function PropertiesByType() {
 
           <TabsContent value="resale" className="mt-0">
             <PropertyTabContent 
-              properties={propertiesResponse?.data.filter(property => 
-                property.listingType === "Resale" && property.isFeatured
-              )}
+              properties={resaleProperties} 
               displayCount={displayCount} 
               loadMore={loadMore} 
             />
