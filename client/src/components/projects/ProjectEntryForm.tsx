@@ -27,6 +27,7 @@ const projectSchema = z.object({
   completionDate: z.string().optional(),
   status: z.string().min(1, "Project status is required"),
   developer: z.string().min(3, "Developer name is required"),
+  numberOfUnits: z.number().optional().nullable(), // Added number of units field
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -60,6 +61,7 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
       completionDate: initialData?.completionDate || "",
       status: initialData?.status || "upcoming",
       developer: initialData?.developer || "",
+      numberOfUnits: initialData?.numberOfUnits || null, //Added default value
     },
   });
 
@@ -124,10 +126,10 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
               <FormItem>
                 <FormLabel>Description *</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Enter project description" 
-                    className="min-h-32" 
-                    {...field} 
+                  <Textarea
+                    placeholder="Enter project description"
+                    className="min-h-32"
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
@@ -200,7 +202,7 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
               <FormItem>
                 <FormLabel>Project Status *</FormLabel>
                 <FormControl>
-                  <select 
+                  <select
                     className="w-full p-2 border rounded-md"
                     {...field}
                   >
@@ -213,6 +215,22 @@ const ProjectEntryForm: React.FC<ProjectEntryFormProps> = ({
               </FormItem>
             )}
           />
+
+          {/* Number of Units */}
+          <FormField
+            control={form.control}
+            name="numberOfUnits"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Number of Units</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
 
           {/* Project Gallery */}
           <div className="space-y-2">
