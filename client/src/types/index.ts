@@ -89,7 +89,7 @@ export interface SiteSettings {
 export interface SearchFilters {
   location?: string;
   propertyType?: string;
-  listingType?: string;
+  listingType?: string; // Primary or Resale
   projectName?: string;
   developerName?: string;
   minPrice?: number;
@@ -98,6 +98,5 @@ export interface SearchFilters {
   minBathrooms?: number;
   isFullCash?: boolean;
   hasInstallments?: boolean;
-  type?: string; // Primary or Resale
   international?: boolean; // For properties outside Egypt
 }
