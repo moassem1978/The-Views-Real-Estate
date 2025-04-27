@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, MoreHorizontal, Plus, Search, Edit, Star, Trash2, Filter, Eye } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus, Search, Edit, Star, Trash2, Filter, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import PropertyForm from "./PropertyForm";
 
 export default function PropertiesManager() {
@@ -397,7 +397,7 @@ export default function PropertiesManager() {
                 </TableCell>
               </TableRow>
             ) : (
-              properties.map((property) => (
+              properties.map((property: Property) => (
                 <TableRow key={property.id}>
                   <TableCell className="font-medium">{property.title}</TableCell>
                   <TableCell>
@@ -513,10 +513,16 @@ export default function PropertiesManager() {
         <Pagination className="justify-center">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-              />
+                className="gap-1 pl-2.5"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span>Previous</span>
+              </Button>
             </PaginationItem>
             
             {Array.from({ length: Math.min(5, pageCount) }).map((_, i) => {
@@ -561,10 +567,16 @@ export default function PropertiesManager() {
             )}
             
             <PaginationItem>
-              <PaginationNext 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setPage(Math.min(pageCount, page + 1))}
                 disabled={page === pageCount}
-              />
+                className="gap-1 pr-2.5"
+              >
+                <span>Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </PaginationItem>
           </PaginationContent>
         </Pagination>
