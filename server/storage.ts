@@ -1235,24 +1235,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllProperties(page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
-    const offset = (page - 1) * pageSize;
-    const totalCount = await this.getPropertyCount();
-    const pageCount = Math.ceil(totalCount / pageSize);
-
-    const data = await db
-      .select()
-      .from(properties)
-      .orderBy(desc(properties.createdAt))
-      .limit(pageSize)
-      .offset(offset);
-
-    return {
-      data,
-      totalCount,
-      pageCount,
-      page,
-      pageSize
-    };
+    try {
+      const offset = (page - 1) * pageSize;
+      
+      // Use raw SQL to avoid issues with reserved keywords
+      const countQuery = `SELECT COUNT(*) FROM properties`;
+      const countResult = await db.execute(countQuery);
+      const totalCount = Number(countResult[0].count);
+      const pageCount = Math.ceil(totalCount / pageSize);
+      
+      // Get paginated data
+      const query = `
+        SELECT * FROM properties 
+        ORDER BY created_at DESC 
+        LIMIT $1 OFFSET $2
+      `;
+      
+      const data = await db.execute(query, [pageSize, offset]);
+      
+      return {
+        data,
+        totalCount,
+        pageCount,
+        page,
+        pageSize
+      };
+    } catch (error) {
+      console.error('Error in getAllProperties:', error);
+      throw error;
+    }
   }
 
   async getFeaturedProperties(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
@@ -1315,18 +1326,19 @@ export class DatabaseStorage implements IStorage {
         LIMIT $1
       `;
       
-      const results = await pool.query(query, [limit]);
+      // Use the pool imported from db.ts
+      const results = await db.execute(query, [limit]);
       
-      console.log(`DEBUG: Query returned ${results.rows.length} highlighted properties`);
+      console.log(`DEBUG: Query returned ${results.length} highlighted properties`);
       
       // Log each property for debugging
-      if (results.rows.length > 0) {
-        results.rows.forEach((p: any) => {
+      if (results.length > 0) {
+        results.forEach((p: any) => {
           console.log(`DEBUG: Highlighted property: ID ${p.id}, Title: ${p.title}, isHighlighted: ${p.is_highlighted}`);
         });
       }
       
-      return results.rows;
+      return results;
     } catch (error) {
       console.error('Error in getHighlightedProperties:', error);
       // Return empty array if query fails to avoid breaking the app
