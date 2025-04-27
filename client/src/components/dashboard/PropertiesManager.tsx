@@ -169,7 +169,19 @@ export default function PropertiesManager() {
   // Handle edit property
   const handleEditProperty = async (id: number) => {
     try {
+      // Find property in current data first
+      const property = properties.find(p => p.id === id);
+      if (property) {
+        setEditingPropertyId(id);
+        setShowPropertyForm(true);
+        return;
+      }
+
+      // Fallback to API request if not found
       const response = await apiRequest("GET", `/api/properties/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch property');
+      }
       const propertyData = await response.json();
       console.log("Fetched property data:", propertyData);
       setEditingPropertyId(id);
@@ -178,7 +190,7 @@ export default function PropertiesManager() {
       console.error("Failed to fetch property details:", error);
       toast({
         title: "Error",
-        description: "Failed to load property details",
+        description: "Failed to load property details. Please try again.",
         variant: "destructive"
       });
     }
