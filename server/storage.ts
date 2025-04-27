@@ -1467,72 +1467,53 @@ export class DatabaseStorage implements IStorage {
       
       // Build SQL query conditions
       let conditions = [];
-      let params: any[] = [];
-      let paramCounter = 1;
       
+      // Build WHERE clause manually to avoid parameter binding errors
       // Filter by location (city, state, zip)
       if (filters.location) {
         const locationTerm = `%${filters.location}%`;
-        conditions.push(`(city ILIKE $${paramCounter} OR state ILIKE $${paramCounter} OR zip_code ILIKE $${paramCounter})`);
-        params.push(locationTerm);
-        paramCounter++;
+        conditions.push(`(city ILIKE '${locationTerm}' OR state ILIKE '${locationTerm}' OR zip_code ILIKE '${locationTerm}')`);
       }
       
       // Filter by property type
       if (filters.propertyType && filters.propertyType !== "all") {
-        conditions.push(`property_type = $${paramCounter}`);
-        params.push(filters.propertyType);
-        paramCounter++;
+        conditions.push(`property_type = '${filters.propertyType}'`);
       }
       
       // Filter by listing type (Primary or Resale)
       if (filters.listingType && filters.listingType !== "all") {
-        conditions.push(`listing_type = $${paramCounter}`);
-        params.push(filters.listingType);
-        paramCounter++;
+        conditions.push(`listing_type = '${filters.listingType}'`);
       }
       
       // Filter by project name
       if (filters.projectName) {
         const projectTerm = `%${filters.projectName}%`;
-        conditions.push(`project_name ILIKE $${paramCounter}`);
-        params.push(projectTerm);
-        paramCounter++;
+        conditions.push(`project_name ILIKE '${projectTerm}'`);
       }
       
       // Filter by developer name
       if (filters.developerName) {
         const developerTerm = `%${filters.developerName}%`;
-        conditions.push(`developer_name ILIKE $${paramCounter}`);
-        params.push(developerTerm);
-        paramCounter++;
+        conditions.push(`developer_name ILIKE '${developerTerm}'`);
       }
       
       // Filter by price range
       if (filters.minPrice) {
-        conditions.push(`price >= $${paramCounter}`);
-        params.push(filters.minPrice);
-        paramCounter++;
+        conditions.push(`price >= ${filters.minPrice}`);
       }
       
       if (filters.maxPrice) {
-        conditions.push(`price <= $${paramCounter}`);
-        params.push(filters.maxPrice);
-        paramCounter++;
+        conditions.push(`price <= ${filters.maxPrice}`);
       }
       
       // Filter by bedrooms
       if (filters.minBedrooms) {
-        conditions.push(`bedrooms >= $${paramCounter}`);
-        params.push(filters.minBedrooms);
-        paramCounter++;
+        conditions.push(`bedrooms >= ${filters.minBedrooms}`);
       }
       
       // Filter by bathrooms
       if (filters.minBathrooms) {
-        conditions.push(`bathrooms >= $${paramCounter}`);
-        params.push(filters.minBathrooms);
-        paramCounter++;
+        conditions.push(`bathrooms >= ${filters.minBathrooms}`);
       }
       
       // Filter by payment options
@@ -1560,8 +1541,8 @@ export class DatabaseStorage implements IStorage {
       
       // Count query
       const countQuery = `SELECT COUNT(*) AS total FROM properties ${whereClause}`;
-      const countResult = await db.execute(countQuery, params);
-      const totalCount = Number(countResult[0]?.total || 0);
+      const countResult = await db.execute(countQuery);
+      const totalCount = Number(countResult.rows?.[0]?.total || 0);
       const pageCount = Math.ceil(totalCount / pageSize);
       
       // Data query with pagination
@@ -1569,17 +1550,14 @@ export class DatabaseStorage implements IStorage {
         SELECT * FROM properties 
         ${whereClause}
         ORDER BY created_at DESC
-        LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
+        LIMIT ${pageSize} OFFSET ${offset}
       `;
       
-      // Add pagination parameters
-      params.push(pageSize, offset);
-      
       // Execute query
-      const data = await db.execute(dataQuery, params);
+      const data = await db.execute(dataQuery);
       
       return {
-        data,
+        data: data.rows || [],
         totalCount,
         pageCount,
         page,
