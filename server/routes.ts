@@ -1511,7 +1511,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
           // Special handling for Windows uploader
           if (referer.includes('windows-uploader.html')) {
-            return res.status200).send(`
+            return res.status(200).send(`
               <!DOCTYPE html>
               <html>
               <head>
