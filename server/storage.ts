@@ -1305,29 +1305,33 @@ export class DatabaseStorage implements IStorage {
 
   async getHighlightedProperties(limit = 10): Promise<Property[]> {
     console.log(`DEBUG: Fetching highlighted properties with limit: ${limit}`);
-    // Get all properties first to debug
-    const allProps = await db.select().from(properties);
-    console.log(`DEBUG: Total properties in database: ${allProps.length}`);
-    console.log(`DEBUG: Properties with isHighlighted=true: ${allProps.filter(p => p.isHighlighted).length}`);
-
-    // Perform the actual query
-    const results = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.isHighlighted, true))
-      .orderBy(desc(properties.createdAt)) // Most recent properties first
-      .limit(limit);
-
-    console.log(`DEBUG: Query returned ${results.length} highlighted properties`);
-
-    // Log each property for debugging
-    if (results.length > 0) {
-      results.forEach(p => {
-        console.log(`DEBUG: Highlighted property: ID ${p.id}, Title: ${p.title}, isHighlighted: ${p.isHighlighted}`);
-      });
+    
+    try {
+      // Use raw SQL to avoid keyword issues
+      const query = `
+        SELECT * FROM properties 
+        WHERE is_highlighted = true 
+        ORDER BY created_at DESC 
+        LIMIT $1
+      `;
+      
+      const results = await pool.query(query, [limit]);
+      
+      console.log(`DEBUG: Query returned ${results.rows.length} highlighted properties`);
+      
+      // Log each property for debugging
+      if (results.rows.length > 0) {
+        results.rows.forEach((p: any) => {
+          console.log(`DEBUG: Highlighted property: ID ${p.id}, Title: ${p.title}, isHighlighted: ${p.is_highlighted}`);
+        });
+      }
+      
+      return results.rows;
+    } catch (error) {
+      console.error('Error in getHighlightedProperties:', error);
+      // Return empty array if query fails to avoid breaking the app
+      return [];
     }
-
-    return results;
   }
 
   async getNewListings(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
