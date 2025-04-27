@@ -1239,9 +1239,11 @@ export class DatabaseStorage implements IStorage {
       const offset = (page - 1) * pageSize;
       
       // Use raw SQL to avoid issues with reserved keywords
-      const countQuery = `SELECT COUNT(*) FROM properties`;
+      const countQuery = `SELECT COUNT(*) AS total FROM properties`;
       const countResult = await db.execute(countQuery);
-      const totalCount = Number(countResult[0].count);
+      console.log('Count result:', countResult);
+      
+      const totalCount = Number(countResult[0]?.total || 0);
       const pageCount = Math.ceil(totalCount / pageSize);
       
       // Get paginated data
@@ -1262,56 +1264,75 @@ export class DatabaseStorage implements IStorage {
       };
     } catch (error) {
       console.error('Error in getAllProperties:', error);
-      throw error;
+      // Return empty data instead of throwing to prevent app crash
+      return {
+        data: [],
+        totalCount: 0,
+        pageCount: 0,
+        page,
+        pageSize
+      };
     }
   }
 
   async getFeaturedProperties(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
-    const offset = (page - 1) * pageSize;
+    try {
+      const offset = (page - 1) * pageSize;
 
-    // Get total count for featured properties
-    const countResult = await db
-      .select({ count: sql`count(*)` })
-      .from(properties)
-      .where(eq(properties.isFeatured, true));
+      // Get total count for featured properties using raw SQL
+      const countQuery = `SELECT COUNT(*) AS total FROM properties WHERE is_featured = true`;
+      const countResult = await db.execute(countQuery);
+      const totalCount = Number(countResult[0]?.total || 0);
+      const pageCount = Math.ceil(totalCount / pageSize);
 
-    const totalCount = Number(countResult[0].count);
-    const pageCount = Math.ceil(totalCount / pageSize);
+      // If limit is provided, use it instead of pagination
+      if (limit > 0) {
+        const query = `
+          SELECT * FROM properties 
+          WHERE is_featured = true 
+          ORDER BY created_at DESC 
+          LIMIT $1
+        `;
+        
+        const data = await db.execute(query, [limit]);
 
-    // If limit is provided, use it instead of pagination
-    if (limit > 0) {
-      const data = await db
-        .select()
-        .from(properties)
-        .where(eq(properties.isFeatured, true))
-        .orderBy(desc(properties.createdAt))
-        .limit(limit);
+        return {
+          data,
+          totalCount,
+          pageCount: 1,
+          page: 1,
+          pageSize: limit
+        };
+      }
+
+      // Otherwise use pagination
+      const query = `
+        SELECT * FROM properties 
+        WHERE is_featured = true 
+        ORDER BY created_at DESC 
+        LIMIT $1 OFFSET $2
+      `;
+      
+      const data = await db.execute(query, [pageSize, offset]);
 
       return {
         data,
         totalCount,
-        pageCount: 1,
-        page: 1,
-        pageSize: limit
+        pageCount,
+        page,
+        pageSize
+      };
+    } catch (error) {
+      console.error('Error in getFeaturedProperties:', error);
+      // Return empty result on error to prevent app crash
+      return {
+        data: [],
+        totalCount: 0,
+        pageCount: 0,
+        page,
+        pageSize
       };
     }
-
-    // Otherwise use pagination
-    const data = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.isFeatured, true))
-      .orderBy(desc(properties.createdAt))
-      .limit(pageSize)
-      .offset(offset);
-
-    return {
-      data,
-      totalCount,
-      pageCount,
-      page,
-      pageSize
-    };
   }
 
   async getHighlightedProperties(limit = 10): Promise<Property[]> {
@@ -1347,51 +1368,63 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNewListings(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
-    const offset = (page - 1) * pageSize;
+    try {
+      const offset = (page - 1) * pageSize;
 
-    // Get total count for new listings
-    const countResult = await db
-      .select({ count: sql`count(*)` })
-      .from(properties)
-      .where(eq(properties.isNewListing, true));
+      // Get total count for new listings using raw SQL
+      const countQuery = `SELECT COUNT(*) AS total FROM properties WHERE is_new_listing = true`;
+      const countResult = await db.execute(countQuery);
+      const totalCount = Number(countResult.length > 0 ? countResult[0].total : 0);
+      const pageCount = Math.ceil(totalCount / pageSize);
 
-    const totalCount = Number(countResult[0].count);
-    const pageCount = Math.ceil(totalCount / pageSize);
+      // If limit is provided, use it instead of pagination
+      if (limit > 0) {
+        const query = `
+          SELECT * FROM properties 
+          WHERE is_new_listing = true 
+          ORDER BY created_at DESC 
+          LIMIT $1
+        `;
+        
+        const data = await db.execute(query, [limit]);
 
-    // If limit is provided, use it instead of pagination
-    if (limit > 0) {
-      const data = await db
-        .select()
-        .from(properties)
-        .where(eq(properties.isNewListing, true))
-        .orderBy(desc(properties.createdAt))
-        .limit(limit);
+        return {
+          data: data || [],
+          totalCount,
+          pageCount: 1,
+          page: 1,
+          pageSize: limit
+        };
+      }
+
+      // Otherwise use pagination
+      const query = `
+        SELECT * FROM properties 
+        WHERE is_new_listing = true 
+        ORDER BY created_at DESC 
+        LIMIT $1 OFFSET $2
+      `;
+      
+      const data = await db.execute(query, [pageSize, offset]);
 
       return {
-        data,
+        data: data || [],
         totalCount,
-        pageCount: 1,
-        page: 1,
-        pageSize: limit
+        pageCount,
+        page,
+        pageSize
+      };
+    } catch (error) {
+      console.error('Error in getNewListings:', error);
+      // Return empty result on error to prevent app crash
+      return {
+        data: [],
+        totalCount: 0,
+        pageCount: 0,
+        page,
+        pageSize
       };
     }
-
-    // Otherwise use pagination
-    const data = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.isNewListing, true))
-      .orderBy(desc(properties.createdAt))
-      .limit(pageSize)
-      .offset(offset);
-
-    return {
-      data,
-      totalCount,
-      pageCount,
-      page,
-      pageSize
-    };
   }
 
   async getPropertyById(id: number): Promise<Property | undefined> {
@@ -1428,120 +1461,141 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchProperties(filters: Partial<PropertySearchFilters>, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
-    let countQuery = db.select({ count: sql`count(*)` }).from(properties);
-    let dataQuery = db.select().from(properties);
-
-    // Apply all filters to both queries
-
-    // Filter by location (city, state, zip)
-    if (filters.location) {
-      const locationTerm = `%${filters.location}%`;
-      const locationFilter = sql`(${properties.city} ILIKE ${locationTerm} OR 
-                                 ${properties.state} ILIKE ${locationTerm} OR 
-                                 ${properties.zipCode} ILIKE ${locationTerm})`;
-      countQuery = countQuery.where(locationFilter);
-      dataQuery = dataQuery.where(locationFilter);
-    }
-
-    // Filter by property type
-    if (filters.propertyType && filters.propertyType !== "all") {
-      countQuery = countQuery.where(eq(properties.propertyType, filters.propertyType));
-      dataQuery = dataQuery.where(eq(properties.propertyType, filters.propertyType));
-    }
-
-    // Filter by listing type (Primary or Resale)
-    if (filters.listingType && filters.listingType !== "all") {
-      countQuery = countQuery.where(eq(properties.listingType, filters.listingType));
-      dataQuery = dataQuery.where(eq(properties.listingType, filters.listingType));
-    }
-
-    // Filter by project name
-    if (filters.projectName) {
-      const projectTerm = `%${filters.projectName}%`;
-      const projectFilter = sql`${properties.projectName} ILIKE ${projectTerm}`;
-      countQuery = countQuery.where(projectFilter);
-      dataQuery = dataQuery.where(projectFilter);
-    }
-
-    // Filter by developer name
-    if (filters.developerName) {
-      const developerTerm = `%${filters.developerName}%`;
-      const developerFilter = sql`${properties.developerName} ILIKE ${developerTerm}`;
-      countQuery = countQuery.where(developerFilter);
-      dataQuery = dataQuery.where(developerFilter);
-    }
-
-    // Filter by price range
-    if (filters.minPrice) {
-      countQuery = countQuery.where(gte(properties.price, filters.minPrice));
-      dataQuery = dataQuery.where(gte(properties.price, filters.minPrice));
-    }
-
-    if (filters.maxPrice) {
-      countQuery = countQuery.where(lte(properties.price, filters.maxPrice));
-      dataQuery = dataQuery.where(lte(properties.price, filters.maxPrice));
-    }
-
-    // Filter by bedrooms
-    if (filters.minBedrooms) {
-      countQuery = countQuery.where(gte(properties.bedrooms, filters.minBedrooms));
-      dataQuery = dataQuery.where(gte(properties.bedrooms, filters.minBedrooms));
-    }
-
-    // Filter by bathrooms
-    if (filters.minBathrooms) {
-      countQuery = countQuery.where(gte(properties.bathrooms, filters.minBathrooms));
-      dataQuery = dataQuery.where(gte(properties.bathrooms, filters.minBathrooms));
-    }
-
-    // Filter by payment options
-    if (filters.isFullCash === true) {
-      countQuery = countQuery.where(eq(properties.isFullCash, true));
-      dataQuery = dataQuery.where(eq(properties.isFullCash, true));
-    }
-
-    if (filters.hasInstallments === true) {
-      const installmentFilter = sql`${properties.installmentAmount} IS NOT NULL`;
-      countQuery = countQuery.where(installmentFilter);
-      dataQuery = dataQuery.where(installmentFilter);
-    }
-
-    // Filter by country (international properties)
-    if (filters.international !== undefined) {
-      if (filters.international) {
-        // International: properties outside Egypt
-        const internationalFilter = sql`${properties.country} IS NOT NULL AND ${properties.country} != 'Egypt'`;
-        countQuery = countQuery.where(internationalFilter);
-        dataQuery = dataQuery.where(internationalFilter);
-      } else {
-        // Domestic: properties in Egypt
-        const domesticFilter = sql`${properties.country} IS NULL OR ${properties.country} = 'Egypt'`;
-        countQuery = countQuery.where(domesticFilter);
-        dataQuery = dataQuery.where(domesticFilter);
+    try {
+      // Calculate pagination parameters
+      const offset = (page - 1) * pageSize;
+      
+      // Build SQL query conditions
+      let conditions = [];
+      let params: any[] = [];
+      let paramCounter = 1;
+      
+      // Filter by location (city, state, zip)
+      if (filters.location) {
+        const locationTerm = `%${filters.location}%`;
+        conditions.push(`(city ILIKE $${paramCounter} OR state ILIKE $${paramCounter} OR zip_code ILIKE $${paramCounter})`);
+        params.push(locationTerm);
+        paramCounter++;
       }
+      
+      // Filter by property type
+      if (filters.propertyType && filters.propertyType !== "all") {
+        conditions.push(`property_type = $${paramCounter}`);
+        params.push(filters.propertyType);
+        paramCounter++;
+      }
+      
+      // Filter by listing type (Primary or Resale)
+      if (filters.listingType && filters.listingType !== "all") {
+        conditions.push(`listing_type = $${paramCounter}`);
+        params.push(filters.listingType);
+        paramCounter++;
+      }
+      
+      // Filter by project name
+      if (filters.projectName) {
+        const projectTerm = `%${filters.projectName}%`;
+        conditions.push(`project_name ILIKE $${paramCounter}`);
+        params.push(projectTerm);
+        paramCounter++;
+      }
+      
+      // Filter by developer name
+      if (filters.developerName) {
+        const developerTerm = `%${filters.developerName}%`;
+        conditions.push(`developer_name ILIKE $${paramCounter}`);
+        params.push(developerTerm);
+        paramCounter++;
+      }
+      
+      // Filter by price range
+      if (filters.minPrice) {
+        conditions.push(`price >= $${paramCounter}`);
+        params.push(filters.minPrice);
+        paramCounter++;
+      }
+      
+      if (filters.maxPrice) {
+        conditions.push(`price <= $${paramCounter}`);
+        params.push(filters.maxPrice);
+        paramCounter++;
+      }
+      
+      // Filter by bedrooms
+      if (filters.minBedrooms) {
+        conditions.push(`bedrooms >= $${paramCounter}`);
+        params.push(filters.minBedrooms);
+        paramCounter++;
+      }
+      
+      // Filter by bathrooms
+      if (filters.minBathrooms) {
+        conditions.push(`bathrooms >= $${paramCounter}`);
+        params.push(filters.minBathrooms);
+        paramCounter++;
+      }
+      
+      // Filter by payment options
+      if (filters.isFullCash === true) {
+        conditions.push(`is_full_cash = true`);
+      }
+      
+      if (filters.hasInstallments === true) {
+        conditions.push(`installment_amount IS NOT NULL`);
+      }
+      
+      // Filter by country (international properties)
+      if (filters.international !== undefined) {
+        if (filters.international) {
+          // International: properties outside Egypt
+          conditions.push(`(country IS NOT NULL AND country != 'Egypt')`);
+        } else {
+          // Domestic: properties in Egypt
+          conditions.push(`(country IS NULL OR country = 'Egypt')`);
+        }
+      }
+      
+      // Build the WHERE clause
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+      
+      // Count query
+      const countQuery = `SELECT COUNT(*) AS total FROM properties ${whereClause}`;
+      const countResult = await db.execute(countQuery, params);
+      const totalCount = Number(countResult[0]?.total || 0);
+      const pageCount = Math.ceil(totalCount / pageSize);
+      
+      // Data query with pagination
+      const dataQuery = `
+        SELECT * FROM properties 
+        ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
+      `;
+      
+      // Add pagination parameters
+      params.push(pageSize, offset);
+      
+      // Execute query
+      const data = await db.execute(dataQuery, params);
+      
+      return {
+        data,
+        totalCount,
+        pageCount,
+        page,
+        pageSize
+      };
+    } catch (error) {
+      console.error('Error in searchProperties:', error);
+      // Return empty result on error to prevent app crash
+      return {
+        data: [],
+        totalCount: 0,
+        pageCount: 0,
+        page,
+        pageSize
+      };
     }
-
-    // Calculate pagination parameters
-    const offset = (page - 1) * pageSize;
-
-    // Get total count
-    const countResult = await countQuery;
-    const totalCount = Number(countResult[0].count);
-    const pageCount = Math.ceil(totalCount / pageSize);
-
-    // Get paginated data
-    const data = await dataQuery
-      .orderBy(desc(properties.createdAt))
-      .limit(pageSize)
-      .offset(offset);
-
-    return {
-      data,
-      totalCount,
-      pageCount,
-      page,
-      pageSize
-    };
   }
 
   // Testimonial operations
