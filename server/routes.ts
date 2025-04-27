@@ -302,11 +302,27 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       console.log(`Attempting to fetch property with ID: ${id}`);
-      const property = await dbStorage.getPropertyById(id);
+      let property;
       
-      if (!property) {
-        console.log(`Property with ID ${id} not found`);
-        return res.status(404).json({ message: "Property not found" });
+      try {
+        property = await dbStorage.getPropertyById(id);
+        
+        if (!property) {
+          console.log(`Property with ID ${id} not found`);
+          return res.status(404).json({ message: "Property not found" });
+        }
+      } catch (dbError) {
+        console.error(`DB Error fetching property ${id}:`, dbError);
+        // Check if it's a missing column error
+        if (dbError.message && dbError.message.includes("column \"references\" does not exist")) {
+          // Inform the client about the database schema issue
+          return res.status(500).json({ 
+            message: "Property schema mismatch. Database needs update.",
+            error: "Missing column in database schema"
+          });
+        }
+        // Re-throw for the outer catch block to handle
+        throw dbError;
       }
 
       console.log(`Successfully retrieved property: ${property.id} - ${property.title}`);
