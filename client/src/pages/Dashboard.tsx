@@ -1,16 +1,59 @@
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, isLoading, error } = useAuth();
+  
+  // Display loading state
+  if (isLoading) {
+    return (
+      <div className="container mx-auto max-w-screen-xl p-4 py-8 flex justify-center items-center min-h-[50vh]">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-[#B87333]" />
+          <p className="text-lg font-medium">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Display error state if any
+  if (error) {
+    return (
+      <div className="container mx-auto max-w-screen-xl p-4 py-8">
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              Error Loading Dashboard
+            </CardTitle>
+            <CardDescription>
+              There was a problem fetching your user information.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">{error.message || "Please try again or contact support if this issue persists."}</p>
+            <div className="flex gap-4">
+              <Link to="/">
+                <Button variant="outline">Return Home</Button>
+              </Link>
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -25,7 +68,7 @@ export default function Dashboard() {
           <CardContent>
             <p>You need to be logged in to access the dashboard.</p>
             <div className="mt-4">
-              <Link to="/auth">
+              <Link to="/signin">
                 <Button>Go to Login</Button>
               </Link>
             </div>
