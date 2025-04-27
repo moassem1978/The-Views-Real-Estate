@@ -53,10 +53,31 @@ export default function PropertyForm({
   });
 
   // Fetch property data if editing
-  const { data: property, isLoading: isLoadingProperty } = useQuery<Property>({
+  const { data: property, isLoading: isLoadingProperty, error: propertyError } = useQuery<Property>({
     queryKey: ["/api/properties", propertyId],
-    queryFn: () => apiRequest("GET", `/api/properties/${propertyId}`).then(res => res.json()),
+    queryFn: async () => {
+      try {
+        console.log(`Fetching property data for ID: ${propertyId}`);
+        const res = await apiRequest("GET", `/api/properties/${propertyId}`);
+        if (!res.ok) {
+          console.error(`Error fetching property ${propertyId}: ${res.status} ${res.statusText}`);
+          throw new Error(`Failed to fetch property (Status: ${res.status})`);
+        }
+        const data = await res.json();
+        console.log("Successfully fetched property data:", data);
+        return data;
+      } catch (error) {
+        console.error("Error in property fetch query:", error);
+        toast({
+          title: "Error loading property",
+          description: error instanceof Error ? error.message : "Failed to fetch property details",
+          variant: "destructive"
+        });
+        throw error;
+      }
+    },
     enabled: !!propertyId,
+    retry: 1,
   });
 
   // Form setup
@@ -219,10 +240,26 @@ export default function PropertyForm({
   const listingType = form.watch('listingType');
   const isResale = listingType === 'Resale';
 
+  // Show loading state
   if (isLoadingProperty && isEditing) {
     return (
       <div className="flex justify-center items-center h-96">
         <Loader2 className="h-8 w-8 animate-spin text-[#B87333]" />
+      </div>
+    );
+  }
+  
+  // Show error state 
+  if (propertyError && isEditing) {
+    return (
+      <div className="flex flex-col justify-center items-center h-96 space-y-4">
+        <div className="text-red-500 text-xl font-medium">Error Loading Property</div>
+        <p className="text-center text-gray-600 max-w-md">
+          We encountered a problem loading this property information. Please try again or contact support.
+        </p>
+        <Button onClick={onCancel} variant="outline">
+          Go Back
+        </Button>
       </div>
     );
   }

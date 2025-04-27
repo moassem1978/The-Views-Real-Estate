@@ -301,14 +301,19 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(400).json({ message: "Invalid property ID" });
       }
 
+      console.log(`Attempting to fetch property with ID: ${id}`);
       const property = await dbStorage.getPropertyById(id);
+      
       if (!property) {
+        console.log(`Property with ID ${id} not found`);
         return res.status(404).json({ message: "Property not found" });
       }
 
+      console.log(`Successfully retrieved property: ${property.id} - ${property.title}`);
       res.json(property);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch property" });
+      console.error(`Error fetching property with ID ${req.params.id}:`, error);
+      res.status(500).json({ message: "Failed to fetch property", error: error instanceof Error ? error.message : String(error) });
     }
   });
 

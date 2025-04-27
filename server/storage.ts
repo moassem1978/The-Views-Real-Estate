@@ -1429,11 +1429,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPropertyById(id: number): Promise<Property | undefined> {
-    const [property] = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.id, id));
-    return property || undefined;
+    try {
+      console.log(`DB: Fetching property with ID ${id}`);
+      const [property] = await db
+        .select()
+        .from(properties)
+        .where(eq(properties.id, id));
+      
+      if (!property) {
+        console.log(`DB: No property found with ID ${id}`);
+      } else {
+        console.log(`DB: Found property ${id} - ${property.title}`);
+      }
+      
+      return property || undefined;
+    } catch (error) {
+      console.error(`DB Error fetching property ${id}:`, error);
+      throw error; // Re-throw to be handled by the calling function
+    }
   }
 
   async createProperty(insertProperty: InsertProperty): Promise<Property> {
