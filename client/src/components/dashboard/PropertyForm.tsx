@@ -90,29 +90,34 @@ export default function PropertyForm({
   useEffect(() => {
     if (property && isEditing) {
       console.log("Setting form data for property:", property);
-      form.reset({
-        title: property.title || "",
-        description: property.description || "",
-        propertyType: property.propertyType || "",
-        listingType: property.listingType || "Resale",
-        price: property.price || 0,
-        downPayment: property.downPayment || 0,
-        installmentAmount: property.installmentAmount || 0,
-        installmentPeriod: property.installmentPeriod || 0,
-        isFullCash: Boolean(property.isFullCash),
-        city: property.city || "",
-        projectName: property.projectName || "",
-        developerName: property.developerName || "",
-        address: property.address || "",
-        bedrooms: property.bedrooms || 0,
-        bathrooms: property.bathrooms || 0,
-        builtUpArea: property.builtUpArea || 0,
-        isFeatured: Boolean(property.isFeatured),
-        isHighlighted: Boolean(property.isHighlighted),
-        isNewListing: Boolean(property.isNewListing),
-        country: property.country || "Egypt",
-        references: property.references || "",
-      }, { shouldDirty: false });
+      const formData = {
+        title: property.title,
+        description: property.description,
+        propertyType: property.propertyType,
+        listingType: property.listingType,
+        price: property.price,
+        downPayment: property.downPayment,
+        installmentAmount: property.installmentAmount,
+        installmentPeriod: property.installmentPeriod,
+        isFullCash: property.isFullCash,
+        city: property.city,
+        projectName: property.projectName,
+        developerName: property.developerName,
+        address: property.address,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        builtUpArea: property.builtUpArea,
+        isFeatured: property.isFeatured,
+        isHighlighted: property.isHighlighted,
+        isNewListing: property.isNewListing,
+        country: property.country,
+        references: property.references,
+        yearBuilt: property.yearBuilt,
+        images: property.images
+      };
+      
+      console.log("Form data being set:", formData);
+      form.reset(formData);
     }
   }, [property, isEditing, form]);
 
