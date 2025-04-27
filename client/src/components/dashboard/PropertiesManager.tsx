@@ -169,21 +169,23 @@ export default function PropertiesManager() {
   // Handle edit property
   const handleEditProperty = async (id: number) => {
     try {
-      // Find property in current data first
-      const property = properties.find(p => p.id === id);
-      if (property) {
-        setEditingPropertyId(id);
-        setShowPropertyForm(true);
-        return;
+      // First try to find property in existing data
+      let property = properties.find(p => p.id === id);
+      
+      if (!property) {
+        // If not found in current data, fetch from API
+        const response = await apiRequest("GET", `/api/properties/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch property');
+        }
+        property = await response.json();
       }
 
-      // Fallback to API request if not found
-      const response = await apiRequest("GET", `/api/properties/${id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch property');
+      if (!property) {
+        throw new Error('Property not found');
       }
-      const propertyData = await response.json();
-      console.log("Fetched property data:", propertyData);
+
+      console.log("Setting property for edit:", property);
       setEditingPropertyId(id);
       setShowPropertyForm(true);
     } catch (error) {
