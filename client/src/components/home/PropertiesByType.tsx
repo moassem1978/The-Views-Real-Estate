@@ -40,41 +40,58 @@ const LoadingSkeleton = () => (
 
 // Memoized property card to prevent unnecessary re-renders
 const PropertyCard = memo(({ property }: { property: Property }) => {
+  // Handle snake_case to camelCase conversions
+  const getPropertyValue = (prop: any, camelKey: string, snakeKey: string) => {
+    return prop[camelKey] !== undefined ? prop[camelKey] : prop[snakeKey];
+  };
+
+  // Fix the potentially undefined images array
+  const images = property.images || [];
+  const firstImage = images.length > 0 ? (typeof images[0] === 'string' ? images[0] : '') : '/placeholder-property.svg';
+  const isNewListing = getPropertyValue(property, 'isNewListing', 'is_new_listing');
+  const listingType = getPropertyValue(property, 'listingType', 'listing_type');
+  const propertyType = getPropertyValue(property, 'propertyType', 'property_type');
+  const price = property.price || 0;
+  const address = property.address || '';
+  const city = property.city || '';
+  const bedrooms = property.bedrooms || 0;
+  const bathrooms = property.bathrooms || 0;
+  const builtUpArea = getPropertyValue(property, 'builtUpArea', 'built_up_area') || 0;
+  const plotSize = getPropertyValue(property, 'plotSize', 'plot_size') || 0;
+
   return (
     <Card className="overflow-hidden transition-shadow hover:shadow-lg">
       <div className="h-56 overflow-hidden relative">
         <PropertyImage
-          src={property.images && property.images.length > 0 ? 
-            (typeof property.images[0] === 'string' ? property.images[0] : '') : 
-            '/placeholder-property.svg'}
+          src={firstImage}
           alt={property.title}
           className="h-full"
-          priority={property.isFeatured}
+          priority={getPropertyValue(property, 'isFeatured', 'is_featured')}
         />
-        {property.isNewListing && (
+        {isNewListing && (
           <Badge className="absolute top-3 left-3 bg-green-600 text-white">
             New
           </Badge>
         )}
         <Badge className="absolute top-3 right-3 bg-[#B87333] text-white">
-          {property.listingType}
+          {listingType}
         </Badge>
       </div>
 
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <Badge variant="outline" className="bg-[#F9F6F2] text-gray-700">
-            {property.propertyType}
+            {propertyType}
           </Badge>
           <span className="text-lg font-semibold text-[#B87333]">
-            {property.price.toLocaleString()} L.E
+            {price.toLocaleString()} L.E
           </span>
         </div>
         <h3 className="font-semibold text-xl mt-2 font-serif">
           {property.title}
         </h3>
         <p className="text-gray-500 text-sm">
-          {property.address}, {property.city}
+          {address}, {city}
         </p>
       </CardHeader>
 
@@ -82,16 +99,16 @@ const PropertyCard = memo(({ property }: { property: Property }) => {
         <div className="flex justify-between text-gray-700">
           <div className="flex items-center gap-1">
             <BedDouble size={18} />
-            <span>{property.bedrooms} {property.bedrooms > 1 ? 'Beds' : 'Bed'}</span>
+            <span>{bedrooms} {bedrooms > 1 ? 'Beds' : 'Bed'}</span>
           </div>
           <div className="flex items-center gap-1">
             <Bath size={18} />
-            <span>{property.bathrooms} {property.bathrooms > 1 ? 'Baths' : 'Bath'}</span>
+            <span>{bathrooms} {bathrooms > 1 ? 'Baths' : 'Bath'}</span>
           </div>
           <div className="flex items-center gap-1">
             <Grid2X2 size={18} />
             <span>
-              {property.builtUpArea || property.plotSize || 0} m²
+              {builtUpArea || plotSize || 0} m²
             </span>
           </div>
         </div>
@@ -171,24 +188,35 @@ export default function PropertiesByType() {
       return { primaryProperties: [], resaleProperties: [] };
     }
 
+    // Handle both snake_case and camelCase property names
     const primary = properties
-      .filter((property: Property) => 
-        property.listingType === "Primary" && property.isFeatured
-      )
-      .sort((a: Property, b: Property) => 
+      .filter((property: Property) => {
+        const listingType = property.listingType || property.listing_type;
+        const isFeatured = property.isFeatured || property.is_featured;
+        console.log(`Property ${property.id}: listingType=${listingType}, isFeatured=${isFeatured}`);
+        return listingType === "Primary" && isFeatured === true;
+      })
+      .sort((a: Property, b: Property) => {
+        const aDate = new Date(a.createdAt || a.created_at);
+        const bDate = new Date(b.createdAt || b.created_at);
         // Sort by newest first
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+        return bDate.getTime() - aDate.getTime();
+      });
 
     const resale = properties
-      .filter((property: Property) => 
-        property.listingType === "Resale" && property.isFeatured
-      )
-      .sort((a: Property, b: Property) => 
+      .filter((property: Property) => {
+        const listingType = property.listingType || property.listing_type;
+        const isFeatured = property.isFeatured || property.is_featured;
+        return listingType === "Resale" && isFeatured === true;
+      })
+      .sort((a: Property, b: Property) => {
+        const aDate = new Date(a.createdAt || a.created_at);
+        const bDate = new Date(b.createdAt || b.created_at);
         // Sort by newest first
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+        return bDate.getTime() - aDate.getTime();
+      });
 
+    console.log(`Found ${primary.length} primary featured properties and ${resale.length} resale featured properties`);
     return { primaryProperties: primary, resaleProperties: resale };
   }, [propertiesResponse]);
 
