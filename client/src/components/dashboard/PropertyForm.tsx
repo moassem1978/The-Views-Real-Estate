@@ -82,6 +82,7 @@ export default function PropertyForm({
       isHighlighted: false,
       isNewListing: true,
       country: "Egypt", // Default to Egypt
+      references: "", // Added default value for references
     },
   });
 
@@ -110,6 +111,7 @@ export default function PropertyForm({
         isHighlighted: property.isHighlighted || property.is_highlighted || false,
         isNewListing: property.isNewListing || property.is_new_listing || false,
         country: property.country || "Egypt",
+        references: property.references || "", // Added references to form reset
       });
     }
   }, [property, isEditing, form]);
@@ -119,16 +121,16 @@ export default function PropertyForm({
     mutationFn: async (data: any) => {
       const url = isEditing ? `/api/properties/${propertyId}` : '/api/properties';
       const method = isEditing ? 'PUT' : 'POST';
-      
+
       // First, create or update the property
       const response = await apiRequest(method, url, data);
       const result = await response.json();
-      
+
       // Then, if there are images to upload, upload them
       if (images.length > 0) {
         await uploadImages(result.id);
       }
-      
+
       return result;
     },
     onSuccess: () => {
@@ -138,13 +140,13 @@ export default function PropertyForm({
           ? "The property has been successfully updated." 
           : "The property has been successfully created.",
       });
-      
+
       // Invalidate queries to refetch data
       queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
       if (isEditing) {
         queryClient.invalidateQueries({ queryKey: ["/api/properties", propertyId] });
       }
-      
+
       // Call the onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
@@ -167,16 +169,16 @@ export default function PropertyForm({
       images.forEach((image) => {
         formData.append('images', image);
       });
-      
+
       const response = await fetch(`/api/upload/property-images/${propertyId}`, {
         method: 'POST',
         body: formData,
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to upload images');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Image upload error:', error);
@@ -194,13 +196,13 @@ export default function PropertyForm({
         ...data,
         // Handle special cases for the database
       };
-      
+
       await mutation.mutateAsync(formattedData);
     } catch (error) {
       console.error('Submission error:', error);
     }
   };
-  
+
   // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -228,7 +230,7 @@ export default function PropertyForm({
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-medium mb-4">Basic Details</h3>
-              
+
               <div className="space-y-4">
                 <FormField
                   control={form.control}
@@ -243,7 +245,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="description"
@@ -262,7 +264,27 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
+                <FormField
+                    control={form.control}
+                    name="references"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reference Number</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter property reference number"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Unique reference number for this property
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -293,7 +315,7 @@ export default function PropertyForm({
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="listingType"
@@ -319,7 +341,7 @@ export default function PropertyForm({
                     )}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -340,7 +362,7 @@ export default function PropertyForm({
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="bathrooms"
@@ -361,7 +383,7 @@ export default function PropertyForm({
                     )}
                   />
                 </div>
-                
+
                 <FormField
                   control={form.control}
                   name="builtUpArea"
@@ -384,12 +406,12 @@ export default function PropertyForm({
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Location Section */}
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-medium mb-4">Location & Project</h3>
-              
+
               <div className="space-y-4">
                 <FormField
                   control={form.control}
@@ -417,7 +439,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="address"
@@ -434,7 +456,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="projectName"
@@ -448,7 +470,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="developerName"
@@ -462,7 +484,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="country"
@@ -487,12 +509,12 @@ export default function PropertyForm({
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Pricing Section */}
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-medium mb-4">Pricing Details</h3>
-              
+
               <div className="space-y-4">
                 <FormField
                   control={form.control}
@@ -513,7 +535,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 {!isResale && (
                   <>
                     <FormField
@@ -534,7 +556,7 @@ export default function PropertyForm({
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="installmentAmount"
@@ -553,7 +575,7 @@ export default function PropertyForm({
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="installmentPeriod"
@@ -575,7 +597,7 @@ export default function PropertyForm({
                     />
                   </>
                 )}
-                
+
                 <FormField
                   control={form.control}
                   name="isFullCash"
@@ -599,12 +621,12 @@ export default function PropertyForm({
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Display Options Section */}
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-medium mb-4">Display Options</h3>
-              
+
               <div className="space-y-4">
                 <FormField
                   control={form.control}
@@ -626,7 +648,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="isHighlighted"
@@ -647,7 +669,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="isNewListing"
@@ -668,7 +690,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="pt-4">
                   <Label htmlFor="images">Property Images</Label>
                   <div className="mt-2 border rounded-md p-4">
@@ -693,7 +715,7 @@ export default function PropertyForm({
                       onChange={handleImageChange}
                       className="hidden"
                     />
-                    
+
                     {images.length > 0 && (
                       <div className="mt-4">
                         <p className="text-sm font-medium mb-2">{images.length} file(s) selected</p>
@@ -710,7 +732,7 @@ export default function PropertyForm({
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="flex justify-end gap-4">
           {onCancel && (
             <Button 
