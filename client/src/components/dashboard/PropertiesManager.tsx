@@ -167,9 +167,21 @@ export default function PropertiesManager() {
   });
 
   // Handle edit property
-  const handleEditProperty = (id: number) => {
-    setEditingPropertyId(id);
-    setShowPropertyForm(true);
+  const handleEditProperty = async (id: number) => {
+    try {
+      const response = await apiRequest("GET", `/api/properties/${id}`);
+      const propertyData = await response.json();
+      console.log("Fetched property data:", propertyData);
+      setEditingPropertyId(id);
+      setShowPropertyForm(true);
+    } catch (error) {
+      console.error("Failed to fetch property details:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load property details",
+        variant: "destructive"
+      });
+    }
   };
 
   // Handle delete property
