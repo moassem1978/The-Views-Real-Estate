@@ -55,8 +55,8 @@ export default function PropertiesManager() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [listingTypeFilter, setListingTypeFilter] = useState<string>("");
-  const [propertyTypeFilter, setPropertyTypeFilter] = useState<string>("");
+  const [listingTypeFilter, setListingTypeFilter] = useState<string>("all");
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("");
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState<number | null>(null);
@@ -77,11 +77,11 @@ export default function PropertiesManager() {
         queryParams.append('search', searchQuery);
       }
       
-      if (listingTypeFilter) {
+      if (listingTypeFilter && listingTypeFilter !== 'all') {
         queryParams.append('listingType', listingTypeFilter);
       }
       
-      if (propertyTypeFilter) {
+      if (propertyTypeFilter && propertyTypeFilter !== 'all') {
         queryParams.append('propertyType', propertyTypeFilter);
       }
       
@@ -216,8 +216,8 @@ export default function PropertiesManager() {
   // Reset filters
   const resetFilters = () => {
     setSearchQuery("");
-    setListingTypeFilter("");
-    setPropertyTypeFilter("");
+    setListingTypeFilter("all");
+    setPropertyTypeFilter("all");
     setCityFilter("");
     setPage(1);
   };
@@ -334,7 +334,7 @@ export default function PropertiesManager() {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Listing Types</SelectItem>
+              <SelectItem value="all">All Listing Types</SelectItem>
               <SelectItem value="Primary">Primary</SelectItem>
               <SelectItem value="Resale">Resale</SelectItem>
             </SelectContent>
@@ -353,7 +353,7 @@ export default function PropertiesManager() {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Property Types</SelectItem>
+              <SelectItem value="all">All Property Types</SelectItem>
               <SelectItem value="apartment">Apartment</SelectItem>
               <SelectItem value="penthouse">Penthouse</SelectItem>
               <SelectItem value="villa">Villa</SelectItem>
