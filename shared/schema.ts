@@ -36,6 +36,7 @@ export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  references: text("references"),
   address: text("address"),
   city: text("city").notNull(),
   state: text("state"),

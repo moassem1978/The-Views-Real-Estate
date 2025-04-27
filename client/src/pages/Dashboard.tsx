@@ -2090,13 +2090,37 @@ export default function Dashboard() {
                     </>
                   )}
 
-                  {/* Resale Market - Single price field */}
+                  {/* Resale Market - Price and References fields */}
                   {formData.listingType === "Resale" && (
-                    <div className="space-y-2">
-                      <label htmlFor="price" className="text-sm font-medium flex items-center">
-                        Price (EGP)
-                        <span className="text-red-500 ml-1">*</span>
-                      </label>
+                    <>
+                      <div className="space-y-2">
+                        <label htmlFor="price" className="text-sm font-medium flex items-center">
+                          Price (EGP)
+                          <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <Input
+                          id="price"
+                          name="price"
+                          type="number"
+                          value={formData.price.toString()}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="references" className="text-sm font-medium">
+                          References
+                        </label>
+                        <Textarea
+                          id="references"
+                          name="references"
+                          placeholder="Add references or source information"
+                          value={formData.references || ""}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    </>
+                  )}
                       <Input
                         id="price"
                         name="price"
