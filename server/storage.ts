@@ -1243,20 +1243,20 @@ export class DatabaseStorage implements IStorage {
       const countResult = await db.execute(countQuery);
       console.log('Count result:', countResult);
       
-      const totalCount = Number(countResult[0]?.total || 0);
+      const totalCount = Number(countResult.rows?.[0]?.total || 0);
       const pageCount = Math.ceil(totalCount / pageSize);
       
-      // Get paginated data
+      // Get paginated data with numeric parameters
       const query = `
         SELECT * FROM properties 
         ORDER BY created_at DESC 
-        LIMIT $1 OFFSET $2
+        LIMIT ${pageSize} OFFSET ${offset}
       `;
       
-      const data = await db.execute(query, [pageSize, offset]);
+      const data = await db.execute(query);
       
       return {
-        data,
+        data: data.rows || [],
         totalCount,
         pageCount,
         page,
@@ -1282,7 +1282,7 @@ export class DatabaseStorage implements IStorage {
       // Get total count for featured properties using raw SQL
       const countQuery = `SELECT COUNT(*) AS total FROM properties WHERE is_featured = true`;
       const countResult = await db.execute(countQuery);
-      const totalCount = Number(countResult[0]?.total || 0);
+      const totalCount = Number(countResult.rows?.[0]?.total || 0);
       const pageCount = Math.ceil(totalCount / pageSize);
 
       // If limit is provided, use it instead of pagination
@@ -1291,13 +1291,13 @@ export class DatabaseStorage implements IStorage {
           SELECT * FROM properties 
           WHERE is_featured = true 
           ORDER BY created_at DESC 
-          LIMIT $1
+          LIMIT ${limit}
         `;
         
-        const data = await db.execute(query, [limit]);
+        const data = await db.execute(query);
 
         return {
-          data,
+          data: data.rows || [],
           totalCount,
           pageCount: 1,
           page: 1,
@@ -1310,13 +1310,13 @@ export class DatabaseStorage implements IStorage {
         SELECT * FROM properties 
         WHERE is_featured = true 
         ORDER BY created_at DESC 
-        LIMIT $1 OFFSET $2
+        LIMIT ${pageSize} OFFSET ${offset}
       `;
       
-      const data = await db.execute(query, [pageSize, offset]);
+      const data = await db.execute(query);
 
       return {
-        data,
+        data: data.rows || [],
         totalCount,
         pageCount,
         page,
@@ -1339,27 +1339,27 @@ export class DatabaseStorage implements IStorage {
     console.log(`DEBUG: Fetching highlighted properties with limit: ${limit}`);
     
     try {
-      // Use raw SQL to avoid keyword issues
+      // Use raw SQL to avoid keyword issues with direct parameter
       const query = `
         SELECT * FROM properties 
         WHERE is_highlighted = true 
         ORDER BY created_at DESC 
-        LIMIT $1
+        LIMIT ${limit}
       `;
       
-      // Use the pool imported from db.ts
-      const results = await db.execute(query, [limit]);
+      // Use db.execute
+      const results = await db.execute(query);
       
-      console.log(`DEBUG: Query returned ${results.length} highlighted properties`);
+      console.log(`DEBUG: Query returned ${results.rows?.length || 0} highlighted properties`);
       
       // Log each property for debugging
-      if (results.length > 0) {
-        results.forEach((p: any) => {
+      if (results.rows?.length > 0) {
+        results.rows.forEach((p: any) => {
           console.log(`DEBUG: Highlighted property: ID ${p.id}, Title: ${p.title}, isHighlighted: ${p.is_highlighted}`);
         });
       }
       
-      return results;
+      return results.rows || [];
     } catch (error) {
       console.error('Error in getHighlightedProperties:', error);
       // Return empty array if query fails to avoid breaking the app
@@ -1374,7 +1374,7 @@ export class DatabaseStorage implements IStorage {
       // Get total count for new listings using raw SQL
       const countQuery = `SELECT COUNT(*) AS total FROM properties WHERE is_new_listing = true`;
       const countResult = await db.execute(countQuery);
-      const totalCount = Number(countResult.length > 0 ? countResult[0].total : 0);
+      const totalCount = Number(countResult.rows?.[0]?.total || 0);
       const pageCount = Math.ceil(totalCount / pageSize);
 
       // If limit is provided, use it instead of pagination
@@ -1383,13 +1383,13 @@ export class DatabaseStorage implements IStorage {
           SELECT * FROM properties 
           WHERE is_new_listing = true 
           ORDER BY created_at DESC 
-          LIMIT $1
+          LIMIT ${limit}
         `;
         
-        const data = await db.execute(query, [limit]);
+        const data = await db.execute(query);
 
         return {
-          data: data || [],
+          data: data.rows || [],
           totalCount,
           pageCount: 1,
           page: 1,
@@ -1402,13 +1402,13 @@ export class DatabaseStorage implements IStorage {
         SELECT * FROM properties 
         WHERE is_new_listing = true 
         ORDER BY created_at DESC 
-        LIMIT $1 OFFSET $2
+        LIMIT ${pageSize} OFFSET ${offset}
       `;
       
-      const data = await db.execute(query, [pageSize, offset]);
+      const data = await db.execute(query);
 
       return {
-        data: data || [],
+        data: data.rows || [],
         totalCount,
         pageCount,
         page,
