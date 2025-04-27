@@ -89,30 +89,30 @@ export default function PropertyForm({
   // Set form values when property data is loaded
   useEffect(() => {
     if (property && isEditing) {
-      // Convert snake_case properties to camelCase if needed
+      console.log("Setting form data for property:", property);
       form.reset({
-        title: property.title,
-        description: property.description,
-        propertyType: property.propertyType || property.property_type || "",
-        listingType: property.listingType || property.listing_type || "Resale",
+        title: property.title || "",
+        description: property.description || "",
+        propertyType: property.propertyType || "",
+        listingType: property.listingType || "Resale",
         price: property.price || 0,
-        downPayment: property.downPayment || property.down_payment || 0,
-        installmentAmount: property.installmentAmount || property.installment_amount || 0,
-        installmentPeriod: property.installmentPeriod || property.installment_period || 0,
-        isFullCash: property.isFullCash || property.is_full_cash || false,
+        downPayment: property.downPayment || 0,
+        installmentAmount: property.installmentAmount || 0,
+        installmentPeriod: property.installmentPeriod || 0,
+        isFullCash: Boolean(property.isFullCash),
         city: property.city || "",
-        projectName: property.projectName || property.project_name || "",
-        developerName: property.developerName || property.developer_name || "",
+        projectName: property.projectName || "",
+        developerName: property.developerName || "",
         address: property.address || "",
         bedrooms: property.bedrooms || 0,
         bathrooms: property.bathrooms || 0,
-        builtUpArea: property.builtUpArea || property.built_up_area || 0,
-        isFeatured: property.isFeatured || property.is_featured || false,
-        isHighlighted: property.isHighlighted || property.is_highlighted || false,
-        isNewListing: property.isNewListing || property.is_new_listing || false,
+        builtUpArea: property.builtUpArea || 0,
+        isFeatured: Boolean(property.isFeatured),
+        isHighlighted: Boolean(property.isHighlighted),
+        isNewListing: Boolean(property.isNewListing),
         country: property.country || "Egypt",
-        references: property.references || "", // Added references to form reset
-      });
+        references: property.references || "",
+      }, { shouldDirty: false });
     }
   }, [property, isEditing, form]);
 
