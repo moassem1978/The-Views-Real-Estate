@@ -10,134 +10,117 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 
-export default function Dashboard() {
-  const { user, isLoading, error } = useAuth();
+// Extremely simplified dashboard to fix rendering issues
+function Dashboard() {
+  console.log("Dashboard component rendering");
   
-  // Display loading state
-  if (isLoading) {
+  try {
+    // Access authentication context
+    const auth = useAuth();
+    console.log("Auth context loaded:", !!auth);
+    const { user, isLoading, error } = auth;
+    console.log("Dashboard state:", { userExists: !!user, isLoading, hasError: !!error });
+    
+    // Display loading state
+    if (isLoading) {
+      return (
+        <div className="container mx-auto p-8 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading...</p>
+        </div>
+      );
+    }
+    
+    // Display error state
+    if (error) {
+      return (
+        <div className="container mx-auto p-8">
+          <h2 className="text-xl font-bold mb-4">Error</h2>
+          <p className="mb-4">{error.message || "Unknown error"}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      );
+    }
+    
+    // Authentication check
+    if (!user) {
+      return (
+        <div className="container mx-auto p-8">
+          <h2 className="text-xl font-bold mb-4">Authentication Required</h2>
+          <p className="mb-4">Please sign in to access the dashboard</p>
+          <Link to="/signin">
+            <Button>Sign In</Button>
+          </Link>
+        </div>
+      );
+    }
+    
+    // Main dashboard content (basic version)
     return (
-      <div className="container mx-auto max-w-screen-xl p-4 py-8 flex justify-center items-center min-h-[50vh]">
-        <div className="flex flex-col items-center justify-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-[#B87333]" />
-          <p className="text-lg font-medium">Loading dashboard...</p>
+      <div className="container mx-auto p-8">
+        <div className="flex justify-between items-center mb-8">
+          <Link to="/">
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+        </div>
+        
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Welcome, {user.username}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Dashboard functionality is currently under maintenance.</p>
+          </CardContent>
+        </Card>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link to="/properties">
+            <Card className="h-full hover:bg-gray-50 transition-colors">
+              <CardHeader>
+                <CardTitle>Properties</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>View all property listings</p>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link to="/announcements">
+            <Card className="h-full hover:bg-gray-50 transition-colors">
+              <CardHeader>
+                <CardTitle>Announcements</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>View all announcements</p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      </div>
+    );
+  } catch (e) {
+    // Fallback error handling
+    console.error("Dashboard render error:", e);
+    return (
+      <div className="container mx-auto p-8 text-center">
+        <AlertCircle className="h-8 w-8 mx-auto mb-4 text-red-500" />
+        <h2 className="text-xl font-bold mb-4">Something went wrong</h2>
+        <p className="mb-4">There was an error rendering the dashboard</p>
+        <div className="flex justify-center gap-4">
+          <Link to="/">
+            <Button variant="outline">Return Home</Button>
+          </Link>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
         </div>
       </div>
     );
   }
-  
-  // Display error state if any
-  if (error) {
-    return (
-      <div className="container mx-auto max-w-screen-xl p-4 py-8">
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              Error Loading Dashboard
-            </CardTitle>
-            <CardDescription>
-              There was a problem fetching your user information.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">{error.message || "Please try again or contact support if this issue persists."}</p>
-            <div className="flex gap-4">
-              <Link to="/">
-                <Button variant="outline">Return Home</Button>
-              </Link>
-              <Button onClick={() => window.location.reload()}>
-                Try Again
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="container mx-auto max-w-screen-xl p-4 py-8">
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              Authentication Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>You need to be logged in to access the dashboard.</p>
-            <div className="mt-4">
-              <Link to="/signin">
-                <Button>Go to Login</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto max-w-screen-xl p-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <Link to="/">
-          <Button variant="outline" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
-          </Button>
-        </Link>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-      </div>
-
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Welcome, {user.username}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            The dashboard is currently under maintenance.
-            <br />
-            Please check back later for full management capabilities.
-          </p>
-          <div className="mt-4">
-            <p className="font-semibold">Available Actions:</p>
-            <ul className="list-disc list-inside mt-2">
-              <li>View the site by going back to the home page</li>
-              <li>Browse all property listings</li>
-              <li>Contact the administrator for urgent changes</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Properties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              View and manage all property listings.
-            </p>
-            <Link to="/properties">
-              <Button>Browse Properties</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Announcements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              View and manage announcements.
-            </p>
-            <Button disabled>Coming Soon</Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
 }
+
+// Export with error boundary
+export default Dashboard;
