@@ -71,7 +71,7 @@ const multerStorage = multer.memoryStorage();
 const diskStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     let uploadPath = uploadsDir;
-    
+
     // Determine the correct subfolder based on upload type
     if (req.path.includes('/api/upload/logo')) {
       uploadPath = path.join(uploadsDir, 'logos');
@@ -82,7 +82,7 @@ const diskStorage = multer.diskStorage({
     } else if (req.path.includes('/api/upload/project-images')) {
       uploadPath = path.join(uploadsDir, 'projects');
     }
-    
+
     // Make sure the directory exists with proper permissions
     try {
       if (!fs.existsSync(uploadPath)) {
@@ -96,7 +96,7 @@ const diskStorage = multer.diskStorage({
     } catch (err) {
       console.error(`Failed to create or update upload directory ${uploadPath}:`, err);
     }
-    
+
     // Also create the same directory in the secondary location for compatibility
     try {
       const secondaryPath = uploadPath.replace(/^.*?public/, 'uploads');
@@ -107,14 +107,14 @@ const diskStorage = multer.diskStorage({
     } catch (err) {
       console.error(`Failed to create secondary upload directory:`, err);
     }
-    
+
     console.log(`Uploading to directory: ${uploadPath}`);
     cb(null, uploadPath);
   },
-  
+
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    
+
     // Get original extension or use a default
     let ext = path.extname(file.originalname).toLowerCase();
 
@@ -171,7 +171,7 @@ const logoUpload = multer({
 export async function registerRoutes(app: Express, customUpload?: any, customUploadsDir?: string): Promise<Server> {
   // Set up authentication routes and middleware
   setupAuth(app);
-  
+
   // Use either the provided upload and uploads directory or the defaults
   const finalUpload = customUpload || upload;
   const finalUploadsDir = customUploadsDir || uploadsDir;
@@ -180,14 +180,14 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     try {
       // Extract pagination parameters from query
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
-      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
-      
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 100;
+
       // Get paginated properties
       // Don't filter by user for admin and owner roles
       if (req.isAuthenticated()) {
         const user = req.user as Express.User;
         console.log(`Authenticated user ${user.username} with role ${user.role} accessing property list`);
-        
+
         // Admin and owner can see all properties
         // Regular users only see their own or published properties
         if (user.role === 'admin' || user.role === 'owner') {
@@ -196,7 +196,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           return res.json(result);
         }
       }
-      
+
       // Default behavior (non-authenticated users or regular users)
       const result = await dbStorage.getAllProperties(page, pageSize);
       res.json(result);
@@ -217,7 +217,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: "Failed to fetch project names" });
     }
   });
-  
+
   // New endpoint to get unique cities (locations)
   app.get("/api/properties/unique-cities", async (_req: Request, res: Response) => {
     try {
@@ -236,7 +236,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
-      
+
       // Get paginated featured properties
       const result = await dbStorage.getFeaturedProperties(limit, page, pageSize);
       res.json(result);
@@ -268,7 +268,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
-      
+
       // Get paginated new listings
       const result = await dbStorage.getNewListings(limit, page, pageSize);
       res.json(result);
@@ -277,14 +277,14 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: "Failed to fetch new listings" });
     }
   });
-  
+
   // New endpoint for international properties
   app.get("/api/properties/international", async (req: Request, res: Response) => {
     try {
       // Get pagination parameters if provided, otherwise use defaults
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
-      
+
       // Search with international filter set to true
       const result = await dbStorage.searchProperties({ international: true }, page, pageSize);
       res.json(result);
@@ -319,18 +319,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Property creation failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to create properties" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to create property: ${user.username} (Role: ${user.role})`);
-      
+
       // All authenticated users can create properties
       // Logging only a subset of data to prevent polluting logs
       console.log("Creating property with title:", req.body.title);
       console.log("Property type:", req.body.propertyType);
       console.log("City:", req.body.city);
       console.log("Image count:", Array.isArray(req.body.images) ? req.body.images.length : 'unknown');
-      
+
       // Add zipCode from city if not provided
       if (!req.body.zipCode && req.body.city) {
         console.log("No zipCode provided, using default based on city");
@@ -344,12 +344,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           'Gouna': '84513',
           'Red Sea': '84712'
         };
-        
+
         const cityName = req.body.city as string;
         req.body.zipCode = (defaultZipCodes[cityName] || '00000');
         console.log(`Using zipCode: ${req.body.zipCode} for city: ${cityName}`);
       }
-      
+
       // Ensure required fields are present (including zipCode now)
       const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'zipCode', 'images', 'bedrooms', 'bathrooms', 'builtUpArea'];
       const missingFields = requiredFields.filter(field => {
@@ -357,7 +357,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         const value = req.body[field];
         return value === undefined || value === null || (Array.isArray(value) && value.length === 0) || value === '';
       });
-      
+
       if (missingFields.length > 0) {
         console.error(`Property creation failed: Missing required fields: ${missingFields.join(', ')}`);
         return res.status(400).json({
@@ -380,7 +380,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           console.error("Error parsing images string:", error);
         }
       }
-      
+
       // Make sure numeric fields are actually numbers
       ['price', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize', 'floor', 'yearBuilt', 'agentId'].forEach(field => {
         if (req.body[field] !== undefined && req.body[field] !== null && req.body[field] !== '') {
@@ -390,7 +390,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         }
       });
-      
+
       // Convert boolean fields if they're strings
       ['isFullCash', 'isGroundUnit', 'isFeatured', 'isNewListing', 'isHighlighted'].forEach(field => {
         if (typeof req.body[field] === 'string') {
@@ -409,7 +409,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           details: parseError instanceof Error ? parseError.message : String(parseError)
         });
       }
-      
+
       // Add createdBy field and status
       const propertyWithUser = {
         ...propertyData,
@@ -417,7 +417,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         status: 'published', // Admin properties are published immediately
         createdAt: new Date().toISOString()
       };
-      
+
       // Log property data just before creation
       console.log("Attempting to create property with final data:", JSON.stringify({
         title: propertyWithUser.title,
@@ -426,16 +426,16 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           `${propertyWithUser.images.length} images` : 
           propertyWithUser.images
       }));
-      
+
       const property = await dbStorage.createProperty(propertyWithUser);
-      
+
       // Log after DB operation success
       console.log("Property created successfully with ID:", property.id);
-      
+
       res.status(201).json(property);
     } catch (error) {
       console.error("Error creating property:", error);
-      
+
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
         console.error("Validation error details:", validationError);
@@ -446,7 +446,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       } else {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("Database or server error:", errorMessage);
-        
+
         // More specific error messages
         if (errorMessage.includes("duplicate key")) {
           return res.status(400).json({ 
@@ -457,7 +457,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             message: "Invalid reference to another record (like agent ID). Please check your data." 
           });
         }
-        
+
         return res.status(500).json({ 
           message: "Failed to create property. Please try again with different data." 
         });
@@ -472,7 +472,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Property update failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to update properties" });
       }
-      
+
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid property ID" });
@@ -497,12 +497,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       const propertyData = req.body;
-      
+
       // If a regular user updates a property, set status back to pending_approval
       if (user.role === 'user') {
         propertyData.status = 'pending_approval';
       }
-      
+
       const property = await dbStorage.updateProperty(id, propertyData);
 
       res.json(property);
@@ -520,7 +520,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Property deletion failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to delete properties" });
       }
-      
+
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid property ID" });
@@ -560,11 +560,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   app.get("/api/properties/search", async (req: Request, res: Response) => {
     try {
       const filters = searchFiltersSchema.parse(req.query);
-      
+
       // Get pagination parameters if provided, otherwise use defaults
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
-      
+
       // Get paginated search results
       const result = await dbStorage.searchProperties(filters, page, pageSize);
       res.json(result);
@@ -585,7 +585,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Extract pagination parameters from query
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
-      
+
       // Get paginated testimonials
       const result = await dbStorage.getAllTestimonials(page, pageSize);
       res.json(result);
@@ -620,18 +620,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Testimonial creation failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to create testimonials" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to create testimonial: ${user.username} (Role: ${user.role})`);
-      
+
       // Only admins or owners can create testimonials directly
       // Regular users testimonials need approval (not implemented yet)
       if (user.role !== 'admin' && user.role !== 'owner') {
         console.error(`Permission denied: User ${user.username} with role ${user.role} attempted to create a testimonial`);
         return res.status(403).json({ message: "Only administrators and owners can create testimonials directly" });
       }
-      
+
       const testimonialData = insertTestimonialSchema.parse(req.body);
       const testimonial = await dbStorage.createTestimonial(testimonialData);
       res.status(201).json(testimonial);
@@ -654,7 +654,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Extract pagination parameters from query
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
-      
+
       // Get paginated announcements
       const result = await dbStorage.getAllAnnouncements(page, pageSize);
       res.json(result);
@@ -663,7 +663,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: "Failed to fetch announcements" });
     }
   });
-  
+
   app.get("/api/announcements/featured", async (req: Request, res: Response) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
@@ -697,19 +697,19 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid announcement ID" });
       }
-      
+
       const announcement = await dbStorage.getAnnouncementById(id);
       if (!announcement) {
         return res.status(404).json({ message: "Announcement not found" });
       }
-      
+
       res.json(announcement);
     } catch (error) {
       console.error("Error fetching announcement:", error);
       res.status(500).json({ message: "Failed to fetch announcement" });
     }
   });
-  
+
   app.post("/api/announcements", async (req: Request, res: Response) => {
     try {
       // Check if user is authenticated
@@ -717,21 +717,21 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Announcement creation failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to create announcements" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to create announcement: ${user.username} (Role: ${user.role})`);
-      
+
       // Create a modified schema that accepts string dates
       const modifiedAnnouncementSchema = insertAnnouncementSchema
         .extend({
           startDate: z.string().transform(val => new Date(val)),
           endDate: z.string().optional().transform(val => val ? new Date(val) : null),
         });
-        
+
       // Parse with our modified schema
       const announcementData = modifiedAnnouncementSchema.parse(req.body);
-      
+
       // Add metadata about who created this announcement
       const announcementWithUser = {
         ...announcementData,
@@ -739,7 +739,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         // Regular users' announcements start as pending approval
         status: user.role === 'user' ? 'pending_approval' : 'published'
       };
-      
+
       const announcement = await dbStorage.createAnnouncement(announcementWithUser);
       res.status(201).json(announcement);
     } catch (error) {
@@ -754,7 +754,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
     }
   });
-  
+
   app.put("/api/announcements/:id", async (req: Request, res: Response) => {
     try {
       // Check if user is authenticated
@@ -762,22 +762,22 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Announcement update failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to update announcements" });
       }
-      
+
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid announcement ID" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to update announcement ${id}: ${user.username} (Role: ${user.role})`);
-      
+
       // Check if announcement exists
       const existingAnnouncement = await dbStorage.getAnnouncementById(id);
       if (!existingAnnouncement) {
         return res.status(404).json({ message: "Announcement not found" });
       }
-      
+
       // Check if user has permission to update this announcement
       // Owner and Admin can update any announcement
       // Regular users can only update their own announcements
@@ -785,7 +785,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error(`Permission denied: User ${user.username} attempted to update announcement ${id} created by user ${existingAnnouncement.createdBy}`);
         return res.status(403).json({ message: "You do not have permission to update this announcement" });
       }
-      
+
       // Handle date strings in the request body
       const updatedData = { ...req.body };
       if (typeof updatedData.startDate === 'string') {
@@ -794,17 +794,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       if (typeof updatedData.endDate === 'string') {
         updatedData.endDate = updatedData.endDate ? new Date(updatedData.endDate) : null;
       }
-      
+
       // Remove createdAt from update data to avoid conversion issues
       if (updatedData.createdAt) {
         delete updatedData.createdAt;
       }
-      
+
       // If a regular user updates an announcement, set status back to pending_approval
       if (user.role === 'user') {
         updatedData.status = 'pending_approval';
       }
-      
+
       // Update the announcement
       const updatedAnnouncement = await dbStorage.updateAnnouncement(id, updatedData);
       res.json(updatedAnnouncement);
@@ -814,7 +814,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: `Failed to update announcement: ${errorMessage}` });
     }
   });
-  
+
   app.delete("/api/announcements/:id", async (req: Request, res: Response) => {
     try {
       // Check if user is authenticated
@@ -822,22 +822,22 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Announcement deletion failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to delete announcements" });
       }
-      
+
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid announcement ID" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to delete announcement ${id}: ${user.username} (Role: ${user.role})`);
-      
+
       // Check if announcement exists
       const existingAnnouncement = await dbStorage.getAnnouncementById(id);
       if (!existingAnnouncement) {
         return res.status(404).json({ message: "Announcement not found" });
       }
-      
+
       // Check if user has permission to delete this announcement
       // Owner and Admin can delete any announcement
       // Regular users can only delete their own announcements
@@ -845,13 +845,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error(`Permission denied: User ${user.username} attempted to delete announcement ${id} created by user ${existingAnnouncement.createdBy}`);
         return res.status(403).json({ message: "You do not have permission to delete this announcement" });
       }
-      
+
       // Delete the announcement
       const success = await dbStorage.deleteAnnouncement(id);
       if (!success) {
         return res.status(500).json({ message: "Failed to delete announcement" });
       }
-      
+
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting announcement:", error);
@@ -877,17 +877,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Site settings update failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to update site settings" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to update site settings: ${user.username} (Role: ${user.role})`);
-      
+
       // Only admin and owner can update site settings
       if (user.role !== 'admin' && user.role !== 'owner') {
         console.error(`Permission denied: User ${user.username} with role ${user.role} attempted to update site settings`);
         return res.status(403).json({ message: "Only administrators and owners can update site settings" });
       }
-      
+
       const updatedSettings = await dbStorage.updateSiteSettings(req.body);
       res.json(updatedSettings);
     } catch (error) {
@@ -905,17 +905,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Logo upload failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to upload logo" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to upload logo: ${user.username} (Role: ${user.role})`);
-      
+
       // Only admin and owner can upload a logo
       if (user.role !== 'admin' && user.role !== 'owner') {
         console.error(`Permission denied: User ${user.username} with role ${user.role} attempted to upload logo`);
         return res.status(403).json({ message: "Only administrators and owners can update the company logo" });
       }
-      
+
       console.log("Received logo upload request");
       console.log("Request file:", req.file ? `File present: ${req.file.originalname}, mimetype: ${req.file.mimetype}, size: ${req.file.size}` : "No file present");
 
@@ -947,7 +947,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Create the file URL relative to the server
       const fileUrl = `/uploads/logos/${req.file.filename}`;
-      
+
       // Also ensure the file is properly saved to disk from memory storage
       try {
         // Ensure the destination directory exists
@@ -956,7 +956,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           fs.mkdirSync(publicDir, { recursive: true, mode: 0o777 });
           console.log(`Created directory: ${publicDir}`);
         }
-        
+
         // Write the file to disk from buffer in memory storage
         if (req.file.buffer) {
           const destPath = path.join(publicDir, req.file.filename);
@@ -992,11 +992,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Announcement image upload failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to upload announcement images" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to upload announcement image: ${user.username} (Role: ${user.role})`);
-      
+
       console.log("Received announcement image upload request");
       console.log("Request file:", req.file ? `File present: ${req.file.originalname}, mimetype: ${req.file.mimetype}, size: ${req.file.size}` : "No file present");
 
@@ -1028,7 +1028,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Create the file URL relative to the server
       const fileUrl = `/uploads/announcements/${req.file.filename}`;
-      
+
       // Also ensure the file is properly saved to disk from memory storage if needed
       try {
         // Check if we need to manually save from buffer (in case of memory storage)
@@ -1059,13 +1059,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Property images upload failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to upload property images" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
-      
+
       console.log("Received property images upload request");
-      
+
       // Log session information to help debug session timeouts
       if (req.session) {
         console.log(`Session ID: ${req.sessionID}`);
@@ -1077,9 +1077,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.log("No property image files received");
         return res.status(400).json({ message: "No files uploaded" });
       }
-      
+
       console.log(`Received ${Array.isArray(req.files) ? req.files.length : 0} files for upload`);
-      
+
       // Use the Express.Multer.File type to correctly handle files
       const files = Array.isArray(req.files) 
         ? req.files as Express.Multer.File[]
@@ -1089,16 +1089,16 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
       fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
       console.log(`Ensured uploads directory exists: ${publicUploadsDir}`);
-      
+
       // A much simpler and more direct approach for saving files
       const fileUrls: string[] = [];
-      
+
       for (const file of files) {
         try {
           console.log(`Processing file: ${file.originalname}, size: ${(file.size / 1024).toFixed(2)}KB`);
-          
+
           const destPath = path.join(publicUploadsDir, file.filename);
-          
+
           // Direct approach: if we have a buffer, write it to the destination
           if (file.buffer) {
             fs.writeFileSync(destPath, file.buffer);
@@ -1112,7 +1112,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           // Double-check that the file exists at the expected location
           else if (!fs.existsSync(destPath)) {
             console.error(`File not found at ${destPath}, trying to recover`);
-            
+
             // Check if the file exists in the temp upload location
             const tempPath = path.join(process.cwd(), 'uploads', 'properties', file.filename);
             if (fs.existsSync(tempPath)) {
@@ -1122,15 +1122,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
               console.error(`File not found in any location, cannot recover`);
             }
           }
-          
+
           // Verify file was successfully saved
           if (fs.existsSync(destPath)) {
             console.log(`File successfully saved at ${destPath}`);
-            
+
             // Get file stats to verify
             const stats = fs.statSync(destPath);
             console.log(`File size on disk: ${stats.size} bytes`);
-            
+
             // Add URL to results
             const fileUrl = `/uploads/properties/${file.filename}`;
             fileUrls.push(fileUrl);
@@ -1138,7 +1138,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             console.error(`Failed to save file ${file.originalname}`);
             throw new Error(`Failed to save file ${file.originalname}`);
           }
-          
+
           // Touch the session to keep it alive
           if (req.session) {
             req.session.touch();
@@ -1157,7 +1157,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       console.log(`Successfully processed ${fileUrls.length} images. Returning URLs to client.`);
-      
+
       res.json({ 
         message: "Property images uploaded successfully", 
         imageUrls: fileUrls,
@@ -1169,21 +1169,21 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: `Failed to upload property images: ${errorMessage}` });
     }
   });
-  
+
   // Create a completely new property image upload endpoint with enhanced error handling
   app.post("/api/upload/property-images-new", async (req: Request, res: Response) => {
     console.log("==== NEW PROPERTY IMAGE UPLOAD ENDPOINT CALLED ====");
-    
+
     try {
       // Check if user is authenticated
       if (!req.isAuthenticated()) {
         console.error("Property images upload failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required" });
       }
-      
+
       const user = req.user as Express.User;
       console.log(`User ${user.username} (${user.role}) attempting property image upload with new endpoint`);
-      
+
       // Create a new multer instance with more generous limits
       const singleUpload = multer({
         storage: multer.diskStorage({
@@ -1229,7 +1229,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         }
       }).array('images', 20); // Process up to 20 files
-      
+
       // Handle the upload using a promise
       const uploadPromise = new Promise<{fileUrls: string[], count: number}>((resolve, reject) => {
         singleUpload(req, res, function(err) {
@@ -1237,25 +1237,25 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             console.error('Multer upload error:', err);
             return reject(err);
           }
-          
+
           console.log("Multer upload processing complete");
-          
+
           // Check if files exist
           if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
             console.error('No files in request');
             return reject(new Error("No files uploaded"));
           }
-          
+
           // Safely handle the files array - typescript doesn't fully recognize multer's type here
           const uploadedFiles = req.files as Express.Multer.File[];
           console.log(`Processing ${uploadedFiles.length} uploaded files`);
-          
+
           try {
             const fileUrls = uploadedFiles.map(file => {
               console.log(`File processed: ${file.originalname} -> ${file.filename} (${Math.round(file.size/1024)}KB)`);
               return `/uploads/properties/${file.filename}`;
             });
-            
+
             // Return success response
             console.log(`Upload complete. Returning ${fileUrls.length} URLs`);
             resolve({
@@ -1268,7 +1268,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         });
       });
-      
+
       // Wait for upload to complete and send response
       const result = await uploadPromise;
       return res.status(200).json({
@@ -1277,7 +1277,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         imageUrls: result.fileUrls,
         count: result.count
       });
-      
+
     } catch (error) {
       console.error('Error in property images upload endpoint:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -1288,7 +1288,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       });
     }
   });
-  
+
   // Keep the existing endpoint for backward compatibility
   app.post("/api/upload/property-images-simple", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
@@ -1297,14 +1297,14 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Simple property images upload failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required" });
       }
-      
+
       const user = req.user as Express.User;
       console.log(`User ${user.username} (${user.role}) attempting simple property image upload`);
-      
+
       if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
         return res.status(400).json({ message: "No files uploaded" });
       }
-      
+
       // Use proper type for multer files
       const uploadedFiles = req.files as Express.Multer.File[];
       console.log(`Simple upload: Processing ${uploadedFiles.length} files`);
@@ -1312,19 +1312,19 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Create output directory
       const outputDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
       fs.mkdirSync(outputDir, { recursive: true });
-      
+
       const fileUrls: string[] = [];
-      
+
       for (const file of uploadedFiles) {
         // Generate a unique filename with timestamp
         const timestamp = Date.now();
         const fileExt = path.extname(file.originalname);
         const baseName = path.basename(file.originalname, fileExt).replace(/[^a-zA-Z0-9]/g, '_');
         const newFilename = `${baseName}_${timestamp}${fileExt}`;
-        
+
         // Save to public/uploads/properties
         const outputPath = path.join(outputDir, newFilename);
-        
+
         console.log(`Processing file ${file.originalname}:
           - Size: ${file.size}
           - MIME Type: ${file.mimetype}
@@ -1332,7 +1332,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           - Has path: ${!!file.path}
           - Output path: ${outputPath}
         `);
-        
+
         // Write file to disk - handle buffer properly
         if (file.buffer && Buffer.isBuffer(file.buffer)) {
           fs.writeFileSync(outputPath, file.buffer);
@@ -1344,11 +1344,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         } else {
           throw new Error(`Cannot save file ${file.originalname}: No valid buffer or path`);
         }
-        
+
         // Add URL to result
         fileUrls.push(`/uploads/properties/${newFilename}`);
       }
-      
+
       console.log(`Simple upload: Successfully processed ${fileUrls.length} files`);
       res.json({ 
         message: "Images uploaded successfully", 
@@ -1367,64 +1367,64 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   app.use('/uploads', (req, res, next) => {
     // Logging to track static file requests for debugging
     console.log(`Static file request: ${req.url}`);
-    
+
     // Set cache headers
     res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
     next();
   }, express.static(path.join(process.cwd(), 'public', 'uploads')));
-  
+
   // Secondary uploads serving - fallback for direct uploads directory
   app.use('/uploads', (req, res, next) => {
     // Only reach here if the file wasn't found in public/uploads
     console.log(`Fallback static file request: ${req.url}`);
-    
+
     // Set cache headers
     res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
     next();
   }, express.static(path.join(process.cwd(), 'uploads')));
-  
+
   // Special bypass endpoint - NO AUTHENTICATION, write directly to disk
   app.post('/api/upload/bypass', async (req: Request, res: Response) => {
     try {
       console.log("==== BYPASS UPLOAD ENDPOINT ACCESSED ====");
       console.log("Content-Type:", req.headers['content-type']);
       console.log("Accept:", req.headers['accept']);
-      
+
       // Create upload directory if it doesn't exist
       const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
         console.log(`Created upload directory: ${uploadDir}`);
       }
-      
+
       // Force directory permissions
       fs.chmodSync(uploadDir, 0o777);
-      
+
       // Create a basic upload handler with minimal options
       const basicUpload = multer({
         dest: uploadDir,
         limits: { fileSize: 25 * 1024 * 1024 } // 25MB
       }).array('files', 10);
-      
+
       // Process the upload
       basicUpload(req, res, function(err) {
         if (err) {
           console.error("Basic upload error:", err);
-          
+
           // Check if this is a direct form submission
           const wantsHtml = req.headers['accept']?.includes('text/html');
-          
+
           if (wantsHtml) {
             // Check referer to determine which uploader was used
             const referer = req.headers['referer'] || '';
             let backLink = '/basic-uploader.html';
-            
+
             if (referer.includes('windows-uploader.html')) {
               backLink = '/windows-uploader.html';
             } else if (referer.includes('cross-platform-uploader.html')) {
               backLink = '/cross-platform-uploader.html';
             }
-            
+
             return res.status(500).send(`
               <html><head><title>Upload Error</title>
               <style>
@@ -1448,25 +1448,25 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             });
           }
         }
-        
+
         // Check if we have files
         if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
           console.log("No files found in bypass upload request");
-          
+
           // Check if this is a direct form submission
           const wantsHtml = req.headers['accept']?.includes('text/html');
-          
+
           if (wantsHtml) {
             // Check referer to determine which uploader was used
             const referer = req.headers['referer'] || '';
             let backLink = '/basic-uploader.html';
-            
+
             if (referer.includes('windows-uploader.html')) {
               backLink = '/windows-uploader.html';
             } else if (referer.includes('cross-platform-uploader.html')) {
               backLink = '/cross-platform-uploader.html';
             }
-            
+
             return res.status(400).send(`
               <html><head><title>Upload Error</title>
               <style>
@@ -1489,29 +1489,29 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             });
           }
         }
-        
+
         const files = req.files as Express.Multer.File[];
         console.log(`Received ${files.length} files in bypass upload`);
-        
+
         // Create URLs for client response
         const imageUrls = files.map(file => `/uploads/properties/${path.basename(file.path)}`);
-        
+
         // Check if this is a direct form submission that expects HTML
         const wantsHtml = req.headers['accept']?.includes('text/html');
-        
+
         if (wantsHtml) {
           // Check referer to determine which uploader was used
           const referer = req.headers['referer'] || '';
-          
+
           // Special handling for cross-platform uploader - redirect back with params
           if (referer.includes('cross-platform-uploader.html')) {
             // Redirect back to the cross-platform uploader with the URLs as parameters
             return res.redirect(`/cross-platform-uploader.html?success=true&urls=${imageUrls.join(',')}`);
           }
-          
+
           // Special handling for Windows uploader
           if (referer.includes('windows-uploader.html')) {
-            return res.status(200).send(`
+            return res.status200).send(`
               <!DOCTYPE html>
               <html>
               <head>
@@ -1532,7 +1532,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
               <body>
                 <h1>Upload Successful!</h1>
                 <div class="success">Successfully uploaded ${files.length} images.</div>
-                
+
                 <div class="instructions" style="background-color: #fffde7; border-left: 4px solid #ffeb3b; padding: 15px; margin: 20px 0;">
                   <h3>Next Steps:</h3>
                   <ol>
@@ -1541,13 +1541,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
                     <li>Paste the URLs into the "Image URLs" field</li>
                   </ol>
                 </div>
-                
+
                 <h2>Copy All URLs</h2>
                 <textarea class="url-list" onclick="this.select()">${imageUrls.join(', ')}</textarea>
                 <button class="copy-btn" onclick="navigator.clipboard.writeText(document.querySelector('.url-list').value)">
                   Copy All URLs
                 </button>
-                
+
                 <h2>Individual Image URLs</h2>
                 ${imageUrls.map((url, index) => `
                   <div>
@@ -1557,14 +1557,14 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
                     <div class="divider"></div>
                   </div>
                 `).join('')}
-                
+
                 <p style="margin-top: 20px;"><a href="/windows-uploader.html">← Upload More Images</a></p>
                 <p><a href="/">← Back to Main Site</a></p>
               </body>
               </html>
             `);
           }
-          
+
           // Standard HTML response for other uploaders
           const imagesHtml = imageUrls.map(url => `
             <div class="img-container">
@@ -1572,7 +1572,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
               <div class="url">${url}</div>
             </div>
           `).join('');
-          
+
           return res.status(200).send(`
             <html><head><title>Upload Successful</title>
             <style>
@@ -1590,7 +1590,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             </head><body>
               <h1>Upload Successful!</h1>
               <p class="success">Successfully uploaded ${files.length} file(s).</p>
-              
+
               <div class="instructions">
                 <h3>Next Steps:</h3>
                 <ol>
@@ -1599,13 +1599,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
                   <li>Paste the URLs into the "Image URLs" field</li>
                 </ol>
               </div>
-              
+
               <h2>Image URLs</h2>
               <textarea class="url-list" onclick="this.select()">${imageUrls.join(', ')}</textarea>
-              
+
               <h2>Image Previews</h2>
               <div class="images">${imagesHtml}</div>
-              
+
               <p>
                 <a href="/basic-uploader.html">← Upload more images</a> | 
                 <a href="/">Return to main website</a>
@@ -1624,22 +1624,22 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       });
     } catch (error) {
       console.error("Fatal error in bypass upload:", error);
-      
+
       // Check if this is a direct form submission
       const wantsHtml = req.headers['accept']?.includes('text/html');
-      
+
       if (wantsHtml) {
         // Check referer to determine which uploader was used
         const referer = req.headers['referer'] || '';
         let backLink = '/basic-uploader.html';
-        
+
         if (referer.includes('windows-uploader.html')) {
           backLink = '/windows-uploader.html';
         } else if (referer.includes('cross-platform-uploader.html')) {
           // Redirect back to the cross-platform uploader with error message
           return res.redirect(`/cross-platform-uploader.html?error=true&message=${encodeURIComponent(error instanceof Error ? error.message : "Unknown error")}`);
         }
-        
+
         return res.status(500).send(`
           <html><head><title>Server Error</title>
           <style>
@@ -1670,27 +1670,27 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     try {
       console.log("==== DIRECT PROPERTY IMAGE UPLOAD CALLED ====");
       console.log("Public upload endpoint - no authentication required");
-      
+
       // Log the incoming request details for debugging
       console.log("Content-Type:", req.headers['content-type']);
       console.log("Request method:", req.method);
       console.log("Query params:", req.query);
-      
+
       // Try to log any form fields that might already be parsed
       if (req.body) {
         console.log("Request body keys:", Object.keys(req.body));
       }
-      
+
       // Create upload directory if it doesn't exist
       const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
         console.log(`Created upload directory: ${uploadDir}`);
       }
-      
+
       // Force directory permissions
       fs.chmodSync(uploadDir, 0o777);
-      
+
       // Create a single-use multer instance
       const upload = multer({
         storage: multer.diskStorage({
@@ -1711,11 +1711,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           files: 20
         }
       });
-      
+
       // First check if there are any files in the request
       if (!req.files && !req.file) {
         console.log("No files found in the request");
-        
+
         // Try to log the request content
         try {
           console.log("Request headers:", req.headers);
@@ -1724,18 +1724,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         } catch (err) {
           console.error("Error logging request details:", err);
         }
-        
+
         return res.status(400).json({
           success: false,
           message: "No files detected in the upload request. Ensure files are being sent correctly with field name 'images'."
         });
       }
-      
+
       // Use the upload middleware as a promise
       const uploadPromise = util.promisify((req: Request, res: Response, callback: (error: any) => void) => {
         upload.array('images', 20)(req, res, callback);
       });
-      
+
       try {
         console.log("Starting file upload process...");
         await uploadPromise(req, res);
@@ -1744,20 +1744,20 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Error during file upload:", uploadError);
         throw new Error(`File upload process failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
       }
-      
+
       // Check if files array exists and has content after upload
       if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
         console.error("No files found after upload process");
         throw new Error("File upload completed but no files were processed");
       }
-      
+
       // Files have been uploaded, extract file info
       const files = req.files as Express.Multer.File[];
       console.log(`Processed ${files.length} files`);
-      
+
       const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
       console.log("File URLs:", fileUrls);
-      
+
       return res.status(200).json({
         success: true,
         message: `Successfully uploaded ${files.length} images`,
@@ -1772,7 +1772,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       });
     }
   });
-  
+
   // Super simple image uploader - no authentication, no error handling
   app.post('/api/simple-upload', (req, res) => {
     const upload = multer({
@@ -1792,25 +1792,25 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }),
       limits: { fileSize: 10 * 1024 * 1024 }
     }).array('images', 10);
-    
+
     upload(req, res, (err) => {
       if (err) {
         console.error('Simple upload error:', err);
         return res.status(400).json({ success: false, error: err.message });
       }
-      
+
       if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
         return res.status(400).json({ success: false, error: 'No files uploaded' });
       }
-      
+
       const urls = (req.files as Express.Multer.File[]).map(file => {
         return `/uploads/properties/${file.filename}`;
       });
-      
+
       res.json({ success: true, urls });
     });
   });
-  
+
   // ====== PROJECT ROUTES ======
   // Get all projects with pagination
   app.get("/api/projects", async (req: Request, res: Response) => {
@@ -1818,7 +1818,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Extract pagination parameters from query
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
-      
+
       // Get paginated projects
       const result = await dbStorage.getAllProjects(page, pageSize);
       res.json(result);
@@ -1827,7 +1827,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: "Failed to fetch projects" });
     }
   });
-  
+
   // Get project by ID
   app.get("/api/projects/:id", async (req: Request, res: Response) => {
     try {
@@ -1847,7 +1847,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: "Failed to fetch project" });
     }
   });
-  
+
   // Get properties associated with a specific project
   app.get("/api/projects/:id/properties", async (req: Request, res: Response) => {
     try {
@@ -1855,29 +1855,29 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid project ID" });
       }
-      
+
       // First check if the project exists
       const project = await dbStorage.getProjectById(id);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
-      
+
       console.log(`Fetching properties for project: ${project.projectName}`);
-      
+
       // Search for properties with matching project name
       const properties = await dbStorage.searchProperties({
         projectName: project.projectName
       });
-      
+
       console.log(`Found ${properties.data.length} properties for project: ${project.projectName}`);
-      
+
       res.json(properties);
     } catch (error) {
       console.error("Error fetching project properties:", error);
       res.status(500).json({ message: "Failed to fetch project properties" });
     }
   });
-  
+
   // Create a new project
   app.post("/api/projects", async (req: Request, res: Response) => {
     try {
@@ -1886,17 +1886,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Project creation failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to create projects" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to create project: ${user.username} (Role: ${user.role})`);
-      
+
       // Only admins and owners can create projects
       if (user.role !== 'admin' && user.role !== 'owner') {
         console.error("Project creation failed: Insufficient permissions");
         return res.status(403).json({ message: "You do not have permission to create projects" });
       }
-      
+
       // Create a new request body with camelCase fields matching the schema
       const formattedBody = {
         projectName: req.body.projectName,
@@ -1908,20 +1908,20 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         status: req.body.status || 'draft',
         createdBy: user.id
       };
-      
+
       // Ensure required fields are present
       const requiredFields = ['projectName', 'description', 'location', 'aboutDeveloper'];
       const missingFields = requiredFields.filter(field => {
         return !formattedBody[field];
       });
-      
+
       if (missingFields.length > 0) {
         console.error(`Project creation failed: Missing required fields: ${missingFields.join(', ')}`);
         return res.status(400).json({
           message: `Missing required fields: ${missingFields.join(', ')}`
         });
       }
-      
+
       // Format images field if it's a comma-separated string
       if (typeof formattedBody.images === 'string') {
         try {
@@ -1932,7 +1932,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           console.error("Error parsing images string:", error);
         }
       }
-      
+
       // Format unitTypes field if it's a comma-separated string
       if (typeof formattedBody.unitTypes === 'string') {
         try {
@@ -1943,14 +1943,14 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           console.error("Error parsing unitTypes string:", error);
         }
       }
-      
+
       // Create the project
       console.log("Creating project with data:", formattedBody);
       const project = await dbStorage.createProject(formattedBody);
       res.status(201).json(project);
     } catch (error) {
       console.error("Error creating project:", error);
-      
+
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
         console.error("Validation error details:", validationError);
@@ -1959,11 +1959,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           details: validationError.message 
         });
       }
-      
+
       res.status(500).json({ message: "Failed to create project" });
     }
   });
-  
+
   // Update an existing project
   app.put("/api/projects/:id", async (req: Request, res: Response) => {
     try {
@@ -1972,28 +1972,28 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Project update failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to update projects" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to update project: ${user.username} (Role: ${user.role})`);
-      
+
       // Only admins and owners can update projects
       if (user.role !== 'admin' && user.role !== 'owner') {
         console.error("Project update failed: Insufficient permissions");
         return res.status(403).json({ message: "You do not have permission to update projects" });
       }
-      
+
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid project ID" });
       }
-      
+
       // Check if the project exists
       const existingProject = await dbStorage.getProjectById(id);
       if (!existingProject) {
         return res.status(404).json({ message: "Project not found" });
       }
-      
+
       // Create a new request body with camelCase fields matching the schema
       const formattedBody = {
         projectName: req.body.projectName,
@@ -2005,7 +2005,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         status: req.body.status || existingProject.status,
         updatedAt: new Date()
       };
-      
+
       // Format images field if it's a comma-separated string
       if (typeof formattedBody.images === 'string') {
         try {
@@ -2016,7 +2016,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           console.error("Error parsing images string:", error);
         }
       }
-      
+
       // Format unitTypes field if it's a comma-separated string
       if (typeof formattedBody.unitTypes === 'string') {
         try {
@@ -2027,11 +2027,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           console.error("Error parsing unitTypes string:", error);
         }
       }
-      
+
       // Update the project
       console.log("Updating project with data:", formattedBody);
       const updatedProject = await dbStorage.updateProject(id, formattedBody);
-      
+
       if (updatedProject) {
         res.json(updatedProject);
       } else {
@@ -2042,7 +2042,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: "Internal server error" });
     }
   });
-  
+
   // Delete a project
   app.delete("/api/projects/:id", async (req: Request, res: Response) => {
     try {
@@ -2051,28 +2051,28 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Project deletion failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to delete projects" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to delete project: ${user.username} (Role: ${user.role})`);
-      
+
       // Only admins and owners can delete projects
       if (user.role !== 'admin' && user.role !== 'owner') {
         console.error("Project deletion failed: Insufficient permissions");
         return res.status(403).json({ message: "You do not have permission to delete projects" });
       }
-      
+
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid project ID" });
       }
-      
+
       // Check if the project exists
       const project = await dbStorage.getProjectById(id);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
-      
+
       // Delete the project
       const success = await dbStorage.deleteProject(id);
       if (success) {
@@ -2085,7 +2085,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       res.status(500).json({ message: "Internal server error" });
     }
   });
-  
+
   // Project image upload route
   app.post("/api/upload/project-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
@@ -2094,32 +2094,32 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.error("Project image upload failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to upload project images" });
       }
-      
+
       // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to upload project images: ${user.username} (Role: ${user.role})`);
-      
+
       // Only admins and owners can upload project images
       if (user.role !== 'admin' && user.role !== 'owner') {
         console.error("Project image upload failed: Insufficient permissions");
         return res.status(403).json({ message: "You do not have permission to upload project images" });
       }
-      
+
       if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
         return res.status(400).json({ message: "No files were uploaded" });
       }
-      
+
       console.log(`Received ${req.files.length} project image files`);
-      
+
       // Process uploaded files
       const imageUrls = req.files.map(file => {
         // Create both public and internal URLs
         const publicUrl = `/uploads/projects/${file.filename}`;
-        
+
         console.log(`Successfully processed project image: ${file.originalname} -> ${publicUrl}`);
         return publicUrl;
       });
-      
+
       res.json({ 
         message: "Project images uploaded successfully",
         imageUrls: imageUrls 
@@ -2133,17 +2133,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // Enhanced file access route with advanced file matching
   app.get('/uploads/*', (req, res) => {
     console.log(`Enhanced file access request for: ${req.path}`);
-    
+
     // Clean up the path and remove the '/uploads/' prefix
     const relativePath = req.path.substring(8); // remove '/uploads/'
-    
+
     // Get the base directories where uploads might be stored
     const baseDirectories = [
       path.join(process.cwd(), 'public', 'uploads'),
       path.join(process.cwd(), 'uploads'),
       path.join(process.cwd())
     ];
-    
+
     // First try the exact path (standard behavior)
     for (const baseDir of baseDirectories) {
       const exactPath = path.join(baseDir, relativePath);
@@ -2152,11 +2152,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.sendFile(exactPath);
       }
     }
-    
+
     // If we couldn't find the exact file, try to find it by filename only (without subdir)
     const filename = path.basename(relativePath);
     const subdirs = ['properties', 'announcements', 'projects', 'logos', ''];
-    
+
     // Check each possible subdirectory
     for (const baseDir of baseDirectories) {
       for (const subdir of subdirs) {
@@ -2172,13 +2172,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     // This is for cases where the URL has a cleaned filename but the actual file has a hash
     try {
       console.log(`Attempting enhanced fuzzy matching for: ${filename}`);
-      
+
       // First try direct hash match for known Windows MD5 hash pattern (32 char hexadecimal)
       const hashMatch = filename.match(/([a-f0-9]{32})/i);
       if (hashMatch) {
         const hash = hashMatch[1];
         console.log(`Found hash pattern in filename: ${hash}`);
-        
+
         // Look for any file containing this hash
         for (const baseDir of baseDirectories) {
           for (const subdir of subdirs) {
@@ -2186,7 +2186,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             if (fs.existsSync(subdirPath)) {
               const files = fs.readdirSync(subdirPath);
               console.log(`Scanning ${files.length} files in ${subdirPath} for hash ${hash}`);
-              
+
               for (const file of files) {
                 if (file.includes(hash)) {
                   console.log(`Exact hash match found: ${file}`);
@@ -2199,10 +2199,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         }
       }
-      
+
       // If no hash match, try listing all files and look for partial matches
       console.log("No exact hash match found, trying partial matching");
-      
+
       // Special case for common Windows image hashes - look for files with MD5 hash patterns
       for (const baseDir of baseDirectories) {
         for (const subdir of subdirs) {
@@ -2210,7 +2210,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           if (fs.existsSync(subdirPath)) {
             const files = fs.readdirSync(subdirPath);
             console.log(`Checking ${files.length} files in ${subdirPath}`);
-            
+
             // First try finding recent files (last modified) as they're most likely to be what we want
             const fileStats = files.map(file => {
               const fullPath = path.join(subdirPath, file);
@@ -2221,10 +2221,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
                 return null;
               }
             }).filter(item => item !== null);
-            
+
             // Sort by last modified date, most recent first
             fileStats.sort((a, b) => b.stats.mtimeMs - a.stats.mtimeMs);
-            
+
             // Check the 5 most recent files first
             const recentFiles = fileStats.slice(0, 5);
             for (const fileInfo of recentFiles) {
@@ -2234,18 +2234,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
                 return res.sendFile(fileInfo.fullPath);
               }
             }
-            
+
             // If that fails, try matching by name fragments
             for (const file of files) {
               // Split the filenames into parts and look for common segments
               const fileParts = file.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(' ').filter(p => p.length > 3);
               const requestedParts = filename.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(' ').filter(p => p.length > 3);
-              
+
               // See if any meaningful part matches
               const hasCommonPart = fileParts.some(part => 
                 requestedParts.some(reqPart => part.includes(reqPart) || reqPart.includes(part))
               );
-              
+
               if (hasCommonPart) {
                 console.log(`Found matching name parts in: ${file}`);
                 const matchPath = path.join(subdirPath, file);
@@ -2259,19 +2259,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     } catch (err) {
       console.error("Error searching for fuzzy file matches:", err);
     }
-    
+
     // If we get here, the file wasn't found with any method
     console.error(`File not found in any location: ${relativePath}`);
-    
+
     // Serve a placeholder image instead of 404
     const placeholderPath = path.join(process.cwd(), 'public', 'placeholder-property.svg');
     if (fs.existsSync(placeholderPath)) {
       console.log(`Serving placeholder image at: ${placeholderPath}`);
       return res.sendFile(placeholderPath);
     }
-    
-    // Last resort, return 404
-    res.status(404).send('File not found');
+
+    // Last resort, return 404).send('File not found');
   });
 
   // Create HTTP server

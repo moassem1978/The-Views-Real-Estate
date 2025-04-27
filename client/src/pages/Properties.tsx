@@ -12,11 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function Properties() {
   const [location] = useLocation();
   const [filters, setFilters] = useState<SearchFilters>({});
-  
+
   // Extract query parameters from URL
   useEffect(() => {
     const params = new URLSearchParams(location.split('?')[1]);
-    
+
     const newFilters: SearchFilters = {};
     if (params.has('location')) newFilters.location = params.get('location') || undefined;
     if (params.has('propertyType')) newFilters.propertyType = params.get('propertyType') || undefined;
@@ -26,7 +26,7 @@ export default function Properties() {
     if (params.has('minBathrooms')) newFilters.minBathrooms = parseInt(params.get('minBathrooms') || '0');
     if (params.has('type')) newFilters.type = params.get('type') || undefined;
     if (params.has('international')) newFilters.international = params.get('international') === 'true';
-    
+
     // Special case for type param (Primary/Resale)
     if (params.has('type')) {
       const typeValue = params.get('type');
@@ -34,37 +34,35 @@ export default function Properties() {
         newFilters.type = typeValue;
       }
     }
-    
+
     setFilters(newFilters);
   }, [location]);
-  
-  // Prepare query parameters for API call
+
+  // Prepare query parameters for API call -  modified to remove pageSize
   const queryParams = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       queryParams.append(key, String(value));
     }
   });
-  
+
   const queryString = queryParams.toString();
   const apiUrl = queryString ? `/api/properties/search?${queryString}` : '/api/properties';
-  
-  // Define the paginated response type
-  interface PaginatedResponse {
+
+  // Define the response type (removed pagination)
+  interface ApiResponse {
     data: Property[];
     totalCount: number;
-    pageCount: number;
-    page: number;
-    pageSize: number;
   }
-  
-  const { data: propertiesResponse, isLoading, error } = useQuery<PaginatedResponse>({
+
+
+  const { data: propertiesResponse, isLoading, error } = useQuery<ApiResponse>({
     queryKey: [apiUrl],
   });
-  
+
   const handleFilterChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
-    
+
     // Update URL with new filters
     const params = new URLSearchParams();
     Object.entries(newFilters).forEach(([key, value]) => {
@@ -72,12 +70,12 @@ export default function Properties() {
         params.append(key, String(value));
       }
     });
-    
+
     const newQueryString = params.toString();
     const newPath = newQueryString ? `/properties?${newQueryString}` : '/properties';
     window.history.pushState(null, '', newPath);
   };
-  
+
   if (error) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -105,7 +103,7 @@ export default function Properties() {
       </div>
     );
   }
-  
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -120,7 +118,7 @@ export default function Properties() {
             />
           </div>
           <div className="absolute inset-0 bg-gradient-to-b from-[#333333]/70 to-[#333333]/90"></div>
-          
+
           <div className="container mx-auto px-4 relative z-10 text-center">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-semibold text-white leading-tight mb-4">
               Discover Our Luxury Properties
@@ -130,7 +128,7 @@ export default function Properties() {
             </p>
           </div>
         </section>
-        
+
         {/* Filters Section */}
         <section className="bg-white border-b border-[#E8DACB]">
           <div className="container mx-auto px-4 py-6">
@@ -140,7 +138,7 @@ export default function Properties() {
             />
           </div>
         </section>
-        
+
         {/* Properties Grid */}
         <section className="py-12 bg-[#F9F6F2]">
           <div className="container mx-auto px-4">
@@ -174,7 +172,7 @@ export default function Properties() {
             )}
           </div>
         </section>
-        
+
         <ContactCTA />
       </main>
       <Footer />
