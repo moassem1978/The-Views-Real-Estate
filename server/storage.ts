@@ -1635,43 +1635,43 @@ export class DatabaseStorage implements IStorage {
       if ('country' in updates) dbUpdates.country = updates.country;
       if ('yearBuilt' in updates) dbUpdates.year_built = updates.yearBuilt;
       if ('status' in updates) dbUpdates.status = updates.status;
+      // Handle images field specially to prevent JSON syntax errors
       if ('images' in updates) {
-        // Ensure images are in the proper JSON array format for the database
-        // First handle the case where images might be strings or stringified JSON
+        console.log('Processing images field:', updates.images);
+        // Create a clean array of image strings
         let imagesArray: string[] = [];
         
         if (Array.isArray(updates.images)) {
-          // Process each image to ensure it's a proper string
-          imagesArray = updates.images.map(img => {
-            if (typeof img === 'string') {
-              return img;
-            } else if (img && typeof img === 'object') {
-              try {
-                return JSON.stringify(img);
-              } catch (e) {
-                console.error('Error stringifying image object:', e);
-                return String(img);
-              }
-            }
-            return String(img);
-          });
+          // Filter out any non-string elements and ensure they're all simple strings
+          imagesArray = updates.images
+            .filter(img => img !== null && img !== undefined)
+            .map(img => typeof img === 'string' ? img : String(img));
         } else if (typeof updates.images === 'string') {
-          // If it's a single string, try to parse it as JSON first
-          try {
-            const parsed = JSON.parse(updates.images);
-            if (Array.isArray(parsed)) {
-              imagesArray = parsed;
-            } else {
+          // If it's a string that looks like JSON, try to parse it
+          if (updates.images.startsWith('[') && updates.images.endsWith(']')) {
+            try {
+              const parsed = JSON.parse(updates.images);
+              if (Array.isArray(parsed)) {
+                imagesArray = parsed.filter(Boolean).map(String);
+              } else {
+                imagesArray = [updates.images];
+              }
+            } catch (e) {
+              // Not valid JSON, treat as a single image path
               imagesArray = [updates.images];
             }
-          } catch (e) {
-            // Not a JSON string, treat as a single image
+          } else {
+            // Just a regular string, treat as a single image path
             imagesArray = [updates.images];
           }
         }
         
-        console.log('Formatted images array for database:', imagesArray);
-        dbUpdates.images = imagesArray;
+        console.log('Cleaned images array for database:', imagesArray);
+        
+        // Use JSON.stringify to convert array to proper JSON string format
+        // This ensures PostgreSQL will accept it as a valid JSON array
+        dbUpdates.images = JSON.stringify(imagesArray);
+        console.log('Final JSON images format:', dbUpdates.images);
       }
       
       console.log(`Converted database updates:`, dbUpdates);
@@ -1710,6 +1710,35 @@ export class DatabaseStorage implements IStorage {
       }
       
       const updatedProperty = result.rows[0];
+      console.log('Raw property from database:', updatedProperty);
+      
+      // Parse images field from database if it's a JSON string
+      let imagesArray: string[] = [];
+      
+      if (updatedProperty.images) {
+        // If images is already an array, use it directly
+        if (Array.isArray(updatedProperty.images)) {
+          imagesArray = updatedProperty.images;
+        } 
+        // If images is a string that starts with [ and ends with ], it's likely a JSON string
+        else if (typeof updatedProperty.images === 'string' && 
+                updatedProperty.images.trim().startsWith('[') && 
+                updatedProperty.images.trim().endsWith(']')) {
+          try {
+            imagesArray = JSON.parse(updatedProperty.images);
+          } catch (e) {
+            console.error('Error parsing images JSON:', e);
+            // Fallback to empty array on error
+            imagesArray = [];
+          }
+        }
+        // If it's a string but not JSON-formatted, treat as a single image
+        else if (typeof updatedProperty.images === 'string') {
+          imagesArray = [updatedProperty.images];
+        }
+      }
+      
+      console.log('Parsed images array for frontend:', imagesArray);
       
       // Convert property back to camelCase for frontend
       const propertyResult = {
@@ -1739,7 +1768,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: updatedProperty.created_at,
         updatedAt: updatedProperty.updated_at,
         references: updates.references || '',
-        images: updatedProperty.images || []
+        images: imagesArray
       };
       
       console.log(`DB: Successfully updated property ${id}`);
