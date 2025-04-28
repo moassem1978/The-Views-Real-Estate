@@ -1122,6 +1122,107 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // Property images upload with ID parameter (used by the enhanced form component)
+  app.post("/api/upload/property-images/:id", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Property images upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to upload property images" });
+      }
+
+      // Get the authenticated user from request
+      const user = req.user as Express.User;
+      console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
+
+      // Get the property ID from route params
+      const propertyId = Number(req.params.id);
+      if (isNaN(propertyId) || propertyId <= 0) {
+        console.error(`Invalid property ID: ${req.params.id}`);
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      console.log(`Received property images upload request for property ID ${propertyId}`);
+
+      // Process the uploaded files
+      const files = req.files as Express.Multer.File[];
+      console.log(`Received ${files.length} files`);
+
+      // Additional fields sent by Windows/Chrome browsers
+      const additionalFiles: Express.Multer.File[] = [];
+      Object.keys(req.files || {}).forEach(key => {
+        if (key.startsWith('image_')) {
+          const imageFile = (req.files as any)[key];
+          if (Array.isArray(imageFile)) {
+            additionalFiles.push(...imageFile);
+          } else if (imageFile) {
+            additionalFiles.push(imageFile);
+          }
+        }
+      });
+
+      // If we found additional files, combine them with the main files
+      const allFiles = [...files, ...additionalFiles];
+      // Make allFiles unique by filename
+      const uniqueFiles = allFiles.filter((file, index, self) => 
+        index === self.findIndex(f => f.filename === file.filename)
+      );
+
+      console.log(`Processing ${uniqueFiles.length} unique files`);
+
+      if (uniqueFiles.length === 0) {
+        console.warn("No valid files were uploaded");
+        return res.status(400).json({ message: "No valid files were uploaded" });
+      }
+
+      // Get the property to update
+      const property = await storage.getPropertyById(propertyId);
+      if (!property) {
+        console.error(`Property not found: ${propertyId}`);
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Check permission - owner and admin can update any property, regular users only their own
+      if (user.role === 'user' && property.createdBy !== user.id) {
+        console.error(`Permission denied: User ${user.username} attempted to upload images for property ${propertyId} created by user ${property.createdBy}`);
+        return res.status(403).json({ message: "You do not have permission to update this property" });
+      }
+
+      // Format file paths for storage - make all paths absolute for frontend consistency
+      const imagePaths = uniqueFiles.map(file => `/uploads/properties/${file.filename}`);
+      console.log("Image paths to add:", imagePaths);
+
+      // Get existing images from the property
+      const existingImages = Array.isArray(property.images) ? property.images : [];
+      console.log("Existing images:", existingImages);
+
+      // Combine existing images with new ones
+      const updatedImages = [...existingImages, ...imagePaths];
+      console.log("Updated images array:", updatedImages);
+
+      // Update the property with the new images
+      const updatedProperty = await storage.updateProperty(propertyId, {
+        images: updatedImages
+      });
+
+      if (!updatedProperty) {
+        console.error(`Failed to update property ${propertyId} with new images`);
+        return res.status(500).json({ message: "Failed to update property with new images" });
+      }
+
+      console.log(`Successfully added ${imagePaths.length} images to property ${propertyId}`);
+      return res.status(200).json({ 
+        message: "Images uploaded successfully", 
+        property: updatedProperty 
+      });
+    } catch (error) {
+      console.error("Error processing property images upload:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      return res.status(500).json({ message: `Failed to upload property images: ${errorMessage}` });
+    }
+  });
+
+  // Legacy property images upload endpoint (without ID)
   app.post("/api/upload/property-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
       // Check if user is authenticated

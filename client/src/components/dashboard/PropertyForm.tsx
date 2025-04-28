@@ -198,6 +198,8 @@ export default function PropertyForm({
   const mutation = useMutation({
     mutationFn: async (data: any) => {
       try {
+        console.log("Starting form submission process...");
+        
         // First try to refresh the auth session
         try {
           await apiRequest("POST", "/api/auth/refresh");
@@ -210,10 +212,13 @@ export default function PropertyForm({
         const method = isEditing ? 'PUT' : 'POST';
         
         console.log(`FORM SUBMISSION: Making ${method} request to ${url}`);
-        console.log("FORM SUBMISSION DATA:", JSON.stringify(data, null, 2));
         
-        // Ensure zipCode is present (required by the server)
-        if (!data.zipCode && data.city) {
+        // Create a clean data object with primitive values to avoid circular reference errors
+        const cleanData = { ...data };
+        
+        // Ensure all fields are properly formatted for transmission
+        // Handle zipCode (required by the server)
+        if (!cleanData.zipCode && cleanData.city) {
           // Default zipCodes for common cities
           const defaultZipCodes: Record<string, string> = {
             'Cairo': '11511',
@@ -224,27 +229,85 @@ export default function PropertyForm({
             'Gouna': '84513',
             'Red Sea': '84712'
           };
-          data.zipCode = (defaultZipCodes[data.city] || '00000');
-          console.log(`Added zipCode: ${data.zipCode} for city: ${data.city}`);
+          cleanData.zipCode = (defaultZipCodes[cleanData.city] || '00000');
+          console.log(`Added zipCode: ${cleanData.zipCode} for city: ${cleanData.city}`);
         }
         
-        // Then, create or update the property
-        const response = await apiRequest(method, url, data);
-        console.log(`FORM SUBMISSION: ${method} request status:`, response.status, response.statusText);
+        // Ensure numeric fields are actually numbers
+        ['price', 'downPayment', 'installmentAmount', 'installmentPeriod', 
+         'bedrooms', 'bathrooms', 'builtUpArea'].forEach(field => {
+          if (field in cleanData) {
+            const value = cleanData[field];
+            if (typeof value === 'string' && value.trim() !== '') {
+              cleanData[field] = Number(value);
+            } else if (value === '' || value === null || value === undefined) {
+              cleanData[field] = 0;
+            }
+          }
+        });
+        
+        // Handle boolean fields properly
+        ['isFullCash', 'isFeatured', 'isHighlighted', 'isNewListing'].forEach(field => {
+          if (field in cleanData) {
+            // Ensure booleans are actual booleans
+            cleanData[field] = Boolean(cleanData[field]);
+          }
+        });
+        
+        // Log the final clean data object
+        try {
+          console.log("FORM SUBMISSION DATA:", JSON.stringify(cleanData, null, 2));
+        } catch (jsonError) {
+          console.error("Error stringifying form data:", jsonError);
+          console.log("Form data (partial):", Object.keys(cleanData).join(', '));
+        }
+        
+        // Browser compatibility: use direct fetch with careful error handling
+        let response;
+        try {
+          // Then, create or update the property
+          response = await apiRequest(method, url, cleanData);
+          console.log(`FORM SUBMISSION: ${method} request status:`, response.status, response.statusText);
+        } catch (error) {
+          const fetchError = error as Error;
+          console.error("Network error during form submission:", fetchError);
+          throw new Error(`Network error: ${fetchError.message || 'Connection failed'}`);
+        }
         
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`FORM SUBMISSION: API Error (${response.status}):`, errorText);
-          throw new Error(`API Error (${response.status}): ${errorText}`);
+          let errorMessage = `Server error (${response.status})`;
+          try {
+            const errorText = await response.text();
+            console.error(`FORM SUBMISSION: API Error (${response.status}):`, errorText);
+            errorMessage = `API Error (${response.status}): ${errorText || response.statusText}`;
+          } catch (textError) {
+            console.error("Failed to get error details:", textError);
+          }
+          throw new Error(errorMessage);
         }
         
-        const result = await response.json();
-        console.log("FORM SUBMISSION: Success response:", result);
+        let result;
+        try {
+          result = await response.json();
+          console.log("FORM SUBMISSION: Success response:", result);
+        } catch (jsonError) {
+          console.error("Error parsing API response:", jsonError);
+          throw new Error("Invalid response from server");
+        }
 
         // Finally, if there are images to upload, upload them
         if (images.length > 0) {
           console.log(`FORM SUBMISSION: Uploading ${images.length} new images`);
-          await uploadImages(result.id);
+          try {
+            await uploadImages(result.id);
+          } catch (uploadError) {
+            console.error("Image upload failed but property was saved:", uploadError);
+            toast({
+              title: "Property saved but images failed",
+              description: "Your property was saved but we couldn't upload the images. You can try again later.",
+              variant: "destructive",
+            });
+          }
         }
 
         return result;
@@ -296,25 +359,79 @@ export default function PropertyForm({
     },
   });
 
-  // Handle image upload
+  // Handle image upload with improved error handling and cross-browser compatibility
   const uploadImages = async (propertyId: number) => {
     try {
       setUploading(true);
+      console.log(`Starting image upload process for property ID ${propertyId}...`);
+      
+      // Create a new FormData object for uploading files
       const formData = new FormData();
-      images.forEach((image) => {
-        formData.append('images', image);
+      
+      // Check if the File objects are valid before appending
+      const validImages = Array.from(images).filter(file => {
+        if (!file || !(file instanceof File) || file.size === 0) {
+          console.warn(`Skipping invalid file: ${file?.name || 'unknown'}`);
+          return false;
+        }
+        return true;
       });
-
-      const response = await fetch(`/api/upload/property-images/${propertyId}`, {
-        method: 'POST',
-        body: formData,
+      
+      console.log(`Processing ${validImages.length} valid images for upload`);
+      
+      // Append each valid image to the FormData
+      validImages.forEach((image, index) => {
+        const fileName = image.name || `image-${index}`;
+        console.log(`Adding image to form: ${fileName} (${Math.round(image.size / 1024)}KB)`);
+        
+        // Use a more generic field name to avoid Windows issues with array naming
+        // Some older browsers have issues with multiple fields with the same name
+        formData.append(`image_${index}`, image, fileName);
+        
+        // Also append the original field name that the server expects
+        formData.append('images', image, fileName);
       });
+      
+      console.log(`Sending upload request to /api/upload/property-images/${propertyId}`);
+      
+      // Set explicit timeout for fetch operations
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-      if (!response.ok) {
-        throw new Error('Failed to upload images');
+      try {
+        const response = await fetch(`/api/upload/property-images/${propertyId}`, {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+          credentials: 'include', // Include cookies for auth
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log(`Upload response status: ${response.status} ${response.statusText}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Upload failed: ${errorText}`);
+          throw new Error(`Failed to upload images: ${response.status} ${response.statusText}`);
+        }
+        
+        try {
+          const result = await response.json();
+          console.log('Upload successful:', result);
+          return result;
+        } catch (jsonError) {
+          console.log('Response was received but not JSON. This is OK for uploads.');
+          return { success: true, message: 'Images uploaded successfully' };
+        }
+      } catch (fetchError) {
+        // Handle abort errors differently
+        if (fetchError.name === 'AbortError') {
+          console.error('Upload request timed out');
+          throw new Error('Upload timed out. Please try with fewer or smaller images.');
+        }
+        throw fetchError;
       }
-
-      return await response.json();
     } catch (error) {
       console.error('Image upload error:', error);
       throw error;
