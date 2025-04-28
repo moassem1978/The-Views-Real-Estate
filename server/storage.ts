@@ -1635,7 +1635,44 @@ export class DatabaseStorage implements IStorage {
       if ('country' in updates) dbUpdates.country = updates.country;
       if ('yearBuilt' in updates) dbUpdates.year_built = updates.yearBuilt;
       if ('status' in updates) dbUpdates.status = updates.status;
-      if ('images' in updates) dbUpdates.images = updates.images;
+      if ('images' in updates) {
+        // Ensure images are in the proper JSON array format for the database
+        // First handle the case where images might be strings or stringified JSON
+        let imagesArray: string[] = [];
+        
+        if (Array.isArray(updates.images)) {
+          // Process each image to ensure it's a proper string
+          imagesArray = updates.images.map(img => {
+            if (typeof img === 'string') {
+              return img;
+            } else if (img && typeof img === 'object') {
+              try {
+                return JSON.stringify(img);
+              } catch (e) {
+                console.error('Error stringifying image object:', e);
+                return String(img);
+              }
+            }
+            return String(img);
+          });
+        } else if (typeof updates.images === 'string') {
+          // If it's a single string, try to parse it as JSON first
+          try {
+            const parsed = JSON.parse(updates.images);
+            if (Array.isArray(parsed)) {
+              imagesArray = parsed;
+            } else {
+              imagesArray = [updates.images];
+            }
+          } catch (e) {
+            // Not a JSON string, treat as a single image
+            imagesArray = [updates.images];
+          }
+        }
+        
+        console.log('Formatted images array for database:', imagesArray);
+        dbUpdates.images = imagesArray;
+      }
       
       console.log(`Converted database updates:`, dbUpdates);
       

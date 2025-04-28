@@ -343,7 +343,21 @@ export default function PropertyForm({
       if (isEditing && existingImages.length > 0) {
         // Ensure we don't lose the existing images when updating
         console.log("Preserving existing images in submission:", existingImages);
-        formattedData.images = existingImages;
+        
+        // Make sure images are properly formatted for JSON
+        // The server expects an array of strings, not an object
+        const formattedImages = existingImages.map(img => {
+          // Ensure image paths are clean strings
+          if (typeof img === 'string') {
+            return img;
+          } else if (typeof img === 'object' && img !== null) {
+            return JSON.stringify(img);
+          }
+          return String(img);
+        });
+        
+        console.log("Formatted images for submission:", formattedImages);
+        formattedData.images = formattedImages;
       }
 
       console.log("Formatted data for submission:", formattedData);
