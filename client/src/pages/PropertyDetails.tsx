@@ -189,6 +189,15 @@ export default function PropertyDetails() {
                   </div>
                 </div>
                 
+                {/* Reference Number Display - prominently shown */}
+                {property.references && (
+                  <div className="mb-6 mt-3">
+                    <div className="inline-block bg-[#F5F0E6] border border-[#D4AF37]/30 text-gray-800 px-4 py-2 rounded">
+                      <span className="font-medium">Reference:</span> <span className="text-[#964B00]">{property.references}</span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="mb-10">
                   <h2 className="text-2xl font-serif font-semibold text-gray-800 mb-4">Property Description</h2>
                   <div className="text-gray-600 leading-relaxed space-y-4">
