@@ -8,7 +8,7 @@ import { faker } from '@faker-js/faker';
 import { formatISO } from 'date-fns';
 import * as fs from 'fs';
 import * as path from 'path';
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, and, like, gte, lte, desc, sql, asc } from "drizzle-orm";
 
 // Storage interface for CRUD operations
@@ -1430,72 +1430,84 @@ export class DatabaseStorage implements IStorage {
 
   async getPropertyById(id: number): Promise<Property | undefined> {
     try {
-      console.log(`DB: Fetching property with ID ${id} using direct SQL`);
+      console.log(`DB: Fetching property with ID ${id} using pool.query`);
       
-      // Use direct SQL first (no ORM) to avoid column validation issues
-      const result = await db.execute(
-        `SELECT * FROM properties WHERE id = ${id}`
+      // Use pool.query with parameterized query for better security and reliability
+      const result = await pool.query(
+        "SELECT * FROM properties WHERE id = $1", 
+        [id]
       );
       
       // Check if we found a property
-      if (!result || !Array.isArray(result) || result.length === 0) {
-        console.log(`DB: No property found with ID ${id} (SQL method)`);
+      if (!result || result.rowCount === 0) {
+        console.log(`DB: No property found with ID ${id}`);
         return undefined;
       }
       
       // Get the raw property data
-      const rawProperty = result[0];
+      const dbProperty = result.rows[0];
       
-      if (!rawProperty) {
+      if (!dbProperty) {
         console.log(`DB: Empty result for property ${id}`);
         return undefined;
       }
       
-      console.log(`DB: Found property ${id} with title: ${rawProperty.title || 'Unknown'}`);
+      console.log(`DB: Found property ${id} with title: ${dbProperty.title || 'Unknown'}`);
       
-      // Create a complete property with all expected fields
-      const completeProperty: Property = {
-        // Copy all existing fields from the raw property
-        ...rawProperty,
-        // Add default values for potentially missing fields
-        references: rawProperty.references || '',
-        street: rawProperty.street || null,
-        unit: rawProperty.unit || null,
-        landmarks: rawProperty.landmarks || null,
-        amenities: rawProperty.amenities || [],
-        notes: rawProperty.notes || null,
-        availableFrom: rawProperty.availableFrom || null,
-        state: rawProperty.state || null,
-        country: rawProperty.country || 'Egypt', // Default to Egypt
-        postalCode: rawProperty.postalCode || null,
-        agentId: rawProperty.agentId || null,
-        approvedBy: rawProperty.approvedBy || null,
-        downPayment: rawProperty.downPayment || null,
-        installmentAmount: rawProperty.installmentAmount || null,
-        installmentYears: rawProperty.installmentYears || null,
-        isNewListing: rawProperty.isNewListing || false,
-        isHighlighted: rawProperty.isHighlighted || false
+      // Map database fields (snake_case) to property fields (camelCase)
+      const property: Property = {
+        id: dbProperty.id,
+        title: dbProperty.title || "",
+        description: dbProperty.description || "",
+        price: dbProperty.price || 0,
+        propertyType: dbProperty.property_type || "apartment",
+        listingType: dbProperty.listing_type || "Resale",
+        status: dbProperty.status || "active",
+        bedrooms: dbProperty.bedrooms || 0,
+        bathrooms: dbProperty.bathrooms || 0,
+        builtUpArea: dbProperty.built_up_area || 0,
+        city: dbProperty.city || "",
+        country: dbProperty.country || "Egypt",
+        address: dbProperty.address || null,
+        projectName: dbProperty.project_name || null,
+        developerName: dbProperty.developer_name || null,
+        downPayment: dbProperty.down_payment || null,
+        installmentAmount: dbProperty.installment_amount || null,
+        installmentPeriod: dbProperty.installment_period || null,
+        isFullCash: dbProperty.is_full_cash || false,
+        hasInstallments: dbProperty.has_installments || false,
+        images: dbProperty.images || [],
+        isFeatured: dbProperty.is_featured || false,
+        isHighlighted: dbProperty.is_highlighted || false,
+        isNewListing: dbProperty.is_new_listing || false,
+        createdAt: dbProperty.created_at || new Date().toISOString(),
+        updatedAt: dbProperty.updated_at || new Date().toISOString(),
+        createdBy: dbProperty.created_by || null,
+        yearBuilt: dbProperty.year_built || null,
+        references: dbProperty.references || ""
       };
       
-      return completeProperty;
+      console.log(`DB: Successfully returned property data for ID ${id}`);
+      return property;
       
     } catch (error) {
       console.error(`DB Error fetching property ${id}:`, error);
       
-      // Try with a more basic SQL query as a last resort
+      // Try with a more basic query as a last resort
       try {
         console.log(`DB: Trying minimalist query for property ${id}`);
         
-        const basicResult = await db.execute(
-          `SELECT id, title, description, price, status FROM properties WHERE id = ${id}`
+        const basicResult = await pool.query(
+          "SELECT id, title, description, price, status FROM properties WHERE id = $1",
+          [id]
         );
         
-        if (!basicResult || !Array.isArray(basicResult) || basicResult.length === 0) {
+        if (!basicResult || basicResult.rowCount === 0) {
           console.log(`DB: Property ${id} not found with basic query`);
           return undefined;
         }
         
-        const basicProperty = basicResult[0];
+        const basicProperty = basicResult.rows[0];
         
         if (basicProperty && basicProperty.id) {
           console.log(`DB: Found basic property data for ID ${id}`);
@@ -1623,24 +1635,44 @@ export class DatabaseStorage implements IStorage {
       if ('country' in updates) dbUpdates.country = updates.country;
       if ('yearBuilt' in updates) dbUpdates.year_built = updates.yearBuilt;
       if ('status' in updates) dbUpdates.status = updates.status;
+      if ('images' in updates) dbUpdates.images = updates.images;
       
       console.log(`Converted database updates:`, dbUpdates);
       
-      // Use direct SQL update for maximum flexibility
-      const updateResult = await db.execute(
-        `UPDATE properties 
-         SET ${Object.entries(dbUpdates).map(([key, _]) => `${key} = $${key}`).join(', ')} 
-         WHERE id = ${id} 
-         RETURNING *`,
-        dbUpdates
-      );
+      // Build the SET clause parts of the SQL query and parameters array
+      const setClauseParts = [];
+      const queryParams = [];
+      let paramIndex = 1;
       
-      if (!updateResult || updateResult.length === 0) {
+      for (const [key, value] of Object.entries(dbUpdates)) {
+        setClauseParts.push(`${key} = $${paramIndex}`);
+        queryParams.push(value);
+        paramIndex++;
+      }
+      
+      // Add the ID as the last parameter
+      queryParams.push(id);
+      
+      // Construct the full query
+      const query = `
+        UPDATE properties 
+        SET ${setClauseParts.join(', ')} 
+        WHERE id = $${paramIndex} 
+        RETURNING *
+      `;
+      
+      console.log(`Executing query: ${query}`);
+      console.log(`With parameters:`, queryParams);
+      
+      // Execute the query using pool.query
+      const result = await pool.query(query, queryParams);
+      
+      if (!result || result.rowCount === 0) {
         console.log(`DB: Failed to update property ${id}`);
         return undefined;
       }
       
-      const updatedProperty = updateResult[0];
+      const updatedProperty = result.rows[0];
       
       // Convert property back to camelCase for frontend
       const propertyResult = {
@@ -1670,7 +1702,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: updatedProperty.created_at,
         updatedAt: updatedProperty.updated_at,
         references: updates.references || '',
-        images: updatedProperty.images
+        images: updatedProperty.images || []
       };
       
       console.log(`DB: Successfully updated property ${id}`);
