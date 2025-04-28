@@ -360,10 +360,19 @@ export default function PropertyForm({
   });
 
   // Handle image upload with improved error handling and cross-browser compatibility
-  const uploadImages = async (propertyId: number) => {
+  const uploadImages = async (propertyId: number | undefined) => {
+    if (!propertyId) {
+      console.error("Property ID is required for image upload");
+      throw new Error("Property ID is required for image upload");
+    }
     try {
       setUploading(true);
       console.log(`Starting image upload process for property ID ${propertyId}...`);
+      
+      if (images.length === 0) {
+        console.log("No new images selected, skipping image upload");
+        return { success: true, message: "No new images to upload" };
+      }
       
       // Create a new FormData object for uploading files
       const formData = new FormData();
@@ -377,6 +386,11 @@ export default function PropertyForm({
         return true;
       });
       
+      if (validImages.length === 0) {
+        console.log("No valid images to upload after filtering");
+        return { success: true, message: "No valid images to upload" };
+      }
+      
       console.log(`Processing ${validImages.length} valid images for upload`);
       
       // Append each valid image to the FormData
@@ -389,7 +403,7 @@ export default function PropertyForm({
         formData.append('images', image, fileName);
       });
       
-      console.log(`Sending upload request to /api/upload/property-images/${propertyId}`);
+      console.log(`Sending upload request to server for property ID ${propertyId}`);
       
       // Set explicit timeout for fetch operations
       const controller = new AbortController();
@@ -474,10 +488,53 @@ export default function PropertyForm({
         builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
       };
 
-      // If we're editing and there are existing images, make sure they're included
-      if (isEditing && existingImages.length > 0) {
-        // Ensure we don't lose the existing images when updating
-        console.log("Preserving existing images in submission:", existingImages);
+      // First save the property data to get an ID (for new properties)
+      console.log("Saving property data first...");
+      const savedProperty = await mutation.mutateAsync(formattedData);
+      console.log("Property saved successfully:", savedProperty);
+      
+      // For new properties, use the returned ID; for editing, use the existing ID prop
+      const savedPropertyId = isEditing ? Number(propertyId) : savedProperty.id;
+      console.log(`Using property ID ${savedPropertyId} for image upload`);
+      
+      // Only attempt image upload if there are new images
+      if (images.length > 0) {
+        try {
+          console.log(`Uploading ${images.length} new images...`);
+          const uploadResult = await uploadImages(savedPropertyId);
+          console.log("Image upload result:", uploadResult);
+          
+          // If we have new image URLs from the upload, update the property with them
+          if (uploadResult && uploadResult.imageUrls && uploadResult.imageUrls.length > 0) {
+            console.log("New image URLs:", uploadResult.imageUrls);
+            
+            // Combine existing and new images
+            const allImages = [
+              ...(existingImages || []),
+              ...(uploadResult.imageUrls || [])
+            ].filter(Boolean);
+            
+            console.log("All images after upload:", allImages);
+            
+            // Update the property with the combined image list if needed
+            if (allImages.length > 0 && !isEditing) {
+              console.log("Updating property with all images...");
+              await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
+                images: allImages 
+              });
+            }
+          }
+        } catch (uploadError) {
+          console.error("Error during image upload:", uploadError);
+          toast({
+            title: "Warning",
+            description: "Property was saved but there was an issue with image upload.",
+            variant: "destructive"
+          });
+        }
+      } else if (isEditing && existingImages.length > 0) {
+        // For editing with existing images but no new ones
+        console.log("No new images to upload, preserving existing images:", existingImages);
         
         // Make sure images are properly formatted for JSON
         // The server expects an array of strings, not an object
@@ -517,11 +574,31 @@ export default function PropertyForm({
         }
         
         console.log("Formatted images for submission:", formattedImages);
-        formattedData.images = formattedImages;
+        // Update property directly with the formatted images
+        if (formattedImages.length > 0) {
+          try {
+            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
+              images: formattedImages 
+            });
+          } catch (updateError) {
+            console.error("Error updating property images:", updateError);
+          }
+        }
       }
-
-      console.log("Formatted data for submission:", formattedData);
-      await mutation.mutateAsync(formattedData);
+      
+      console.log("Property submission completed successfully");
+      
+      // Show success message
+      toast({
+        title: isEditing ? "Property updated" : "Property created",
+        description: "Property has been saved successfully",
+        variant: "default"
+      });
+      
+      // Call the onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error('Submission error:', error);
       toast({
