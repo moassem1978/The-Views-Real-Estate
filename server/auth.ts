@@ -352,9 +352,13 @@ export function setupAuth(app: Express) {
         console.log(`Login successful for ${user.username} (${user.role})`);
         console.log(`Session ID: ${req.sessionID}`);
         
-        // Show session expiration
-        if (req.session.cookie.expires) {
-          console.log(`Session expires: ${req.session.cookie.expires}`);
+        // Set session to expire in 30 days
+        if (req.session) {
+          req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+          console.log(`Session created with 30-day expiration for ${user.username}`);
+          if (req.session.cookie.expires) {
+            console.log(`Session expires: ${req.session.cookie.expires}`);
+          }
         }
         
         // Return the user without the password
@@ -401,14 +405,34 @@ export function setupAuth(app: Express) {
     
     const user = req.user as SelectUser;
     
-    // Touch the session to extend its life
+    // Extend session expiration with each user request
     if (req.session) {
+      // Extend session to 30 days with each authenticated request
+      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
       req.session.touch();
+      console.log(`Session extended for ${user.username}, new expiry: ${req.session.cookie.expires}`);
     }
     
     // Return user without password
     const { password, ...userWithoutPassword } = user;
     
+    res.json(userWithoutPassword);
+  });
+  
+  // Add a session refresh endpoint
+  app.post("/api/auth/refresh", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
+    // Extend session
+    const user = req.user as SelectUser;
+    if (req.session) {
+      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+      console.log(`Session explicitly refreshed for ${user.username}, new expiry: ${req.session.cookie.expires}`);
+    }
+    
+    const { password, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);
   });
 }

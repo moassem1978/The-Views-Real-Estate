@@ -164,19 +164,45 @@ export default function PropertyForm({
   // Create or update property mutation
   const mutation = useMutation({
     mutationFn: async (data: any) => {
-      const url = isEditing ? `/api/properties/${propertyId}` : '/api/properties';
-      const method = isEditing ? 'PUT' : 'POST';
+      try {
+        // First try to refresh the auth session
+        try {
+          await apiRequest("POST", "/api/auth/refresh");
+          console.log("Authentication refreshed successfully");
+        } catch (authError) {
+          console.warn("Authentication refresh failed, will try request anyway", authError);
+        }
+        
+        const url = isEditing ? `/api/properties/${propertyId}` : '/api/properties';
+        const method = isEditing ? 'PUT' : 'POST';
 
-      // First, create or update the property
-      const response = await apiRequest(method, url, data);
-      const result = await response.json();
+        // Then, create or update the property
+        const response = await apiRequest(method, url, data);
+        const result = await response.json();
 
-      // Then, if there are images to upload, upload them
-      if (images.length > 0) {
-        await uploadImages(result.id);
+        // Finally, if there are images to upload, upload them
+        if (images.length > 0) {
+          await uploadImages(result.id);
+        }
+
+        return result;
+      } catch (error: any) {
+        // Handle 401 errors specifically
+        if (error.message && error.message.includes('401')) {
+          // Show a more specific error and redirect to login
+          toast({
+            title: "Authentication Required",
+            description: "Please log in again to continue.",
+            variant: "destructive",
+          });
+          
+          // Redirect to login after a brief delay
+          setTimeout(() => {
+            window.location.href = '/auth';
+          }, 2000);
+        }
+        throw error;
       }
-
-      return result;
     },
     onSuccess: () => {
       toast({
