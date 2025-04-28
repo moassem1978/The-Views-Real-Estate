@@ -308,24 +308,24 @@ export default function PropertyForm({
                 />
 
                 <FormField
-                    control={form.control}
-                    name="references"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Reference Number</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter property reference number"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Unique reference number for this property
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  control={form.control}
+                  name="references"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reference Number</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter property reference number"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Unique reference number for this property
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
@@ -475,6 +475,8 @@ export default function PropertyForm({
                           <SelectItem value="Zayed">Zayed</SelectItem>
                           <SelectItem value="North coast">North Coast</SelectItem>
                           <SelectItem value="Red Sea">Red Sea</SelectItem>
+                          <SelectItem value="Dubai">Dubai</SelectItem>
+                          <SelectItem value="London">London</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -484,16 +486,28 @@ export default function PropertyForm({
 
                 <FormField
                   control={form.control}
-                  name="address"
+                  name="country"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Enter the property address" 
-                          {...field} 
-                        />
-                      </FormControl>
+                      <FormLabel>Country</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Egypt">Egypt</SelectItem>
+                          <SelectItem value="UAE">UAE</SelectItem>
+                          <SelectItem value="UK">UK</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        International properties will be featured in the International section
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -506,7 +520,11 @@ export default function PropertyForm({
                     <FormItem>
                       <FormLabel>Project Name*</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter project name" {...field} required />
+                        <Input 
+                          placeholder="Enter project name" 
+                          {...field} 
+                          required 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -520,7 +538,10 @@ export default function PropertyForm({
                     <FormItem>
                       <FormLabel>Developer Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter developer name" {...field} />
+                        <Input 
+                          placeholder="Enter developer name" 
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -529,21 +550,16 @@ export default function PropertyForm({
 
                 <FormField
                   control={form.control}
-                  name="country"
+                  name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Country*</FormLabel>
+                      <FormLabel>Address</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="Country" 
+                          placeholder="Enter property address" 
                           {...field} 
-                          defaultValue="Egypt"
-                          required 
                         />
                       </FormControl>
-                      <FormDescription>
-                        Properties outside Egypt will appear in the International section
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -551,11 +567,13 @@ export default function PropertyForm({
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Pricing Section */}
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Pricing Details</h3>
+              <h3 className="text-lg font-medium mb-4">Pricing</h3>
 
               <div className="space-y-4">
                 <FormField
@@ -623,7 +641,7 @@ export default function PropertyForm({
                       name="installmentPeriod"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Installment Period (years)</FormLabel>
+                          <FormLabel>Installment Period (Years)</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -652,9 +670,11 @@ export default function PropertyForm({
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>Full Cash Payment</FormLabel>
+                        <FormLabel>
+                          Full Cash Payment
+                        </FormLabel>
                         <FormDescription>
-                          Indicates the property requires full cash payment
+                          Only cash payment is accepted for this property
                         </FormDescription>
                       </div>
                     </FormItem>
@@ -664,100 +684,39 @@ export default function PropertyForm({
             </CardContent>
           </Card>
 
-          {/* Display Options Section */}
+          {/* Images & Features Section */}
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Display Options</h3>
+              <h3 className="text-lg font-medium mb-4">Images & Features</h3>
 
               <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="isFeatured"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Featured Property</FormLabel>
-                        <FormDescription>
-                          Featured properties appear in the main carousel
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="isHighlighted"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Highlighted Property</FormLabel>
-                        <FormDescription>
-                          Highlighted properties appear in special sections
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="isNewListing"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">New Listing</FormLabel>
-                        <FormDescription>
-                          New properties are marked as special and appear in the New section
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="pt-4">
+                <div className="space-y-2">
                   <Label htmlFor="images">Property Images</Label>
-                  <div className="mt-2 border rounded-md p-4">
-                    <Label 
-                      htmlFor="images" 
-                      className="flex flex-col items-center justify-center gap-2 cursor-pointer text-center py-8"
-                    >
-                      <Upload className="h-8 w-8 text-[#B87333]" />
-                      <span className="text-sm font-medium">
-                        Click to select images
-                        <span className="text-muted-foreground"> or drag and drop</span>
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        JPG, PNG, or GIF up to 10MB each
-                      </span>
-                    </Label>
-                    <Input
-                      id="images"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
-
+                  <div className="border rounded-md p-4">
+                    <div className="flex items-center justify-center w-full">
+                      <label
+                        htmlFor="file-upload"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="w-8 h-8 mb-2 text-gray-500" />
+                          <p className="text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            PNG, JPG or JPEG (MAX. 5MB per file)
+                          </p>
+                        </div>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          className="hidden"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                    </div>
                     {images.length > 0 && (
                       <div className="mt-4">
                         <p className="text-sm font-medium mb-2">{images.length} file(s) selected</p>
@@ -770,6 +729,71 @@ export default function PropertyForm({
                     )}
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="isFeatured"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Featured</FormLabel>
+                          <FormDescription>
+                            Show on featured properties carousel
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="isHighlighted"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Highlighted</FormLabel>
+                          <FormDescription>
+                            Show in highlighted section
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="isNewListing"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">New Listing</FormLabel>
+                        <FormDescription>
+                          Show in new listings section
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
             </CardContent>
           </Card>
