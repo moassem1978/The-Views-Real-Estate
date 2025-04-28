@@ -591,7 +591,21 @@ export default function PropertyForm({
                     <FormItem>
                       <FormLabel>City*</FormLabel>
                       <Select 
-                        onValueChange={field.onChange} 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          // Update zipCode based on city selection
+                          const defaultZipCodes: Record<string, string> = {
+                            'Cairo': '11511',
+                            'Dubai': '00000',
+                            'London': 'SW1A 1AA',
+                            'Zayed': '12311',
+                            'North coast': '23511',
+                            'Red Sea': '84712'
+                          };
+                          const zipCode = defaultZipCodes[value] || '00000';
+                          form.setValue('zipCode', zipCode);
+                          console.log(`City selected: ${value}, setting zipCode: ${zipCode}`);
+                        }}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -609,6 +623,19 @@ export default function PropertyForm({
                         </SelectContent>
                       </Select>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Hidden zipCode field that's populated based on city selection */}
+                <FormField
+                  control={form.control}
+                  name="zipCode"
+                  render={({ field }) => (
+                    <FormItem className="hidden">
+                      <FormControl>
+                        <Input type="hidden" {...field} />
+                      </FormControl>
                     </FormItem>
                   )}
                 />
