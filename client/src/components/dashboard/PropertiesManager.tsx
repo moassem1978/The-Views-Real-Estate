@@ -169,30 +169,20 @@ export default function PropertiesManager() {
   // Handle edit property
   const handleEditProperty = async (id: number) => {
     try {
-      // First try to find property in existing data
-      let property = properties.find(p => p.id === id);
+      // Log the intent to edit
+      console.log("Setting property for edit, ID:", id);
       
-      if (!property) {
-        // If not found in current data, fetch from API
-        const response = await apiRequest("GET", `/api/properties/${id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch property');
-        }
-        property = await response.json();
-      }
-
-      if (!property) {
-        throw new Error('Property not found');
-      }
-
-      console.log("Setting property for edit:", property);
+      // Simply set the ID and show the form - the PropertyForm will handle fetching
       setEditingPropertyId(id);
       setShowPropertyForm(true);
+      
+      // Pre-invalidate the query to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/properties", id] });
     } catch (error) {
-      console.error("Failed to fetch property details:", error);
+      console.error("Error preparing property edit:", error);
       toast({
         title: "Error",
-        description: "Failed to load property details. Please try again.",
+        description: "Failed to prepare property edit. Please try again.",
         variant: "destructive"
       });
     }

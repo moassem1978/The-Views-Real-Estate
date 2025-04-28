@@ -57,12 +57,29 @@ export default function PropertyForm({
     queryKey: ["/api/properties", propertyId],
     queryFn: async () => {
       try {
+        if (!propertyId) {
+          throw new Error("No property ID provided");
+        }
+        
         console.log(`Fetching property data for ID: ${propertyId}`);
+        
+        // Try to get property from cache first
+        const propertiesCache = queryClient.getQueryData<{ data: Property[] }>(["/api/properties"]);
+        if (propertiesCache?.data) {
+          const cachedProperty = propertiesCache.data.find(p => p.id === propertyId);
+          if (cachedProperty) {
+            console.log("Found property in cache:", cachedProperty);
+            return cachedProperty;
+          }
+        }
+        
+        // If not in cache, fetch from server
         const res = await apiRequest("GET", `/api/properties/${propertyId}`);
         if (!res.ok) {
           console.error(`Error fetching property ${propertyId}: ${res.status} ${res.statusText}`);
           throw new Error(`Failed to fetch property (Status: ${res.status})`);
         }
+        
         const data = await res.json();
         console.log("Successfully fetched property data:", data);
         return data;
@@ -70,14 +87,14 @@ export default function PropertyForm({
         console.error("Error in property fetch query:", error);
         toast({
           title: "Error loading property",
-          description: error instanceof Error ? error.message : "Failed to fetch property details",
+          description: "Failed to fetch property details. Please try again.",
           variant: "destructive"
         });
         throw error;
       }
     },
     enabled: !!propertyId,
-    retry: 1,
+    retry: 2,
   });
 
   // Form setup
