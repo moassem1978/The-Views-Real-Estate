@@ -424,8 +424,9 @@ export default function PropertyForm({
           console.log('Response was received but not JSON. This is OK for uploads.');
           return { success: true, message: 'Images uploaded successfully' };
         }
-      } catch (fetchError) {
+      } catch (error) {
         // Handle abort errors differently
+        const fetchError = error as Error;
         if (fetchError.name === 'AbortError') {
           console.error('Upload request timed out');
           throw new Error('Upload timed out. Please try with fewer or smaller images.');
@@ -474,9 +475,10 @@ export default function PropertyForm({
             }
             // If it's an object, stringify it safely
             if (typeof img === 'object' && img !== null) {
-              // If it has a toString method that returns a useful string, use that
+              // If it's not a plain object, try to convert it to a string
               if (Object.prototype.toString.call(img) !== '[object Object]') {
-                return img.toString();
+                // We know it's not a plain object, so we can safely cast
+                return String(img);
               }
               // Otherwise, use JSON.stringify
               try {

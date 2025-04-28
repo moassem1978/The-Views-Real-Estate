@@ -1176,7 +1176,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       // Get the property to update
-      const property = await storage.getPropertyById(propertyId);
+      const property = await dbStorage.getPropertyById(propertyId);
       if (!property) {
         console.error(`Property not found: ${propertyId}`);
         return res.status(404).json({ message: "Property not found" });
@@ -1201,7 +1201,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.log("Updated images array:", updatedImages);
 
       // Update the property with the new images
-      const updatedProperty = await storage.updateProperty(propertyId, {
+      const updatedProperty = await dbStorage.updateProperty(propertyId, {
         images: updatedImages
       });
 
