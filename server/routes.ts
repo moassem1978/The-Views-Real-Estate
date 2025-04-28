@@ -1460,9 +1460,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Keep the existing endpoint for backward compatibility
+  // Cross-platform simple upload endpoint (works with Windows and iOS)
   app.post("/api/upload/property-images-simple", finalUpload.array('images', 10), async (req: Request, res: Response) => {
-    console.log("Using Windows-compatible simple upload endpoint");
+    console.log("==== CROSS-PLATFORM SIMPLE UPLOAD ENDPOINT CALLED ====");
+    console.log("User agent:", req.headers['user-agent']);
+    console.log("Content type:", req.headers['content-type']);
     
     try {
       // Check if user is authenticated
@@ -1475,7 +1477,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const user = req.user as Express.User;
       console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
 
-      console.log("Request body:", req.body);
+      // Deep inspection of request body
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
       
       // Get property ID from request body
       const propertyId = parseInt(req.body.propertyId);
@@ -1616,7 +1619,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         });
       }
     } catch (error) {
-      console.error('Error in Windows-compatible upload endpoint:', error);
+      console.error('Error in cross-platform upload endpoint:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(500).json({ message: `Failed to upload property images: ${errorMessage}` });
     }

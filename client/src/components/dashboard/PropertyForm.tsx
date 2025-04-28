@@ -396,19 +396,25 @@ export default function PropertyForm({
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       try {
-        // Windows specific - use a different endpoint for compatibility
+        // Detect device type for compatibility
         const isWindows = navigator.userAgent.indexOf('Windows') !== -1;
-        // Use the simpler endpoint for Windows which has fewer field restrictions
-        const endpoint = isWindows 
+        const isiOS = /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
+        const useSimpleEndpoint = isWindows || isiOS;
+        
+        console.log(`Detected device: ${isWindows ? 'Windows' : (isiOS ? 'iOS' : 'Other')}`);
+        
+        // Use the simpler endpoint for Windows/iOS which has fewer field restrictions
+        const endpoint = useSimpleEndpoint
           ? `/api/upload/property-images-simple` 
           : `/api/upload/property-images/${propertyId}`;
         
-        // If using Windows endpoint, we need to include the property ID in the form data
-        if (isWindows) {
+        // If using simple endpoint, we need to include the property ID in the form data
+        if (useSimpleEndpoint) {
           formData.append('propertyId', propertyId.toString());
+          console.log(`Added property ID ${propertyId} to form data for simple endpoint`);
         }
         
-        console.log(`Using ${isWindows ? 'Windows-compatible' : 'standard'} endpoint: ${endpoint}`);
+        console.log(`Using ${useSimpleEndpoint ? 'simple-compatible' : 'standard'} endpoint: ${endpoint}`);
         
         const response = await fetch(endpoint, {
           method: 'POST',

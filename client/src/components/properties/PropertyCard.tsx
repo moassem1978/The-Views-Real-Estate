@@ -128,12 +128,15 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
             <h3 className="mt-1 font-serif text-xl font-semibold text-gray-800 leading-tight">{property.title}</h3>
             
-            {/* Reference Number - Add this to display the reference */}
-            {property.references && (
+            {/* Reference Number - Enhanced display with logging */}
+            {property.references && property.references.trim() !== '' && (
               <div className="mt-1 text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded inline-block">
                 Ref: {property.references}
               </div>
             )}
+            
+            {/* Debug logging for reference field */}
+            {console.log(`Property ${property.id} reference: "${property.references}", type: ${typeof property.references}`)}
 
             {/* Project & Developer Info */}
             {(property.projectName || property.developerName) && (
