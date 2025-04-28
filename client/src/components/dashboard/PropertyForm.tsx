@@ -75,6 +75,24 @@ export default function PropertyForm({
         
         // If not in cache, fetch from server
         const res = await apiRequest("GET", `/api/properties/${propertyId}`);
+        
+        // Handle 404 specifically
+        if (res.status === 404) {
+          console.error(`Property with ID ${propertyId} not found`);
+          toast({
+            title: "Property not found",
+            description: `The property with ID ${propertyId} does not exist or was deleted.`,
+            variant: "destructive"
+          });
+          
+          // Return null to immediately close the form
+          setTimeout(() => {
+            if (onCancel) onCancel();
+          }, 1500);
+          
+          throw new Error(`Property with ID ${propertyId} not found`);
+        }
+        
         if (!res.ok) {
           console.error(`Error fetching property ${propertyId}: ${res.status} ${res.statusText}`);
           throw new Error(`Failed to fetch property (Status: ${res.status})`);
@@ -94,7 +112,14 @@ export default function PropertyForm({
       }
     },
     enabled: !!propertyId,
-    retry: 2,
+    retry: (failureCount, error: any) => {
+      // Don't retry if the property doesn't exist
+      if (error?.message?.includes("not found")) {
+        return false;
+      }
+      // Otherwise retry up to 2 times for other errors
+      return failureCount < 2;
+    },
   });
 
   // Form setup
