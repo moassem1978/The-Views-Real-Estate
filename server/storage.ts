@@ -1595,30 +1595,86 @@ export class DatabaseStorage implements IStorage {
   async updateProperty(id: number, updates: Partial<Property>): Promise<Property | undefined> {
     try {
       console.log(`DB: Updating property with ID ${id}`);
+      console.log(`Received update data:`, updates);
       
-      // Remove references field from updates if it exists, since the DB doesn't have this column
-      const { references, ...safeUpdates } = updates as any;
+      // Convert camelCase keys to snake_case for database
+      const dbUpdates: any = {};
       
-      // Use Drizzle's update operation with the filtered fields
-      const [updatedProperty] = await db
-        .update(properties)
-        .set(safeUpdates)
-        .where(eq(properties.id, id))
-        .returning();
+      // Map camelCase to snake_case for all possible property fields
+      if ('title' in updates) dbUpdates.title = updates.title;
+      if ('description' in updates) dbUpdates.description = updates.description;
+      if ('propertyType' in updates) dbUpdates.property_type = updates.propertyType;
+      if ('listingType' in updates) dbUpdates.listing_type = updates.listingType;
+      if ('price' in updates) dbUpdates.price = updates.price;
+      if ('downPayment' in updates) dbUpdates.down_payment = updates.downPayment;
+      if ('installmentAmount' in updates) dbUpdates.installment_amount = updates.installmentAmount;
+      if ('installmentPeriod' in updates) dbUpdates.installment_period = updates.installmentPeriod;
+      if ('isFullCash' in updates) dbUpdates.is_full_cash = updates.isFullCash;
+      if ('city' in updates) dbUpdates.city = updates.city;
+      if ('projectName' in updates) dbUpdates.project_name = updates.projectName;
+      if ('developerName' in updates) dbUpdates.developer_name = updates.developerName;
+      if ('address' in updates) dbUpdates.address = updates.address;
+      if ('bedrooms' in updates) dbUpdates.bedrooms = updates.bedrooms;
+      if ('bathrooms' in updates) dbUpdates.bathrooms = updates.bathrooms;
+      if ('builtUpArea' in updates) dbUpdates.built_up_area = updates.builtUpArea;
+      if ('isFeatured' in updates) dbUpdates.is_featured = updates.isFeatured;
+      if ('isHighlighted' in updates) dbUpdates.is_highlighted = updates.isHighlighted;
+      if ('isNewListing' in updates) dbUpdates.is_new_listing = updates.isNewListing;
+      if ('country' in updates) dbUpdates.country = updates.country;
+      if ('yearBuilt' in updates) dbUpdates.year_built = updates.yearBuilt;
+      if ('status' in updates) dbUpdates.status = updates.status;
       
-      if (!updatedProperty) {
+      console.log(`Converted database updates:`, dbUpdates);
+      
+      // Use direct SQL update for maximum flexibility
+      const updateResult = await db.execute(
+        `UPDATE properties 
+         SET ${Object.entries(dbUpdates).map(([key, _]) => `${key} = $${key}`).join(', ')} 
+         WHERE id = ${id} 
+         RETURNING *`,
+        dbUpdates
+      );
+      
+      if (!updateResult || updateResult.length === 0) {
         console.log(`DB: Failed to update property ${id}`);
         return undefined;
       }
       
-      // Add the references field back to the returned object
-      const propertyWithReferences = {
-        ...updatedProperty,
-        references: references || updatedProperty.references || '',
+      const updatedProperty = updateResult[0];
+      
+      // Convert property back to camelCase for frontend
+      const propertyResult = {
+        id: updatedProperty.id,
+        title: updatedProperty.title,
+        description: updatedProperty.description,
+        propertyType: updatedProperty.property_type,
+        listingType: updatedProperty.listing_type,
+        price: updatedProperty.price,
+        downPayment: updatedProperty.down_payment,
+        installmentAmount: updatedProperty.installment_amount,
+        installmentPeriod: updatedProperty.installment_period,
+        isFullCash: updatedProperty.is_full_cash,
+        city: updatedProperty.city,
+        projectName: updatedProperty.project_name,
+        developerName: updatedProperty.developer_name,
+        address: updatedProperty.address,
+        bedrooms: updatedProperty.bedrooms,
+        bathrooms: updatedProperty.bathrooms,
+        builtUpArea: updatedProperty.built_up_area,
+        isFeatured: updatedProperty.is_featured,
+        isHighlighted: updatedProperty.is_highlighted,
+        isNewListing: updatedProperty.is_new_listing,
+        country: updatedProperty.country,
+        yearBuilt: updatedProperty.year_built,
+        status: updatedProperty.status,
+        createdAt: updatedProperty.created_at,
+        updatedAt: updatedProperty.updated_at,
+        references: updates.references || '',
+        images: updatedProperty.images
       };
       
       console.log(`DB: Successfully updated property ${id}`);
-      return propertyWithReferences;
+      return propertyResult as Property;
     } catch (error) {
       console.error(`DB Error updating property ${id}:`, error);
       throw error;

@@ -128,29 +128,31 @@ export default function PropertyForm({
   useEffect(() => {
     if (property && isEditing) {
       console.log("Setting form data for property:", property);
+      
+      // Handle both camelCase and snake_case property names
       const formData = {
         title: property.title,
         description: property.description,
-        propertyType: property.propertyType,
-        listingType: property.listingType,
+        propertyType: property.propertyType || property.property_type,
+        listingType: property.listingType || property.listing_type,
         price: property.price,
-        downPayment: property.downPayment,
-        installmentAmount: property.installmentAmount,
-        installmentPeriod: property.installmentPeriod,
-        isFullCash: property.isFullCash,
+        downPayment: property.downPayment || property.down_payment,
+        installmentAmount: property.installmentAmount || property.installment_amount,
+        installmentPeriod: property.installmentPeriod || property.installment_period,
+        isFullCash: property.isFullCash || property.is_full_cash,
         city: property.city,
-        projectName: property.projectName,
-        developerName: property.developerName,
+        projectName: property.projectName || property.project_name,
+        developerName: property.developerName || property.developer_name,
         address: property.address,
         bedrooms: property.bedrooms,
         bathrooms: property.bathrooms,
-        builtUpArea: property.builtUpArea,
-        isFeatured: property.isFeatured,
-        isHighlighted: property.isHighlighted,
-        isNewListing: property.isNewListing,
+        builtUpArea: property.builtUpArea || property.built_up_area,
+        isFeatured: property.isFeatured || property.is_featured,
+        isHighlighted: property.isHighlighted || property.is_highlighted,
+        isNewListing: property.isNewListing || property.is_new_listing,
         country: property.country,
         references: property.references,
-        yearBuilt: property.yearBuilt,
+        yearBuilt: property.yearBuilt || property.year_built,
         images: property.images
       };
       
@@ -234,15 +236,28 @@ export default function PropertyForm({
   // Handle form submission
   const onSubmit = async (data: any) => {
     try {
-      // Convert boolean values to database format if needed
+      console.log("Submitting form data:", data);
+      // Ensure all numeric fields are parsed as numbers
       const formattedData = {
         ...data,
-        // Handle special cases for the database
+        price: typeof data.price === 'string' ? parseInt(data.price) : data.price,
+        downPayment: typeof data.downPayment === 'string' ? parseInt(data.downPayment) : data.downPayment,
+        installmentAmount: typeof data.installmentAmount === 'string' ? parseInt(data.installmentAmount) : data.installmentAmount,
+        installmentPeriod: typeof data.installmentPeriod === 'string' ? parseInt(data.installmentPeriod) : data.installmentPeriod,
+        bedrooms: typeof data.bedrooms === 'string' ? parseInt(data.bedrooms) : data.bedrooms,
+        bathrooms: typeof data.bathrooms === 'string' ? parseInt(data.bathrooms) : data.bathrooms,
+        builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
       };
 
+      console.log("Formatted data for submission:", formattedData);
       await mutation.mutateAsync(formattedData);
     } catch (error) {
       console.error('Submission error:', error);
+      toast({
+        title: "Error saving property",
+        description: error instanceof Error ? error.message : "Failed to save property data",
+        variant: "destructive"
+      });
     }
   };
 
