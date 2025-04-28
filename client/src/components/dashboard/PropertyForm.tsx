@@ -399,7 +399,21 @@ export default function PropertyForm({
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       try {
-        const response = await fetch(`/api/upload/property-images/${propertyId}`, {
+        // Windows specific - use a different endpoint for compatibility
+        const isWindows = navigator.userAgent.indexOf('Windows') !== -1;
+        // Use the simpler endpoint for Windows which has fewer field restrictions
+        const endpoint = isWindows 
+          ? `/api/upload/property-images-simple` 
+          : `/api/upload/property-images/${propertyId}`;
+        
+        // If using Windows endpoint, we need to include the property ID in the form data
+        if (isWindows) {
+          formData.append('propertyId', propertyId.toString());
+        }
+        
+        console.log(`Using ${isWindows ? 'Windows-compatible' : 'standard'} endpoint: ${endpoint}`);
+        
+        const response = await fetch(endpoint, {
           method: 'POST',
           body: formData,
           signal: controller.signal,

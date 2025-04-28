@@ -1462,75 +1462,163 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   // Keep the existing endpoint for backward compatibility
   app.post("/api/upload/property-images-simple", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+    console.log("Using Windows-compatible simple upload endpoint");
+    
     try {
       // Check if user is authenticated
       if (!req.isAuthenticated()) {
-        console.error("Simple property images upload failed: User not authenticated");
-        return res.status(401).json({ message: "Authentication required" });
+        console.error("Property images upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to upload property images" });
       }
 
+      // Get the authenticated user from request
       const user = req.user as Express.User;
-      console.log(`User ${user.username} (${user.role}) attempting simple property image upload`);
+      console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
+
+      console.log("Request body:", req.body);
+      
+      // Get property ID from request body
+      const propertyId = parseInt(req.body.propertyId);
+      if (isNaN(propertyId) || propertyId <= 0) {
+        console.error(`Invalid property ID from form: ${req.body.propertyId}`);
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+      
+      console.log(`Processing images for property ID: ${propertyId}`);
 
       if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+        console.log("No property image files received");
         return res.status(400).json({ message: "No files uploaded" });
       }
 
-      // Use proper type for multer files
-      const uploadedFiles = req.files as Express.Multer.File[];
-      console.log(`Simple upload: Processing ${uploadedFiles.length} files`);
+      console.log(`Received ${Array.isArray(req.files) ? req.files.length : 0} files for upload`);
 
-      // Create output directory
-      const outputDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-      fs.mkdirSync(outputDir, { recursive: true });
+      // Use the Express.Multer.File type to correctly handle files
+      const files = Array.isArray(req.files) 
+        ? req.files as Express.Multer.File[]
+        : [req.files as unknown as Express.Multer.File];
 
+      // Ensure the property uploads directory exists with proper permissions
+      const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+      fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
+      console.log(`Ensured uploads directory exists: ${publicUploadsDir}`);
+
+      // Process the files
       const fileUrls: string[] = [];
 
-      for (const file of uploadedFiles) {
-        // Generate a unique filename with timestamp
-        const timestamp = Date.now();
-        const fileExt = path.extname(file.originalname);
-        const baseName = path.basename(file.originalname, fileExt).replace(/[^a-zA-Z0-9]/g, '_');
-        const newFilename = `${baseName}_${timestamp}${fileExt}`;
+      for (const file of files) {
+        try {
+          console.log(`Processing file: ${file.originalname}, size: ${(file.size / 1024).toFixed(2)}KB`);
 
-        // Save to public/uploads/properties
-        const outputPath = path.join(outputDir, newFilename);
+          const destPath = path.join(publicUploadsDir, file.filename);
 
-        console.log(`Processing file ${file.originalname}:
-          - Size: ${file.size}
-          - MIME Type: ${file.mimetype}
-          - Has buffer: ${!!file.buffer}
-          - Has path: ${!!file.path}
-          - Output path: ${outputPath}
-        `);
+          // Direct approach: if we have a buffer, write it to the destination
+          if (file.buffer) {
+            fs.writeFileSync(destPath, file.buffer);
+            console.log(`Wrote file directly from buffer to ${destPath}`);
+          } 
+          // If we have the file.path, copy it to the destination
+          else if (file.path && fs.existsSync(file.path)) {
+            fs.copyFileSync(file.path, destPath);
+            console.log(`Copied file from ${file.path} to ${destPath}`);
+          }
+          // Double-check that the file exists at the expected location
+          else if (!fs.existsSync(destPath)) {
+            console.error(`File not found at ${destPath}, trying to recover`);
 
-        // Write file to disk - handle buffer properly
-        if (file.buffer && Buffer.isBuffer(file.buffer)) {
-          fs.writeFileSync(outputPath, file.buffer);
-          console.log(`Simple upload: Saved ${newFilename} from buffer`);
-        } else if (file.path && fs.existsSync(file.path)) {
-          // If we have a path instead of buffer, copy the file
-          fs.copyFileSync(file.path, outputPath);
-          console.log(`Simple upload: Copied from ${file.path} to ${outputPath}`);
-        } else {
-          throw new Error(`Cannot save file ${file.originalname}: No valid buffer or path`);
+            // Check if the file exists in the temp upload location
+            const tempPath = path.join(process.cwd(), 'uploads', 'properties', file.filename);
+            if (fs.existsSync(tempPath)) {
+              fs.copyFileSync(tempPath, destPath);
+              console.log(`Recovered file from ${tempPath} to ${destPath}`);
+            } else {
+              console.error(`File not found in any location, cannot recover`);
+            }
+          }
+
+          // Verify file was successfully saved
+          if (fs.existsSync(destPath)) {
+            console.log(`File successfully saved at ${destPath}`);
+
+            // Get file stats to verify
+            const stats = fs.statSync(destPath);
+            console.log(`File size on disk: ${stats.size} bytes`);
+
+            // Add URL to results
+            const fileUrl = `/uploads/properties/${file.filename}`;
+            fileUrls.push(fileUrl);
+          } else {
+            console.error(`Failed to save file ${file.originalname}`);
+            throw new Error(`Failed to save file ${file.originalname}`);
+          }
+
+          // Touch the session to keep it alive
+          if (req.session) {
+            req.session.touch();
+          }
+        } catch (fileError) {
+          console.error(`Error processing file ${file.originalname}:`, fileError);
+          return res.status(500).json({ 
+            message: `Error processing file ${file.originalname}`,
+            error: fileError instanceof Error ? fileError.message : 'Unknown error'
+          });
         }
-
-        // Add URL to result
-        fileUrls.push(`/uploads/properties/${newFilename}`);
       }
 
-      console.log(`Simple upload: Successfully processed ${fileUrls.length} files`);
-      res.json({ 
-        message: "Images uploaded successfully", 
-        imageUrls: fileUrls
-      });
+      if (fileUrls.length === 0) {
+        return res.status(500).json({ message: "No files were successfully processed" });
+      }
+
+      // Now update the property with the new images
+      try {
+        const property = await dbStorage.getPropertyById(propertyId);
+        if (!property) {
+          console.error(`Property not found: ${propertyId}`);
+          return res.status(404).json({ message: "Property not found" });
+        }
+
+        // Check permission - owner and admin can update any property, regular users only their own
+        if (user.role === 'user' && property.createdBy !== user.id) {
+          console.error(`Permission denied: User ${user.username} attempted to upload images for property ${propertyId} created by user ${property.createdBy}`);
+          return res.status(403).json({ message: "You do not have permission to update this property" });
+        }
+
+        // Get existing images from the property
+        const existingImages = Array.isArray(property.images) ? property.images : [];
+        console.log("Existing images:", existingImages);
+
+        // Combine existing images with new ones
+        const updatedImages = [...existingImages, ...fileUrls];
+        console.log("Updated images array:", updatedImages);
+
+        // Update the property with the new images
+        const updatedProperty = await dbStorage.updateProperty(propertyId, {
+          images: updatedImages
+        });
+
+        if (!updatedProperty) {
+          console.error(`Failed to update property ${propertyId} with new images`);
+          return res.status(500).json({ message: "Failed to update property with new images" });
+        }
+
+        console.log(`Successfully added ${fileUrls.length} images to property ${propertyId}`);
+        return res.status(200).json({
+          message: "Property images uploaded successfully", 
+          imageUrls: fileUrls,
+          count: fileUrls.length,
+          property: updatedProperty
+        });
+      } catch (dbError) {
+        console.error(`Error updating property ${propertyId} with new images:`, dbError);
+        return res.status(500).json({ 
+          message: "Error updating property with new images",
+          error: dbError instanceof Error ? dbError.message : 'Unknown error'
+        });
+      }
     } catch (error) {
-      console.error('Simple upload error:', error);
-      res.status(500).json({ 
-        message: "Upload failed", 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      });
+      console.error('Error in Windows-compatible upload endpoint:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Failed to upload property images: ${errorMessage}` });
     }
   });
 

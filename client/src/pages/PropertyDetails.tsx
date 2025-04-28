@@ -127,6 +127,14 @@ export default function PropertyDetails() {
                     <h1 className="text-3xl md:text-4xl font-serif font-semibold text-gray-800">
                       {property.title}
                     </h1>
+                    
+                    {/* Reference Number */}
+                    {property.references && (
+                      <div className="mt-2 text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded inline-block">
+                        Reference: {property.references}
+                      </div>
+                    )}
+                    
                     <p className="mt-2 text-gray-600 flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
