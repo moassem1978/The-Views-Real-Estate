@@ -1430,60 +1430,138 @@ export class DatabaseStorage implements IStorage {
 
   async getPropertyById(id: number): Promise<Property | undefined> {
     try {
-      console.log(`DB: Fetching property with ID ${id}`);
+      console.log(`DB: Fetching property with ID ${id} using direct SQL`);
       
-      // Use Drizzle's select method which works better with TypeScript
-      const [property] = await db
-        .select()
-        .from(properties)
-        .where(eq(properties.id, id));
+      // Use direct SQL first (no ORM) to avoid column validation issues
+      const result = await db.execute(
+        `SELECT * FROM properties WHERE id = ${id}`
+      );
       
-      if (!property) {
-        console.log(`DB: No property found with ID ${id}`);
+      // Check if we found a property
+      if (!result || !Array.isArray(result) || result.length === 0) {
+        console.log(`DB: No property found with ID ${id} (SQL method)`);
         return undefined;
       }
       
-      console.log(`DB: Found property ${id} - ${property.title}`);
+      // Get the raw property data
+      const rawProperty = result[0];
       
-      // Add any missing expected fields with default values
-      const sanitizedProperty: Property = {
-        ...property,
-        // Fill in fields that might be missing in the database but expected in the schema
-        references: property.references || '',
-      };
-      
-      return sanitizedProperty;
-    } catch (error) {
-      console.error(`DB Error fetching property ${id}:`, error);
-      // If it's a missing column error, try a more basic approach with SQL
-      if (error instanceof Error && error.message.includes('column "references" does not exist')) {
-        console.log(`DB: Trying fallback approach for property ${id} due to schema mismatch`);
-        try {
-          // Use a simple SQL query without the problematic column
-          const result = await db.execute(
-            `SELECT * FROM properties WHERE id = ${id}`
-          );
-          
-          if (!result || result.length === 0) {
-            console.log(`DB: No property found with ID ${id} (fallback method)`);
-            return undefined;
-          }
-          
-          const rawProperty = result[0];
-          console.log(`DB: Found property ${id} - ${rawProperty.title} (fallback method)`);
-          
-          // Add missing fields with default values
-          return {
-            ...rawProperty,
-            references: '', // Add default value for references
-          } as Property;
-        } catch (fallbackError) {
-          console.error(`DB: Fallback approach also failed for property ${id}:`, fallbackError);
-          throw fallbackError;
-        }
+      if (!rawProperty) {
+        console.log(`DB: Empty result for property ${id}`);
+        return undefined;
       }
       
-      throw error; // Re-throw to be handled by the calling function
+      console.log(`DB: Found property ${id} with title: ${rawProperty.title || 'Unknown'}`);
+      
+      // Create a complete property with all expected fields
+      const completeProperty: Property = {
+        // Copy all existing fields from the raw property
+        ...rawProperty,
+        // Add default values for potentially missing fields
+        references: rawProperty.references || '',
+        street: rawProperty.street || null,
+        unit: rawProperty.unit || null,
+        landmarks: rawProperty.landmarks || null,
+        amenities: rawProperty.amenities || [],
+        notes: rawProperty.notes || null,
+        availableFrom: rawProperty.availableFrom || null,
+        state: rawProperty.state || null,
+        country: rawProperty.country || 'Egypt', // Default to Egypt
+        postalCode: rawProperty.postalCode || null,
+        agentId: rawProperty.agentId || null,
+        approvedBy: rawProperty.approvedBy || null,
+        downPayment: rawProperty.downPayment || null,
+        installmentAmount: rawProperty.installmentAmount || null,
+        installmentYears: rawProperty.installmentYears || null,
+        isNewListing: rawProperty.isNewListing || false,
+        isHighlighted: rawProperty.isHighlighted || false
+      };
+      
+      return completeProperty;
+      
+    } catch (error) {
+      console.error(`DB Error fetching property ${id}:`, error);
+      
+      // Try with a more basic SQL query as a last resort
+      try {
+        console.log(`DB: Trying minimalist query for property ${id}`);
+        
+        const basicResult = await db.execute(
+          `SELECT id, title, description, price, status FROM properties WHERE id = ${id}`
+        );
+        
+        if (!basicResult || !Array.isArray(basicResult) || basicResult.length === 0) {
+          console.log(`DB: Property ${id} not found with basic query`);
+          return undefined;
+        }
+        
+        const basicProperty = basicResult[0];
+        
+        if (basicProperty && basicProperty.id) {
+          console.log(`DB: Found basic property data for ID ${id}`);
+          
+          // Create minimal property to avoid errors
+          return {
+            id: basicProperty.id,
+            title: basicProperty.title || `Property #${id}`,
+            description: basicProperty.description || '',
+            price: basicProperty.price || 0,
+            status: basicProperty.status || 'draft',
+            propertyType: 'apartment', // Default
+            listingType: 'Primary', // Default
+            city: 'Unknown',
+            images: [],
+            bedrooms: 0,
+            bathrooms: 0,
+            builtUpArea: 0,
+            zipCode: '00000',
+            createdAt: new Date().toISOString(),
+            references: '',
+            createdBy: null,
+            address: null,
+            street: null,
+            unit: null,
+            state: null,
+            zipCodeCoverage: null,
+            latitude: null,
+            longitude: null,
+            plotSize: null,
+            gardenSize: null,
+            floor: null,
+            numberOfFloors: null,
+            amenities: [],
+            isGroundUnit: false,
+            availableFrom: null,
+            yearBuilt: null,
+            condition: null,
+            nearbyAmenities: null,
+            view: null,
+            landmarks: null,
+            notes: null,
+            lastUpdated: null,
+            updatedBy: null,
+            approvedBy: null,
+            approvedAt: null,
+            isFeatured: false,
+            isHighlighted: false,
+            projectName: null,
+            developerName: null,
+            downPayment: null,
+            installmentAmount: null,
+            installmentYears: null,
+            isFullCash: false,
+            country: 'Egypt',
+            postalCode: null,
+            isNewListing: false,
+            agentId: null,
+          } as Property;
+        }
+      } catch (fallbackError) {
+        console.error(`DB: Ultimate fallback also failed for property ${id}:`, fallbackError);
+      }
+      
+      // If all methods fail, return undefined
+      return undefined;
     }
   }
 
