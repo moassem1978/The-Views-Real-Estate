@@ -1432,18 +1432,17 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`DB: Fetching property with ID ${id}`);
       
-      // Use raw SQL query to avoid the schema validation issues
-      // This allows us to get whatever columns exist without requiring all columns in the schema
-      const result = await db.execute(`
-        SELECT * FROM properties WHERE id = $1
-      `, [id]);
+      // Use Drizzle's select method which works better with TypeScript
+      const [property] = await db
+        .select()
+        .from(properties)
+        .where(eq(properties.id, id));
       
-      if (!result || result.length === 0) {
+      if (!property) {
         console.log(`DB: No property found with ID ${id}`);
         return undefined;
       }
       
-      const property = result[0];
       console.log(`DB: Found property ${id} - ${property.title}`);
       
       // Add any missing expected fields with default values
@@ -1456,6 +1455,34 @@ export class DatabaseStorage implements IStorage {
       return sanitizedProperty;
     } catch (error) {
       console.error(`DB Error fetching property ${id}:`, error);
+      // If it's a missing column error, try a more basic approach with SQL
+      if (error instanceof Error && error.message.includes('column "references" does not exist')) {
+        console.log(`DB: Trying fallback approach for property ${id} due to schema mismatch`);
+        try {
+          // Use a simple SQL query without the problematic column
+          const result = await db.execute(
+            `SELECT * FROM properties WHERE id = ${id}`
+          );
+          
+          if (!result || result.length === 0) {
+            console.log(`DB: No property found with ID ${id} (fallback method)`);
+            return undefined;
+          }
+          
+          const rawProperty = result[0];
+          console.log(`DB: Found property ${id} - ${rawProperty.title} (fallback method)`);
+          
+          // Add missing fields with default values
+          return {
+            ...rawProperty,
+            references: '', // Add default value for references
+          } as Property;
+        } catch (fallbackError) {
+          console.error(`DB: Fallback approach also failed for property ${id}:`, fallbackError);
+          throw fallbackError;
+        }
+      }
+      
       throw error; // Re-throw to be handled by the calling function
     }
   }
