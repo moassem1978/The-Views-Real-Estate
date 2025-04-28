@@ -147,6 +147,7 @@ export default function PropertyForm({
       isNewListing: true,
       country: "Egypt", // Default to Egypt
       references: "", // Added default value for references
+      zipCode: "" // Required by server
     },
   });
 
@@ -179,6 +180,7 @@ export default function PropertyForm({
         country: property.country,
         references: property.references,
         yearBuilt: property.yearBuilt || property.year_built,
+        zipCode: property.zipCode || property.zip_code || "00000", // Required by server
         images: property.images
       };
       
@@ -206,18 +208,49 @@ export default function PropertyForm({
         
         const url = isEditing ? `/api/properties/${propertyId}` : '/api/properties';
         const method = isEditing ? 'PUT' : 'POST';
-
+        
+        console.log(`FORM SUBMISSION: Making ${method} request to ${url}`);
+        console.log("FORM SUBMISSION DATA:", JSON.stringify(data, null, 2));
+        
+        // Ensure zipCode is present (required by the server)
+        if (!data.zipCode && data.city) {
+          // Default zipCodes for common cities
+          const defaultZipCodes: Record<string, string> = {
+            'Cairo': '11511',
+            'Dubai': '00000',
+            'London': 'SW1A 1AA',
+            'Zayed': '12311',
+            'North coast': '23511',
+            'Gouna': '84513',
+            'Red Sea': '84712'
+          };
+          data.zipCode = (defaultZipCodes[data.city] || '00000');
+          console.log(`Added zipCode: ${data.zipCode} for city: ${data.city}`);
+        }
+        
         // Then, create or update the property
         const response = await apiRequest(method, url, data);
+        console.log(`FORM SUBMISSION: ${method} request status:`, response.status, response.statusText);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`FORM SUBMISSION: API Error (${response.status}):`, errorText);
+          throw new Error(`API Error (${response.status}): ${errorText}`);
+        }
+        
         const result = await response.json();
+        console.log("FORM SUBMISSION: Success response:", result);
 
         // Finally, if there are images to upload, upload them
         if (images.length > 0) {
+          console.log(`FORM SUBMISSION: Uploading ${images.length} new images`);
           await uploadImages(result.id);
         }
 
         return result;
       } catch (error: any) {
+        console.error("FORM SUBMISSION: Caught error:", error);
+        
         // Handle 401 errors specifically
         if (error.message && error.message.includes('401')) {
           // Show a more specific error and redirect to login
