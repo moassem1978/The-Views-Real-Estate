@@ -172,7 +172,45 @@ export default function PropertiesManager() {
       // Log the intent to edit
       console.log("Setting property for edit, ID:", id);
       
-      // Simply set the ID and show the form - the PropertyForm will handle fetching
+      // Check if the property exists in the current properties array
+      const propertyExists = properties?.data?.some(p => p.id === id);
+      
+      if (!propertyExists) {
+        console.warn(`Property ID ${id} not found in current properties list`);
+        
+        // Double-check with the server directly
+        try {
+          const response = await fetch(`/api/properties/${id}`, {
+            credentials: "include",
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache',
+            }
+          });
+          
+          if (response.status === 404) {
+            toast({
+              title: "Property not found",
+              description: `The property with ID ${id} doesn't exist or was deleted.`,
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          if (!response.ok) {
+            throw new Error(`Error checking property: ${response.status}`);
+          }
+          
+          // Property exists, continue with edit
+          console.log(`Property ${id} verified with server`);
+        } catch (checkError) {
+          console.error("Error verifying property:", checkError);
+          // Property verification failed, but we'll continue anyway
+          // The PropertyForm will handle detailed error presentation
+        }
+      }
+      
+      // Set the ID and show the form - the PropertyForm will handle detailed fetching
       setEditingPropertyId(id);
       setShowPropertyForm(true);
       
