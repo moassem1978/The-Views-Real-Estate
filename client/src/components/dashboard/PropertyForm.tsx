@@ -384,11 +384,8 @@ export default function PropertyForm({
         const fileName = image.name || `image-${index}`;
         console.log(`Adding image to form: ${fileName} (${Math.round(image.size / 1024)}KB)`);
         
-        // Use a more generic field name to avoid Windows issues with array naming
-        // Some older browsers have issues with multiple fields with the same name
-        formData.append(`image_${index}`, image, fileName);
-        
-        // Also append the original field name that the server expects
+        // Only use a single field name for the upload - 'images'
+        // Multiple files with the same field name is properly handled by multer
         formData.append('images', image, fileName);
       });
       

@@ -1635,6 +1635,7 @@ export class DatabaseStorage implements IStorage {
       if ('country' in updates) dbUpdates.country = updates.country;
       if ('yearBuilt' in updates) dbUpdates.year_built = updates.yearBuilt;
       if ('status' in updates) dbUpdates.status = updates.status;
+      if ('references' in updates) dbUpdates.references = updates.references;
       // Handle images field specially to prevent JSON syntax errors
       if ('images' in updates) {
         console.log('Processing images field:', updates.images);
@@ -1767,7 +1768,7 @@ export class DatabaseStorage implements IStorage {
         status: updatedProperty.status,
         createdAt: updatedProperty.created_at,
         updatedAt: updatedProperty.updated_at,
-        references: updates.references || '',
+        references: updatedProperty.references || '',
         images: imagesArray
       };
       
