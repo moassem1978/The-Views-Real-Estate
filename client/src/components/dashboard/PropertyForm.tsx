@@ -43,6 +43,7 @@ export default function PropertyForm({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [images, setImages] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const isEditing = !!propertyId;
 
@@ -181,6 +182,11 @@ export default function PropertyForm({
         images: property.images
       };
       
+      // Set existing images if available
+      const propertyImages = property.images || [];
+      console.log("Setting existing property images:", propertyImages);
+      setExistingImages(Array.isArray(propertyImages) ? propertyImages : []);
+      
       console.log("Form data being set:", formData);
       form.reset(formData);
     }
@@ -299,6 +305,13 @@ export default function PropertyForm({
         bathrooms: typeof data.bathrooms === 'string' ? parseInt(data.bathrooms) : data.bathrooms,
         builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
       };
+
+      // If we're editing and there are existing images, make sure they're included
+      if (isEditing && existingImages.length > 0) {
+        // Ensure we don't lose the existing images when updating
+        console.log("Preserving existing images in submission:", existingImages);
+        formattedData.images = existingImages;
+      }
 
       console.log("Formatted data for submission:", formattedData);
       await mutation.mutateAsync(formattedData);
@@ -776,6 +789,35 @@ export default function PropertyForm({
                 <div className="space-y-2">
                   <Label htmlFor="images">Property Images</Label>
                   <div className="border rounded-md p-4">
+                    {/* Existing Images Display */}
+                    {existingImages.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {existingImages.map((imageUrl, index) => (
+                            <div key={`existing-${index}`} className="relative rounded-md overflow-hidden h-24 bg-gray-100">
+                              <img 
+                                src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
+                                alt={`Property image ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Try alternate path if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  if (!target.src.includes('/public/')) {
+                                    target.src = `/public/uploads/properties/${imageUrl}`;
+                                  } else {
+                                    // If still fails, use a placeholder
+                                    target.src = 'https://placehold.co/300x200?text=Image+Not+Found';
+                                  }
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Upload New Images */}
                     <div className="flex items-center justify-center w-full">
                       <label
                         htmlFor="file-upload"
@@ -784,7 +826,7 @@ export default function PropertyForm({
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-8 h-8 mb-2 text-gray-500" />
                           <p className="text-sm text-gray-500">
-                            <span className="font-semibold">Click to upload</span> or drag and drop
+                            <span className="font-semibold">Click to upload new images</span> or drag and drop
                           </p>
                           <p className="text-xs text-gray-500">
                             PNG, JPG or JPEG (MAX. 5MB per file)
@@ -800,9 +842,11 @@ export default function PropertyForm({
                         />
                       </label>
                     </div>
+                    
+                    {/* Newly Selected Images */}
                     {images.length > 0 && (
                       <div className="mt-4">
-                        <p className="text-sm font-medium mb-2">{images.length} file(s) selected</p>
+                        <p className="text-sm font-medium mb-2">New Images Selected ({images.length})</p>
                         <ul className="text-xs text-muted-foreground">
                           {Array.from(images).map((file, index) => (
                             <li key={index}>{file.name}</li>
