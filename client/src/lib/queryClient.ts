@@ -49,7 +49,40 @@ export async function apiRequest(
   if (isGet && apiRequestCache.has(cacheKey)) {
     return apiRequestCache.get(cacheKey)!;
   }
+
+  // First, check if the user is authenticated for write operations
+  if (method.toUpperCase() !== 'GET') {
+    try {
+      const userCheckResponse = await fetch('/api/user', {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+      
+      if (userCheckResponse.status === 401) {
+        console.log('User not authenticated, checking for session expiration');
+        
+        // Try to refresh the session by calling the auth check endpoint
+        const refreshResponse = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        if (refreshResponse.status === 401) {
+          console.error('Session expired and refresh failed');
+          const error = new Error('401: Authentication required to update properties');
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      // Continue with the request, the server will handle authentication errors
+    }
+  }
   
+  // Proceed with the main request
   const fetchPromise = fetch(url, {
     method,
     headers: {
@@ -63,6 +96,13 @@ export async function apiRequest(
     // Clear cache entry once request completes
     if (isGet) {
       apiRequestCache.delete(cacheKey);
+    }
+    
+    if (res.status === 401) {
+      // For 401 responses, redirect to login
+      console.error('Authentication required');
+      // Throw a specific error for 401 that can be handled by the UI
+      throw new Error('401: Authentication required');
     }
     
     await throwIfResNotOk(res);
