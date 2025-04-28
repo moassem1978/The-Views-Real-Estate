@@ -346,15 +346,39 @@ export default function PropertyForm({
         
         // Make sure images are properly formatted for JSON
         // The server expects an array of strings, not an object
-        const formattedImages = existingImages.map(img => {
-          // Ensure image paths are clean strings
-          if (typeof img === 'string') {
-            return img;
-          } else if (typeof img === 'object' && img !== null) {
-            return JSON.stringify(img);
-          }
-          return String(img);
-        });
+        let formattedImages: string[] = [];
+        
+        try {
+          // Handle different possible input formats
+          formattedImages = existingImages.filter(img => img !== null && img !== undefined).map(img => {
+            // If it's already a string, use it directly
+            if (typeof img === 'string') {
+              return img;
+            }
+            // If it's an object, stringify it safely
+            if (typeof img === 'object' && img !== null) {
+              // If it has a toString method that returns a useful string, use that
+              if (Object.prototype.toString.call(img) !== '[object Object]') {
+                return img.toString();
+              }
+              // Otherwise, use JSON.stringify
+              try {
+                return JSON.stringify(img);
+              } catch (e) {
+                console.error('Error stringifying image object:', e);
+                return '';
+              }
+            }
+            // Convert any other types to string
+            return String(img || '');
+          }).filter(Boolean); // Filter out any empty strings
+        } catch (error) {
+          console.error('Error formatting images:', error);
+          // Fallback to simple string conversion if there's an error
+          formattedImages = existingImages
+            .filter(Boolean)
+            .map(img => String(img));
+        }
         
         console.log("Formatted images for submission:", formattedImages);
         formattedData.images = formattedImages;
