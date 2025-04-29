@@ -493,7 +493,21 @@ export default function PropertyForm({
       // Make sure we're using the state variable for imagesToRemove
       // This ensures we're using the correct tracking from the UI interaction
       data.imagesToRemove = imagesToRemove;
-      console.log("Images marked for removal:", imagesToRemove);
+      console.log(`CRITICAL: Images marked for removal (${imagesToRemove.length}):`, imagesToRemove);
+      
+      // Log each image URL being removed for debugging
+      if (imagesToRemove.length > 0) {
+        imagesToRemove.forEach((url, index) => {
+          console.log(`Image ${index + 1} marked for removal: ${url}`);
+        });
+        
+        // Add a visible toast notification about the number of images being removed
+        toast({
+          title: `Removing ${imagesToRemove.length} images`,
+          description: "These images will be removed when you save the property",
+          variant: "default"
+        });
+      }
       
       // Ensure all numeric fields are parsed as numbers
       const formattedData = {
@@ -505,13 +519,30 @@ export default function PropertyForm({
         bedrooms: typeof data.bedrooms === 'string' ? parseInt(data.bedrooms) : data.bedrooms,
         bathrooms: typeof data.bathrooms === 'string' ? parseInt(data.bathrooms) : data.bathrooms,
         builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
-        imagesToRemove: imagesToRemove, // Ensure this is passed correctly
+        imagesToRemove: imagesToRemove, // Ensure this is passed correctly to the API
       };
 
       // First save the property data to get an ID (for new properties)
-      console.log("Saving property data first...");
+      console.log(`Saving property data first... (${isEditing ? 'EDITING' : 'NEW'} property)`);
+      console.log("Sending data to API, focusing on image removal:", {
+        endpoint: isEditing ? `/api/properties/${propertyId}` : '/api/properties',
+        method: isEditing ? 'PUT' : 'POST',
+        imagesToRemoveCount: formattedData.imagesToRemove.length,
+        imagesToRemove: formattedData.imagesToRemove
+      });
+      
+      // Call the API to save the property data
       const savedProperty = await mutation.mutateAsync(formattedData);
       console.log("Property saved successfully:", savedProperty);
+      
+      // Add toast notification specific to image removal success if any images were removed
+      if (formattedData.imagesToRemove && formattedData.imagesToRemove.length > 0) {
+        toast({
+          title: `${formattedData.imagesToRemove.length} images removed`,
+          description: "The selected images have been removed successfully",
+          variant: "default"
+        });
+      }
       
       // For new properties, use the returned ID; for editing, use the existing ID prop
       const savedPropertyId = isEditing ? Number(propertyId) : savedProperty.id;
@@ -1188,10 +1219,19 @@ export default function PropertyForm({
                                       });
                                     }
                                   }}
-                                  className={`absolute top-0 right-0 ${isMarkedForRemoval ? 'bg-green-500' : 'bg-red-500'} text-white p-2 rounded-bl-md shadow-md opacity-80 group-hover:opacity-100 transition-opacity`}
+                                  className={`absolute top-0 right-0 ${
+                                    isMarkedForRemoval 
+                                      ? 'bg-green-500 border-2 border-white' 
+                                      : 'bg-red-500'
+                                  } text-white p-2 rounded-bl-md shadow-md opacity-100 hover:opacity-100 transition-opacity z-20`}
                                   aria-label={isMarkedForRemoval ? "Keep image" : "Remove image"}
                                 >
-                                  {isMarkedForRemoval ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                  <span className="flex items-center">
+                                    {isMarkedForRemoval 
+                                      ? <><Check className="h-4 w-4 mr-1" /> Keep</>
+                                      : <><X className="h-4 w-4 mr-1" /> Remove</>
+                                    }
+                                  </span>
                                 </button>
                               </div>
                             );
