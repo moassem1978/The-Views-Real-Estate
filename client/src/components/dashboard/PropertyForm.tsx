@@ -498,14 +498,41 @@ export default function PropertyForm({
       
       // Make sure we're using the state variable for imagesToRemove
       // This ensures we're using the correct tracking from the UI interaction
-      data.imagesToRemove = [...imagesToRemove]; // Create a fresh copy of the array
+      const imagesToRemoveCopy = [...imagesToRemove]; // Create a fresh copy of the array
+      data.imagesToRemove = imagesToRemoveCopy;
       
       // Force-update the correct images to remove
-      console.log(`CRITICAL: Images marked for removal (${imagesToRemove.length}):`, imagesToRemove);
-      console.log("Current imagesToRemove state:", imagesToRemove);
+      console.log(`CRITICAL: Images marked for removal (${imagesToRemoveCopy.length}):`, imagesToRemoveCopy);
+      console.log("Current imagesToRemove state:", imagesToRemoveCopy);
       
       // Extra logging for debugging
       console.log("All existing images:", existingImages);
+      
+      // If we have images to remove, filter them from existing images right here
+      // This should help when the server processes images
+      if (imagesToRemoveCopy.length > 0) {
+        // We want to filter out any images that should be removed
+        const filteredImages = existingImages.filter(imageUrl => {
+          // Normalize image URL for comparison
+          const normalizedImageUrl = imageUrl.replace(/^\/uploads\/properties\//, '');
+          
+          // Check if this image should be kept (not marked for removal)
+          const shouldKeep = !imagesToRemoveCopy.some(url => 
+            url === imageUrl || 
+            url === normalizedImageUrl || 
+            imageUrl.endsWith(url)
+          );
+          
+          if (!shouldKeep) {
+            console.log(`Filtering out image: ${imageUrl}`);
+          }
+          
+          return shouldKeep;
+        });
+        
+        data.images = filteredImages;
+        console.log("Images after filtering out removals:", filteredImages);
+      }
       
       // Log each image URL being removed for debugging
       if (imagesToRemove.length > 0) {
@@ -571,21 +598,28 @@ export default function PropertyForm({
           if (uploadResult && uploadResult.imageUrls && uploadResult.imageUrls.length > 0) {
             console.log("New image URLs:", uploadResult.imageUrls);
             
-            // Combine existing and new images
+            // Get the updated property data after our save, to make sure we have the most current images
+            // This ensures we're not adding back images that were just removed
+            console.log("Fetching the most current property data to get latest images array");
+            const currentProperty = await apiRequest("GET", `/api/properties/${savedPropertyId}`);
+            const currentPropertyData = await currentProperty.json();
+            const currentImages = currentPropertyData.images || [];
+            
+            console.log("Current images after previous update:", currentImages);
+            
+            // Combine current and new images
             const allImages = [
-              ...(existingImages || []),
+              ...currentImages,
               ...(uploadResult.imageUrls || [])
             ].filter(Boolean);
             
             console.log("All images after upload:", allImages);
             
-            // Update the property with the combined image list if needed
-            if (allImages.length > 0 && !isEditing) {
-              console.log("Updating property with all images...");
-              await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
-                images: allImages 
-              });
-            }
+            // Update the property with the combined image list
+            console.log("Updating property with all images...");
+            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
+              images: allImages 
+            });
           }
         } catch (uploadError) {
           console.error("Error during image upload:", uploadError);
@@ -595,8 +629,26 @@ export default function PropertyForm({
             variant: "destructive"
           });
         }
+      } else if (isEditing && data.images && Array.isArray(data.images) && data.images.length > 0) {
+        // For editing with filtered images but no new ones to upload
+        console.log("No new images to upload, using filtered images from form data:", data.images);
+        
+        // These are already filtered to remove any images marked for removal
+        let formattedImages = [...data.images];
+        
+        console.log("Formatted images for submission from filtered data:", formattedImages);
+        // Update property directly with the formatted images
+        if (formattedImages.length > 0) {
+          try {
+            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
+              images: formattedImages 
+            });
+          } catch (updateError) {
+            console.error("Error updating property images:", updateError);
+          }
+        }
       } else if (isEditing && existingImages.length > 0) {
-        // For editing with existing images but no new ones
+        // For editing with existing images, but no filtered images in data and no new uploads
         console.log("No new images to upload, preserving existing images:", existingImages);
         
         // Make sure images are properly formatted for JSON

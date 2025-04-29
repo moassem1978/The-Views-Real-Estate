@@ -1789,9 +1789,10 @@ export class DatabaseStorage implements IStorage {
         
         console.log('New images to add:', newImagesArray);
         
-        // We no longer need to handle imagesToRemove here as it's already handled
-        // at the beginning of the updateProperty function
-        const filteredExistingImages = existingImages;
+        // IMPORTANT: If updates.images already contains filtered images from the imagesToRemove process,
+        // we must use that instead of the raw database values
+        const filteredExistingImages = Array.isArray(updates.images) ? updates.images : existingImages;
+        console.log('Using images array after removal processing:', filteredExistingImages);
         console.log('Existing images after removal:', filteredExistingImages);
         
         // Remove duplicate images before combining arrays
