@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -147,7 +147,8 @@ export default function PropertyForm({
       isNewListing: true,
       country: "Egypt", // Default to Egypt
       references: "", // Added default value for references
-      zipCode: "" // Required by server
+      zipCode: "", // Required by server
+      imagesToRemove: [] as string[] // Track images to remove
     },
   });
 
@@ -850,7 +851,7 @@ export default function PropertyForm({
                             'Dubai': '00000',
                             'London': 'SW1A 1AA',
                             'Zayed': '12311',
-                            'North coast': '23511',
+                            'North Coast': '23511',
                             'Red Sea': '84712'
                           };
                           const zipCode = defaultZipCodes[value] || '00000';
@@ -867,7 +868,7 @@ export default function PropertyForm({
                         <SelectContent>
                           <SelectItem value="Cairo">Cairo</SelectItem>
                           <SelectItem value="Zayed">Zayed</SelectItem>
-                          <SelectItem value="North coast">North Coast</SelectItem>
+                          <SelectItem value="North Coast">North Coast</SelectItem>
                           <SelectItem value="Red Sea">Red Sea</SelectItem>
                           <SelectItem value="Dubai">Dubai</SelectItem>
                           <SelectItem value="London">London</SelectItem>
@@ -1127,9 +1128,13 @@ export default function PropertyForm({
                                 onClick={() => {
                                   // Remove the image from existingImages
                                   setExistingImages(current => current.filter((_, i) => i !== index));
-                                  // Add this to form data to track which images to remove
-                                  const currentImages = form.getValues('images') || [];
-                                  form.setValue('imagesToRemove', [...(form.getValues('imagesToRemove') || []), imageUrl]);
+                                  
+                                  // Add this image URL to the form's imagesToRemove array
+                                  const imagesToRemove = [...(form.getValues().imagesToRemove || []), imageUrl];
+                                  form.setValue("imagesToRemove", imagesToRemove);
+                                  
+                                  console.log("Image removed:", imageUrl);
+                                  console.log("Images to remove:", imagesToRemove);
                                 }}
                                 className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl-md opacity-0 group-hover:opacity-100 transition-opacity"
                                 aria-label="Remove image"

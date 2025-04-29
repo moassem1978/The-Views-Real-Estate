@@ -1751,15 +1751,32 @@ export class DatabaseStorage implements IStorage {
         
         console.log('New images to add:', newImagesArray);
         
+        // Check if there are images to remove
+        const imagesToRemove: string[] = [];
+        if ('imagesToRemove' in updates && Array.isArray(updates.imagesToRemove)) {
+          updates.imagesToRemove.forEach((imageUrl: string) => {
+            if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
+              imagesToRemove.push(imageUrl);
+            }
+          });
+        }
+        console.log('Images requested to be removed:', imagesToRemove);
+        
+        // Filter out existing images that are marked for removal
+        const filteredExistingImages = imagesToRemove.length > 0
+          ? existingImages.filter(img => !imagesToRemove.includes(img))
+          : existingImages;
+        console.log('Existing images after removal:', filteredExistingImages);
+        
         // Remove duplicate images before combining arrays
         const uniqueNewImages = newImagesArray.filter(newImg => {
           // Check if this image URL already exists in existing images
-          return !existingImages.some(existingImg => existingImg === newImg);
+          return !filteredExistingImages.some(existingImg => existingImg === newImg);
         });
         console.log('Unique new images after deduplication:', uniqueNewImages);
         
-        // Combine existing and unique new images
-        const combinedImages = [...existingImages, ...uniqueNewImages];
+        // Combine filtered existing and unique new images
+        const combinedImages = [...filteredExistingImages, ...uniqueNewImages];
         console.log('Combined images array:', combinedImages);
         
         // Use JSON.stringify to convert array to proper JSON string format
