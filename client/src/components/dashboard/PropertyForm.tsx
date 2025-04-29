@@ -202,9 +202,9 @@ export default function PropertyForm({
       console.log("INITIALIZING: Setting keptImages with all existing images:", imagesArray);
       setKeptImages([...imagesArray]);
       
-      // IMPORTANT: Also set the form value for 'images' to match our kept images
-      // This ensures the form submission will have the correct images data
-      form.setValue('images', imagesArray);
+      // We won't use form.setValue directly for images anymore
+      // Instead, we'll rely on the keptImages state
+      // and use it directly in the form submission
       
       console.log("Form data being set:", formData);
       form.reset(formData);
@@ -1248,8 +1248,8 @@ export default function PropertyForm({
                                     // Update state with the filtered array
                                     setKeptImages(updatedKeptImages);
                                     
-                                    // CRITICAL: Force re-render to ensure UI is updated
-                                    form.setValue('images', updatedKeptImages);
+                                    // Don't try to set form value directly, just update state
+                                    // The form submission will use keptImages directly
                                     
                                     // Notify user
                                     toast({
