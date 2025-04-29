@@ -591,10 +591,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         } else {
           console.log(`Existing property has no images or images is not an array`);
         }
-          
-        if (removedImages.length > 0) {
-          console.log(`REMOVED IMAGES: ${removedImages.length} images were removed:`, removedImages);
-        }
       }
 
       // If a regular user updates a property, set status back to pending_approval
