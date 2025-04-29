@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Loader2, Upload, X } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useFormState } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 
@@ -45,6 +45,7 @@ export default function PropertyForm({
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [imagesToRemove, setImagesToRemove] = useState<string[]>([]);
   const isEditing = !!propertyId;
 
   // Fetch available projects for dropdown
@@ -182,13 +183,17 @@ export default function PropertyForm({
         references: property.references || property.reference_number || '',
         yearBuilt: property.yearBuilt || property.year_built || '',
         zipCode: property.zipCode || property.zip_code || "00000", // Required by server
-        images: property.images || []
+        images: property.images || [],
+        imagesToRemove: [] // Initialize with empty array
       };
       
       // Set existing images if available
       const propertyImages = property.images || [];
       console.log("Setting existing property images:", propertyImages);
       setExistingImages(Array.isArray(propertyImages) ? propertyImages : []);
+      
+      // Reset imagesToRemove state
+      setImagesToRemove([]);
       
       console.log("Form data being set:", formData);
       form.reset(formData);
@@ -1114,8 +1119,6 @@ export default function PropertyForm({
                         <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
-                            // Instead of using state for each image, directly check if the image is in the imagesToRemove array
-                            const imagesToRemove = form.getValues().imagesToRemove || [];
                             const isMarkedForRemoval = imagesToRemove.includes(imageUrl);
                             
                             return (
@@ -1146,11 +1149,10 @@ export default function PropertyForm({
                                 <button 
                                   type="button"
                                   onClick={() => {
-                                    const currentImagesToRemove = form.getValues().imagesToRemove || [];
-                                    
                                     if (isMarkedForRemoval) {
                                       // If already marked for removal, unmark it
-                                      const updatedImagesToRemove = currentImagesToRemove.filter(img => img !== imageUrl);
+                                      const updatedImagesToRemove = imagesToRemove.filter(img => img !== imageUrl);
+                                      setImagesToRemove(updatedImagesToRemove);
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
                                       
                                       console.log(`Image unmarked for removal: ${imageUrl}`);
@@ -1163,7 +1165,8 @@ export default function PropertyForm({
                                       });
                                     } else {
                                       // Mark for removal
-                                      const updatedImagesToRemove = [...currentImagesToRemove, imageUrl];
+                                      const updatedImagesToRemove = [...imagesToRemove, imageUrl];
+                                      setImagesToRemove(updatedImagesToRemove);
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
                                       
                                       console.log(`Image marked for removal: ${imageUrl}`);
