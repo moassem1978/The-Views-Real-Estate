@@ -36,7 +36,7 @@ export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  references: text("references").default('').notNull(),
+  references: text("reference_number").default('').notNull(), // Changed column name from "references" to "reference_number"
   address: text("address"),
   city: text("city").notNull(),
   state: text("state"),

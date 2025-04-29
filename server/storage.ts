@@ -1595,13 +1595,13 @@ export class DatabaseStorage implements IStorage {
       
       console.log(`Successfully created property with ID ${property.id}`);
       
-      // If there's a references value, update it separately with proper SQL quoting
+      // If there's a references value, update it separately as reference_number
       if (references) {
         try {
-          console.log(`Updating references field for property ${property.id} with value: ${references}`);
-          // Using raw SQL query to handle the reserved keyword
+          console.log(`Updating reference_number field for property ${property.id} with value: ${references}`);
+          // Using raw SQL query to handle the reference number column
           const result = await pool.query(
-            `UPDATE properties SET "references" = $1 WHERE id = $2 RETURNING *`,
+            `UPDATE properties SET reference_number = $1 WHERE id = $2 RETURNING *`,
             [references, property.id]
           );
           
@@ -1669,8 +1669,8 @@ export class DatabaseStorage implements IStorage {
       if ('country' in updates) dbUpdates.country = updates.country;
       if ('yearBuilt' in updates) dbUpdates.year_built = updates.yearBuilt;
       if ('status' in updates) dbUpdates.status = updates.status;
-      // The field 'references' is a reserved SQL keyword, so we need to handle it specially
-      if ('references' in updates) dbUpdates['"references"'] = updates.references;
+      // The references field maps to reference_number column
+      if ('references' in updates) dbUpdates.reference_number = updates.references;
       // Handle images field specially to prevent JSON syntax errors
       if ('images' in updates) {
         console.log('Processing images field:', updates.images);
@@ -1718,14 +1718,8 @@ export class DatabaseStorage implements IStorage {
       let paramIndex = 1;
       
       for (const [key, value] of Object.entries(dbUpdates)) {
-        // If it's the references field, we need special handling for this reserved keyword
-        if (key === '"references"') {
-          setClauseParts.push(`"references" = $${paramIndex}`);
-        } 
-        // For everything else, use standard column names
-        else {
-          setClauseParts.push(`${key} = $${paramIndex}`);
-        }
+        // Just use standard column names for all fields now
+        setClauseParts.push(`${key} = $${paramIndex}`);
         queryParams.push(value);
         paramIndex++;
       }
@@ -1810,7 +1804,7 @@ export class DatabaseStorage implements IStorage {
         status: updatedProperty.status,
         createdAt: updatedProperty.created_at,
         updatedAt: updatedProperty.updated_at,
-        references: updatedProperty.references || '',
+        references: updatedProperty.reference_number || '',
         images: imagesArray
       };
       

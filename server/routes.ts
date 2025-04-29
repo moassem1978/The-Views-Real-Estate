@@ -1599,6 +1599,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
         // Combine existing images with new ones
         const updatedImages = [...existingImages, ...fileUrls];
+        console.log(`Combining ${existingImages.length} existing images with ${fileUrls.length} new images`);
+        console.log(`Final image count should be ${updatedImages.length} images`);
         console.log("Updated images array:", updatedImages);
 
         // Update the property with the new images
