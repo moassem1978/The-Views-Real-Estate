@@ -174,6 +174,15 @@ export default function PropertiesManager() {
       // Use apiRequest helper for consistent error handling
       const response = await apiRequest("GET", `/api/properties/${id}`);
       
+      if (response.status === 404) {
+        toast({
+          title: "Property not found",
+          description: `The property with ID ${id} doesn't exist or was deleted.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(`Failed to fetch property (Status: ${response.status})`);
       }
@@ -186,35 +195,6 @@ export default function PropertiesManager() {
       
       setEditingPropertyId(id);
       setShowPropertyForm(true);
-          
-          if (response.status === 404) {
-            toast({
-              title: "Property not found",
-              description: `The property with ID ${id} doesn't exist or was deleted.`,
-              variant: "destructive",
-            });
-            return;
-          }
-          
-          if (!response.ok) {
-            throw new Error(`Error checking property: ${response.status}`);
-          }
-          
-          // Property exists, continue with edit
-          console.log(`Property ${id} verified with server`);
-        } catch (checkError) {
-          console.error("Error verifying property:", checkError);
-          // Property verification failed, but we'll continue anyway
-          // The PropertyForm will handle detailed error presentation
-        }
-      }
-      
-      // Set the ID and show the form - the PropertyForm will handle detailed fetching
-      setEditingPropertyId(id);
-      setShowPropertyForm(true);
-      
-      // Pre-invalidate the query to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/properties", id] });
     } catch (error) {
       console.error("Error preparing property edit:", error);
       toast({
