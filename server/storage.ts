@@ -1584,16 +1584,36 @@ export class DatabaseStorage implements IStorage {
       // Remove references field from the insert data
       const { references, ...safePropertyData } = insertProperty as any;
       
-      // Insert with safe data
+      // We need to handle the 'references' field in a special way since it's a SQL reserved keyword
+      // First, create the property without the references field
       const [property] = await db
         .insert(properties)
         .values(safePropertyData)
         .returning();
       
-      // Add the references field back to the return value
+      // If there's a references value, update it separately with proper SQL quoting
+      if (references) {
+        try {
+          console.log(`Updating references field for property ${property.id} with value: ${references}`);
+          await pool.query(
+            `UPDATE properties SET "references" = $1 WHERE id = $2`,
+            [references, property.id]
+          );
+        } catch (refError) {
+          console.error(`Error updating references field:`, refError);
+        }
+      }
+      
+      // Get the updated property with all fields
+      const [updatedProperty] = await db
+        .select()
+        .from(properties)
+        .where(eq(properties.id, property.id));
+      
+      // Add the references field back to the return value if needed
       const propertyWithReferences = {
-        ...property,
-        references: references || '',
+        ...updatedProperty,
+        references: updatedProperty.references || references || '',
       };
       
       console.log(`DB: Successfully created property with ID ${property.id}`);
@@ -1635,7 +1655,8 @@ export class DatabaseStorage implements IStorage {
       if ('country' in updates) dbUpdates.country = updates.country;
       if ('yearBuilt' in updates) dbUpdates.year_built = updates.yearBuilt;
       if ('status' in updates) dbUpdates.status = updates.status;
-      if ('references' in updates) dbUpdates.references = updates.references;
+      // The field 'references' is a reserved SQL keyword, so we need to handle it specially
+      if ('references' in updates) dbUpdates['"references"'] = updates.references;
       // Handle images field specially to prevent JSON syntax errors
       if ('images' in updates) {
         console.log('Processing images field:', updates.images);
@@ -1683,7 +1704,10 @@ export class DatabaseStorage implements IStorage {
       let paramIndex = 1;
       
       for (const [key, value] of Object.entries(dbUpdates)) {
-        setClauseParts.push(`${key} = $${paramIndex}`);
+        // If the key contains quotes, it's already properly escaped
+        // Otherwise, it's a regular column name
+        const formattedKey = key.includes('"') ? key : key;
+        setClauseParts.push(`${formattedKey} = $${paramIndex}`);
         queryParams.push(value);
         paramIndex++;
       }
