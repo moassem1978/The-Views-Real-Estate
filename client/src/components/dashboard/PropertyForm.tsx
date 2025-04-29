@@ -501,73 +501,38 @@ export default function PropertyForm({
     try {
       console.log("Submitting form data:", data);
       
-      // Make sure we're using the state variable for imagesToRemove
-      // This ensures we're using the correct tracking from the UI interaction
-      const imagesToRemoveCopy = [...imagesToRemove]; // Create a fresh copy of the array
+      // Make a copy of the arrays for safer processing
+      const imagesToRemoveCopy = [...imagesToRemove];
+      const removedIndexesCopy = [...removedImageIndexes];
+      
+      console.log(`CRITICAL: Using index-based approach, ${removedIndexesCopy.length} images visually removed`);
+      console.log("Indexes of removed images:", removedIndexesCopy);
+      
+      // Generate a filtered image list based on removedImageIndexes
+      // This directly corresponds to what the user sees on the form
+      // Each index in removedImageIndexes corresponds to an image that should be filtered out
+      const filteredImages = existingImages.filter((imageUrl, index) => {
+        // Skip any images whose indexes are in removedImageIndexes
+        const shouldKeep = !removedIndexesCopy.includes(index);
+        
+        if (!shouldKeep) {
+          console.log(`REMOVING image at index ${index}: ${imageUrl}`);
+        }
+        
+        return shouldKeep;
+      });
+      
+      // For completeness, also set the imagesToRemove array for the server
+      // This uses the original approach for maximum compatibility
       data.imagesToRemove = imagesToRemoveCopy;
       
-      // Force-update the correct images to remove
-      console.log(`CRITICAL: Images marked for removal (${imagesToRemoveCopy.length}):`, imagesToRemoveCopy);
-      console.log("Current imagesToRemove state:", imagesToRemoveCopy);
+      // IMPORTANT: Override the images array with our filtered list
+      // This ensures the server gets the exact list of images to keep
+      console.log("BEFORE FILTERING, existing images:", existingImages.length);
+      console.log("AFTER FILTERING, images count:", filteredImages.length);
       
-      // Extra logging for debugging
-      console.log("All existing images:", existingImages);
-      
-      // DIRECT IMAGE REMOVAL APPROACH: If we have images to remove, handle that first
-      // Important: We'll just pass the imagesToRemove array separately
-      if (imagesToRemoveCopy.length > 0) {
-        console.log("DIRECT APPROACH: Using image removal process with imagesToRemove array");
-        console.log("Using imagesToRemove array of length:", imagesToRemoveCopy.length);
-        
-        // We set a property called 'imagesToRemove' in the data object
-        // This will be sent to the server and processed there
-        data.imagesToRemove = imagesToRemoveCopy;
-        
-        // We'll also filter the existing images here to avoid duplicate processing
-        const filteredImages = existingImages.filter(imageUrl => {
-          // Use our new robust approach to check if this image should be removed
-          const imageBasename = typeof imageUrl === 'string' ? imageUrl.split('/').pop() || '' : '';
-          
-          // Check against all removal urls
-          const shouldRemove = imagesToRemoveCopy.some(url => {
-            if (!url || !imageUrl) return false;
-            
-            const urlBasename = typeof url === 'string' ? url.split('/').pop() || '' : '';
-            
-            // 1. Direct equality
-            if (url === imageUrl) return true;
-            
-            // 2. If both have basename and they match
-            if (imageBasename && urlBasename && imageBasename === urlBasename) return true;
-            
-            // 3. If one contains the other (to handle path differences)
-            if (url.includes(imageBasename) || imageUrl.includes(urlBasename)) return true;
-            
-            // 4. Handle case where upload path is prefixed differently
-            const normalizedImage = imageUrl.replace(/^\/uploads\/properties\//, '');
-            const normalizedUrl = url.replace(/^\/uploads\/properties\//, '');
-            if (normalizedImage === normalizedUrl) return true;
-            
-            // 5. Check if image URL ends with the URL to remove (handle path prefixes)
-            if (imageUrl.endsWith(url)) return true;
-            
-            return false;
-          });
-          
-          // Log which images are being filtered out
-          if (shouldRemove) {
-            console.log(`FILTERING OUT image from data.images: ${imageUrl}`);
-          }
-          
-          // Keep the image if it should NOT be removed
-          return !shouldRemove;
-        });
-        
-        // Set the filtered images list in the data object
-        console.log("BEFORE FILTERING, existing images:", existingImages.length);
-        console.log("AFTER FILTERING, images count:", filteredImages.length);
-        data.images = filteredImages;
-      }
+      // Set the final filtered images list in the data object
+      data.images = filteredImages;
       
       // Log each image URL being removed for debugging
       if (imagesToRemove.length > 0) {
