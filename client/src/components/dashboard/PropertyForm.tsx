@@ -46,6 +46,7 @@ export default function PropertyForm({
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [imagesToRemove, setImagesToRemove] = useState<string[]>([]);
+  const [removedImageIndexes, setRemovedImageIndexes] = useState<number[]>([]);
   const isEditing = !!propertyId;
 
   // Fetch available projects for dropdown
@@ -195,8 +196,9 @@ export default function PropertyForm({
       // Set the master list of images
       setExistingImages(imagesArray);
       
-      // Reset imagesToRemove state
+      // Reset image removal states
       setImagesToRemove([]);
+      setRemovedImageIndexes([]);
       
       console.log("Form data being set:", formData);
       form.reset(formData);
@@ -1252,12 +1254,12 @@ export default function PropertyForm({
                     {existingImages.length > 0 && (
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">
-                          Current Images ({existingImages.filter(img => !imagesToRemove.includes(img)).length})
+                          Current Images ({existingImages.length - removedImageIndexes.length})
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
-                            // Skip images marked for removal
-                            if (imagesToRemove.includes(imageUrl)) {
+                            // Skip images marked for removal - using the index-based approach for immediacy
+                            if (removedImageIndexes.includes(index)) {
                               return null;
                             }
                             
@@ -1284,16 +1286,20 @@ export default function PropertyForm({
                                 <button 
                                   type="button"
                                   onClick={() => {
-                                    // ABSOLUTE SIMPLEST APPROACH POSSIBLE:
-                                    // Just mark this image for removal by its full URL only
+                                    // Add to images to remove list for the server submission
                                     const newImagesToRemove = [...imagesToRemove, imageUrl];
                                     setImagesToRemove(newImagesToRemove);
+                                    
+                                    // Track the index to visually hide it immediately
+                                    const newRemovedIndexes = [...removedImageIndexes, index];
+                                    setRemovedImageIndexes(newRemovedIndexes);
+                                    
+                                    // Also update the form value for submission
                                     form.setValue("imagesToRemove", newImagesToRemove);
                                     
                                     toast({
                                       title: "Image removed",
-                                      description: "Click Update Property to finalize changes",
-                                      variant: "destructive",
+                                      description: "The image has been removed from view",
                                     });
                                   }}
                                   className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-bl-md shadow-md opacity-100 hover:opacity-100 transition-opacity z-20"
