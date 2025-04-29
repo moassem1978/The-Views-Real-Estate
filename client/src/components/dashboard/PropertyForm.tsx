@@ -1106,7 +1106,7 @@ export default function PropertyForm({
                         <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => (
-                            <div key={`existing-${index}`} className="relative rounded-md overflow-hidden h-24 bg-gray-100">
+                            <div key={`existing-${index}`} className="relative rounded-md overflow-hidden h-24 bg-gray-100 group">
                               <img 
                                 src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
                                 alt={`Property image ${index + 1}`}
@@ -1122,6 +1122,20 @@ export default function PropertyForm({
                                   }
                                 }}
                               />
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  // Remove the image from existingImages
+                                  setExistingImages(current => current.filter((_, i) => i !== index));
+                                  // Add this to form data to track which images to remove
+                                  const currentImages = form.getValues('images') || [];
+                                  form.setValue('imagesToRemove', [...(form.getValues('imagesToRemove') || []), imageUrl]);
+                                }}
+                                className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label="Remove image"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
                             </div>
                           ))}
                         </div>
