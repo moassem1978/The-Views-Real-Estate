@@ -1248,7 +1248,17 @@ export default function PropertyForm({
                     {/* Existing Images Display */}
                     {existingImages.length > 0 && (
                       <div className="mb-4">
-                        <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
+                        {/* Count only images that are not marked for removal */}
+                        <p className="text-sm font-medium mb-2">
+                          Current Images ({existingImages.filter(img => 
+                            !imagesToRemove.some(removeUrl => {
+                              const imgBase = img.split('/').pop() || '';
+                              const removeBase = removeUrl.split('/').pop() || '';
+                              return removeUrl === img || removeBase === imgBase || 
+                                     img.includes(removeUrl) || removeUrl.includes(img);
+                            })
+                          ).length})
+                        </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
                             // ENHANCED ROBUST APPROACH: Better image URL normalization and matching
@@ -1285,15 +1295,20 @@ export default function PropertyForm({
                             
                             console.log(`Image ${index}: ${imageUrl}, marked for removal: ${isMarkedForRemoval}`);
                             
+                            // IMPORTANT: Skip rendering this image entirely if it's marked for removal
+                            if (isMarkedForRemoval) {
+                              return null; // Don't render anything for this image
+                            }
+                            
                             return (
                               <div 
                                 key={`existing-${index}`} 
-                                className={`relative rounded-md overflow-hidden h-24 bg-gray-100 group ${isMarkedForRemoval ? 'border-2 border-red-500' : ''}`}
+                                className="relative rounded-md overflow-hidden h-24 bg-gray-100 group"
                               >
                                 <img 
                                   src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
                                   alt={`Property image ${index + 1}`}
-                                  className={`w-full h-full object-cover ${isMarkedForRemoval ? 'opacity-50' : ''}`}
+                                  className="w-full h-full object-cover"
                                   onError={(e) => {
                                     // Try alternate path if image fails to load
                                     const target = e.target as HTMLImageElement;
@@ -1305,75 +1320,34 @@ export default function PropertyForm({
                                     }
                                   }}
                                 />
-                                {isMarkedForRemoval && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-30">
-                                    <span className="text-white text-sm font-bold bg-red-600 px-3 py-2 rounded shadow-md border border-white">MARKED FOR REMOVAL</span>
-                                  </div>
-                                )}
                                 <button 
                                   type="button"
                                   onClick={() => {
-                                    if (isMarkedForRemoval) {
-                                      // SIMPLIFIED APPROACH: If already marked for removal, unmark it
-                                      // First, remove the exact imageUrl if it exists
-                                      let updatedImagesToRemove = imagesToRemove.filter(url => url !== imageUrl);
-                                      
-                                      // Also remove any URL that might be a variant of this one
-                                      updatedImagesToRemove = updatedImagesToRemove.filter(url => {
-                                        // Check if either URL contains the basename of the other
-                                        const urlBasename = url.split('/').pop();
-                                        const imageBasename = imageUrl.split('/').pop();
-                                        return urlBasename !== imageBasename;
-                                      });
-                                        
-                                      console.log("UNMARK - Updated images to remove:", updatedImagesToRemove);
-                                      
-                                      // Update state and form
-                                      setImagesToRemove(updatedImagesToRemove);
-                                      form.setValue("imagesToRemove", updatedImagesToRemove);
-                                      
-                                      console.log(`Image unmarked for removal: ${imageUrl}`);
-                                      console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
-                                      
-                                      toast({
-                                        title: "Image will be kept",
-                                        description: "Removal canceled",
-                                        variant: "default",
-                                      });
-                                    } else {
-                                      // SIMPLIFIED APPROACH: Mark for removal
-                                      // Add both the full URL and just the filename to maximize matching chances
-                                      const imageBasename = imageUrl.split('/').pop() || '';
-                                      const updatedImagesToRemove = [...imagesToRemove, imageUrl, imageBasename].filter(Boolean);
-                                      
-                                      console.log("MARK - Adding to images to remove:", updatedImagesToRemove);
-                                      
-                                      // Update state and form
-                                      setImagesToRemove(updatedImagesToRemove);
-                                      form.setValue("imagesToRemove", updatedImagesToRemove);
-                                      
-                                      console.log(`Image marked for removal: ${imageUrl}`);
-                                      console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
-                                      
-                                      toast({
-                                        title: "Image marked for removal",
-                                        description: "Click Update Property to complete the removal",
-                                        variant: "destructive",
-                                      });
-                                    }
+                                    // SIMPLIFIED DIRECT REMOVAL: Always add to images to remove
+                                    // Mark for removal - add both full URL and filename to maximize matching
+                                    const imageBasename = imageUrl.split('/').pop() || '';
+                                    const updatedImagesToRemove = [...imagesToRemove, imageUrl, imageBasename].filter(Boolean);
+                                    
+                                    console.log("MARK - Adding to images to remove:", updatedImagesToRemove);
+                                    
+                                    // Update state and form
+                                    setImagesToRemove(updatedImagesToRemove);
+                                    form.setValue("imagesToRemove", updatedImagesToRemove);
+                                    
+                                    console.log(`Image marked for removal: ${imageUrl}`);
+                                    console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
+                                    
+                                    toast({
+                                      title: "Image removed",
+                                      description: "Click Update Property to finalize changes",
+                                      variant: "destructive",
+                                    });
                                   }}
-                                  className={`absolute top-0 right-0 ${
-                                    isMarkedForRemoval 
-                                      ? 'bg-green-500 border-2 border-white' 
-                                      : 'bg-red-500'
-                                  } text-white p-2 rounded-bl-md shadow-md opacity-100 hover:opacity-100 transition-opacity z-20`}
-                                  aria-label={isMarkedForRemoval ? "Keep image" : "Remove image"}
+                                  className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-bl-md shadow-md opacity-100 hover:opacity-100 transition-opacity z-20"
+                                  aria-label="Remove image"
                                 >
                                   <span className="flex items-center">
-                                    {isMarkedForRemoval 
-                                      ? <><Check className="h-4 w-4 mr-1" /> Keep</>
-                                      : <><X className="h-4 w-4 mr-1" /> Remove</>
-                                    }
+                                    <X className="h-4 w-4 mr-1" /> Remove
                                   </span>
                                 </button>
                               </div>
