@@ -495,38 +495,29 @@ export default function PropertyForm({
     try {
       console.log("Submitting form data:", data);
       
-      console.log("Starting simplified image handling...");
+      console.log("Starting DIRECT IMAGE APPROACH image handling...");
       
-      // Copy arrays for safety
-      const removedIndexesCopy = [...removedImageIndexes];
+      // With our new approach, we just use the keptImages state directly
+      // This array only contains the images we're keeping
+      console.log(`DIRECT APPROACH: Starting with ${existingImages.length} images, keeping ${keptImages.length}`);
       
-      // SIMPLEST POSSIBLE APPROACH:
-      // Just filter out the indexes and send the filtered list
+      // Set the images field directly to our keptImages array
+      // This will override whatever was in the database before with exactly what we want to keep
+      data.images = keptImages;
       
-      // 1. Get the list of images that should be kept (those not removed)
-      const imagesToKeep = existingImages.filter((imageUrl, index) => {
-        return !removedIndexesCopy.includes(index);
-      });
-      
-      console.log(`SIMPLIFIED: ${removedIndexesCopy.length} images removed visually`);
-      console.log(`SIMPLIFIED: Starting with ${existingImages.length} images, keeping ${imagesToKeep.length}`);
-      
-      // 2. Set the filtered images array directly
-      // This will override whatever was in the database before
-      data.images = imagesToKeep;
-      
-      // 3. Remove complex imagesToRemove approach
-      // Instead of sending both arrays, we just send the list to keep
-      // This makes things far less error-prone
+      // Remove legacy fields
       delete data.imagesToRemove;
       
-      // Log removed image indexes for debugging
-      if (removedImageIndexes.length > 0) {
-        console.log(`${removedImageIndexes.length} images marked for removal by index:`, removedImageIndexes);
+      // Calculate which images are being removed (for logging only)
+      const removedImages = existingImages.filter(img => !keptImages.includes(img));
+      
+      // Log removed images for debugging
+      if (removedImages.length > 0) {
+        console.log(`${removedImages.length} images marked for removal:`, removedImages);
         
         // Add a visible toast notification about the number of images being removed
         toast({
-          title: `Removing ${removedImageIndexes.length} images`,
+          title: `Removing ${removedImages.length} images`,
           description: "These images will be removed when you save the property",
           variant: "default"
         });
@@ -559,9 +550,9 @@ export default function PropertyForm({
       console.log("Property saved successfully:", savedProperty);
       
       // Add toast notification for successful image update
-      if (removedImageIndexes.length > 0) {
+      if (removedImages.length > 0) {
         toast({
-          title: `${removedImageIndexes.length} images removed`,
+          title: `${removedImages.length} images removed`,
           description: "The selected images have been removed successfully",
           variant: "default"
         });
@@ -1199,16 +1190,19 @@ export default function PropertyForm({
                 <div className="space-y-2">
                   <Label htmlFor="images">Property Images</Label>
                   <div className="border rounded-md p-4">
-                    {/* Existing Images Display */}
+                    {/* Existing Images Display - NEW APPROACH */}
                     {existingImages.length > 0 && (
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">
-                          Current Images ({existingImages.length - removedImageIndexes.length})
+                          Current Images ({keptImages.length})
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
-                            // Skip images marked for removal - using the index-based approach for immediacy
-                            if (removedImageIndexes.includes(index)) {
+                            // Check if this image is in our kept images list
+                            const isKept = keptImages.includes(imageUrl);
+                            
+                            // Don't show images that have been removed
+                            if (!isKept) {
                               return null;
                             }
                             
@@ -1235,20 +1229,17 @@ export default function PropertyForm({
                                 <button 
                                   type="button"
                                   onClick={() => {
-                                    // Add to images to remove list for the server submission
-                                    const newImagesToRemove = [...imagesToRemove, imageUrl];
-                                    setImagesToRemove(newImagesToRemove);
+                                    // NEW APPROACH: Just remove this image from keptImages
+                                    const updatedKeptImages = keptImages.filter(img => img !== imageUrl);
+                                    setKeptImages(updatedKeptImages);
                                     
-                                    // Track the index to visually hide it immediately
-                                    const newRemovedIndexes = [...removedImageIndexes, index];
-                                    setRemovedImageIndexes(newRemovedIndexes);
-                                    
-                                    // Also update the form value for submission
-                                    form.setValue("imagesToRemove", newImagesToRemove);
+                                    // Log what happened for debugging
+                                    console.log(`Removed image from keptImages: ${imageUrl}`);
+                                    console.log(`KeptImages now has ${updatedKeptImages.length} images`);
                                     
                                     toast({
                                       title: "Image removed",
-                                      description: "The image has been removed from view",
+                                      description: "The image has been removed from this property",
                                     });
                                   }}
                                   className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-bl-md shadow-md opacity-100 hover:opacity-100 transition-opacity z-20"
