@@ -1252,16 +1252,12 @@ export default function PropertyForm({
                     {existingImages.length > 0 && (
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">
-                          Current Images ({existingImages.length})
+                          Current Images ({existingImages.filter(img => !imagesToRemove.includes(img)).length})
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
-                            // Check if this image is marked for removal
-                            const shouldHide = imagesToRemove.includes(imageUrl) || 
-                                             (imageUrl.split('/').pop() && imagesToRemove.includes(imageUrl.split('/').pop() || ''));
-                            
-                            // Skip rendering entirely if marked for removal
-                            if (shouldHide) {
+                            // Skip images marked for removal
+                            if (imagesToRemove.includes(imageUrl)) {
                               return null;
                             }
                             
@@ -1288,14 +1284,11 @@ export default function PropertyForm({
                                 <button 
                                   type="button"
                                   onClick={() => {
-                                    // ULTRA-SIMPLE APPROACH:
-                                    // Just add the image and its basename to removals
-                                    const basename = imageUrl.split('/').pop() || '';
-                                    setImagesToRemove([...imagesToRemove, imageUrl, basename]);
-                                    form.setValue("imagesToRemove", [...imagesToRemove, imageUrl, basename]);
-                                    
-                                    // Force rerender by updating state
-                                    setExistingImages([...existingImages]);
+                                    // ABSOLUTE SIMPLEST APPROACH POSSIBLE:
+                                    // Just mark this image for removal by its full URL only
+                                    const newImagesToRemove = [...imagesToRemove, imageUrl];
+                                    setImagesToRemove(newImagesToRemove);
+                                    form.setValue("imagesToRemove", newImagesToRemove);
                                     
                                     toast({
                                       title: "Image removed",
