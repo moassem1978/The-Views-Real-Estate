@@ -1673,13 +1673,51 @@ export class DatabaseStorage implements IStorage {
       if ('references' in updates) dbUpdates.reference_number = updates.references;
       // Handle images field specially to prevent JSON syntax errors
       if ('images' in updates) {
-        console.log('Processing images field:', updates.images);
-        // Create a clean array of image strings
-        let imagesArray: string[] = [];
+        console.log('Processing images field for update:', updates.images);
+        
+        // First, retrieve the existing property to get current images
+        const existingQuery = 'SELECT images FROM properties WHERE id = $1';
+        const existingResult = await pool.query(existingQuery, [id]);
+        let existingImages: string[] = [];
+        
+        if (existingResult && existingResult.rows && existingResult.rows.length > 0) {
+          // Get existing images from the database
+          const existingData = existingResult.rows[0].images;
+          console.log('Existing images from database:', existingData);
+          
+          if (Array.isArray(existingData)) {
+            // Already parsed as an array by pg
+            existingImages = existingData
+              .filter(img => img !== null && img !== undefined)
+              .map(img => typeof img === 'string' ? img : String(img));
+          } else if (existingData && typeof existingData === 'object') {
+            // Sometimes it comes as an object that needs to be converted
+            existingImages = Object.values(existingData)
+              .filter(img => img !== null && img !== undefined)
+              .map(img => typeof img === 'string' ? img : String(img));
+          } else if (typeof existingData === 'string') {
+            // Try to parse as JSON
+            try {
+              const parsed = JSON.parse(existingData);
+              if (Array.isArray(parsed)) {
+                existingImages = parsed.filter(Boolean).map(String);
+              }
+            } catch (e) {
+              // Not valid JSON
+              console.log('Could not parse existing images as JSON');
+              existingImages = [];
+            }
+          }
+        }
+        
+        console.log('Existing images array:', existingImages);
+        
+        // Process new images to add
+        let newImagesArray: string[] = [];
         
         if (Array.isArray(updates.images)) {
           // Filter out any non-string elements and ensure they're all simple strings
-          imagesArray = updates.images
+          newImagesArray = updates.images
             .filter(img => img !== null && img !== undefined)
             .map(img => typeof img === 'string' ? img : String(img));
         } else if (typeof updates.images === 'string') {
@@ -1688,25 +1726,29 @@ export class DatabaseStorage implements IStorage {
             try {
               const parsed = JSON.parse(updates.images);
               if (Array.isArray(parsed)) {
-                imagesArray = parsed.filter(Boolean).map(String);
+                newImagesArray = parsed.filter(Boolean).map(String);
               } else {
-                imagesArray = [updates.images];
+                newImagesArray = [updates.images];
               }
             } catch (e) {
               // Not valid JSON, treat as a single image path
-              imagesArray = [updates.images];
+              newImagesArray = [updates.images];
             }
           } else {
             // Just a regular string, treat as a single image path
-            imagesArray = [updates.images];
+            newImagesArray = [updates.images];
           }
         }
         
-        console.log('Cleaned images array for database:', imagesArray);
+        console.log('New images to add:', newImagesArray);
+        
+        // Combine existing and new images
+        const combinedImages = [...existingImages, ...newImagesArray];
+        console.log('Combined images array:', combinedImages);
         
         // Use JSON.stringify to convert array to proper JSON string format
         // This ensures PostgreSQL will accept it as a valid JSON array
-        dbUpdates.images = JSON.stringify(imagesArray);
+        dbUpdates.images = JSON.stringify(combinedImages);
         console.log('Final JSON images format:', dbUpdates.images);
       }
       
