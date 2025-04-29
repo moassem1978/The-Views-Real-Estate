@@ -42,11 +42,11 @@ export default function PropertyForm({
 }: PropertyFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  // New approach: Use a single array of retained images instead of tracking removals
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [imagesToRemove, setImagesToRemove] = useState<string[]>([]);
-  const [removedImageIndexes, setRemovedImageIndexes] = useState<number[]>([]);
+  const [keptImages, setKeptImages] = useState<string[]>([]);
   const isEditing = !!propertyId;
 
   // Fetch available projects for dropdown
@@ -196,9 +196,9 @@ export default function PropertyForm({
       // Set the master list of images
       setExistingImages(imagesArray);
       
-      // Reset image removal states
-      setImagesToRemove([]);
-      setRemovedImageIndexes([]);
+      // Initialize the kept images with all current images
+      // This is our new approach - directly track which images to keep
+      setKeptImages([...imagesArray]);
       
       console.log("Form data being set:", formData);
       form.reset(formData);
@@ -227,18 +227,12 @@ export default function PropertyForm({
         // Create a clean data object with primitive values to avoid circular reference errors
         const cleanData = { ...data };
         
-        // Ensure imagesToRemove is properly passed
-        if (imagesToRemove && imagesToRemove.length > 0) {
-          console.log(`CRITICAL: Ensuring ${imagesToRemove.length} images are removed. Image list:`, imagesToRemove);
-          cleanData.imagesToRemove = imagesToRemove;
-        }
+        // NEW APPROACH: Just set the images array directly to what we want to keep
+        console.log(`USING NEW DIRECT IMAGE APPROACH: ${keptImages.length} images to keep`);
+        cleanData.images = keptImages;
         
-        // Make sure imagesToRemove is properly set if present
-        if (cleanData.imagesToRemove && Array.isArray(cleanData.imagesToRemove)) {
-          console.log(`Including ${cleanData.imagesToRemove.length} images marked for removal:`, cleanData.imagesToRemove);
-        } else {
-          cleanData.imagesToRemove = [];
-        }
+        // Log what's happening with images
+        console.log(`Setting property to keep only these images:`, keptImages);
         
         // Ensure all fields are properly formatted for transmission
         // Handle zipCode (required by the server)

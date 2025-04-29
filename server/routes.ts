@@ -568,28 +568,30 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       const propertyData = req.body;
       
-      // CRITICAL: If images array is explicitly provided in request, use it directly
-      // This is a more direct approach that overrides whatever was previously in the DB
-      if (propertyData.images && Array.isArray(propertyData.images)) {
-        console.log(`DIRECT OVERRIDE: Using provided images array with ${propertyData.images.length} images`);
-        console.log(`New images list:`, propertyData.images);
+      // COMPLETELY NEW APPROACH: 
+      // Instead of trying to determine what to keep or remove, just set the images directly
+      console.log("USING NEW DIRECT IMAGE REPLACEMENT APPROACH");
+      
+      // First, let's see what's currently in the database
+      if (existingProperty && existingProperty.images) {
+        console.log(`Existing property: ${id} has ${Array.isArray(existingProperty.images) ? existingProperty.images.length : 'unknown'} images`);
+      }
+      
+      // Now let's look at what's coming in from the request
+      if (propertyData.images) {
+        console.log(`Request includes ${Array.isArray(propertyData.images) ? propertyData.images.length : 'unknown'} images`);
+        console.log(`Images in request:`, propertyData.images);
         
-        // The frontend now sends exactly the images to keep
-        // We'll force the property to use exactly these images
-        const existingProperty = await dbStorage.getPropertyById(id);
-        
-        if (existingProperty && existingProperty.images && Array.isArray(existingProperty.images)) {
-          console.log(`Existing property had ${existingProperty.images.length} images`);
-          
-          // We're going to keep track of removed images too, for logging
-          const removedImages = existingProperty.images.filter(img => 
-            !propertyData.images.includes(img)) || [];
-            
-          if (removedImages.length > 0) {
-            console.log(`REMOVED IMAGES: ${removedImages.length} images were removed:`, removedImages);
-          }
-        } else {
-          console.log(`Existing property has no images or images is not an array`);
+        // Ensure images is an array to prevent errors
+        if (!Array.isArray(propertyData.images)) {
+          propertyData.images = [];
+          console.log("Converted non-array images field to empty array");
+        }
+      } else {
+        // If images is not present, don't touch the existing images
+        console.log("No images field in request, keeping existing images");
+        if (existingProperty.images) {
+          propertyData.images = existingProperty.images;
         }
       }
 
@@ -597,8 +599,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       if (user.role === 'user') {
         propertyData.status = 'pending_approval';
       }
+      
+      console.log("Final property data to save:", propertyData);
 
       const property = await dbStorage.updateProperty(id, propertyData);
+      console.log("Property updated successfully:", property);
 
       res.json(property);
     } catch (error) {
