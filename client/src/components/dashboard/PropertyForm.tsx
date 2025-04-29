@@ -222,6 +222,12 @@ export default function PropertyForm({
         // Create a clean data object with primitive values to avoid circular reference errors
         const cleanData = { ...data };
         
+        // Ensure imagesToRemove is properly passed
+        if (imagesToRemove && imagesToRemove.length > 0) {
+          console.log(`CRITICAL: Ensuring ${imagesToRemove.length} images are removed. Image list:`, imagesToRemove);
+          cleanData.imagesToRemove = imagesToRemove;
+        }
+        
         // Make sure imagesToRemove is properly set if present
         if (cleanData.imagesToRemove && Array.isArray(cleanData.imagesToRemove)) {
           console.log(`Including ${cleanData.imagesToRemove.length} images marked for removal:`, cleanData.imagesToRemove);
@@ -492,8 +498,14 @@ export default function PropertyForm({
       
       // Make sure we're using the state variable for imagesToRemove
       // This ensures we're using the correct tracking from the UI interaction
-      data.imagesToRemove = imagesToRemove;
+      data.imagesToRemove = [...imagesToRemove]; // Create a fresh copy of the array
+      
+      // Force-update the correct images to remove
       console.log(`CRITICAL: Images marked for removal (${imagesToRemove.length}):`, imagesToRemove);
+      console.log("Current imagesToRemove state:", imagesToRemove);
+      
+      // Extra logging for debugging
+      console.log("All existing images:", existingImages);
       
       // Log each image URL being removed for debugging
       if (imagesToRemove.length > 0) {
@@ -519,7 +531,7 @@ export default function PropertyForm({
         bedrooms: typeof data.bedrooms === 'string' ? parseInt(data.bedrooms) : data.bedrooms,
         bathrooms: typeof data.bathrooms === 'string' ? parseInt(data.bathrooms) : data.bathrooms,
         builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
-        imagesToRemove: imagesToRemove, // Ensure this is passed correctly to the API
+        imagesToRemove: [...imagesToRemove], // Ensure this is passed correctly to the API (create a fresh copy)
       };
 
       // First save the property data to get an ID (for new properties)
@@ -1157,7 +1169,15 @@ export default function PropertyForm({
                         <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
-                            const isMarkedForRemoval = imagesToRemove.includes(imageUrl);
+                            // Normalize image URL for comparison
+                            const normalizedImageUrl = imageUrl.replace(/^\/uploads\/properties\//, '');
+                            const isMarkedForRemoval = imagesToRemove.some(url => 
+                              url === imageUrl || 
+                              url === normalizedImageUrl || 
+                              imageUrl.endsWith(url)
+                            );
+                            
+                            console.log(`Image ${index}: ${imageUrl}, marked for removal: ${isMarkedForRemoval}`);
                             
                             return (
                               <div 
@@ -1189,7 +1209,20 @@ export default function PropertyForm({
                                   onClick={() => {
                                     if (isMarkedForRemoval) {
                                       // If already marked for removal, unmark it
-                                      const updatedImagesToRemove = imagesToRemove.filter(img => img !== imageUrl);
+                                      // Need to find the actual URL that was added to imagesToRemove
+                                      const matchedUrl = imagesToRemove.find(url => 
+                                        url === imageUrl || 
+                                        url === normalizedImageUrl || 
+                                        imageUrl.endsWith(url)
+                                      );
+                                      
+                                      console.log(`Found matching URL to remove: ${matchedUrl}`);
+                                      
+                                      // Filter out the matched URL
+                                      const updatedImagesToRemove = matchedUrl 
+                                        ? imagesToRemove.filter(img => img !== matchedUrl)
+                                        : imagesToRemove.filter(img => img !== imageUrl);
+                                        
                                       setImagesToRemove(updatedImagesToRemove);
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
                                       
@@ -1203,7 +1236,7 @@ export default function PropertyForm({
                                         variant: "default",
                                       });
                                     } else {
-                                      // Mark for removal
+                                      // Mark for removal - always use the full URL
                                       const updatedImagesToRemove = [...imagesToRemove, imageUrl];
                                       setImagesToRemove(updatedImagesToRemove);
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
@@ -1214,7 +1247,7 @@ export default function PropertyForm({
                                       
                                       toast({
                                         title: "Image marked for removal",
-                                        description: "Save the property to complete the removal",
+                                        description: "Click Update Property to complete the removal",
                                         variant: "destructive",
                                       });
                                     }

@@ -1646,6 +1646,7 @@ export class DatabaseStorage implements IStorage {
       // Handle image removal before database update if imagesToRemove array is present
       if (updates.imagesToRemove && Array.isArray(updates.imagesToRemove) && updates.imagesToRemove.length > 0) {
         console.log(`Processing request to remove ${updates.imagesToRemove.length} images from property ${id}`);
+        console.log(`Images to remove:`, updates.imagesToRemove);
         
         // First, get the current property to access its images
         const currentProperty = await this.getPropertyById(id);
@@ -1656,14 +1657,19 @@ export class DatabaseStorage implements IStorage {
         
         // Make sure we have the images array
         if (currentProperty.images && Array.isArray(currentProperty.images)) {
-          console.log(`Current property has ${currentProperty.images.length} images`);
+          console.log(`Current property has ${currentProperty.images.length} images:`, currentProperty.images);
           
           // Filter out the images that are marked for removal
-          const updatedImages = currentProperty.images.filter(img => 
-            !updates.imagesToRemove?.includes(img)
-          );
+          const updatedImages = currentProperty.images.filter(img => {
+            const shouldKeep = !updates.imagesToRemove?.includes(img);
+            if (!shouldKeep) {
+              console.log(`Removing image: ${img}`);
+            }
+            return shouldKeep;
+          });
           
           console.log(`After filtering, property will have ${updatedImages.length} images`);
+          console.log(`Remaining images:`, updatedImages);
           
           // Update the images array in the updates object
           updates.images = updatedImages;
