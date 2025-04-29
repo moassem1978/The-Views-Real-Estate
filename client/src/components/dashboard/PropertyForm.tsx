@@ -501,48 +501,38 @@ export default function PropertyForm({
     try {
       console.log("Submitting form data:", data);
       
-      // Make a copy of the arrays for safer processing
-      const imagesToRemoveCopy = [...imagesToRemove];
+      console.log("Starting simplified image handling...");
+      
+      // Copy arrays for safety
       const removedIndexesCopy = [...removedImageIndexes];
       
-      console.log(`CRITICAL: Using index-based approach, ${removedIndexesCopy.length} images visually removed`);
-      console.log("Indexes of removed images:", removedIndexesCopy);
+      // SIMPLEST POSSIBLE APPROACH:
+      // Just filter out the indexes and send the filtered list
       
-      // Generate a filtered image list based on removedImageIndexes
-      // This directly corresponds to what the user sees on the form
-      // Each index in removedImageIndexes corresponds to an image that should be filtered out
-      const filteredImages = existingImages.filter((imageUrl, index) => {
-        // Skip any images whose indexes are in removedImageIndexes
-        const shouldKeep = !removedIndexesCopy.includes(index);
-        
-        if (!shouldKeep) {
-          console.log(`REMOVING image at index ${index}: ${imageUrl}`);
-        }
-        
-        return shouldKeep;
+      // 1. Get the list of images that should be kept (those not removed)
+      const imagesToKeep = existingImages.filter((imageUrl, index) => {
+        return !removedIndexesCopy.includes(index);
       });
       
-      // For completeness, also set the imagesToRemove array for the server
-      // This uses the original approach for maximum compatibility
-      data.imagesToRemove = imagesToRemoveCopy;
+      console.log(`SIMPLIFIED: ${removedIndexesCopy.length} images removed visually`);
+      console.log(`SIMPLIFIED: Starting with ${existingImages.length} images, keeping ${imagesToKeep.length}`);
       
-      // IMPORTANT: Override the images array with our filtered list
-      // This ensures the server gets the exact list of images to keep
-      console.log("BEFORE FILTERING, existing images:", existingImages.length);
-      console.log("AFTER FILTERING, images count:", filteredImages.length);
+      // 2. Set the filtered images array directly
+      // This will override whatever was in the database before
+      data.images = imagesToKeep;
       
-      // Set the final filtered images list in the data object
-      data.images = filteredImages;
+      // 3. Remove complex imagesToRemove approach
+      // Instead of sending both arrays, we just send the list to keep
+      // This makes things far less error-prone
+      delete data.imagesToRemove;
       
-      // Log each image URL being removed for debugging
-      if (imagesToRemove.length > 0) {
-        imagesToRemove.forEach((url, index) => {
-          console.log(`Image ${index + 1} marked for removal: ${url}`);
-        });
+      // Log removed image indexes for debugging
+      if (removedImageIndexes.length > 0) {
+        console.log(`${removedImageIndexes.length} images marked for removal by index:`, removedImageIndexes);
         
         // Add a visible toast notification about the number of images being removed
         toast({
-          title: `Removing ${imagesToRemove.length} images`,
+          title: `Removing ${removedImageIndexes.length} images`,
           description: "These images will be removed when you save the property",
           variant: "default"
         });
@@ -558,26 +548,26 @@ export default function PropertyForm({
         bedrooms: typeof data.bedrooms === 'string' ? parseInt(data.bedrooms) : data.bedrooms,
         bathrooms: typeof data.bathrooms === 'string' ? parseInt(data.bathrooms) : data.bathrooms,
         builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
-        imagesToRemove: [...imagesToRemove], // Ensure this is passed correctly to the API (create a fresh copy)
+        // We're now using the filtered images array directly, no need for imagesToRemove
       };
 
       // First save the property data to get an ID (for new properties)
       console.log(`Saving property data first... (${isEditing ? 'EDITING' : 'NEW'} property)`);
-      console.log("Sending data to API, focusing on image removal:", {
+      console.log("Sending data to API, using direct image list override:", {
         endpoint: isEditing ? `/api/properties/${propertyId}` : '/api/properties',
         method: isEditing ? 'PUT' : 'POST',
-        imagesToRemoveCount: formattedData.imagesToRemove.length,
-        imagesToRemove: formattedData.imagesToRemove
+        imagesCount: formattedData.images?.length || 0,
+        // We're sending the exact image list to keep rather than a removal list
       });
       
       // Call the API to save the property data
       const savedProperty = await mutation.mutateAsync(formattedData);
       console.log("Property saved successfully:", savedProperty);
       
-      // Add toast notification specific to image removal success if any images were removed
-      if (formattedData.imagesToRemove && formattedData.imagesToRemove.length > 0) {
+      // Add toast notification for successful image update
+      if (removedImageIndexes.length > 0) {
         toast({
-          title: `${formattedData.imagesToRemove.length} images removed`,
+          title: `${removedImageIndexes.length} images removed`,
           description: "The selected images have been removed successfully",
           variant: "default"
         });

@@ -567,12 +567,34 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       const propertyData = req.body;
-
-      // The imagesToRemove array will be passed directly to the storage layer
-      // which will handle the image removal process
-      if (propertyData.imagesToRemove && Array.isArray(propertyData.imagesToRemove) && propertyData.imagesToRemove.length > 0) {
-        console.log(`Request to remove ${propertyData.imagesToRemove.length} images from property ${id}`);
-        console.log(`Images to remove:`, propertyData.imagesToRemove);
+      
+      // CRITICAL: If images array is explicitly provided in request, use it directly
+      // This is a more direct approach that overrides whatever was previously in the DB
+      if (propertyData.images && Array.isArray(propertyData.images)) {
+        console.log(`DIRECT OVERRIDE: Using provided images array with ${propertyData.images.length} images`);
+        console.log(`New images list:`, propertyData.images);
+        
+        // The frontend now sends exactly the images to keep
+        // We'll force the property to use exactly these images
+        const existingProperty = await dbStorage.getPropertyById(id);
+        
+        if (existingProperty && existingProperty.images && Array.isArray(existingProperty.images)) {
+          console.log(`Existing property had ${existingProperty.images.length} images`);
+          
+          // We're going to keep track of removed images too, for logging
+          const removedImages = existingProperty.images.filter(img => 
+            !propertyData.images.includes(img)) || [];
+            
+          if (removedImages.length > 0) {
+            console.log(`REMOVED IMAGES: ${removedImages.length} images were removed:`, removedImages);
+          }
+        } else {
+          console.log(`Existing property has no images or images is not an array`);
+        }
+          
+        if (removedImages.length > 0) {
+          console.log(`REMOVED IMAGES: ${removedImages.length} images were removed:`, removedImages);
+        }
       }
 
       // If a regular user updates a property, set status back to pending_approval
