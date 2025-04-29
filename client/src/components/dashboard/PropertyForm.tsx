@@ -489,6 +489,12 @@ export default function PropertyForm({
   const onSubmit = async (data: any) => {
     try {
       console.log("Submitting form data:", data);
+      
+      // Make sure we're using the state variable for imagesToRemove
+      // This ensures we're using the correct tracking from the UI interaction
+      data.imagesToRemove = imagesToRemove;
+      console.log("Images marked for removal:", imagesToRemove);
+      
       // Ensure all numeric fields are parsed as numbers
       const formattedData = {
         ...data,
@@ -499,6 +505,7 @@ export default function PropertyForm({
         bedrooms: typeof data.bedrooms === 'string' ? parseInt(data.bedrooms) : data.bedrooms,
         bathrooms: typeof data.bathrooms === 'string' ? parseInt(data.bathrooms) : data.bathrooms,
         builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
+        imagesToRemove: imagesToRemove, // Ensure this is passed correctly
       };
 
       // First save the property data to get an ID (for new properties)
