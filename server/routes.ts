@@ -1517,11 +1517,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
           // Direct approach: if we have a buffer, write it to the destination
           if (file.buffer) {
+            console.log(`File has buffer of size ${file.buffer.length} bytes`);
             fs.writeFileSync(destPath, file.buffer);
             console.log(`Wrote file directly from buffer to ${destPath}`);
           } 
           // If we have the file.path, copy it to the destination
           else if (file.path && fs.existsSync(file.path)) {
+            console.log(`File exists at path: ${file.path}, copying to destination`);
             fs.copyFileSync(file.path, destPath);
             console.log(`Copied file from ${file.path} to ${destPath}`);
           }
@@ -1532,6 +1534,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             // Check if the file exists in the temp upload location
             const tempPath = path.join(process.cwd(), 'uploads', 'properties', file.filename);
             if (fs.existsSync(tempPath)) {
+              console.log(`Found file in temp location: ${tempPath}`);
               fs.copyFileSync(tempPath, destPath);
               console.log(`Recovered file from ${tempPath} to ${destPath}`);
             } else {
@@ -1574,11 +1577,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Now update the property with the new images
       try {
+        console.log(`Fetching property with ID ${propertyId} from database`);
         const property = await dbStorage.getPropertyById(propertyId);
+        
         if (!property) {
           console.error(`Property not found: ${propertyId}`);
           return res.status(404).json({ message: "Property not found" });
         }
+        
+        console.log(`Found property: ${property.title}`);
 
         // Check permission - owner and admin can update any property, regular users only their own
         if (user.role === 'user' && property.createdBy !== user.id) {
@@ -1595,6 +1602,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.log("Updated images array:", updatedImages);
 
         // Update the property with the new images
+        console.log(`Calling updateProperty for ID ${propertyId} with ${updatedImages.length} images`);
+        
+        // Only update the images field, not references or other fields
         const updatedProperty = await dbStorage.updateProperty(propertyId, {
           images: updatedImages
         });
@@ -1605,6 +1615,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
 
         console.log(`Successfully added ${fileUrls.length} images to property ${propertyId}`);
+        console.log(`Updated property now has ${updatedProperty.images ? updatedProperty.images.length : 0} images`);
+        
         return res.status(200).json({
           message: "Property images uploaded successfully", 
           imageUrls: fileUrls,
@@ -1613,6 +1625,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         });
       } catch (dbError) {
         console.error(`Error updating property ${propertyId} with new images:`, dbError);
+        if (dbError instanceof Error) {
+          console.error(`Error name: ${dbError.name}, message: ${dbError.message}`);
+          console.error(`Error stack: ${dbError.stack}`);
+        }
         return res.status(500).json({ 
           message: "Error updating property with new images",
           error: dbError instanceof Error ? dbError.message : 'Unknown error'

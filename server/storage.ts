@@ -1584,6 +1584,8 @@ export class DatabaseStorage implements IStorage {
       // Remove references field from the insert data
       const { references, ...safePropertyData } = insertProperty as any;
       
+      console.log('Safe property data to be inserted:', safePropertyData);
+      
       // We need to handle the 'references' field in a special way since it's a SQL reserved keyword
       // First, create the property without the references field
       const [property] = await db
@@ -1591,17 +1593,29 @@ export class DatabaseStorage implements IStorage {
         .values(safePropertyData)
         .returning();
       
+      console.log(`Successfully created property with ID ${property.id}`);
+      
       // If there's a references value, update it separately with proper SQL quoting
       if (references) {
         try {
           console.log(`Updating references field for property ${property.id} with value: ${references}`);
-          await pool.query(
-            `UPDATE properties SET "references" = $1 WHERE id = $2`,
+          // Using raw SQL query to handle the reserved keyword
+          const result = await pool.query(
+            `UPDATE properties SET "references" = $1 WHERE id = $2 RETURNING *`,
             [references, property.id]
           );
+          
+          console.log(`References update affected ${result.rowCount} rows`);
+          
+          if (result.rowCount === 0) {
+            console.error(`Failed to update references field for property ${property.id}`);
+          }
         } catch (refError) {
           console.error(`Error updating references field:`, refError);
+          console.error(refError instanceof Error ? refError.stack : 'Unknown error');
         }
+      } else {
+        console.log('No references value provided, skipping references update');
       }
       
       // Get the updated property with all fields
@@ -1704,10 +1718,14 @@ export class DatabaseStorage implements IStorage {
       let paramIndex = 1;
       
       for (const [key, value] of Object.entries(dbUpdates)) {
-        // If the key contains quotes, it's already properly escaped
-        // Otherwise, it's a regular column name
-        const formattedKey = key.includes('"') ? key : key;
-        setClauseParts.push(`${formattedKey} = $${paramIndex}`);
+        // If it's the references field, we need special handling for this reserved keyword
+        if (key === '"references"') {
+          setClauseParts.push(`"references" = $${paramIndex}`);
+        } 
+        // For everything else, use standard column names
+        else {
+          setClauseParts.push(`${key} = $${paramIndex}`);
+        }
         queryParams.push(value);
         paramIndex++;
       }
