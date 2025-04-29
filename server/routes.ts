@@ -420,8 +420,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.log(`Using zipCode: ${req.body.zipCode} for city: ${cityName}`);
       }
 
-      // Ensure required fields are present (including zipCode now)
-      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'zipCode', 'images', 'bedrooms', 'bathrooms', 'builtUpArea'];
+      // Ensure required fields are present (made images optional)
+      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'zipCode', 'bedrooms', 'bathrooms', 'builtUpArea'];
       const missingFields = requiredFields.filter(field => {
         // Check if field is missing or empty
         const value = req.body[field];
@@ -438,6 +438,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Handle amenities if empty
       if (!req.body.amenities) {
         req.body.amenities = [];
+      }
+      
+      // Ensure images field exists
+      if (!req.body.images) {
+        req.body.images = [];
+        console.log("Initialized empty images array for new property");
       }
 
       // Format images field if it's a comma-separated string
