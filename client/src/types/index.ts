@@ -68,6 +68,8 @@ export interface Property {
   agentId?: number;
   agent_id?: number; // Snake case variant
   country?: string; // Used to identify international properties (any property not in Egypt)
+  references?: string; // Property reference number (camelCase)
+  reference_number?: string; // Property reference number (snake_case)
   
   // Allow any other string indexing for flexibility with database columns
   [key: string]: any;
