@@ -568,6 +568,26 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       const propertyData = req.body;
 
+      // Check if there are images to remove
+      if (propertyData.imagesToRemove && Array.isArray(propertyData.imagesToRemove) && propertyData.imagesToRemove.length > 0) {
+        console.log(`Request to remove ${propertyData.imagesToRemove.length} images from property ${id}`);
+        
+        // If there are existing images, filter out the ones to be removed
+        if (existingProperty.images && Array.isArray(existingProperty.images)) {
+          const updatedImages = existingProperty.images.filter(img => 
+            !propertyData.imagesToRemove.includes(img)
+          );
+          
+          console.log(`Filtered images from ${existingProperty.images.length} to ${updatedImages.length}`);
+          
+          // Update the images array to only include non-removed images
+          propertyData.images = updatedImages;
+        }
+        
+        // Remove the imagesToRemove field from the data sent to storage
+        delete propertyData.imagesToRemove;
+      }
+
       // If a regular user updates a property, set status back to pending_approval
       if (user.role === 'user') {
         propertyData.status = 'pending_approval';

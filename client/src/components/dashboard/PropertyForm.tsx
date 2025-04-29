@@ -148,6 +148,7 @@ export default function PropertyForm({
       country: "Egypt", // Default to Egypt
       references: "", // Added default value for references
       zipCode: "", // Required by server
+      imagesToRemove: [], // Array to track images marked for removal
       imagesToRemove: [] as string[] // Track images to remove
     },
   });
