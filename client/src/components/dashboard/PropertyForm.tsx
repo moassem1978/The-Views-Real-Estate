@@ -44,6 +44,7 @@ export default function PropertyForm({
   const queryClient = useQueryClient();
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [visibleImages, setVisibleImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [imagesToRemove, setImagesToRemove] = useState<string[]>([]);
   const isEditing = !!propertyId;
@@ -191,7 +192,10 @@ export default function PropertyForm({
       const propertyImages = property.images || [];
       console.log("Setting existing property images:", propertyImages);
       const imagesArray = Array.isArray(propertyImages) ? propertyImages : [];
+      
+      // Set both the master list of images and the visible images
       setExistingImages(imagesArray);
+      setVisibleImages(imagesArray);
       
       // Reset imagesToRemove state
       setImagesToRemove([]);
@@ -1247,113 +1251,65 @@ export default function PropertyForm({
                   <Label htmlFor="images">Property Images</Label>
                   <div className="border rounded-md p-4">
                     {/* Existing Images Display */}
-                    {existingImages.length > 0 && (
+                    {visibleImages.length > 0 && (
                       <div className="mb-4">
-                        {/* Count only images that are not marked for removal */}
                         <p className="text-sm font-medium mb-2">
-                          Current Images ({existingImages.filter(img => 
-                            !imagesToRemove.some(removeUrl => {
-                              const imgBase = img.split('/').pop() || '';
-                              const removeBase = removeUrl.split('/').pop() || '';
-                              return removeUrl === img || removeBase === imgBase || 
-                                     img.includes(removeUrl) || removeUrl.includes(img);
-                            })
-                          ).length})
+                          Current Images ({visibleImages.length})
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {existingImages.map((imageUrl, index) => {
-                            // ENHANCED ROBUST APPROACH: Better image URL normalization and matching
-                            // Extract the filename only from the image URL
-                            const imageBasename = typeof imageUrl === 'string' ? imageUrl.split('/').pop() || '' : '';
-                            
-                            // Perform much more thorough matching to catch all edge cases
-                            const isMarkedForRemoval = imagesToRemove.some(url => {
-                              // Exit early if either URL is invalid
-                              if (!url || !imageUrl) return false;
-                              
-                              // Get base filename of the URL to remove
-                              const urlBasename = typeof url === 'string' ? url.split('/').pop() || '' : '';
-                              
-                              // 1. Direct equality
-                              if (url === imageUrl) return true;
-                              
-                              // 2. If both have basename and they match
-                              if (imageBasename && urlBasename && imageBasename === urlBasename) return true;
-                              
-                              // 3. If one contains the other (to handle path differences)
-                              if (url.includes(imageBasename) || imageUrl.includes(urlBasename)) return true;
-                              
-                              // 4. Handle case where upload path is prefixed differently
-                              const normalizedImage = imageUrl.replace(/^\/uploads\/properties\//, '');
-                              const normalizedUrl = url.replace(/^\/uploads\/properties\//, '');
-                              if (normalizedImage === normalizedUrl) return true;
-                              
-                              // 5. Check if image URL ends with the URL to remove (handle path prefixes)
-                              if (imageUrl.endsWith(url)) return true;
-                              
-                              return false;
-                            });
-                            
-                            console.log(`Image ${index}: ${imageUrl}, marked for removal: ${isMarkedForRemoval}`);
-                            
-                            // IMPORTANT: Skip rendering this image entirely if it's marked for removal
-                            if (isMarkedForRemoval) {
-                              return null; // Don't render anything for this image
-                            }
-                            
-                            return (
-                              <div 
-                                key={`existing-${index}`} 
-                                className="relative rounded-md overflow-hidden h-24 bg-gray-100 group"
+                          {visibleImages.map((imageUrl, index) => (
+                            <div 
+                              key={`existing-${index}`} 
+                              className="relative rounded-md overflow-hidden h-24 bg-gray-100 group"
+                            >
+                              <img 
+                                src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
+                                alt={`Property image ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Try alternate path if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  if (!target.src.includes('/public/')) {
+                                    target.src = `/public/uploads/properties/${imageUrl}`;
+                                  } else {
+                                    // If still fails, use a placeholder
+                                    target.src = 'https://placehold.co/300x200?text=Image+Not+Found';
+                                  }
+                                }}
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  // BRAND NEW APPROACH: Simply remove from visibleImages and add to imagesToRemove
+                                  
+                                  // 1. Add to imagesToRemove for server-side removal (both full URL and basename)
+                                  const imageBasename = imageUrl.split('/').pop() || '';
+                                  const updatedImagesToRemove = [...imagesToRemove, imageUrl, imageBasename].filter(Boolean);
+                                  setImagesToRemove(updatedImagesToRemove);
+                                  form.setValue("imagesToRemove", updatedImagesToRemove);
+                                  
+                                  // 2. Remove from visibleImages for immediate UI update
+                                  const updatedVisibleImages = visibleImages.filter(img => img !== imageUrl);
+                                  setVisibleImages(updatedVisibleImages);
+                                  
+                                  console.log(`Image removed from view: ${imageUrl}`);
+                                  console.log(`Total images to remove: ${updatedImagesToRemove.length}`);
+                                  
+                                  toast({
+                                    title: "Image removed",
+                                    description: "Click Update Property to finalize changes",
+                                    variant: "destructive",
+                                  });
+                                }}
+                                className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-bl-md shadow-md opacity-100 hover:opacity-100 transition-opacity z-20"
+                                aria-label="Remove image"
                               >
-                                <img 
-                                  src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
-                                  alt={`Property image ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    // Try alternate path if image fails to load
-                                    const target = e.target as HTMLImageElement;
-                                    if (!target.src.includes('/public/')) {
-                                      target.src = `/public/uploads/properties/${imageUrl}`;
-                                    } else {
-                                      // If still fails, use a placeholder
-                                      target.src = 'https://placehold.co/300x200?text=Image+Not+Found';
-                                    }
-                                  }}
-                                />
-                                <button 
-                                  type="button"
-                                  onClick={() => {
-                                    // SIMPLIFIED DIRECT REMOVAL: Always add to images to remove
-                                    // Mark for removal - add both full URL and filename to maximize matching
-                                    const imageBasename = imageUrl.split('/').pop() || '';
-                                    const updatedImagesToRemove = [...imagesToRemove, imageUrl, imageBasename].filter(Boolean);
-                                    
-                                    console.log("MARK - Adding to images to remove:", updatedImagesToRemove);
-                                    
-                                    // Update state and form
-                                    setImagesToRemove(updatedImagesToRemove);
-                                    form.setValue("imagesToRemove", updatedImagesToRemove);
-                                    
-                                    console.log(`Image marked for removal: ${imageUrl}`);
-                                    console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
-                                    
-                                    toast({
-                                      title: "Image removed",
-                                      description: "Click Update Property to finalize changes",
-                                      variant: "destructive",
-                                    });
-                                  }}
-                                  className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-bl-md shadow-md opacity-100 hover:opacity-100 transition-opacity z-20"
-                                  aria-label="Remove image"
-                                >
-                                  <span className="flex items-center">
-                                    <X className="h-4 w-4 mr-1" /> Remove
-                                  </span>
-                                </button>
-                              </div>
-                            );
-                          })}
+                                <span className="flex items-center">
+                                  <X className="h-4 w-4 mr-1" /> Remove
+                                </span>
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
