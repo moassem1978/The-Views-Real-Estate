@@ -125,7 +125,7 @@ export default function PropertyForm({
     },
   });
 
-  // Form setup
+  // Form setup with simpler defaultValues
   const form = useForm({
     defaultValues: {
       title: "",
@@ -150,8 +150,7 @@ export default function PropertyForm({
       country: "Egypt", // Default to Egypt
       references: "", // Added default value for references
       zipCode: "", // Required by server
-      images: [] as string[], // Array to hold the current images 
-      imagesToRemove: [] as string[] // Legacy field - kept for compatibility
+      // Removed images and imagesToRemove from form state
     },
   });
 
@@ -185,8 +184,7 @@ export default function PropertyForm({
         references: property.references || property.reference_number || '',
         yearBuilt: property.yearBuilt || property.year_built || '',
         zipCode: property.zipCode || property.zip_code || "00000", // Required by server
-        images: property.images || [],
-        imagesToRemove: [] // Initialize with empty array
+        // Removed problematic images fields
       };
       
       // Set existing images if available
