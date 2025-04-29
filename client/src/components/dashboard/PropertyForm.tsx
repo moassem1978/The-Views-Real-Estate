@@ -1204,11 +1204,8 @@ export default function PropertyForm({
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
-                            // Check if this image is in our kept images list
-                            const isKept = keptImages.includes(imageUrl);
-                            
-                            // Don't show images that have been removed
-                            if (!isKept) {
+                            // Simple approach - just don't render images that aren't in our keptImages list
+                            if (!keptImages.includes(imageUrl)) {
                               return null;
                             }
                             
@@ -1235,27 +1232,8 @@ export default function PropertyForm({
                                 <button 
                                   type="button"
                                   onClick={() => {
-                                    // DEBUGGING: Log the current state before changes
-                                    console.log("BEFORE REMOVAL: Current keptImages:", keptImages);
-                                    console.log("Attempting to remove image:", imageUrl);
-                                    
-                                    // Create a new array without the clicked image
-                                    const updatedKeptImages = keptImages.filter(img => img !== imageUrl);
-                                    
-                                    // DEBUGGING: Log the results of the filter operation
-                                    console.log("FILTER RESULT: updatedKeptImages:", updatedKeptImages);
-                                    
-                                    // Update state with the filtered array
-                                    setKeptImages(updatedKeptImages);
-                                    
-                                    // Don't try to set form value directly, just update state
-                                    // The form submission will use keptImages directly
-                                    
-                                    // Notify user
-                                    toast({
-                                      title: "Image removed",
-                                      description: "The image has been removed from this property",
-                                    });
+                                    // Ultra-simple direct approach - just update state
+                                    setKeptImages(prev => prev.filter(img => img !== imageUrl));
                                   }}
                                   className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-bl-md shadow-md opacity-100 hover:opacity-100 transition-opacity z-20"
                                   aria-label="Remove image"
