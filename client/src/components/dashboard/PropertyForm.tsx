@@ -190,7 +190,8 @@ export default function PropertyForm({
       // Set existing images if available
       const propertyImages = property.images || [];
       console.log("Setting existing property images:", propertyImages);
-      setExistingImages(Array.isArray(propertyImages) ? propertyImages : []);
+      const imagesArray = Array.isArray(propertyImages) ? propertyImages : [];
+      setExistingImages(imagesArray);
       
       // Reset imagesToRemove state
       setImagesToRemove([]);
