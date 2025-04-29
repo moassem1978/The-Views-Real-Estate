@@ -156,12 +156,30 @@ export default function PropertyForm({
     if (property && isEditing) {
       console.log("Setting form data for property:", property);
       
-      // Handle both camelCase and snake_case property names
+      // Create a clean form data object with consistent field names
       const formData = {
-        title: property.title,
-        description: property.description,
-        propertyType: property.propertyType || property.property_type,
-        listingType: property.listingType || property.listing_type,
+        title: property.title || '',
+        description: property.description || '',
+        propertyType: property.propertyType || property.property_type || '',
+        listingType: property.listingType || property.listing_type || 'Primary',
+        price: property.price || 0,
+        downPayment: property.downPayment || property.down_payment || 0,
+        installmentAmount: property.installmentAmount || property.installment_amount || 0,
+        installmentPeriod: property.installmentPeriod || property.installment_period || 0,
+        isFullCash: Boolean(property.isFullCash || property.is_full_cash),
+        city: property.city || '',
+        projectName: property.projectName || property.project_name || '',
+        developerName: property.developerName || property.developer_name || '',
+        address: property.address || '',
+        bedrooms: property.bedrooms || 0,
+        bathrooms: property.bathrooms || 0,
+        builtUpArea: property.builtUpArea || property.built_up_area || 0,
+        isFeatured: Boolean(property.isFeatured || property.is_featured),
+        isHighlighted: Boolean(property.isHighlighted || property.is_highlighted),
+        isNewListing: Boolean(property.isNewListing || property.is_new_listing),
+        country: property.country || 'Egypt',
+        references: property.references || '',
+        zipCode: property.zipCode || property.zip_code || '00000',
         price: property.price,
         downPayment: property.downPayment || property.down_payment,
         installmentAmount: property.installmentAmount || property.installment_amount,

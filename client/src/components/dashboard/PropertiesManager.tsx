@@ -169,24 +169,23 @@ export default function PropertiesManager() {
   // Handle edit property
   const handleEditProperty = async (id: number) => {
     try {
-      // Log the intent to edit
       console.log("Setting property for edit, ID:", id);
+
+      // Use apiRequest helper for consistent error handling
+      const response = await apiRequest("GET", `/api/properties/${id}`);
       
-      // Check if the property exists in the current properties array
-      const propertyExists = properties?.data?.some(p => p.id === id);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch property (Status: ${response.status})`);
+      }
+
+      const propertyData = await response.json();
+      console.log("Property data loaded:", propertyData);
+
+      // If we got here, the property exists and we have its data
+      queryClient.setQueryData(["/api/properties", id], propertyData);
       
-      if (!propertyExists) {
-        console.warn(`Property ID ${id} not found in current properties list`);
-        
-        // Double-check with the server directly
-        try {
-          const response = await fetch(`/api/properties/${id}`, {
-            credentials: "include",
-            headers: {
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache',
-            }
-          });
+      setEditingPropertyId(id);
+      setShowPropertyForm(true);
           
           if (response.status === 404) {
             toast({
