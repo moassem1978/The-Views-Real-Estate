@@ -138,7 +138,7 @@ export default function PropertyForm({
       city: "",
       projectName: "",
       developerName: "",
-      address: "",
+      address: "Project Address", // Default address to avoid null error
       bedrooms: 0,
       bathrooms: 0,
       builtUpArea: 0,
