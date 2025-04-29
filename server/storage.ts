@@ -1667,7 +1667,16 @@ export class DatabaseStorage implements IStorage {
       if ('isHighlighted' in updates) dbUpdates.is_highlighted = updates.isHighlighted;
       if ('isNewListing' in updates) dbUpdates.is_new_listing = updates.isNewListing;
       if ('country' in updates) dbUpdates.country = updates.country;
-      if ('yearBuilt' in updates) dbUpdates.year_built = updates.yearBuilt;
+      if ('yearBuilt' in updates) {
+        // Handle yearBuilt field to ensure it's a number or null
+        if (updates.yearBuilt === '' || updates.yearBuilt === null || updates.yearBuilt === undefined) {
+          dbUpdates.year_built = null; // Use NULL for empty year values
+        } else {
+          dbUpdates.year_built = typeof updates.yearBuilt === 'number' ? 
+            updates.yearBuilt : parseInt(String(updates.yearBuilt)) || null;
+        }
+      }
+      
       if ('status' in updates) dbUpdates.status = updates.status;
       // The references field maps to reference_number column
       if ('references' in updates) dbUpdates.reference_number = updates.references;
@@ -1742,8 +1751,15 @@ export class DatabaseStorage implements IStorage {
         
         console.log('New images to add:', newImagesArray);
         
-        // Combine existing and new images
-        const combinedImages = [...existingImages, ...newImagesArray];
+        // Remove duplicate images before combining arrays
+        const uniqueNewImages = newImagesArray.filter(newImg => {
+          // Check if this image URL already exists in existing images
+          return !existingImages.some(existingImg => existingImg === newImg);
+        });
+        console.log('Unique new images after deduplication:', uniqueNewImages);
+        
+        // Combine existing and unique new images
+        const combinedImages = [...existingImages, ...uniqueNewImages];
         console.log('Combined images array:', combinedImages);
         
         // Use JSON.stringify to convert array to proper JSON string format
