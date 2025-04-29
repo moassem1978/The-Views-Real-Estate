@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Upload, X } from "lucide-react";
+import { Check, Loader2, Upload, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -1113,51 +1113,76 @@ export default function PropertyForm({
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {existingImages.map((imageUrl, index) => (
-                            <div key={`existing-${index}`} className="relative rounded-md overflow-hidden h-24 bg-gray-100 group">
-                              <img 
-                                src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
-                                alt={`Property image ${index + 1}`}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  // Try alternate path if image fails to load
-                                  const target = e.target as HTMLImageElement;
-                                  if (!target.src.includes('/public/')) {
-                                    target.src = `/public/uploads/properties/${imageUrl}`;
-                                  } else {
-                                    // If still fails, use a placeholder
-                                    target.src = 'https://placehold.co/300x200?text=Image+Not+Found';
-                                  }
-                                }}
-                              />
-                              <button 
-                                type="button"
-                                onClick={() => {
-                                  // Remove the image from existingImages
-                                  setExistingImages(current => current.filter((_, i) => i !== index));
-                                  
-                                  // Add this image URL to the form's imagesToRemove array
-                                  const currentImagesToRemove = form.getValues().imagesToRemove || [];
-                                  const updatedImagesToRemove = [...currentImagesToRemove, imageUrl];
-                                  form.setValue("imagesToRemove", updatedImagesToRemove);
-                                  
-                                  console.log(`Image marked for removal: ${imageUrl}`);
-                                  console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
-                                  
-                                  // Show toast for better user feedback
-                                  toast({
-                                    title: "Image marked for removal",
-                                    description: "Save the property to complete the removal",
-                                    variant: "default",
-                                  });
-                                }}
-                                className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                aria-label="Remove image"
+                          {existingImages.map((imageUrl, index) => {
+                            // Check if this image is in the imagesToRemove array
+                            const isMarkedForRemoval = form.getValues().imagesToRemove?.includes(imageUrl) || false;
+                            
+                            return (
+                              <div 
+                                key={`existing-${index}`} 
+                                className={`relative rounded-md overflow-hidden h-24 bg-gray-100 group ${isMarkedForRemoval ? 'border-2 border-red-500' : ''}`}
                               >
-                                <X className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ))}
+                                <img 
+                                  src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
+                                  alt={`Property image ${index + 1}`}
+                                  className={`w-full h-full object-cover ${isMarkedForRemoval ? 'opacity-50' : ''}`}
+                                  onError={(e) => {
+                                    // Try alternate path if image fails to load
+                                    const target = e.target as HTMLImageElement;
+                                    if (!target.src.includes('/public/')) {
+                                      target.src = `/public/uploads/properties/${imageUrl}`;
+                                    } else {
+                                      // If still fails, use a placeholder
+                                      target.src = 'https://placehold.co/300x200?text=Image+Not+Found';
+                                    }
+                                  }}
+                                />
+                                {isMarkedForRemoval && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-20">
+                                    <span className="text-white text-xs font-bold bg-red-500 px-2 py-1 rounded">TO REMOVE</span>
+                                  </div>
+                                )}
+                                <button 
+                                  type="button"
+                                  onClick={() => {
+                                    const currentImagesToRemove = form.getValues().imagesToRemove || [];
+                                    
+                                    if (isMarkedForRemoval) {
+                                      // If already marked for removal, unmark it
+                                      const updatedImagesToRemove = currentImagesToRemove.filter(img => img !== imageUrl);
+                                      form.setValue("imagesToRemove", updatedImagesToRemove);
+                                      
+                                      console.log(`Image unmarked for removal: ${imageUrl}`);
+                                      console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
+                                      
+                                      toast({
+                                        title: "Image removal canceled",
+                                        description: "Image will be kept",
+                                        variant: "default",
+                                      });
+                                    } else {
+                                      // Mark for removal
+                                      const updatedImagesToRemove = [...currentImagesToRemove, imageUrl];
+                                      form.setValue("imagesToRemove", updatedImagesToRemove);
+                                      
+                                      console.log(`Image marked for removal: ${imageUrl}`);
+                                      console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
+                                      
+                                      toast({
+                                        title: "Image marked for removal",
+                                        description: "Save the property to complete the removal",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  }}
+                                  className={`absolute top-0 right-0 ${isMarkedForRemoval ? 'bg-green-500' : 'bg-red-500'} text-white p-1 rounded-bl-md opacity-0 group-hover:opacity-100 transition-opacity`}
+                                  aria-label={isMarkedForRemoval ? "Keep image" : "Remove image"}
+                                >
+                                  {isMarkedForRemoval ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
