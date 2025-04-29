@@ -1114,8 +1114,18 @@ export default function PropertyForm({
                         <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
-                            // Check if this image is in the imagesToRemove array
-                            const isMarkedForRemoval = form.getValues().imagesToRemove?.includes(imageUrl) || false;
+                            // Create a state variable to track the removal status for each image
+                            const [isMarkedForRemoval, setIsMarkedForRemoval] = useState(() => {
+                              // Initialize from the form state
+                              const currentImagesToRemove = form.getValues().imagesToRemove || [];
+                              return currentImagesToRemove.includes(imageUrl);
+                            });
+                            
+                            useEffect(() => {
+                              // This effect ensures the form state and UI stay in sync
+                              const currentImagesToRemove = form.getValues().imagesToRemove || [];
+                              setIsMarkedForRemoval(currentImagesToRemove.includes(imageUrl));
+                            }, [imageUrl, form]);
                             
                             return (
                               <div 
@@ -1151,19 +1161,21 @@ export default function PropertyForm({
                                       // If already marked for removal, unmark it
                                       const updatedImagesToRemove = currentImagesToRemove.filter(img => img !== imageUrl);
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
+                                      setIsMarkedForRemoval(false);
                                       
                                       console.log(`Image unmarked for removal: ${imageUrl}`);
                                       console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
                                       
                                       toast({
-                                        title: "Image removal canceled",
-                                        description: "Image will be kept",
+                                        title: "Image will be kept",
+                                        description: "Removal canceled",
                                         variant: "default",
                                       });
                                     } else {
                                       // Mark for removal
                                       const updatedImagesToRemove = [...currentImagesToRemove, imageUrl];
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
+                                      setIsMarkedForRemoval(true);
                                       
                                       console.log(`Image marked for removal: ${imageUrl}`);
                                       console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);

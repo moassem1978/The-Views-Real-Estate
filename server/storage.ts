@@ -1638,10 +1638,42 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateProperty(id: number, updates: Partial<Property>): Promise<Property | undefined> {
+  async updateProperty(id: number, updates: Partial<Property> & { imagesToRemove?: string[] }): Promise<Property | undefined> {
     try {
       console.log(`DB: Updating property with ID ${id}`);
       console.log(`Received update data:`, updates);
+      
+      // Handle image removal before database update if imagesToRemove array is present
+      if (updates.imagesToRemove && Array.isArray(updates.imagesToRemove) && updates.imagesToRemove.length > 0) {
+        console.log(`Processing request to remove ${updates.imagesToRemove.length} images from property ${id}`);
+        
+        // First, get the current property to access its images
+        const currentProperty = await this.getPropertyById(id);
+        if (!currentProperty) {
+          console.error(`Cannot remove images - property ${id} not found`);
+          throw new Error(`Property ${id} not found`);
+        }
+        
+        // Make sure we have the images array
+        if (currentProperty.images && Array.isArray(currentProperty.images)) {
+          console.log(`Current property has ${currentProperty.images.length} images`);
+          
+          // Filter out the images that are marked for removal
+          const updatedImages = currentProperty.images.filter(img => 
+            !updates.imagesToRemove?.includes(img)
+          );
+          
+          console.log(`After filtering, property will have ${updatedImages.length} images`);
+          
+          // Update the images array in the updates object
+          updates.images = updatedImages;
+        } else {
+          console.log(`Property has no images or images is not an array`);
+        }
+        
+        // Remove the imagesToRemove field so it doesn't confuse the database
+        delete updates.imagesToRemove;
+      }
       
       // Convert camelCase keys to snake_case for database
       const dbUpdates: any = {};
@@ -1751,21 +1783,9 @@ export class DatabaseStorage implements IStorage {
         
         console.log('New images to add:', newImagesArray);
         
-        // Check if there are images to remove
-        const imagesToRemove: string[] = [];
-        if ('imagesToRemove' in updates && Array.isArray(updates.imagesToRemove)) {
-          updates.imagesToRemove.forEach((imageUrl: string) => {
-            if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
-              imagesToRemove.push(imageUrl);
-            }
-          });
-        }
-        console.log('Images requested to be removed:', imagesToRemove);
-        
-        // Filter out existing images that are marked for removal
-        const filteredExistingImages = imagesToRemove.length > 0
-          ? existingImages.filter(img => !imagesToRemove.includes(img))
-          : existingImages;
+        // We no longer need to handle imagesToRemove here as it's already handled
+        // at the beginning of the updateProperty function
+        const filteredExistingImages = existingImages;
         console.log('Existing images after removal:', filteredExistingImages);
         
         // Remove duplicate images before combining arrays
