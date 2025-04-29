@@ -1142,8 +1142,8 @@ export default function PropertyForm({
                                   }}
                                 />
                                 {isMarkedForRemoval && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-20">
-                                    <span className="text-white text-xs font-bold bg-red-500 px-2 py-1 rounded">TO REMOVE</span>
+                                  <div className="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-30">
+                                    <span className="text-white text-sm font-bold bg-red-600 px-3 py-2 rounded shadow-md border border-white">MARKED FOR REMOVAL</span>
                                   </div>
                                 )}
                                 <button 
@@ -1157,6 +1157,7 @@ export default function PropertyForm({
                                       
                                       console.log(`Image unmarked for removal: ${imageUrl}`);
                                       console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
+                                      console.log("Current state of imagesToRemove after unmarking:", updatedImagesToRemove);
                                       
                                       toast({
                                         title: "Image will be kept",
@@ -1171,6 +1172,7 @@ export default function PropertyForm({
                                       
                                       console.log(`Image marked for removal: ${imageUrl}`);
                                       console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
+                                      console.log("Current state of imagesToRemove after marking:", updatedImagesToRemove);
                                       
                                       toast({
                                         title: "Image marked for removal",
@@ -1179,7 +1181,7 @@ export default function PropertyForm({
                                       });
                                     }
                                   }}
-                                  className={`absolute top-0 right-0 ${isMarkedForRemoval ? 'bg-green-500' : 'bg-red-500'} text-white p-1 rounded-bl-md opacity-0 group-hover:opacity-100 transition-opacity`}
+                                  className={`absolute top-0 right-0 ${isMarkedForRemoval ? 'bg-green-500' : 'bg-red-500'} text-white p-2 rounded-bl-md shadow-md opacity-80 group-hover:opacity-100 transition-opacity`}
                                   aria-label={isMarkedForRemoval ? "Keep image" : "Remove image"}
                                 >
                                   {isMarkedForRemoval ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
