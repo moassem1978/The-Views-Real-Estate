@@ -150,7 +150,8 @@ export default function PropertyForm({
       country: "Egypt", // Default to Egypt
       references: "", // Added default value for references
       zipCode: "", // Required by server
-      imagesToRemove: [] as string[] // Array to track images marked for removal
+      images: [] as string[], // Array to hold the current images 
+      imagesToRemove: [] as string[] // Legacy field - kept for compatibility
     },
   });
 
@@ -198,7 +199,12 @@ export default function PropertyForm({
       
       // Initialize the kept images with all current images
       // This is our new approach - directly track which images to keep
+      console.log("INITIALIZING: Setting keptImages with all existing images:", imagesArray);
       setKeptImages([...imagesArray]);
+      
+      // IMPORTANT: Also set the form value for 'images' to match our kept images
+      // This ensures the form submission will have the correct images data
+      form.setValue('images', imagesArray);
       
       console.log("Form data being set:", formData);
       form.reset(formData);
@@ -1229,14 +1235,23 @@ export default function PropertyForm({
                                 <button 
                                   type="button"
                                   onClick={() => {
-                                    // NEW APPROACH: Just remove this image from keptImages
+                                    // DEBUGGING: Log the current state before changes
+                                    console.log("BEFORE REMOVAL: Current keptImages:", keptImages);
+                                    console.log("Attempting to remove image:", imageUrl);
+                                    
+                                    // Create a new array without the clicked image
                                     const updatedKeptImages = keptImages.filter(img => img !== imageUrl);
+                                    
+                                    // DEBUGGING: Log the results of the filter operation
+                                    console.log("FILTER RESULT: updatedKeptImages:", updatedKeptImages);
+                                    
+                                    // Update state with the filtered array
                                     setKeptImages(updatedKeptImages);
                                     
-                                    // Log what happened for debugging
-                                    console.log(`Removed image from keptImages: ${imageUrl}`);
-                                    console.log(`KeptImages now has ${updatedKeptImages.length} images`);
+                                    // CRITICAL: Force re-render to ensure UI is updated
+                                    form.setValue('images', updatedKeptImages);
                                     
+                                    // Notify user
                                     toast({
                                       title: "Image removed",
                                       description: "The image has been removed from this property",
