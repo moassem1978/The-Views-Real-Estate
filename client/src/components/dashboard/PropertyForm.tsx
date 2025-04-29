@@ -148,8 +148,7 @@ export default function PropertyForm({
       country: "Egypt", // Default to Egypt
       references: "", // Added default value for references
       zipCode: "", // Required by server
-      imagesToRemove: [], // Array to track images marked for removal
-      imagesToRemove: [] as string[] // Track images to remove
+      imagesToRemove: [] as string[] // Array to track images marked for removal
     },
   });
 
@@ -217,6 +216,13 @@ export default function PropertyForm({
         
         // Create a clean data object with primitive values to avoid circular reference errors
         const cleanData = { ...data };
+        
+        // Make sure imagesToRemove is properly set if present
+        if (cleanData.imagesToRemove && Array.isArray(cleanData.imagesToRemove)) {
+          console.log(`Including ${cleanData.imagesToRemove.length} images marked for removal:`, cleanData.imagesToRemove);
+        } else {
+          cleanData.imagesToRemove = [];
+        }
         
         // Ensure all fields are properly formatted for transmission
         // Handle zipCode (required by the server)
@@ -1131,11 +1137,19 @@ export default function PropertyForm({
                                   setExistingImages(current => current.filter((_, i) => i !== index));
                                   
                                   // Add this image URL to the form's imagesToRemove array
-                                  const imagesToRemove = [...(form.getValues().imagesToRemove || []), imageUrl];
-                                  form.setValue("imagesToRemove", imagesToRemove);
+                                  const currentImagesToRemove = form.getValues().imagesToRemove || [];
+                                  const updatedImagesToRemove = [...currentImagesToRemove, imageUrl];
+                                  form.setValue("imagesToRemove", updatedImagesToRemove);
                                   
-                                  console.log("Image removed:", imageUrl);
-                                  console.log("Images to remove:", imagesToRemove);
+                                  console.log(`Image marked for removal: ${imageUrl}`);
+                                  console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
+                                  
+                                  // Show toast for better user feedback
+                                  toast({
+                                    title: "Image marked for removal",
+                                    description: "Save the property to complete the removal",
+                                    variant: "default",
+                                  });
                                 }}
                                 className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl-md opacity-0 group-hover:opacity-100 transition-opacity"
                                 aria-label="Remove image"
