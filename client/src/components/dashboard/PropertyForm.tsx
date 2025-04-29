@@ -1114,18 +1114,9 @@ export default function PropertyForm({
                         <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
-                            // Create a state variable to track the removal status for each image
-                            const [isMarkedForRemoval, setIsMarkedForRemoval] = useState(() => {
-                              // Initialize from the form state
-                              const currentImagesToRemove = form.getValues().imagesToRemove || [];
-                              return currentImagesToRemove.includes(imageUrl);
-                            });
-                            
-                            useEffect(() => {
-                              // This effect ensures the form state and UI stay in sync
-                              const currentImagesToRemove = form.getValues().imagesToRemove || [];
-                              setIsMarkedForRemoval(currentImagesToRemove.includes(imageUrl));
-                            }, [imageUrl, form]);
+                            // Instead of using state for each image, directly check if the image is in the imagesToRemove array
+                            const imagesToRemove = form.getValues().imagesToRemove || [];
+                            const isMarkedForRemoval = imagesToRemove.includes(imageUrl);
                             
                             return (
                               <div 
@@ -1161,7 +1152,6 @@ export default function PropertyForm({
                                       // If already marked for removal, unmark it
                                       const updatedImagesToRemove = currentImagesToRemove.filter(img => img !== imageUrl);
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
-                                      setIsMarkedForRemoval(false);
                                       
                                       console.log(`Image unmarked for removal: ${imageUrl}`);
                                       console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
@@ -1175,7 +1165,6 @@ export default function PropertyForm({
                                       // Mark for removal
                                       const updatedImagesToRemove = [...currentImagesToRemove, imageUrl];
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
-                                      setIsMarkedForRemoval(true);
                                       
                                       console.log(`Image marked for removal: ${imageUrl}`);
                                       console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
