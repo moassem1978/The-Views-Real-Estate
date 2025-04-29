@@ -508,30 +508,60 @@ export default function PropertyForm({
       // Extra logging for debugging
       console.log("All existing images:", existingImages);
       
-      // If we have images to remove, filter them from existing images right here
-      // This should help when the server processes images
+      // DIRECT IMAGE REMOVAL APPROACH: If we have images to remove, handle that first
+      // Important: We'll just pass the imagesToRemove array separately
       if (imagesToRemoveCopy.length > 0) {
-        // We want to filter out any images that should be removed
+        console.log("DIRECT APPROACH: Using image removal process with imagesToRemove array");
+        console.log("Using imagesToRemove array of length:", imagesToRemoveCopy.length);
+        
+        // We set a property called 'imagesToRemove' in the data object
+        // This will be sent to the server and processed there
+        data.imagesToRemove = imagesToRemoveCopy;
+        
+        // We'll also filter the existing images here to avoid duplicate processing
         const filteredImages = existingImages.filter(imageUrl => {
-          // Normalize image URL for comparison
-          const normalizedImageUrl = imageUrl.replace(/^\/uploads\/properties\//, '');
+          // Use our new robust approach to check if this image should be removed
+          const imageBasename = typeof imageUrl === 'string' ? imageUrl.split('/').pop() || '' : '';
           
-          // Check if this image should be kept (not marked for removal)
-          const shouldKeep = !imagesToRemoveCopy.some(url => 
-            url === imageUrl || 
-            url === normalizedImageUrl || 
-            imageUrl.endsWith(url)
-          );
+          // Check against all removal urls
+          const shouldRemove = imagesToRemoveCopy.some(url => {
+            if (!url || !imageUrl) return false;
+            
+            const urlBasename = typeof url === 'string' ? url.split('/').pop() || '' : '';
+            
+            // 1. Direct equality
+            if (url === imageUrl) return true;
+            
+            // 2. If both have basename and they match
+            if (imageBasename && urlBasename && imageBasename === urlBasename) return true;
+            
+            // 3. If one contains the other (to handle path differences)
+            if (url.includes(imageBasename) || imageUrl.includes(urlBasename)) return true;
+            
+            // 4. Handle case where upload path is prefixed differently
+            const normalizedImage = imageUrl.replace(/^\/uploads\/properties\//, '');
+            const normalizedUrl = url.replace(/^\/uploads\/properties\//, '');
+            if (normalizedImage === normalizedUrl) return true;
+            
+            // 5. Check if image URL ends with the URL to remove (handle path prefixes)
+            if (imageUrl.endsWith(url)) return true;
+            
+            return false;
+          });
           
-          if (!shouldKeep) {
-            console.log(`Filtering out image: ${imageUrl}`);
+          // Log which images are being filtered out
+          if (shouldRemove) {
+            console.log(`FILTERING OUT image from data.images: ${imageUrl}`);
           }
           
-          return shouldKeep;
+          // Keep the image if it should NOT be removed
+          return !shouldRemove;
         });
         
+        // Set the filtered images list in the data object
+        console.log("BEFORE FILTERING, existing images:", existingImages.length);
+        console.log("AFTER FILTERING, images count:", filteredImages.length);
         data.images = filteredImages;
-        console.log("Images after filtering out removals:", filteredImages);
       }
       
       // Log each image URL being removed for debugging
@@ -1221,13 +1251,37 @@ export default function PropertyForm({
                         <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {existingImages.map((imageUrl, index) => {
-                            // Normalize image URL for comparison
-                            const normalizedImageUrl = imageUrl.replace(/^\/uploads\/properties\//, '');
-                            const isMarkedForRemoval = imagesToRemove.some(url => 
-                              url === imageUrl || 
-                              url === normalizedImageUrl || 
-                              imageUrl.endsWith(url)
-                            );
+                            // ENHANCED ROBUST APPROACH: Better image URL normalization and matching
+                            // Extract the filename only from the image URL
+                            const imageBasename = typeof imageUrl === 'string' ? imageUrl.split('/').pop() || '' : '';
+                            
+                            // Perform much more thorough matching to catch all edge cases
+                            const isMarkedForRemoval = imagesToRemove.some(url => {
+                              // Exit early if either URL is invalid
+                              if (!url || !imageUrl) return false;
+                              
+                              // Get base filename of the URL to remove
+                              const urlBasename = typeof url === 'string' ? url.split('/').pop() || '' : '';
+                              
+                              // 1. Direct equality
+                              if (url === imageUrl) return true;
+                              
+                              // 2. If both have basename and they match
+                              if (imageBasename && urlBasename && imageBasename === urlBasename) return true;
+                              
+                              // 3. If one contains the other (to handle path differences)
+                              if (url.includes(imageBasename) || imageUrl.includes(urlBasename)) return true;
+                              
+                              // 4. Handle case where upload path is prefixed differently
+                              const normalizedImage = imageUrl.replace(/^\/uploads\/properties\//, '');
+                              const normalizedUrl = url.replace(/^\/uploads\/properties\//, '');
+                              if (normalizedImage === normalizedUrl) return true;
+                              
+                              // 5. Check if image URL ends with the URL to remove (handle path prefixes)
+                              if (imageUrl.endsWith(url)) return true;
+                              
+                              return false;
+                            });
                             
                             console.log(`Image ${index}: ${imageUrl}, marked for removal: ${isMarkedForRemoval}`);
                             
@@ -1260,27 +1314,26 @@ export default function PropertyForm({
                                   type="button"
                                   onClick={() => {
                                     if (isMarkedForRemoval) {
-                                      // If already marked for removal, unmark it
-                                      // Need to find the actual URL that was added to imagesToRemove
-                                      const matchedUrl = imagesToRemove.find(url => 
-                                        url === imageUrl || 
-                                        url === normalizedImageUrl || 
-                                        imageUrl.endsWith(url)
-                                      );
+                                      // SIMPLIFIED APPROACH: If already marked for removal, unmark it
+                                      // First, remove the exact imageUrl if it exists
+                                      let updatedImagesToRemove = imagesToRemove.filter(url => url !== imageUrl);
                                       
-                                      console.log(`Found matching URL to remove: ${matchedUrl}`);
-                                      
-                                      // Filter out the matched URL
-                                      const updatedImagesToRemove = matchedUrl 
-                                        ? imagesToRemove.filter(img => img !== matchedUrl)
-                                        : imagesToRemove.filter(img => img !== imageUrl);
+                                      // Also remove any URL that might be a variant of this one
+                                      updatedImagesToRemove = updatedImagesToRemove.filter(url => {
+                                        // Check if either URL contains the basename of the other
+                                        const urlBasename = url.split('/').pop();
+                                        const imageBasename = imageUrl.split('/').pop();
+                                        return urlBasename !== imageBasename;
+                                      });
                                         
+                                      console.log("UNMARK - Updated images to remove:", updatedImagesToRemove);
+                                      
+                                      // Update state and form
                                       setImagesToRemove(updatedImagesToRemove);
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
                                       
                                       console.log(`Image unmarked for removal: ${imageUrl}`);
                                       console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
-                                      console.log("Current state of imagesToRemove after unmarking:", updatedImagesToRemove);
                                       
                                       toast({
                                         title: "Image will be kept",
@@ -1288,14 +1341,19 @@ export default function PropertyForm({
                                         variant: "default",
                                       });
                                     } else {
-                                      // Mark for removal - always use the full URL
-                                      const updatedImagesToRemove = [...imagesToRemove, imageUrl];
+                                      // SIMPLIFIED APPROACH: Mark for removal
+                                      // Add both the full URL and just the filename to maximize matching chances
+                                      const imageBasename = imageUrl.split('/').pop() || '';
+                                      const updatedImagesToRemove = [...imagesToRemove, imageUrl, imageBasename].filter(Boolean);
+                                      
+                                      console.log("MARK - Adding to images to remove:", updatedImagesToRemove);
+                                      
+                                      // Update state and form
                                       setImagesToRemove(updatedImagesToRemove);
                                       form.setValue("imagesToRemove", updatedImagesToRemove);
                                       
                                       console.log(`Image marked for removal: ${imageUrl}`);
                                       console.log(`Total images to remove: ${updatedImagesToRemove.length}`, updatedImagesToRemove);
-                                      console.log("Current state of imagesToRemove after marking:", updatedImagesToRemove);
                                       
                                       toast({
                                         title: "Image marked for removal",

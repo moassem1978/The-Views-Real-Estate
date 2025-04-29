@@ -1659,13 +1659,46 @@ export class DatabaseStorage implements IStorage {
         if (currentProperty.images && Array.isArray(currentProperty.images)) {
           console.log(`Current property has ${currentProperty.images.length} images:`, currentProperty.images);
           
-          // Filter out the images that are marked for removal
+          // Filter out the images that are marked for removal - with enhanced matching
           const updatedImages = currentProperty.images.filter(img => {
-            const shouldKeep = !updates.imagesToRemove?.includes(img);
-            if (!shouldKeep) {
-              console.log(`Removing image: ${img}`);
+            // Check if any of the imagesToRemove matches this image path
+            // in any of the possible formats
+            let shouldRemove = false;
+            
+            if (updates.imagesToRemove && Array.isArray(updates.imagesToRemove)) {
+              for (const removeUrl of updates.imagesToRemove) {
+                // Normalize both the current image and the one to remove
+                const imgBasename = typeof img === 'string' ? img.split('/').pop() : '';
+                const removeBasename = typeof removeUrl === 'string' ? removeUrl.split('/').pop() : '';
+                
+                // Check for exact match
+                if (img === removeUrl) {
+                  shouldRemove = true;
+                  break;
+                }
+                
+                // Check for basename match 
+                if (imgBasename && removeBasename && imgBasename === removeBasename) {
+                  shouldRemove = true;
+                  break;
+                }
+                
+                // Check if the full URL contains the path to remove or vice versa
+                if (typeof img === 'string' && typeof removeUrl === 'string') {
+                  if (img.includes(removeUrl) || removeUrl.includes(img)) {
+                    shouldRemove = true;
+                    break;
+                  }
+                }
+              }
             }
-            return shouldKeep;
+            
+            if (shouldRemove) {
+              console.log(`REMOVING IMAGE: ${img}`);
+              return false;
+            }
+            
+            return true;
           });
           
           console.log(`After filtering, property will have ${updatedImages.length} images`);
