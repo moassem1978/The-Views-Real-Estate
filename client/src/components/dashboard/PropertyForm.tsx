@@ -170,7 +170,7 @@ export default function PropertyForm({
         city: property.city || '',
         projectName: property.projectName || property.project_name || '',
         developerName: property.developerName || property.developer_name || '',
-        address: property.address || '',
+        address: property.address || 'Project Address', // Default to avoid null
         bedrooms: property.bedrooms || 0,
         bathrooms: property.bathrooms || 0,
         builtUpArea: property.builtUpArea || property.built_up_area || 0,
@@ -178,28 +178,10 @@ export default function PropertyForm({
         isHighlighted: Boolean(property.isHighlighted || property.is_highlighted),
         isNewListing: Boolean(property.isNewListing || property.is_new_listing),
         country: property.country || 'Egypt',
-        references: property.references || '',
-        zipCode: property.zipCode || property.zip_code || '00000',
-        price: property.price,
-        downPayment: property.downPayment || property.down_payment,
-        installmentAmount: property.installmentAmount || property.installment_amount,
-        installmentPeriod: property.installmentPeriod || property.installment_period,
-        isFullCash: property.isFullCash || property.is_full_cash,
-        city: property.city,
-        projectName: property.projectName || property.project_name,
-        developerName: property.developerName || property.developer_name,
-        address: property.address,
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms,
-        builtUpArea: property.builtUpArea || property.built_up_area,
-        isFeatured: property.isFeatured || property.is_featured,
-        isHighlighted: property.isHighlighted || property.is_highlighted,
-        isNewListing: property.isNewListing || property.is_new_listing,
-        country: property.country,
-        references: property.references,
-        yearBuilt: property.yearBuilt || property.year_built,
+        references: property.references || property.reference_number || '',
+        yearBuilt: property.yearBuilt || property.year_built || '',
         zipCode: property.zipCode || property.zip_code || "00000", // Required by server
-        images: property.images
+        images: property.images || []
       };
       
       // Set existing images if available

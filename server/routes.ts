@@ -1595,13 +1595,32 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
         // Get existing images from the property
         const existingImages = Array.isArray(property.images) ? property.images : [];
-        console.log("Existing images:", existingImages);
+        console.log("Existing images:", JSON.stringify(existingImages));
+        console.log("Existing images length:", existingImages.length);
+        console.log("Existing images type:", typeof property.images);
+        
+        // Debug the actual property.images field
+        console.log("Raw property.images value:", property.images);
+        
+        // Log property info for debugging
+        console.log("Property info:", {
+          id: property.id,
+          title: property.title,
+          imagesField: property.images ? 'present' : 'missing',
+          imagesType: typeof property.images,
+          imagesIsArray: Array.isArray(property.images),
+          imagesLength: Array.isArray(property.images) ? property.images.length : 'not an array'
+        });
+
+        // Ensure fileUrls is properly formatted
+        console.log("New image URLs:", JSON.stringify(fileUrls));
+        console.log("New images length:", fileUrls.length);
 
         // Combine existing images with new ones
         const updatedImages = [...existingImages, ...fileUrls];
         console.log(`Combining ${existingImages.length} existing images with ${fileUrls.length} new images`);
         console.log(`Final image count should be ${updatedImages.length} images`);
-        console.log("Updated images array:", updatedImages);
+        console.log("Updated images array:", JSON.stringify(updatedImages));
 
         // Update the property with the new images
         console.log(`Calling updateProperty for ID ${propertyId} with ${updatedImages.length} images`);
