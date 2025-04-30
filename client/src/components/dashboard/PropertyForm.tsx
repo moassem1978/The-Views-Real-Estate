@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Info, Loader2, Upload, X } from "lucide-react";
-import SimpleWindowsUploader from "../SimpleWindowsUploader";
 import { useForm, useFormState } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -1353,12 +1352,12 @@ export default function PropertyForm({
                       </div>
                     )}
                     
-                    {/* Windows-specific upload section */}
+                    {/* Alternative upload section for all platforms */}
                     {isEditing && propertyId ? (
                       <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                        <h3 className="text-sm font-medium mb-2">Windows Upload Alternative</h3>
+                        <h3 className="text-sm font-medium mb-2">Alternative Upload Method</h3>
                         <p className="text-xs text-muted-foreground mb-3">
-                          Having issues uploading images on Windows? Use our simplified uploader:
+                          Having trouble uploading images? Use our simplified uploader that works on all devices:
                         </p>
                         <a
                           href={`/windows-upload.html?propertyId=${propertyId}`}
@@ -1367,20 +1366,20 @@ export default function PropertyForm({
                           className="bg-[#B87333] hover:bg-[#964B00] text-white py-2 px-4 rounded text-sm inline-flex items-center"
                           onClick={() => {
                             // Log that the link was clicked
-                            console.log(`Windows upload link clicked for property ${propertyId}`);
+                            console.log(`Alternative upload link clicked for property ${propertyId}`);
                           }}
                         >
-                          Open Windows Uploader
+                          Open Simplified Uploader
                         </a>
                         <p className="text-xs text-muted-foreground mt-3">
-                          This will open a simplified page specifically designed for Windows compatibility.
+                          This will open a dedicated upload page that works on all devices (Windows, iOS, Android).
                           After uploading, return to this page and refresh to see your images.
                         </p>
                       </div>
                     ) : (
                       <div className="p-4 bg-muted/30 border rounded-lg mb-4">
                         <p className="text-sm text-muted-foreground italic">
-                          Windows upload option will be available after saving the property initially.
+                          Alternative upload option will be available after saving the property initially.
                         </p>
                       </div>
                     )}

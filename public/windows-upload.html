@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Windows Image Uploader - The Views Real Estate</title>
+  <title>Image Uploader - The Views Real Estate</title>
   <style>
     body {
       font-family: Tahoma, Arial, sans-serif;
@@ -121,15 +121,15 @@
       <img src="/uploads/logos/logo.png" alt="The Views Real Estate" onerror="this.src='/favicon.ico'; this.onerror=null;">
     </div>
     
-    <h1>Windows Image Uploader</h1>
+    <h1>Universal Image Uploader</h1>
     
     <div class="instructions">
       <strong>Instructions:</strong>
       <ol>
-        <li>Enter the Property ID number (found in the URL when editing a property)</li>
+        <li>The Property ID should be pre-filled from your edit page</li>
         <li>Select multiple images to upload (you can select up to 10 images)</li>
         <li>Click the "Upload Images" button and wait for confirmation</li>
-        <li>After successful upload, return to the property edit page to see your images</li>
+        <li>After successful upload, return to the property edit page and refresh to see your images</li>
       </ol>
     </div>
     
@@ -202,14 +202,19 @@
         // Add property ID (in multiple ways to ensure it's received)
         formData.append('propertyId', propertyId);
         
-        // Send the request
-        fetch(`/api/upload/windows?propertyId=${propertyId}`, {
+        // Add timestamp to avoid caching issues
+        const timestamp = new Date().getTime();
+        
+        // Send the request with cross-platform compatibility
+        fetch(`/api/upload/windows?propertyId=${propertyId}&_t=${timestamp}`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
           headers: {
             'Accept': 'application/json',
-            'X-Property-Id': propertyId
+            'X-Property-Id': propertyId,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Cache-Control': 'no-cache'
           }
         })
         .then(response => {
@@ -223,8 +228,19 @@
         .then(result => {
           console.log('Upload successful:', result);
           
+          // Show success message
           let message = `Successfully uploaded ${result.count || 0} images.`;
           showStatus(message, 'success');
+          
+          // Add back link to property edit page
+          const backToEditLink = document.createElement('a');
+          backToEditLink.href = `/dashboard/properties/edit/${propertyId}`;
+          backToEditLink.className = 'back-link';
+          backToEditLink.style.display = 'block';
+          backToEditLink.style.marginTop = '10px';
+          backToEditLink.style.fontWeight = 'bold';
+          backToEditLink.textContent = '➡️ Return to property edit page';
+          statusMessage.appendChild(backToEditLink);
           
           // Show image previews if available
           if (result.imageUrls && result.imageUrls.length) {
@@ -234,6 +250,12 @@
               const img = document.createElement('img');
               img.src = url;
               img.alt = 'Uploaded image';
+              img.style.maxWidth = '150px';
+              img.style.marginRight = '10px';
+              img.style.marginBottom = '10px';
+              img.style.border = '1px solid #ddd';
+              img.style.borderRadius = '4px';
+              img.style.padding = '3px';
               imagePreview.appendChild(img);
             });
           }
