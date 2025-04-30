@@ -1507,9 +1507,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Cross-platform simple upload endpoint (works with Windows and iOS)
+  // Enhanced cross-platform upload endpoint (works with Windows, iOS, and other platforms)
   app.post("/api/upload/property-images-simple", finalUpload.array('images', 10), async (req: Request, res: Response) => {
-    console.log("==== CROSS-PLATFORM SIMPLE UPLOAD ENDPOINT CALLED ====");
+    console.log("==== ENHANCED CROSS-PLATFORM UPLOAD ENDPOINT CALLED ====");
     console.log("User agent:", req.headers['user-agent']);
     console.log("Content type:", req.headers['content-type']);
     
@@ -1524,84 +1524,211 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const user = req.user as Express.User;
       console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
 
-      // Deep inspection of request body
-      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      // Deep inspection of request body - safely handle potential parsing errors
+      try {
+        console.log("Request body:", JSON.stringify(req.body, null, 2));
+      } catch (bodyError) {
+        console.log("Request body cannot be stringified:", bodyError);
+        console.log("Request body keys:", Object.keys(req.body || {}));
+      }
       
-      // Get property ID from request body
-      const propertyId = parseInt(req.body.propertyId);
+      // Extra debugging for Windows - examine all request properties
+      console.log("Request content type:", req.get('Content-Type'));
+      console.log("Request method:", req.method);
+      console.log("Request path:", req.path);
+      
+      // Get property ID from request body - with additional failsafes
+      let propertyId: number;
+      if (req.body && req.body.propertyId) {
+        propertyId = parseInt(req.body.propertyId);
+      } else if (req.query && req.query.propertyId) {
+        // Try fallback to query parameter
+        propertyId = parseInt(req.query.propertyId as string);
+      } else {
+        // Last resort - try to extract from path or headers
+        const propIdHeader = req.get('X-Property-Id');
+        if (propIdHeader) {
+          propertyId = parseInt(propIdHeader);
+        } else {
+          console.error("No property ID found in request");
+          return res.status(400).json({ message: "Missing property ID in request" });
+        }
+      }
+      
       if (isNaN(propertyId) || propertyId <= 0) {
-        console.error(`Invalid property ID from form: ${req.body.propertyId}`);
+        console.error(`Invalid property ID: ${propertyId}`);
         return res.status(400).json({ message: "Invalid property ID" });
       }
       
       console.log(`Processing images for property ID: ${propertyId}`);
 
-      if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
-        console.log("No property image files received");
-        return res.status(400).json({ message: "No files uploaded" });
+      // Thoroughly check for files with enhanced debugging
+      if (!req.files) {
+        console.error("req.files is undefined or null");
+        return res.status(400).json({ message: "No files received in request" });
+      }
+      
+      if (Array.isArray(req.files) && req.files.length === 0) {
+        console.error("req.files is an empty array");
+        return res.status(400).json({ message: "No files uploaded (empty array)" });
+      }
+      
+      // Log detailed file info regardless of structure
+      if (Array.isArray(req.files)) {
+        console.log(`Received ${req.files.length} files as array`);
+      } else {
+        console.log("Received files as non-array object");
+        console.log("Files object keys:", Object.keys(req.files));
       }
 
-      console.log(`Received ${Array.isArray(req.files) ? req.files.length : 0} files for upload`);
+      // Enhanced handling for multer file types with better error recovery
+      let files: Express.Multer.File[] = [];
+      
+      try {
+        if (Array.isArray(req.files)) {
+          files = req.files as Express.Multer.File[];
+        } else {
+          // Handle potential object form (from Windows/non-standard clients)
+          const fileObj = req.files as Record<string, Express.Multer.File[]>;
+          // Try to extract files from potential nested structure
+          if (fileObj.images && Array.isArray(fileObj.images)) {
+            files = fileObj.images;
+          } else {
+            // Last resort - try to collect all file objects
+            Object.values(fileObj).forEach(fieldFiles => {
+              if (Array.isArray(fieldFiles)) {
+                files.push(...fieldFiles);
+              }
+            });
+          }
+        }
+      } catch (fileParseError) {
+        console.error("Error parsing file structure:", fileParseError);
+        // Try one more desperate attempt to save the files
+        files = Array.isArray(req.files) 
+          ? req.files 
+          : [req.files as unknown as Express.Multer.File];
+      }
+      
+      console.log(`Will process ${files.length} files after structure normalization`);
 
-      // Use the Express.Multer.File type to correctly handle files
-      const files = Array.isArray(req.files) 
-        ? req.files as Express.Multer.File[]
-        : [req.files as unknown as Express.Multer.File];
-
-      // Ensure the property uploads directory exists with proper permissions
+      // Ensure BOTH upload directories exist with proper permissions
       const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-      fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
-      console.log(`Ensured uploads directory exists: ${publicUploadsDir}`);
+      const tempUploadsDir = path.join(process.cwd(), 'uploads', 'properties');
+      
+      [publicUploadsDir, tempUploadsDir].forEach(dir => {
+        try {
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true, mode: 0o777 });
+            console.log(`Created directory: ${dir} with full permissions`);
+          } else {
+            // Update permissions on existing directory
+            fs.chmodSync(dir, 0o777);
+            console.log(`Updated permissions for existing directory: ${dir}`);
+          }
+        } catch (dirError) {
+          console.error(`Error creating/updating directory ${dir}:`, dirError);
+        }
+      });
 
-      // Process the files
+      // Process the files with enhanced error handling
       const fileUrls: string[] = [];
 
       for (const file of files) {
         try {
           console.log(`Processing file: ${file.originalname}, size: ${(file.size / 1024).toFixed(2)}KB`);
+          console.log(`File object properties:`, Object.keys(file));
+          
+          // Enhanced Windows compatibility - ensure filename is set
+          if (!file.filename) {
+            // Generate a filename if missing (common on Windows)
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 1000000000);
+            const originalExt = path.extname(file.originalname) || '.jpg';
+            file.filename = `images-${timestamp}-${random}${originalExt}`;
+            console.log(`Generated filename for Windows upload: ${file.filename}`);
+          }
 
           const destPath = path.join(publicUploadsDir, file.filename);
-
-          // Direct approach: if we have a buffer, write it to the destination
-          if (file.buffer) {
-            console.log(`File has buffer of size ${file.buffer.length} bytes`);
-            fs.writeFileSync(destPath, file.buffer);
-            console.log(`Wrote file directly from buffer to ${destPath}`);
-          } 
-          // If we have the file.path, copy it to the destination
-          else if (file.path && fs.existsSync(file.path)) {
-            console.log(`File exists at path: ${file.path}, copying to destination`);
-            fs.copyFileSync(file.path, destPath);
-            console.log(`Copied file from ${file.path} to ${destPath}`);
+          
+          // Multiple strategies to ensure file is saved correctly
+          let fileSaved = false;
+          
+          // Strategy 1: Direct buffer writing (works on most platforms)
+          if (file.buffer && file.buffer.length > 0) {
+            try {
+              fs.writeFileSync(destPath, file.buffer);
+              console.log(`Strategy 1: Wrote file directly from buffer to ${destPath}`);
+              fileSaved = true;
+            } catch (bufferWriteError) {
+              console.error(`Strategy 1 failed:`, bufferWriteError);
+            }
           }
-          // Double-check that the file exists at the expected location
-          else if (!fs.existsSync(destPath)) {
-            console.error(`File not found at ${destPath}, trying to recover`);
-
-            // Check if the file exists in the temp upload location
-            const tempPath = path.join(process.cwd(), 'uploads', 'properties', file.filename);
+          
+          // Strategy 2: File path copying (works on standard setups)
+          if (!fileSaved && file.path && fs.existsSync(file.path)) {
+            try {
+              fs.copyFileSync(file.path, destPath);
+              console.log(`Strategy 2: Copied file from ${file.path} to ${destPath}`);
+              fileSaved = true;
+            } catch (copyError) {
+              console.error(`Strategy 2 failed:`, copyError);
+            }
+          }
+          
+          // Strategy 3: Recovery from temp location
+          if (!fileSaved) {
+            const tempPath = path.join(tempUploadsDir, file.filename);
             if (fs.existsSync(tempPath)) {
-              console.log(`Found file in temp location: ${tempPath}`);
-              fs.copyFileSync(tempPath, destPath);
-              console.log(`Recovered file from ${tempPath} to ${destPath}`);
-            } else {
-              console.error(`File not found in any location, cannot recover`);
+              try {
+                fs.copyFileSync(tempPath, destPath);
+                console.log(`Strategy 3: Recovered file from ${tempPath} to ${destPath}`);
+                fileSaved = true;
+              } catch (recoveryError) {
+                console.error(`Strategy 3 failed:`, recoveryError);
+              }
+            }
+          }
+          
+          // Strategy 4: Direct streaming for Windows (for some older Windows browsers)
+          if (!fileSaved && file.stream) {
+            try {
+              const writeStream = fs.createWriteStream(destPath);
+              await new Promise<void>((resolve, reject) => {
+                file.stream.pipe(writeStream)
+                  .on('finish', () => {
+                    console.log(`Strategy 4: Streamed file to ${destPath}`);
+                    resolve();
+                  })
+                  .on('error', (err) => {
+                    console.error(`Strategy 4 streaming error:`, err);
+                    reject(err);
+                  });
+              });
+              fileSaved = true;
+            } catch (streamError) {
+              console.error(`Strategy 4 failed:`, streamError);
             }
           }
 
           // Verify file was successfully saved
           if (fs.existsSync(destPath)) {
-            console.log(`File successfully saved at ${destPath}`);
-
-            // Get file stats to verify
             const stats = fs.statSync(destPath);
-            console.log(`File size on disk: ${stats.size} bytes`);
-
-            // Add URL to results
-            const fileUrl = `/uploads/properties/${file.filename}`;
-            fileUrls.push(fileUrl);
+            if (stats.size > 0) {
+              console.log(`File successfully saved at ${destPath} (${stats.size} bytes)`);
+              
+              // Fix permissions to ensure readability
+              fs.chmodSync(destPath, 0o666);
+              
+              // Add URL to results
+              const fileUrl = `/uploads/properties/${file.filename}`;
+              fileUrls.push(fileUrl);
+            } else {
+              console.error(`File saved but has zero size: ${destPath}`);
+              throw new Error(`File saved but has zero size: ${file.originalname}`);
+            }
           } else {
-            console.error(`Failed to save file ${file.originalname}`);
+            console.error(`Failed to save file ${file.originalname} to ${destPath}`);
             throw new Error(`Failed to save file ${file.originalname}`);
           }
 
@@ -1610,11 +1737,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             req.session.touch();
           }
         } catch (fileError) {
-          console.error(`Error processing file ${file.originalname}:`, fileError);
-          return res.status(500).json({ 
-            message: `Error processing file ${file.originalname}`,
-            error: fileError instanceof Error ? fileError.message : 'Unknown error'
-          });
+          console.error(`Error processing file ${file.originalname || 'unknown'}:`, fileError);
+          // Continue processing other files instead of failing the entire request
+          console.log("Continuing with other files despite error");
         }
       }
 

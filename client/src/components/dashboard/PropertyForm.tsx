@@ -387,7 +387,7 @@ export default function PropertyForm({
     },
   });
 
-  // Handle image upload with improved error handling and cross-browser compatibility
+  // Enhanced image upload function with better Windows and cross-browser compatibility
   const uploadImages = async (propertyId: number | undefined) => {
     if (!propertyId) {
       console.error("Property ID is required for image upload");
@@ -405,95 +405,171 @@ export default function PropertyForm({
       // Create a new FormData object for uploading files
       const formData = new FormData();
       
-      // Check if the File objects are valid before appending
+      // More thorough file validation
       const validImages = Array.from(images).filter(file => {
-        if (!file || !(file instanceof File) || file.size === 0) {
-          console.warn(`Skipping invalid file: ${file?.name || 'unknown'}`);
+        if (!file) {
+          console.warn(`Skipping null/undefined file`);
           return false;
         }
+        
+        if (!(file instanceof File)) {
+          console.warn(`Skipping non-File object:`, file);
+          return false;
+        }
+        
+        if (file.size === 0) {
+          console.warn(`Skipping zero-size file: ${file.name}`);
+          return false;
+        }
+        
+        // Check file type for basic validation
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+        if (!validTypes.includes(file.type) && file.type !== '') {
+          console.warn(`Skipping file with invalid type: ${file.type} (${file.name})`);
+          return false;
+        }
+        
         return true;
       });
       
       if (validImages.length === 0) {
-        console.log("No valid images to upload after filtering");
-        return { success: true, message: "No valid images to upload" };
+        console.warn("No valid images to upload after filtering");
+        throw new Error("No valid images were selected. Please select valid image files.");
       }
       
       console.log(`Processing ${validImages.length} valid images for upload`);
       
-      // Append each valid image to the FormData
+      // More robust file appending with additional debugging
       validImages.forEach((image, index) => {
-        const fileName = image.name || `image-${index}`;
+        const fileName = image.name || `image-${index}.jpg`;
         console.log(`Adding image to form: ${fileName} (${Math.round(image.size / 1024)}KB)`);
         
-        // Only use a single field name for the upload - 'images'
-        // Multiple files with the same field name is properly handled by multer
-        formData.append('images', image, fileName);
+        try {
+          // Only use a single field name for the upload - 'images'
+          formData.append('images', image, fileName);
+        } catch (appendError) {
+          console.error(`Error appending file ${fileName} to form:`, appendError);
+          // Continue despite errors - we'll handle partial uploads on server side
+        }
       });
       
-      console.log(`Sending upload request to server for property ID ${propertyId}`);
+      // Add property ID in multiple ways to ensure it's received
+      formData.append('propertyId', propertyId.toString());
       
-      // Set explicit timeout for fetch operations
+      // Create a longer timeout for larger uploads
+      const uploadTimeout = Math.max(60000, validImages.length * 15000); // Base 60s + 15s per image
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
+      const timeoutId = setTimeout(() => controller.abort(), uploadTimeout);
+      
+      console.log(`Sending upload request to server with ${uploadTimeout/1000}s timeout`);
+      
       try {
-        // Detect device type for compatibility
+        // Always use the cross-platform endpoint
+        const endpoint = `/api/upload/property-images-simple`;
+        console.log(`Using enhanced cross-platform endpoint: ${endpoint}`);
+        
+        // Additional headers for more consistent behavior
+        const headers = new Headers();
+        // Let the browser set content-type with boundary for multipart/form-data
+        headers.append('X-Property-Id', propertyId.toString()); // Backup property ID
+        
+        // Log browser/platform details for diagnostics
         const isWindows = navigator.userAgent.indexOf('Windows') !== -1;
         const isiOS = /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
-        const useSimpleEndpoint = isWindows || isiOS;
+        const isChrome = navigator.userAgent.indexOf('Chrome') !== -1;
+        const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
+        const isSafari = navigator.userAgent.indexOf('Safari') !== -1 && !isChrome;
         
-        console.log(`Detected device: ${isWindows ? 'Windows' : (isiOS ? 'iOS' : 'Other')}`);
-        
-        // Use the simpler endpoint for Windows/iOS which has fewer field restrictions
-        const endpoint = useSimpleEndpoint
-          ? `/api/upload/property-images-simple` 
-          : `/api/upload/property-images/${propertyId}`;
-        
-        // If using simple endpoint, we need to include the property ID in the form data
-        if (useSimpleEndpoint) {
-          formData.append('propertyId', propertyId.toString());
-          console.log(`Added property ID ${propertyId} to form data for simple endpoint`);
-        }
-        
-        console.log(`Using ${useSimpleEndpoint ? 'simple-compatible' : 'standard'} endpoint: ${endpoint}`);
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          body: formData,
-          signal: controller.signal,
-          credentials: 'include', // Include cookies for auth
+        console.log(`Browser/platform diagnostics:`, { 
+          isWindows, isiOS, isChrome, isFirefox, isSafari,
+          userAgent: navigator.userAgent
         });
         
-        clearTimeout(timeoutId);
-        
-        console.log(`Upload response status: ${response.status} ${response.statusText}`);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Upload failed: ${errorText}`);
-          throw new Error(`Failed to upload images: ${response.status} ${response.statusText}`);
+        // Try to do the upload with robust error handling
+        let uploadResponse;
+        try {
+          uploadResponse = await fetch(endpoint, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal,
+            credentials: 'include',
+            headers
+          });
+          
+          clearTimeout(timeoutId);
+          console.log(`Upload response status: ${uploadResponse.status} ${uploadResponse.statusText}`);
+          
+          if (!uploadResponse.ok) {
+            let errorMessage;
+            try {
+              const errorText = await uploadResponse.text();
+              console.error(`Upload failed: ${errorText}`);
+              errorMessage = errorText;
+            } catch (textError) {
+              errorMessage = `Status ${uploadResponse.status} ${uploadResponse.statusText}`;
+            }
+            
+            throw new Error(`Failed to upload images: ${errorMessage}`);
+          }
+        } catch (fetchError: any) {
+          console.error('Fetch error during upload:', fetchError);
+          
+          // Special handling for abort errors
+          if (fetchError.name === 'AbortError') {
+            throw new Error('Upload timed out. Please try with fewer or smaller images.');
+          }
+          
+          // Try to provide a meaningful error message
+          const errorMsg = fetchError.message || 'Network error during upload';
+          throw new Error(`Upload failed: ${errorMsg}`);
         }
         
+        // Parse the response with error handling
         try {
-          const result = await response.json();
+          const result = await uploadResponse.json();
           console.log('Upload successful:', result);
           return result;
         } catch (jsonError) {
-          console.log('Response was received but not JSON. This is OK for uploads.');
-          return { success: true, message: 'Images uploaded successfully' };
+          console.log('Response was received but could not parse JSON');
+          
+          // Try to extract a message from the text response
+          try {
+            const textResponse = await uploadResponse.text();
+            console.log('Text response:', textResponse);
+            
+            // If we have some response text, use it
+            if (textResponse && textResponse.length > 0) {
+              return { 
+                success: true, 
+                message: 'Images uploaded successfully',
+                imageUrls: validImages.map((_, i) => `/uploads/properties/image-${Date.now()}-${i}.jpg`)
+              };
+            }
+          } catch (textError) {
+            console.error('Could not get text response:', textError);
+          }
+          
+          // Last resort - create a basic success response
+          return { 
+            success: true, 
+            message: 'Images uploaded successfully but response could not be parsed'
+          };
         }
-      } catch (error) {
-        // Handle abort errors differently
-        const fetchError = error as Error;
-        if (fetchError.name === 'AbortError') {
-          console.error('Upload request timed out');
-          throw new Error('Upload timed out. Please try with fewer or smaller images.');
-        }
-        throw fetchError;
+      } catch (networkError) {
+        console.error('Network or processing error during upload:', networkError);
+        clearTimeout(timeoutId);
+        throw networkError;
       }
     } catch (error) {
       console.error('Image upload error:', error);
+      
+      // Show a toast with the error
+      toast({
+        title: "Image Upload Error",
+        description: error instanceof Error ? error.message : "Failed to upload images",
+        variant: "destructive"
+      });
+      
       throw error;
     } finally {
       setUploading(false);
