@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Property Form | The Views Real Estate</title>
+  <style>
+    body {
+      font-family: 'Tahoma', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+    }
+    
+    h1 {
+      color: #B87333;
+      font-family: 'Playfair Display', 'Times New Roman', serif;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .logo img {
+      max-width: 180px;
+      height: auto;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+    
+    button {
+      background-color: #B87333;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #964B00;
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: #B87333;
+      text-decoration: none;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    
+    .status {
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .loading {
+      background-color: #e2e3e5;
+      color: #383d41;
+      border: 1px solid #d6d8db;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .types-container {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    
+    .property-type-toggle {
+      margin-bottom: 15px;
+    }
+    
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .form-column {
+      flex: 1;
+    }
+    
+    .form-section {
+      margin-bottom: 30px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 20px;
+    }
+    
+    .form-section-title {
+      color: #B87333;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      font-weight: normal;
+      cursor: pointer;
+    }
+    
+    .checkbox-label input {
+      width: auto;
+      margin-right: 10px;
+    }
+    
+    .tab-container {
+      margin-bottom: 20px;
+    }
+    
+    .tab-buttons {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 15px;
+    }
+    
+    .tab-button {
+      padding: 10px 20px;
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      margin-right: 5px;
+      cursor: pointer;
+    }
+    
+    .tab-button.active {
+      background-color: #B87333;
+      color: white;
+      border-color: #B87333;
+    }
+    
+    .tab-content {
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+    }
+    
+    .tab-panel {
+      display: none;
+    }
+    
+    .tab-panel.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="/uploads/logos/logo.png" alt="The Views Real Estate" onerror="this.src='/favicon.ico'; this.onerror=null;">
+    </div>
+    
+    <h1>Universal Property Form</h1>
+    <p style="color: #666; margin-bottom: 20px; text-align: center;">This simplified form works on all devices including Windows, iOS, and Android.</p>
+    
+    <div id="statusMessage" class="status hidden"></div>
+    
+    <div class="tab-container">
+      <div class="tab-buttons">
+        <div class="tab-button active" data-tab="basicInfo">Basic Information</div>
+        <div class="tab-button" data-tab="details">Property Details</div>
+        <div class="tab-button" data-tab="pricing">Pricing & Payment</div>
+        <div class="tab-button" data-tab="features">Features</div>
+      </div>
+      
+      <form id="propertyForm">
+        <div class="tab-content">
+          <!-- Tab 1: Basic Information -->
+          <div class="tab-panel active" id="basicInfo">
+            <div class="form-section">
+              <div class="form-section-title">Property Type</div>
+              <div class="property-type-toggle">
+                <select id="propertyType" name="propertyType" required>
+                  <option value="">Select Property Type</option>
+                  <option value="apartment">Apartment</option>
+                  <option value="penthouse">Penthouse</option>
+                  <option value="villa">Villa</option>
+                  <option value="townhouse">Townhouse</option>
+                  <option value="twinhouse">Twinhouse</option>
+                  <option value="chalet">Chalet</option>
+                  <option value="office">Office</option>
+                </select>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group form-column">
+                  <label for="listingType">Listing Type</label>
+                  <select id="listingType" name="listingType" required>
+                    <option value="">Select Listing Type</option>
+                    <option value="primary">Primary</option>
+                    <option value="resale">Resale</option>
+                  </select>
+                </div>
+                
+                <div class="form-group form-column">
+                  <label for="status">Status</label>
+                  <select id="status" name="status" required>
+                    <option value="">Select Status</option>
+                    <option value="available">Available</option>
+                    <option value="sold">Sold</option>
+                    <option value="pending">Pending</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-section">
+              <div class="form-section-title">Location</div>
+              <div class="form-row">
+                <div class="form-group form-column">
+                  <label for="projectName">Project Name</label>
+                  <input type="text" id="projectName" name="projectName" placeholder="Enter project name" required>
+                </div>
+                
+                <div class="form-group form-column">
+                  <label for="city">City</label>
+                  <select id="city" name="city" required>
+                    <option value="">Select City</option>
+                    <option value="Cairo">Cairo</option>
+                    <option value="Zayed">Zayed</option>
+                    <option value="North Coast">North Coast</option>
+                    <option value="Red Sea">Red Sea</option>
+                    <option value="Other">Other (International)</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="address">Address (Optional)</label>
+                <input type="text" id="address" name="address" placeholder="Enter address">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="title">Property Title</label>
+              <input type="text" id="title" name="title" placeholder="e.g. 'Luxury Villa in Zayed'" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="description">Property Description</label>
+              <textarea id="description" name="description" placeholder="Enter detailed description of the property"></textarea>
+            </div>
+            
+            <button type="button" class="next-tab" data-next="details">Next: Property Details</button>
+          </div>
+          
+          <!-- Tab 2: Property Details -->
+          <div class="tab-panel" id="details">
+            <div class="form-section">
+              <div class="form-section-title">Property Specifications</div>
+              <div class="form-row">
+                <div class="form-group form-column">
+                  <label for="bedrooms">Bedrooms</label>
+                  <input type="number" id="bedrooms" name="bedrooms" min="0" step="1" placeholder="Number of bedrooms">
+                </div>
+                
+                <div class="form-group form-column">
+                  <label for="bathrooms">Bathrooms</label>
+                  <input type="number" id="bathrooms" name="bathrooms" min="0" step="1" placeholder="Number of bathrooms">
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group form-column">
+                  <label for="area">Area (in m²)</label>
+                  <input type="number" id="area" name="area" min="0" placeholder="Property area" required>
+                </div>
+                
+                <div class="form-group form-column">
+                  <label for="floorNumber">Floor Number</label>
+                  <input type="number" id="floorNumber" name="floorNumber" min="0" placeholder="Floor number">
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-section">
+              <div class="form-section-title">Additional Information</div>
+              <div class="form-group">
+                <label for="yearBuilt">Year Built</label>
+                <input type="number" id="yearBuilt" name="yearBuilt" min="1900" max="2099" placeholder="Year property was built">
+              </div>
+              
+              <div class="form-group">
+                <label for="furnishingStatus">Furnishing Status</label>
+                <select id="furnishingStatus" name="furnishingStatus">
+                  <option value="">Select Status</option>
+                  <option value="unfurnished">Unfurnished</option>
+                  <option value="semi-furnished">Semi-Furnished</option>
+                  <option value="fully-furnished">Fully Furnished</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <button type="button" class="prev-tab" data-prev="basicInfo">Previous: Basic Information</button>
+              <button type="button" class="next-tab" data-next="pricing">Next: Pricing & Payment</button>
+            </div>
+          </div>
+          
+          <!-- Tab 3: Pricing & Payment -->
+          <div class="tab-panel" id="pricing">
+            <div class="form-section pricing-section" id="primaryPricing">
+              <div class="form-section-title">Primary Property Pricing</div>
+              
+              <div class="form-row">
+                <div class="form-group form-column">
+                  <label for="totalPrice">Total Price (L.E)</label>
+                  <input type="number" id="totalPrice" name="totalPrice" min="0" placeholder="Total property price">
+                </div>
+                
+                <div class="form-group form-column">
+                  <label for="downPayment">Down Payment (L.E)</label>
+                  <input type="number" id="downPayment" name="downPayment" min="0" placeholder="Down payment amount">
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="installmentYears">Installment Period (Years)</label>
+                <input type="number" id="installmentYears" name="installmentYears" min="0" max="30" placeholder="Number of years for installment">
+              </div>
+              
+              <div class="form-group">
+                <label for="deliveryYear">Delivery Year</label>
+                <input type="number" id="deliveryYear" name="deliveryYear" min="2023" max="2050" placeholder="Year of delivery">
+              </div>
+            </div>
+            
+            <div class="form-section pricing-section" id="resalePricing">
+              <div class="form-section-title">Resale Property Pricing</div>
+              
+              <div class="form-group">
+                <label for="price">Price (L.E)</label>
+                <input type="number" id="price" name="price" min="0" placeholder="Property price">
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <button type="button" class="prev-tab" data-prev="details">Previous: Property Details</button>
+              <button type="button" class="next-tab" data-next="features">Next: Features</button>
+            </div>
+          </div>
+          
+          <!-- Tab 4: Features -->
+          <div class="tab-panel" id="features">
+            <div class="form-section">
+              <div class="form-section-title">Property Features</div>
+              
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="features" value="balcony"> Balcony
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="features" value="pool"> Swimming Pool
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="features" value="garden"> Garden
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="features" value="security"> 24/7 Security
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="features" value="gym"> Gym
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="features" value="parking"> Parking
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="features" value="elevator"> Elevator
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="features" value="centralAC"> Central A/C
+                </label>
+              </div>
+            </div>
+            
+            <div class="form-section">
+              <div class="form-section-title">Marketing Options</div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="isHighlighted" name="isHighlighted"> Feature this property on homepage
+                </label>
+              </div>
+            </div>
+            
+            <div class="form-section">
+              <div class="form-section-title">Contact Information</div>
+              <div class="form-row">
+                <div class="form-group form-column">
+                  <label for="contactName">Contact Person Name</label>
+                  <input type="text" id="contactName" name="contactName" placeholder="Contact person name">
+                </div>
+                
+                <div class="form-group form-column">
+                  <label for="contactPhone">Contact Phone</label>
+                  <input type="tel" id="contactPhone" name="contactPhone" placeholder="Contact phone number">
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="contactEmail">Contact Email</label>
+                <input type="email" id="contactEmail" name="contactEmail" placeholder="Contact email address">
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <button type="button" class="prev-tab" data-prev="pricing">Previous: Pricing</button>
+              <button type="submit" id="submitButton">Create Property</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div id="successMessage" class="status success hidden">
+      <p>Property created successfully!</p>
+      <p><a href="/dashboard/properties" class="back-link">Return to Properties Dashboard</a></p>
+    </div>
+    
+    <a href="/dashboard" class="back-link">← Return to Dashboard</a>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('propertyForm');
+      const statusMessage = document.getElementById('statusMessage');
+      const successMessage = document.getElementById('successMessage');
+      const submitButton = document.getElementById('submitButton');
+      const listingTypeSelect = document.getElementById('listingType');
+      const primaryPricing = document.getElementById('primaryPricing');
+      const resalePricing = document.getElementById('resalePricing');
+      
+      // Tab navigation
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabPanels = document.querySelectorAll('.tab-panel');
+      const nextButtons = document.querySelectorAll('.next-tab');
+      const prevButtons = document.querySelectorAll('.prev-tab');
+      
+      // Show/hide pricing sections based on listing type
+      listingTypeSelect.addEventListener('change', function() {
+        if (this.value === 'primary') {
+          primaryPricing.style.display = 'block';
+          resalePricing.style.display = 'none';
+        } else if (this.value === 'resale') {
+          primaryPricing.style.display = 'none';
+          resalePricing.style.display = 'block';
+        } else {
+          primaryPricing.style.display = 'block';
+          resalePricing.style.display = 'block';
+        }
+      });
+      
+      // Initialize pricing sections
+      primaryPricing.style.display = 'none';
+      resalePricing.style.display = 'none';
+      
+      // Tab navigation
+      function showTab(tabId) {
+        tabPanels.forEach(panel => {
+          panel.classList.remove('active');
+        });
+        
+        tabButtons.forEach(button => {
+          button.classList.remove('active');
+        });
+        
+        document.getElementById(tabId).classList.add('active');
+        document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+      }
+      
+      tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const tabId = this.getAttribute('data-tab');
+          showTab(tabId);
+        });
+      });
+      
+      nextButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const nextTab = this.getAttribute('data-next');
+          showTab(nextTab);
+        });
+      });
+      
+      prevButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const prevTab = this.getAttribute('data-prev');
+          showTab(prevTab);
+        });
+      });
+      
+      // Form submission
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading status
+        showStatus('Creating property, please wait...', 'loading');
+        submitButton.disabled = true;
+        
+        // Gather form data
+        const formData = new FormData(form);
+        
+        // Process checkboxes for features
+        const features = [];
+        document.querySelectorAll('input[name="features"]:checked').forEach(checkbox => {
+          features.push(checkbox.value);
+        });
+        
+        // Convert FormData to JSON object
+        const propertyData = {};
+        for (const [key, value] of formData.entries()) {
+          if (key !== 'features') {
+            // Convert numeric values
+            if (!isNaN(value) && value !== '' && 
+                ['totalPrice', 'downPayment', 'price', 'area', 'bedrooms', 
+                 'bathrooms', 'floorNumber', 'yearBuilt', 'installmentYears',
+                 'deliveryYear'].includes(key)) {
+              propertyData[key] = Number(value);
+            } else if (key === 'isHighlighted') {
+              propertyData[key] = true;
+            } else {
+              propertyData[key] = value;
+            }
+          }
+        }
+        
+        // Add features array
+        propertyData.features = features;
+        
+        // Add empty images array (will be populated later)
+        propertyData.images = [];
+        
+        // Send the request
+        fetch('/api/properties', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(propertyData),
+          credentials: 'include'
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.text().then(text => {
+              throw new Error(`Failed to create property: ${response.status} ${response.statusText}. ${text}`);
+            });
+          }
+          return response.json();
+        })
+        .then(result => {
+          console.log('Property created successfully:', result);
+          
+          // Hide form and show success message
+          form.style.display = 'none';
+          document.querySelector('.tab-container').style.display = 'none';
+          successMessage.classList.remove('hidden');
+          
+          // Add property ID to link
+          const propertyLink = document.createElement('a');
+          propertyLink.href = `/dashboard/properties/edit/${result.id}`;
+          propertyLink.className = 'back-link';
+          propertyLink.style.display = 'block';
+          propertyLink.style.marginTop = '10px';
+          propertyLink.style.fontWeight = 'bold';
+          propertyLink.textContent = '➡️ Go to Property Edit Page (to add images)';
+          successMessage.appendChild(propertyLink);
+        })
+        .catch(error => {
+          console.error('Error creating property:', error);
+          showStatus(`Error: ${error.message}`, 'error');
+          submitButton.disabled = false;
+        });
+      });
+      
+      function showStatus(message, type) {
+        statusMessage.textContent = message;
+        statusMessage.className = `status ${type}`;
+        
+        // Remove the hidden class
+        if (statusMessage.classList.contains('hidden')) {
+          statusMessage.classList.remove('hidden');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

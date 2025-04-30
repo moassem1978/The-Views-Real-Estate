@@ -329,16 +329,28 @@ export default function PropertiesManager() {
             Manage property listings ({totalCount} total)
           </p>
         </div>
-        <Button 
-          className="bg-[#B87333] hover:bg-[#964B00]"
-          onClick={() => {
-            setEditingPropertyId(null);
-            setShowPropertyForm(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Property
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            className="bg-[#B87333] hover:bg-[#964B00]"
+            onClick={() => {
+              setEditingPropertyId(null);
+              setShowPropertyForm(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Property
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white"
+            onClick={() => {
+              window.open('/windows-property.html', '_blank');
+            }}
+          >
+            Universal Property Form
+          </Button>
+        </div>
       </div>
       
       {/* Search and filters */}
