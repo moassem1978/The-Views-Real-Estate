@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Loader2, Upload, X } from "lucide-react";
+import { Check, Info, Loader2, Upload, X } from "lucide-react";
 import { useForm, useFormState } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -500,212 +500,217 @@ export default function PropertyForm({
     }
   };
 
-  // Handle form submission
+  // Simplified form submission using direct fetch for better reliability
   const onSubmit = async (data: any) => {
     try {
+      console.log("Starting form submission process...");
       console.log("Submitting form data:", data);
       
-      console.log("Starting DIRECT IMAGE APPROACH image handling...");
-      
-      // With our new approach, we just use the keptImages state directly
-      // This array only contains the images we're keeping
-      console.log(`DIRECT APPROACH: Starting with ${existingImages.length} images, keeping ${keptImages.length}`);
-      
-      // Set the images field directly to our keptImages array
-      // This will override whatever was in the database before with exactly what we want to keep
-      data.images = keptImages;
-      
-      // Remove legacy fields
-      delete data.imagesToRemove;
-      
-      // Calculate which images are being removed (for logging only)
-      const removedImages = existingImages.filter(img => !keptImages.includes(img));
-      
-      // Log removed images for debugging
-      if (removedImages.length > 0) {
-        console.log(`${removedImages.length} images marked for removal:`, removedImages);
-        
-        // Add a visible toast notification about the number of images being removed
-        toast({
-          title: `Removing ${removedImages.length} images`,
-          description: "These images will be removed when you save the property",
-          variant: "default"
-        });
+      // Ensure required fields are present
+      if (!data.createdAt) {
+        data.createdAt = new Date().toISOString();
       }
       
-      // Ensure all numeric fields are parsed as numbers
+      if (!data.agentId) {
+        data.agentId = 1; // Default to admin user
+      }
+      
+      // Set keptImages as the images array
+      data.images = keptImages || [];
+      console.log("USING NEW DIRECT IMAGE APPROACH:", data.images.length, "images to keep");
+      
+      // Ensure all numeric fields are properly parsed as numbers
       const formattedData = {
         ...data,
         price: typeof data.price === 'string' ? parseInt(data.price) : data.price,
-        downPayment: typeof data.downPayment === 'string' ? parseInt(data.downPayment) : data.downPayment,
-        installmentAmount: typeof data.installmentAmount === 'string' ? parseInt(data.installmentAmount) : data.installmentAmount,
-        installmentPeriod: typeof data.installmentPeriod === 'string' ? parseInt(data.installmentPeriod) : data.installmentPeriod,
+        downPayment: typeof data.downPayment === 'string' ? parseInt(data.downPayment) : (data.downPayment || 0),
+        installmentAmount: typeof data.installmentAmount === 'string' ? 
+          parseInt(data.installmentAmount) : (data.installmentAmount || 0),
+        installmentPeriod: typeof data.installmentPeriod === 'string' ? 
+          parseInt(data.installmentPeriod) : (data.installmentPeriod || 0),
         bedrooms: typeof data.bedrooms === 'string' ? parseInt(data.bedrooms) : data.bedrooms,
         bathrooms: typeof data.bathrooms === 'string' ? parseInt(data.bathrooms) : data.bathrooms,
         builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
-        // We're now using the filtered images array directly, no need for imagesToRemove
+        
+        // Ensure boolean fields are properly formatted
+        isFeatured: Boolean(data.isFeatured),
+        isHighlighted: Boolean(data.isHighlighted),
+        isNewListing: Boolean(data.isNewListing),
+        isFullCash: Boolean(data.isFullCash),
+        
+        // Property status
+        status: data.status || 'active',
+        
+        // For referencing/filtering
+        images: data.images || [],
+        amenities: data.amenities || [],
+        
+        // Fix for the missing state field - this is required by the database
+        state: data.state || 'Cairo', // Default to Cairo if not provided
+        
+        // These fields help with database field mapping
+        reference_number: data.references || '',
+        references: data.references || '',
       };
 
-      // First save the property data to get an ID (for new properties)
-      console.log(`Saving property data first... (${isEditing ? 'EDITING' : 'NEW'} property)`);
-      console.log("Sending data to API, using direct image list override:", {
-        endpoint: isEditing ? `/api/properties/${propertyId}` : '/api/properties',
-        method: isEditing ? 'PUT' : 'POST',
-        imagesCount: formattedData.images?.length || 0,
-        // We're sending the exact image list to keep rather than a removal list
-      });
+      console.log("FORM SUBMISSION DATA:", JSON.stringify(formattedData, null, 2));
       
-      // Call the API to save the property data
-      const savedProperty = await mutation.mutateAsync(formattedData);
-      console.log("Property saved successfully:", savedProperty);
+      setUploading(true);
       
-      // Add toast notification for successful image update
-      if (removedImages.length > 0) {
-        toast({
-          title: `${removedImages.length} images removed`,
-          description: "The selected images have been removed successfully",
-          variant: "default"
-        });
-      }
-      
-      // For new properties, use the returned ID; for editing, use the existing ID prop
-      const savedPropertyId = isEditing ? Number(propertyId) : savedProperty.id;
-      console.log(`Using property ID ${savedPropertyId} for image upload`);
-      
-      // Only attempt image upload if there are new images
-      if (images.length > 0) {
-        try {
-          console.log(`Uploading ${images.length} new images...`);
-          const uploadResult = await uploadImages(savedPropertyId);
-          console.log("Image upload result:", uploadResult);
-          
-          // If we have new image URLs from the upload, update the property with them
-          if (uploadResult && uploadResult.imageUrls && uploadResult.imageUrls.length > 0) {
-            console.log("New image URLs:", uploadResult.imageUrls);
-            
-            // Get the updated property data after our save, to make sure we have the most current images
-            // This ensures we're not adding back images that were just removed
-            console.log("Fetching the most current property data to get latest images array");
-            const currentProperty = await apiRequest("GET", `/api/properties/${savedPropertyId}`);
-            const currentPropertyData = await currentProperty.json();
-            const currentImages = currentPropertyData.images || [];
-            
-            console.log("Current images after previous update:", currentImages);
-            
-            // Combine current and new images
-            const allImages = [
-              ...currentImages,
-              ...(uploadResult.imageUrls || [])
-            ].filter(Boolean);
-            
-            console.log("All images after upload:", allImages);
-            
-            // Update the property with the combined image list
-            console.log("Updating property with all images...");
-            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
-              images: allImages 
-            });
-          }
-        } catch (uploadError) {
-          console.error("Error during image upload:", uploadError);
-          toast({
-            title: "Warning",
-            description: "Property was saved but there was an issue with image upload.",
-            variant: "destructive"
+      try {
+        let response;
+        
+        if (isEditing) {
+          // Update existing property
+          console.log(`Updating property ${propertyId}`);
+          response = await fetch(`/api/properties/${propertyId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(formattedData)
+          });
+        } else {
+          // Create new property
+          console.log("Creating new property");
+          response = await fetch('/api/properties', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(formattedData)
           });
         }
-      } else if (isEditing && data.images && Array.isArray(data.images) && data.images.length > 0) {
-        // For editing with filtered images but no new ones to upload
-        console.log("No new images to upload, using filtered images from form data:", data.images);
         
-        // These are already filtered to remove any images marked for removal
-        let formattedImages = [...data.images];
+        console.log(`Response status: ${response.status} ${response.statusText}`);
         
-        console.log("Formatted images for submission from filtered data:", formattedImages);
-        // Update property directly with the formatted images
-        if (formattedImages.length > 0) {
+        if (!response.ok) {
+          let errorMessage = `Failed to ${isEditing ? 'update' : 'create'} property`;
+          
           try {
-            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
-              images: formattedImages 
+            const errorData = await response.json();
+            console.error("API error response:", errorData);
+            errorMessage = errorData.message || errorMessage;
+          } catch (jsonError) {
+            try {
+              const errorText = await response.text();
+              console.error("API error text:", errorText);
+              errorMessage = errorText || errorMessage;
+            } catch (textError) {
+              console.error("Couldn't parse error response");
+            }
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        const savedProperty = await response.json();
+        console.log(`Property ${isEditing ? 'updated' : 'created'} successfully:`, savedProperty);
+        
+        // For new properties, use the returned ID; for editing, use the existing ID
+        const savedPropertyId = isEditing ? Number(propertyId) : savedProperty.id;
+        
+        // Upload new images if any
+        if (images.length > 0) {
+          try {
+            console.log(`Uploading ${images.length} new images for property ID ${savedPropertyId}`);
+            
+            const uploadResult = await uploadImages(savedPropertyId);
+            console.log("Upload result:", uploadResult);
+            
+            if (uploadResult && uploadResult.imageUrls && uploadResult.imageUrls.length > 0) {
+              // Combine current and new images
+              const allImages = [
+                ...(keptImages || []),
+                ...(uploadResult.imageUrls || [])
+              ].filter(Boolean);
+              
+              console.log("All images after upload:", allImages);
+              
+              // Update the property with the combined image list
+              const updateImageResponse = await fetch(`/api/properties/${savedPropertyId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ images: allImages })
+              });
+              
+              if (!updateImageResponse.ok) {
+                console.warn("Warning: Failed to update property with new images");
+              } else {
+                console.log("Successfully updated property with new images");
+              }
+            }
+          } catch (uploadError) {
+            console.error("Error uploading images:", uploadError);
+            toast({
+              title: "Warning",
+              description: "Property was saved but there was an issue with uploading images",
+              variant: "destructive"
             });
-          } catch (updateError) {
-            console.error("Error updating property images:", updateError);
           }
         }
-      } else if (isEditing && existingImages.length > 0) {
-        // For editing with existing images, but no filtered images in data and no new uploads
-        console.log("No new images to upload, preserving existing images:", existingImages);
         
-        // Make sure images are properly formatted for JSON
-        // The server expects an array of strings, not an object
-        let formattedImages: string[] = [];
+        // Show success message
+        toast({
+          title: isEditing ? "Property updated" : "Property created",
+          description: "Property has been saved successfully",
+          variant: "default"
+        });
         
-        try {
-          // Handle different possible input formats
-          formattedImages = existingImages.filter(img => img !== null && img !== undefined).map(img => {
-            // If it's already a string, use it directly
-            if (typeof img === 'string') {
-              return img;
-            }
-            // If it's an object, stringify it safely
-            if (typeof img === 'object' && img !== null) {
-              // If it's not a plain object, try to convert it to a string
-              if (Object.prototype.toString.call(img) !== '[object Object]') {
-                // We know it's not a plain object, so we can safely cast
-                return String(img);
-              }
-              // Otherwise, use JSON.stringify
-              try {
-                return JSON.stringify(img);
-              } catch (e) {
-                console.error('Error stringifying image object:', e);
-                return '';
-              }
-            }
-            // Convert any other types to string
-            return String(img || '');
-          }).filter(Boolean); // Filter out any empty strings
-        } catch (error) {
-          console.error('Error formatting images:', error);
-          // Fallback to simple string conversion if there's an error
-          formattedImages = existingImages
-            .filter(Boolean)
-            .map(img => String(img));
+        // Reset the form for a new property
+        if (!isEditing) {
+          form.reset({
+            title: "",
+            description: "",
+            propertyType: "",
+            listingType: "Resale", 
+            price: 0,
+            downPayment: 0,
+            installmentAmount: 0,
+            installmentPeriod: 0,
+            isFullCash: false,
+            city: "",
+            projectName: "",
+            developerName: "",
+            address: "Project Address",
+            bedrooms: 0,
+            bathrooms: 0,
+            builtUpArea: 0,
+            isFeatured: false,
+            isHighlighted: false,
+            isNewListing: true,
+            country: "Egypt",
+            references: "",
+            zipCode: ""
+          });
+          setImages([]);
+          setExistingImages([]);
+          setKeptImages([]);
         }
         
-        console.log("Formatted images for submission:", formattedImages);
-        // Update property directly with the formatted images
-        if (formattedImages.length > 0) {
-          try {
-            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
-              images: formattedImages 
-            });
-          } catch (updateError) {
-            console.error("Error updating property images:", updateError);
-          }
+        // Call the onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess();
         }
+        
+      } catch (error) {
+        console.error("Error saving property:", error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to save property",
+          variant: "destructive"
+        });
+      } finally {
+        setUploading(false);
       }
       
-      console.log("Property submission completed successfully");
-      
-      // Show success message
-      toast({
-        title: isEditing ? "Property updated" : "Property created",
-        description: "Property has been saved successfully",
-        variant: "default"
-      });
-      
-      // Call the onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      }
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error("Form submission error:", error);
       toast({
-        title: "Error saving property",
-        description: error instanceof Error ? error.message : "Failed to save property data",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to process form data",
         variant: "destructive"
       });
+      setUploading(false);
     }
   };
 
