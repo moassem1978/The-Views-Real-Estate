@@ -122,6 +122,7 @@
     </div>
     
     <h1>Universal Image Uploader</h1>
+    <p style="color: #666; margin-bottom: 20px;">This simplified uploader works on all devices including Windows, iOS, and Android.</p>
     
     <div class="instructions">
       <strong>Instructions:</strong>
@@ -136,15 +137,18 @@
     <form id="uploadForm" enctype="multipart/form-data">
       <div class="form-group">
         <label for="propertyId">Property ID:</label>
-        <input type="text" id="propertyId" name="propertyId" required placeholder="Enter the property ID number">
+        <input type="text" id="propertyId" name="propertyId" required placeholder="Enter the property ID number" inputmode="numeric" pattern="[0-9]*">
+        <small style="display: block; margin-top: 5px; color: #666;">The ID number from the property you're editing</small>
       </div>
       
       <div class="form-group">
         <label for="files">Select Images:</label>
-        <input type="file" id="files" name="files" multiple accept="image/*" required>
+        <input type="file" id="files" name="files" multiple accept="image/*" required 
+          style="padding: 15px; background-color: #f9f9f9; border: 2px dashed #ccc;">
+        <small style="display: block; margin-top: 5px; color: #666;">You can select multiple images at once (up to 10)</small>
       </div>
       
-      <button type="submit" id="submitButton">Upload Images</button>
+      <button type="submit" id="submitButton" style="padding: 12px 20px; font-size: 16px; width: 100%;">Upload Images</button>
     </form>
     
     <div id="statusMessage" class="status hidden"></div>

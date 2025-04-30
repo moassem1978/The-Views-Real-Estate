@@ -1557,17 +1557,44 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
       });
       
-      // Create multer instance with extremely simple config
+      // Create multer instance with extremely simple config for maximum cross-platform compatibility
       const simpleUpload = multer({
         storage: diskStorage,
-        limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
-      }).array('files', 10); // Accept 'files' field name to match our HTML form
+        limits: { 
+          fileSize: 25 * 1024 * 1024, // 25MB limit
+          files: 10 // Max 10 files
+        }
+      }).array('files', 10); // Accept 'files' field name to match our universal uploader HTML form
       
-      // Process the upload
+      // Process the upload with enhanced logging for cross-platform compatibility
       simpleUpload(req, res, async function(err) {
-        // Log entire request body right after parsing
+        // Extended logging for better debugging
+        console.log("======= UNIVERSAL UPLOADER PROCESSING =======");
+        console.log("User agent:", req.headers['user-agent']);
+        console.log("Content type:", req.get('Content-Type'));
         console.log("Request body after multer:", req.body);
-        console.log("Files processed by multer:", req.files);
+        console.log("Files array:", Array.isArray(req.files) ? `Yes (${req.files.length} files)` : "No");
+        
+        try {
+          // Try to safely log the files
+          if (req.files && Array.isArray(req.files)) {
+            req.files.forEach((file, index) => {
+              console.log(`File ${index + 1}:`, {
+                fieldname: file.fieldname,
+                originalname: file.originalname,
+                encoding: file.encoding,
+                mimetype: file.mimetype,
+                size: `${Math.round(file.size/1024)} KB`,
+                filename: file.filename
+              });
+            });
+          } else {
+            console.log("No files array available");
+          }
+        } catch (logError) {
+          console.error("Error while logging files:", logError);
+        }
+        console.log("==========================================");
         
         // Check for multer errors
         if (err) {
