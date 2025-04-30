@@ -1362,41 +1362,6 @@ export default function PropertyForm({
                           setKeptImages(prev => [...prev, ...imageUrls]);
                         }}
                       />
-                              }).then(async response => {
-                                if (!response.ok) {
-                                  throw new Error(`Upload failed: ${response.status}`);
-                                }
-                                return response.json();
-                              }).then(result => {
-                                // Show success message
-                                toast({
-                                  title: "Upload Successful",
-                                  description: `Successfully uploaded ${result.count || 0} images`,
-                                  variant: "default"
-                                });
-                                
-                                // Update kept images
-                                if (result.imageUrls && result.imageUrls.length) {
-                                  setKeptImages(prev => [...prev, ...result.imageUrls]);
-                                }
-                                
-                                // Reset the file input
-                                fileInput.value = '';
-                              }).catch(error => {
-                                // Show error
-                                toast({
-                                  title: "Upload Failed",
-                                  description: error.message || "Failed to upload images",
-                                  variant: "destructive"
-                                });
-                              });
-                            }}
-                            className="bg-[#B87333] hover:bg-[#964B00] text-white"
-                          >
-                            Upload Windows Images
-                          </Button>
-                        </div>
-                      </div>
                     ) : (
                       <div className="p-4 bg-muted/30 border rounded-lg mb-4">
                         <p className="text-sm text-muted-foreground italic">
