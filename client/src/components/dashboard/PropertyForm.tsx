@@ -1403,11 +1403,23 @@ export default function PropertyForm({
                                 description: "Uploading images, please wait",
                               });
                               
-                              // Upload using fetch directly
+                              // Add propertyId in multiple ways to ensure it's received
+                              formData.append('propertyId', propertyId.toString());
+                              
+                              // Show detailed upload status
+                              console.log(`Uploading ${fileInput.files.length} images for property ${propertyId}`);
+                              
+                              // Upload using fetch directly with proper headers
                               fetch(`/api/upload/windows?propertyId=${propertyId}`, {
                                 method: 'POST',
                                 body: formData,
-                                credentials: 'include'
+                                credentials: 'include',
+                                headers: {
+                                  // Don't set Content-Type - browser will set it with proper boundary
+                                  'Accept': 'application/json',
+                                  // Add property ID as header too for triple redundancy
+                                  'X-Property-Id': propertyId.toString()
+                                }
                               }).then(async response => {
                                 if (!response.ok) {
                                   throw new Error(`Upload failed: ${response.status}`);

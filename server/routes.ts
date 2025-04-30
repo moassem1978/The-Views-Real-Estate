@@ -1520,11 +1520,23 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      // Get property ID from query parameters
-      const propertyId = parseInt(req.query.propertyId as string);
-      if (isNaN(propertyId) || propertyId <= 0) {
-        console.error(`Invalid property ID: ${req.query.propertyId}`);
-        return res.status(400).json({ message: "Invalid property ID" });
+      // Get property ID from query parameters or form data
+      let propertyId: number;
+      
+      // Try to get from query parameters first
+      if (req.query.propertyId) {
+        propertyId = parseInt(req.query.propertyId as string);
+      } 
+      // Process the upload first and then check for propertyId in the form data
+      else {
+        console.log("No propertyId in query parameters, will check form data after upload");
+        propertyId = 0; // Temporary placeholder, will be updated after parsing form data
+      }
+      
+      // Initial validation - more validation will happen after form parsing
+      if (isNaN(propertyId) || propertyId < 0) {
+        console.error(`Invalid property ID in query parameters: ${req.query.propertyId}`);
+        // Don't return error yet - will check form data after upload processing
       }
       
       // Get width and height from query parameters (optional)
@@ -1595,6 +1607,21 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
         
         console.log(`Received ${files.length} files in Windows upload`);
+        
+        // Now that form data is parsed, check if propertyId was in the form data
+        if (propertyId === 0 && req.body && req.body.propertyId) {
+          const formPropertyId = parseInt(req.body.propertyId);
+          if (!isNaN(formPropertyId) && formPropertyId > 0) {
+            console.log(`Found propertyId ${formPropertyId} in form data`);
+            propertyId = formPropertyId;
+          }
+        }
+        
+        // Final validation of propertyId
+        if (isNaN(propertyId) || propertyId <= 0) {
+          console.error(`Invalid property ID after checking all sources: ${propertyId}`);
+          return res.status(400).json({ message: "Invalid or missing property ID" });
+        }
         
         // Process the files
         const fileUrls: string[] = [];
