@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Info, Loader2, Upload, X } from "lucide-react";
-import WindowsUploader from "../WindowsUploader";
+import SimpleWindowsUploader from "../SimpleWindowsUploader";
 import { useForm, useFormState } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -1353,26 +1353,100 @@ export default function PropertyForm({
                       </div>
                     )}
                     
-                    {/* Windows-specific uploader */}
+                    {/* Windows-specific upload section */}
                     {isEditing && propertyId ? (
-                      <WindowsUploader 
-                        propertyId={propertyId} 
-                        onSuccess={(newImageUrls) => {
-                          // Update kept images with the new ones
-                          setKeptImages(prev => [...prev, ...newImageUrls]);
+                      <div className="mb-4 p-4 bg-muted/30 border rounded-lg">
+                        <h3 className="text-base font-medium mb-2">Windows Upload Alternative</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          If you're having issues uploading from Windows, try this simpler method:
+                        </p>
+                        
+                        {/* DIY Windows uploader */}
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="windows-direct-upload">Select Images</Label>
+                            <Input
+                              id="windows-direct-upload"
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              You can select multiple images (up to 10)
+                            </p>
+                          </div>
                           
-                          // Show success toast
-                          toast({
-                            title: "Windows Upload Successful",
-                            description: `${newImageUrls.length} images were uploaded and added to the property`,
-                            variant: "default"
-                          });
-                        }}
-                      />
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              // Get the file input
+                              const fileInput = document.getElementById('windows-direct-upload') as HTMLInputElement;
+                              if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                                toast({
+                                  title: "No files selected",
+                                  description: "Please select at least one image to upload",
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              
+                              // Create FormData
+                              const formData = new FormData();
+                              Array.from(fileInput.files).forEach(file => {
+                                formData.append('files', file);
+                              });
+                              
+                              // Upload the files
+                              toast({
+                                title: "Uploading...",
+                                description: "Uploading images, please wait",
+                              });
+                              
+                              // Upload using fetch directly
+                              fetch(`/api/upload/windows?propertyId=${propertyId}`, {
+                                method: 'POST',
+                                body: formData,
+                                credentials: 'include'
+                              }).then(async response => {
+                                if (!response.ok) {
+                                  throw new Error(`Upload failed: ${response.status}`);
+                                }
+                                return response.json();
+                              }).then(result => {
+                                // Show success message
+                                toast({
+                                  title: "Upload Successful",
+                                  description: `Successfully uploaded ${result.count || 0} images`,
+                                  variant: "default"
+                                });
+                                
+                                // Update kept images
+                                if (result.imageUrls && result.imageUrls.length) {
+                                  setKeptImages(prev => [...prev, ...result.imageUrls]);
+                                }
+                                
+                                // Reset the file input
+                                fileInput.value = '';
+                              }).catch(error => {
+                                // Show error
+                                toast({
+                                  title: "Upload Failed",
+                                  description: error.message || "Failed to upload images",
+                                  variant: "destructive"
+                                });
+                              });
+                            }}
+                            className="bg-[#B87333] hover:bg-[#964B00] text-white"
+                          >
+                            Upload Windows Images
+                          </Button>
+                        </div>
+                      </div>
                     ) : (
                       <div className="p-4 bg-muted/30 border rounded-lg mb-4">
                         <p className="text-sm text-muted-foreground italic">
-                          Special Windows upload option will be available after saving the property initially.
+                          Windows upload option will be available after saving the property initially.
                         </p>
                       </div>
                     )}

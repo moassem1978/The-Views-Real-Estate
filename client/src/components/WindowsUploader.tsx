@@ -91,11 +91,21 @@ export default function WindowsUploader({ propertyId, onSuccess }: WindowsUpload
       const uploadUrl = `/api/upload/windows?propertyId=${propertyId}`;
       console.log(`Uploading ${validFiles.length} files to ${uploadUrl}`);
 
-      // Make the upload request
+      // Log details about the upload for debugging
+      console.log(`Preparing Windows upload request to ${uploadUrl} with ${validFiles.length} files`);
+      
+      console.log('Windows upload: Using standard fetch API');
+      
+      // Make the upload request with explicit headers for better Windows compatibility
       const response = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
         credentials: 'include',
+        headers: {
+          // Don't set Content-Type header manually - the browser will set it correctly with boundary
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
       });
 
       if (!response.ok) {
