@@ -827,6 +827,33 @@ export default function PropertyForm({
 
   return (
     <Form {...form}>
+      {/* Cross-platform compatibility notice */}
+      {(
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
+          <p className="text-amber-800 font-medium mb-1">Having trouble with this form on Windows?</p>
+          <p className="text-amber-700 mb-2">Try our Universal Property Form that works on all platforms.</p>
+          <div className="flex space-x-2">
+            <a 
+              href={`/windows-property.html${propertyId ? `?propertyId=${propertyId}` : ''}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              Open Universal Property Form
+            </a>
+            {propertyId && (
+              <a 
+                href={`/windows-upload.html?propertyId=${propertyId}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline ml-4"
+              >
+                Universal Image Uploader
+              </a>
+            )}
+          </div>
+        </div>
+      )}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Basic Details Section */}

@@ -478,7 +478,7 @@
     </div>
     
     <div id="successMessage" class="status success hidden">
-      <p>Property created successfully!</p>
+      <p id="successText">Property created successfully!</p>
       <p><a href="/dashboard/properties" class="back-link">Return to Properties Dashboard</a></p>
     </div>
     
@@ -494,6 +494,48 @@
       const listingTypeSelect = document.getElementById('listingType');
       const primaryPricing = document.getElementById('primaryPricing');
       const resalePricing = document.getElementById('resalePricing');
+      
+      // Check if propertyId was provided in the URL for editing
+      const urlParams = new URLSearchParams(window.location.search);
+      const propertyIdFromUrl = urlParams.get('propertyId');
+      let isEditing = false;
+      
+      if (propertyIdFromUrl) {
+        isEditing = true;
+        // Update button text
+        submitButton.textContent = 'Update Property';
+        
+        // Show loading indicator
+        showStatus('Loading property data, please wait...', 'loading');
+        
+        // Fetch the property data
+        fetch(`/api/properties/${propertyIdFromUrl}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          },
+          credentials: 'include'
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to load property: ${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(property => {
+          console.log('Property data loaded:', property);
+          
+          // Hide the loading indicator
+          statusMessage.classList.add('hidden');
+          
+          // Populate the form fields with the property data
+          populateFormFields(property);
+        })
+        .catch(error => {
+          console.error('Error loading property:', error);
+          showStatus(`Error: ${error.message}`, 'error');
+        });
+      }
       
       // Tab navigation
       const tabButtons = document.querySelectorAll('.tab-button');
@@ -555,11 +597,76 @@
       });
       
       // Form submission
+      // Function to populate form fields from property data
+      function populateFormFields(property) {
+        // Map property data to form fields
+        const fieldMappings = {
+          title: 'title',
+          description: 'description',
+          propertyType: 'propertyType',
+          listingType: 'listingType',
+          status: 'status',
+          bedrooms: 'bedrooms',
+          bathrooms: 'bathrooms',
+          area: 'area',
+          builtUpArea: 'builtUpArea',
+          projectName: 'projectName',
+          city: 'city',
+          address: 'address',
+          price: 'price',
+          totalPrice: 'totalPrice',
+          downPayment: 'downPayment',
+          installmentYears: 'installmentYears',
+          deliveryYear: 'deliveryYear',
+          floorNumber: 'floorNumber',
+          yearBuilt: 'yearBuilt',
+          furnishingStatus: 'furnishingStatus',
+          contactName: 'contactName',
+          contactPhone: 'contactPhone',
+          contactEmail: 'contactEmail'
+        };
+        
+        // Set form field values
+        Object.entries(fieldMappings).forEach(([propKey, formFieldId]) => {
+          const field = document.getElementById(formFieldId);
+          if (field && property[propKey] !== undefined) {
+            field.value = property[propKey];
+          }
+        });
+        
+        // Handle checkboxes (features)
+        if (property.features && Array.isArray(property.features)) {
+          property.features.forEach(feature => {
+            const checkbox = document.querySelector(`input[name="features"][value="${feature}"]`);
+            if (checkbox) {
+              checkbox.checked = true;
+            }
+          });
+        }
+        
+        // Handle highlighted checkbox
+        if (property.isHighlighted) {
+          const highlightedCheckbox = document.getElementById('isHighlighted');
+          if (highlightedCheckbox) {
+            highlightedCheckbox.checked = true;
+          }
+        }
+        
+        // Set listing type and trigger change event to show correct pricing section
+        if (property.listingType) {
+          listingTypeSelect.value = property.listingType;
+          // Trigger change event
+          const event = new Event('change');
+          listingTypeSelect.dispatchEvent(event);
+        }
+      }
+      
       form.addEventListener('submit', function(e) {
         e.preventDefault();
         
         // Show loading status
-        showStatus('Creating property, please wait...', 'loading');
+        const actionVerb = isEditing ? 'Updating' : 'Creating';
+        showStatus(`${actionVerb} property, please wait...`, 'loading');
         submitButton.disabled = true;
         
         // Gather form data
@@ -579,7 +686,7 @@
             if (!isNaN(value) && value !== '' && 
                 ['totalPrice', 'downPayment', 'price', 'area', 'bedrooms', 
                  'bathrooms', 'floorNumber', 'yearBuilt', 'installmentYears',
-                 'deliveryYear'].includes(key)) {
+                 'deliveryYear', 'builtUpArea'].includes(key)) {
               propertyData[key] = Number(value);
             } else if (key === 'isHighlighted') {
               propertyData[key] = true;
@@ -592,12 +699,42 @@
         // Add features array
         propertyData.features = features;
         
-        // Add empty images array (will be populated later)
-        propertyData.images = [];
+        // Preserve existing images array if editing, otherwise initialize empty
+        if (isEditing) {
+          // We'll fetch the property again to ensure we have the current images array
+          fetch(`/api/properties/${propertyIdFromUrl}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            credentials: 'include'
+          })
+          .then(response => response.json())
+          .then(property => {
+            // Use existing images
+            propertyData.images = property.images || [];
+            sendPropertyData(propertyData);
+          })
+          .catch(error => {
+            console.error('Error fetching current property data:', error);
+            // Fallback to empty images array if we can't fetch current data
+            propertyData.images = [];
+            sendPropertyData(propertyData);
+          });
+        } else {
+          // New property, start with empty images
+          propertyData.images = [];
+          sendPropertyData(propertyData);
+        }
+      });
+      
+      // Function to send property data to API
+      function sendPropertyData(propertyData) {
+        // Determine endpoint and method based on whether we're editing or creating
+        const endpoint = isEditing ? `/api/properties/${propertyIdFromUrl}` : '/api/properties';
+        const method = isEditing ? 'PATCH' : 'POST';
         
         // Send the request
-        fetch('/api/properties', {
-          method: 'POST',
+        fetch(endpoint, {
+          method: method,
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -614,16 +751,23 @@
           return response.json();
         })
         .then(result => {
-          console.log('Property created successfully:', result);
+          console.log(`Property ${isEditing ? 'updated' : 'created'} successfully:`, result);
           
           // Hide form and show success message
           form.style.display = 'none';
           document.querySelector('.tab-container').style.display = 'none';
+          
+          // Update success message based on action
+          const successText = document.getElementById('successText');
+          successText.textContent = isEditing 
+            ? `Property updated successfully!` 
+            : `Property created successfully!`;
+          
           successMessage.classList.remove('hidden');
           
           // Add property ID to link
           const propertyLink = document.createElement('a');
-          propertyLink.href = `/dashboard/properties/edit/${result.id}`;
+          propertyLink.href = `/dashboard/properties/edit/${result.id || propertyIdFromUrl}`;
           propertyLink.className = 'back-link';
           propertyLink.style.display = 'block';
           propertyLink.style.marginTop = '10px';
