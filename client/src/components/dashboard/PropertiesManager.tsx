@@ -321,6 +321,34 @@ export default function PropertiesManager() {
         </AlertDialogContent>
       </AlertDialog>
       
+      {/* Cross-platform compatibility notice */}
+      <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
+        <p className="text-amber-800 font-medium mb-1">Windows Users: Use Universal Forms for compatibility</p>
+        <p className="text-amber-700 mb-2">Having trouble with property forms on Windows? Use these cross-platform tools:</p>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Button 
+            variant="default"
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => {
+              window.open('/windows-property.html', '_blank');
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Universal Property Form
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+            onClick={() => {
+              window.open('/windows-upload.html', '_blank');
+            }}
+          >
+            Universal Image Uploader
+          </Button>
+        </div>
+      </div>
+      
       {/* Header with add button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -339,16 +367,6 @@ export default function PropertiesManager() {
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Property
-          </Button>
-          
-          <Button 
-            variant="outline"
-            className="border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white"
-            onClick={() => {
-              window.open('/windows-property.html', '_blank');
-            }}
-          >
-            Universal Property Form
           </Button>
         </div>
       </div>
