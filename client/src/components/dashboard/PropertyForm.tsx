@@ -1355,13 +1355,28 @@ export default function PropertyForm({
                     
                     {/* Windows-specific upload section */}
                     {isEditing && propertyId ? (
-                      <SimpleWindowsUploader 
-                        propertyId={propertyId}
-                        onSuccess={(imageUrls) => {
-                          // Update the kept images list with the new URLs
-                          setKeptImages(prev => [...prev, ...imageUrls]);
-                        }}
-                      />
+                      <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <h3 className="text-sm font-medium mb-2">Windows Upload Alternative</h3>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Having issues uploading images on Windows? Use our simplified uploader:
+                        </p>
+                        <a
+                          href={`/windows-upload.html?propertyId=${propertyId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-[#B87333] hover:bg-[#964B00] text-white py-2 px-4 rounded text-sm inline-flex items-center"
+                          onClick={() => {
+                            // Log that the link was clicked
+                            console.log(`Windows upload link clicked for property ${propertyId}`);
+                          }}
+                        >
+                          Open Windows Uploader
+                        </a>
+                        <p className="text-xs text-muted-foreground mt-3">
+                          This will open a simplified page specifically designed for Windows compatibility.
+                          After uploading, return to this page and refresh to see your images.
+                        </p>
+                      </div>
                     ) : (
                       <div className="p-4 bg-muted/30 border rounded-lg mb-4">
                         <p className="text-sm text-muted-foreground italic">

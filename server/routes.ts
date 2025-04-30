@@ -1561,7 +1561,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const simpleUpload = multer({
         storage: diskStorage,
         limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
-      }).any(); // Accept any field names for maximum compatibility
+      }).array('files', 10); // Accept 'files' field name to match our HTML form
       
       // Process the upload
       simpleUpload(req, res, async function(err) {
