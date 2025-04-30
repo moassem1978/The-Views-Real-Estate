@@ -1507,215 +1507,204 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Special dedicated Windows upload endpoint - ultra simple approach
+  // Ultra-simplified Windows upload endpoint for maximum compatibility
   app.post("/api/upload/windows", async (req: Request, res: Response) => {
-    console.log("==== WINDOWS-SPECIFIC UPLOAD ENDPOINT CALLED ====");
+    console.log("============================================================");
+    console.log("==== SIMPLIFIED WINDOWS UPLOAD ENDPOINT CALLED ====");
     console.log("User agent:", req.headers['user-agent']);
     console.log("Content type:", req.headers['content-type']);
+    console.log("Request headers:", req.headers);
+    console.log("============================================================");
     
     try {
-      // Check if user is authenticated
+      // Authentication check
       if (!req.isAuthenticated()) {
-        console.error("Windows image upload failed: User not authenticated");
+        console.error("Authentication failed");
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      // Get property ID from query parameters or form data
-      let propertyId: number;
+      // Get the property ID from any possible source
+      // Priority: Headers > Query Params > Form Data
+      let propertyId: number | null = null;
       
-      // Try to get from query parameters first
-      if (req.query.propertyId) {
+      // Check custom header first (most reliable)
+      if (req.headers['x-property-id']) {
+        propertyId = parseInt(req.headers['x-property-id'] as string);
+        console.log(`Found propertyId ${propertyId} in custom header`);
+      }
+      
+      // Try query parameters if not in header
+      if (propertyId === null && req.query.propertyId) {
         propertyId = parseInt(req.query.propertyId as string);
-      } 
-      // Process the upload first and then check for propertyId in the form data
-      else {
-        console.log("No propertyId in query parameters, will check form data after upload");
-        propertyId = 0; // Temporary placeholder, will be updated after parsing form data
+        console.log(`Found propertyId ${propertyId} in query parameter`);
       }
       
-      // Initial validation - more validation will happen after form parsing
-      if (isNaN(propertyId) || propertyId < 0) {
-        console.error(`Invalid property ID in query parameters: ${req.query.propertyId}`);
-        // Don't return error yet - will check form data after upload processing
-      }
-      
-      // Get width and height from query parameters (optional)
-      const width = req.query.width ? parseInt(req.query.width as string) : null;
-      const height = req.query.height ? parseInt(req.query.height as string) : null;
-      
-      console.log(`Processing Windows special upload for property ID ${propertyId}`);
-      
-      // Create uploads directory with permissions
+      // Setup multer for Windows
       const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
       fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
       
-      // Simple diskStorage for multer - failsafe configuration
       const diskStorage = multer.diskStorage({
         destination: function (req, file, cb) {
+          console.log(`Setting destination for ${file.originalname} to ${publicUploadsDir}`);
           cb(null, publicUploadsDir);
         },
         filename: function (req, file, cb) {
+          // Maximum simplicity in file naming
           const timestamp = Date.now();
-          const randomness = Math.floor(Math.random() * 1000000000);
-          
-          // Get original file extension or default to jpg
-          let fileExt = '.jpg';
-          
-          if (file.originalname) {
-            const origExt = path.extname(file.originalname).toLowerCase();
-            if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(origExt)) {
-              fileExt = origExt;
-            }
-          } else if (file.mimetype) {
-            // Use mimetype as fallback
-            const mimeExtMap: Record<string, string> = {
-              'image/jpeg': '.jpg',
-              'image/png': '.png',
-              'image/gif': '.gif',
-              'image/webp': '.webp'
-            };
-            fileExt = mimeExtMap[file.mimetype] || '.jpg';
-          }
-          
-          const safeFilename = `windows-${timestamp}-${randomness}${fileExt}`;
-          console.log(`Windows upload: Generated filename ${safeFilename} for ${file.originalname || 'unknown file'}`);
+          const safeFilename = `win-${timestamp}-${Math.floor(Math.random() * 1000000)}.jpg`;
+          console.log(`Generated filename: ${safeFilename} for ${file.originalname}`);
           cb(null, safeFilename);
         }
       });
       
-      // Create a simpler uploader with minimal options
-      const windowsUpload = multer({
+      // Create multer instance with extremely simple config
+      const simpleUpload = multer({
         storage: diskStorage,
-        limits: {
-          fileSize: 10 * 1024 * 1024, // 10MB
-          files: 10,
-        }
-      }).array('files', 10); // Accept up to 10 files
+        limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
+      }).any(); // Accept any field names for maximum compatibility
       
-      // Process the upload with the simpler middleware
-      windowsUpload(req, res, async function(err) {
+      // Process the upload
+      simpleUpload(req, res, async function(err) {
+        // Log entire request body right after parsing
+        console.log("Request body after multer:", req.body);
+        console.log("Files processed by multer:", req.files);
+        
+        // Check for multer errors
         if (err) {
-          console.error('Windows upload error:', err);
-          return res.status(500).json({ message: `Upload failed: ${err.message}` });
+          console.error('Multer upload error:', err);
+          return res.status(500).json({ message: `Upload processing error: ${err.message}` });
         }
         
-        const files = req.files as Express.Multer.File[];
-        
-        if (!files || files.length === 0) {
-          console.error('No files received in Windows upload');
-          return res.status(400).json({ message: "No files received" });
-        }
-        
-        console.log(`Received ${files.length} files in Windows upload`);
-        
-        // Now that form data is parsed, check if propertyId was in the form data
-        if (propertyId === 0 && req.body && req.body.propertyId) {
-          const formPropertyId = parseInt(req.body.propertyId);
-          if (!isNaN(formPropertyId) && formPropertyId > 0) {
-            console.log(`Found propertyId ${formPropertyId} in form data`);
-            propertyId = formPropertyId;
+        // Get propertyId from form if not found earlier
+        if (propertyId === null && req.body && req.body.propertyId) {
+          const formId = parseInt(req.body.propertyId);
+          if (!isNaN(formId) && formId > 0) {
+            propertyId = formId;
+            console.log(`Found propertyId ${propertyId} in form data`);
           }
         }
         
         // Final validation of propertyId
-        if (isNaN(propertyId) || propertyId <= 0) {
-          console.error(`Invalid property ID after checking all sources: ${propertyId}`);
-          return res.status(400).json({ message: "Invalid or missing property ID" });
-        }
-        
-        // Process the files
-        const fileUrls: string[] = [];
-        
-        for (const file of files) {
-          try {
-            console.log(`Windows upload processing: ${file.originalname} -> ${file.filename}`);
-            
-            // Ensure the file exists and has content
-            const filePath = path.join(publicUploadsDir, file.filename);
-            if (fs.existsSync(filePath)) {
-              const stats = fs.statSync(filePath);
-              console.log(`Windows upload file saved: ${file.filename} (${stats.size} bytes)`);
-              
-              // Set permissions
-              fs.chmodSync(filePath, 0o666);
-              
-              // Add URL to results
-              const fileUrl = `/uploads/properties/${file.filename}`;
-              fileUrls.push(fileUrl);
-            } else {
-              console.error(`Windows upload: File not found at ${filePath}`);
-            }
-          } catch (fileError) {
-            console.error(`Windows upload: Error processing file ${file.originalname}:`, fileError);
-          }
-        }
-        
-        // If no files were successfully processed, return an error
-        if (fileUrls.length === 0) {
-          console.error("Windows upload: No files were successfully processed");
-          return res.status(500).json({ 
-            message: "Failed to process any of the uploaded files. Please try again with different images or use the standard uploader." 
+        if (propertyId === null || isNaN(propertyId) || propertyId <= 0) {
+          console.error(`Invalid or missing property ID: ${propertyId}`);
+          return res.status(400).json({ 
+            message: "Invalid or missing property ID. Please ensure the property ID is provided.",
+            receivedId: propertyId,
+            queryParams: req.query,
+            bodyKeys: Object.keys(req.body || {})
           });
         }
         
-        // Update the property with the new images
+        // Check for files
+        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+          console.error('No files received');
+          return res.status(400).json({ message: "No files were received" });
+        }
+        
+        const files = req.files as Express.Multer.File[];
+        console.log(`Processing ${files.length} files for property ID ${propertyId}`);
+        
+        // Process files with maximum reliability
+        const fileUrls: string[] = [];
+        const errors: string[] = [];
+        
+        for (const file of files) {
+          try {
+            console.log(`Processing file: ${file.originalname || 'unnamed'}`);
+            
+            const filePath = file.path;
+            if (!fs.existsSync(filePath)) {
+              console.error(`File missing at ${filePath}`);
+              errors.push(`File ${file.originalname} was not saved correctly`);
+              continue;
+            }
+            
+            // Check file size as validation
+            const stats = fs.statSync(filePath);
+            if (stats.size === 0) {
+              console.error(`File at ${filePath} is empty`);
+              errors.push(`File ${file.originalname} is empty`);
+              continue;
+            }
+            
+            console.log(`Validated file: ${file.filename} (${stats.size} bytes)`);
+            
+            // Set liberal permissions
+            fs.chmodSync(filePath, 0o666);
+            
+            // Add to successful files
+            const fileUrl = `/uploads/properties/${file.filename}`;
+            fileUrls.push(fileUrl);
+          } catch (fileError) {
+            console.error(`Error processing file ${file.originalname}:`, fileError);
+            errors.push(`Error processing ${file.originalname}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`);
+          }
+        }
+        
+        // Return early if no files were processed
+        if (fileUrls.length === 0) {
+          console.error(`No files were successfully processed, errors: ${errors.join(', ')}`);
+          return res.status(500).json({ 
+            message: "Failed to process files",
+            errors
+          });
+        }
+        
+        // Update the property's images
         try {
-          console.log(`Windows upload: Successfully processed ${fileUrls.length} files. Updating property ${propertyId}`);
-          
           // Get the property
           const property = await dbStorage.getPropertyById(propertyId);
           
           if (!property) {
-            console.error(`Windows upload: Property ${propertyId} not found`);
-            return res.status(404).json({ message: "Property not found" });
+            console.error(`Property with ID ${propertyId} not found`);
+            return res.status(404).json({ 
+              message: "Property not found", 
+              propertyId,
+              imageUrls: fileUrls,
+              count: fileUrls.length,
+              note: "Images were uploaded but could not be associated with a property"
+            });
           }
           
-          // Get existing images and combine with new ones
+          // Combine existing and new images
           const existingImages = Array.isArray(property.images) ? property.images : [];
+          console.log(`Property has ${existingImages.length} existing images + ${fileUrls.length} new images`);
           
-          console.log(`Windows upload: Property has ${existingImages.length} existing images`);
+          // Avoid duplicates
+          const allImages = [...new Set([...existingImages, ...fileUrls])];
           
-          // Clean up duplicate file paths
-          const allImages = new Set([...existingImages, ...fileUrls]);
-          const updatedImages = Array.from(allImages);
-          
-          console.log(`Windows upload: Updating property with ${updatedImages.length} total images`);
-          
-          // Update the property with the new images
+          // Update property
+          console.log(`Updating property ${propertyId} with ${allImages.length} total images`);
           const updatedProperty = await dbStorage.updateProperty(propertyId, {
-            images: updatedImages
+            images: allImages
           });
           
-          console.log(`Windows upload: Property successfully updated with new images`);
-          
           return res.status(200).json({
-            message: "Windows upload successful",
+            message: "Upload successful",
+            success: true,
             imageUrls: fileUrls,
             count: fileUrls.length,
             property: updatedProperty
           });
         } catch (dbError) {
-          console.error(`Windows upload: Error updating property:`, dbError);
+          console.error('Error updating property:', dbError);
           
-          // Try to provide more helpful error message
-          let errorMessage = "Failed to update property with new images";
-          
-          if (dbError instanceof Error) {
-            errorMessage = `Database error: ${dbError.message}`;
-          }
-          
-          // Return a 500 error with the error message
-          return res.status(500).json({ 
-            message: errorMessage,
+          // Still return partial success since files were uploaded
+          return res.status(207).json({
+            message: "Images uploaded but property update failed",
             success: false,
-            fileUrls: fileUrls, // Still return the URLs so client knows files were uploaded
-            count: fileUrls.length
+            imageUrls: fileUrls,
+            count: fileUrls.length,
+            error: dbError instanceof Error ? dbError.message : 'Unknown database error'
           });
         }
       });
     } catch (error) {
-      console.error('Windows upload endpoint error:', error);
-      return res.status(500).json({ message: "Internal server error" });
+      console.error('Unexpected error in Windows upload endpoint:', error);
+      return res.status(500).json({ 
+        message: "Server error",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
   

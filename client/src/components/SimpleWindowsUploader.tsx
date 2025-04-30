@@ -1,35 +1,24 @@
-import { useState, useEffect } from "react";
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, Info, Check, AlertCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
-// Simple uploader with minimal dependencies for Windows compatibility
 interface SimpleWindowsUploaderProps {
   propertyId: number;
   onSuccess?: (imageUrls: string[]) => void;
 }
 
+/**
+ * A simplified Windows-specific file uploader using native DOM manipulations
+ * instead of React-specific features to maximize compatibility.
+ */
 export default function SimpleWindowsUploader({ propertyId, onSuccess }: SimpleWindowsUploaderProps) {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [statusMessage, setStatusMessage] = useState('');
   const { toast } = useToast();
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const filesArray = Array.from(e.target.files);
-      setSelectedFiles(filesArray);
-      setUploadStatus('idle');
-    }
-  };
-
-  const uploadImages = async () => {
-    if (selectedFiles.length === 0) {
+  const [uploading, setUploading] = useState(false);
+  
+  // Handle the core upload functionality
+  const handleUpload = async (files: FileList) => {
+    if (!files || files.length === 0) {
       toast({
         title: "No files selected",
         description: "Please select at least one image to upload",
@@ -37,170 +26,119 @@ export default function SimpleWindowsUploader({ propertyId, onSuccess }: SimpleW
       });
       return;
     }
-
+    
     setUploading(true);
-    setUploadStatus('idle');
-
+    console.log(`Windows upload: Starting upload of ${files.length} files for property ID ${propertyId}`);
+    
     try {
-      // Create FormData object for the upload
+      // Create FormData object
       const formData = new FormData();
       
-      // Add each file
-      selectedFiles.forEach(file => {
+      // Append all files to the form data
+      Array.from(files).forEach(file => {
+        console.log(`Windows upload: Adding file: ${file.name} (${file.size} bytes)`);
         formData.append('files', file);
       });
       
-      // Log the upload details
-      console.log(`Uploading ${selectedFiles.length} files for property ID ${propertyId}`);
+      // Add the property ID in multiple places for redundancy
+      formData.append('propertyId', propertyId.toString());
       
-      // Create the upload URL with the property ID
-      const url = `/api/upload/windows?propertyId=${propertyId}`;
-      
-      // Perform the upload
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
+      // Show upload toast
+      toast({
+        title: "Uploading images...",
+        description: `Uploading ${files.length} files, please wait...`,
       });
       
-      // Handle non-successful responses
-      if (!response.ok) {
-        let errorMessage = "Upload failed";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          try {
-            const errorText = await response.text();
-            errorMessage = errorText || errorMessage;
-          } catch (textError) {
-            errorMessage = `Upload failed with status ${response.status}`;
-          }
+      // Use simple fetch with minimal headers
+      const response = await fetch(`/api/upload/windows?propertyId=${propertyId}`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'X-Property-Id': propertyId.toString()
         }
-        throw new Error(errorMessage);
+      });
+      
+      // Handle response
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Windows upload failed: ${response.status} ${response.statusText}`, errorText);
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
       }
       
-      // Parse the successful response
       const result = await response.json();
-      console.log("Upload successful:", result);
+      console.log('Windows upload response:', result);
       
-      // Update status and show success message
-      setUploadStatus('success');
-      setStatusMessage(`Successfully uploaded ${result.count || result.imageUrls?.length || 0} images`);
-      
-      // Display success message
+      // Show success toast
       toast({
         title: "Upload Successful",
-        description: `Images uploaded successfully`,
+        description: `Successfully uploaded ${result.count || 0} images`,
         variant: "default"
       });
       
-      // Clear the file input
-      setSelectedFiles([]);
-      
-      // Call the success callback if provided
-      if (onSuccess && result.imageUrls) {
+      // Call success callback if provided
+      if (onSuccess && result.imageUrls && result.imageUrls.length) {
         onSuccess(result.imageUrls);
       }
+      
+      return result;
     } catch (error) {
-      console.error("Upload error:", error);
-      
-      // Update status and show error message
-      setUploadStatus('error');
-      setStatusMessage(error instanceof Error ? error.message : "Failed to upload images");
-      
-      // Display error message
+      console.error('Windows upload error:', error);
       toast({
         title: "Upload Failed",
         description: error instanceof Error ? error.message : "Failed to upload images",
         variant: "destructive"
       });
+      return null;
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="bg-muted/30 border border-muted-foreground/20 rounded-lg p-4 my-4">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-[#B87333] mb-1">Simple Windows Upload</h3>
-        <p className="text-sm text-muted-foreground">
-          This simplified uploader works better with Windows systems. Images will be added to the property.
+    <div className="windows-uploader mb-4">
+      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <h3 className="text-sm font-semibold mb-2">Windows Upload Option</h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          This simplified option is designed for Windows users who may experience issues with the standard uploader.
         </p>
-      </div>
-      
-      {uploadStatus !== 'idle' && (
-        <Alert 
-          variant={uploadStatus === 'success' ? "default" : "destructive"}
-          className="mb-4"
-        >
-          {uploadStatus === 'success' ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <AlertCircle className="h-4 w-4" />
-          )}
-          <AlertTitle>
-            {uploadStatus === 'success' ? 'Upload Complete' : 'Upload Failed'}
-          </AlertTitle>
-          <AlertDescription>{statusMessage}</AlertDescription>
-        </Alert>
-      )}
-      
-      <div className="space-y-6">
-        <div>
-          <Label htmlFor="windows-simple-files">Select Property Images</Label>
-          <Input
-            id="windows-simple-files"
+        
+        <div className="flex items-center gap-2">
+          <input
             type="file"
+            id="windows-special-uploader"
+            className="text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[#B87333]/10 file:text-[#B87333] hover:file:bg-[#B87333]/20"
             multiple
             accept="image/*"
-            onChange={handleFileChange}
-            disabled={uploading}
-            className="mt-2"
           />
-          <p className="text-xs text-muted-foreground mt-1">
-            Select multiple images (JPG, PNG) up to 5MB each
-          </p>
-        </div>
-        
-        {selectedFiles.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Selected Files ({selectedFiles.length})</p>
-            <div className="max-h-24 overflow-y-auto text-xs space-y-1 text-muted-foreground">
-              {selectedFiles.map((file, index) => (
-                <div key={index} className="flex items-center">
-                  <span className="truncate max-w-[250px]">{file.name}</span>
-                  <span className="ml-2">({(file.size / 1024).toFixed(1)} KB)</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        <Button
-          type="button"
-          onClick={uploadImages}
-          disabled={selectedFiles.length === 0 || uploading}
-          className="w-full bg-[#B87333] hover:bg-[#964B00] text-white"
-        >
-          {uploading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Uploading...
-            </>
-          ) : (
-            <>
-              <UploadCloud className="mr-2 h-4 w-4" />
-              Upload Images
-            </>
-          )}
-        </Button>
-        
-        <div className="flex items-start gap-2 border-t border-border pt-3 mt-3">
-          <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            For best results on Windows, use smaller images in JPEG format and upload only a few at a time.
-          </p>
+          
+          <Button
+            type="button"
+            disabled={uploading}
+            onClick={() => {
+              const fileInput = document.getElementById('windows-special-uploader') as HTMLInputElement;
+              if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                handleUpload(fileInput.files);
+              } else {
+                toast({
+                  title: "No files selected",
+                  description: "Please select at least one image first",
+                  variant: "destructive"
+                });
+              }
+            }}
+            className="bg-[#B87333] hover:bg-[#964B00] text-white"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              "Upload Images"
+            )}
+          </Button>
         </div>
       </div>
     </div>

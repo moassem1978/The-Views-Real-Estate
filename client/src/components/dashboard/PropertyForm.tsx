@@ -1355,71 +1355,13 @@ export default function PropertyForm({
                     
                     {/* Windows-specific upload section */}
                     {isEditing && propertyId ? (
-                      <div className="mb-4 p-4 bg-muted/30 border rounded-lg">
-                        <h3 className="text-base font-medium mb-2">Windows Upload Alternative</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          If you're having issues uploading from Windows, try this simpler method:
-                        </p>
-                        
-                        {/* DIY Windows uploader */}
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="windows-direct-upload">Select Images</Label>
-                            <Input
-                              id="windows-direct-upload"
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              className="mt-1"
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">
-                              You can select multiple images (up to 10)
-                            </p>
-                          </div>
-                          
-                          <Button
-                            type="button"
-                            onClick={() => {
-                              // Get the file input
-                              const fileInput = document.getElementById('windows-direct-upload') as HTMLInputElement;
-                              if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                                toast({
-                                  title: "No files selected",
-                                  description: "Please select at least one image to upload",
-                                  variant: "destructive"
-                                });
-                                return;
-                              }
-                              
-                              // Create FormData
-                              const formData = new FormData();
-                              Array.from(fileInput.files).forEach(file => {
-                                formData.append('files', file);
-                              });
-                              
-                              // Upload the files
-                              toast({
-                                title: "Uploading...",
-                                description: "Uploading images, please wait",
-                              });
-                              
-                              // Add propertyId in multiple ways to ensure it's received
-                              formData.append('propertyId', propertyId.toString());
-                              
-                              // Show detailed upload status
-                              console.log(`Uploading ${fileInput.files.length} images for property ${propertyId}`);
-                              
-                              // Upload using fetch directly with proper headers
-                              fetch(`/api/upload/windows?propertyId=${propertyId}`, {
-                                method: 'POST',
-                                body: formData,
-                                credentials: 'include',
-                                headers: {
-                                  // Don't set Content-Type - browser will set it with proper boundary
-                                  'Accept': 'application/json',
-                                  // Add property ID as header too for triple redundancy
-                                  'X-Property-Id': propertyId.toString()
-                                }
+                      <SimpleWindowsUploader 
+                        propertyId={propertyId}
+                        onSuccess={(imageUrls) => {
+                          // Update the kept images list with the new URLs
+                          setKeptImages(prev => [...prev, ...imageUrls]);
+                        }}
+                      />
                               }).then(async response => {
                                 if (!response.ok) {
                                   throw new Error(`Upload failed: ${response.status}`);
