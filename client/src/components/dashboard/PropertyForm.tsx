@@ -148,7 +148,7 @@ export default function PropertyForm({
       isHighlighted: false,
       isNewListing: true,
       country: "Egypt", // Default to Egypt
-      references: "", // Added default value for references
+      references: "", // Reference number field
       zipCode: "", // Required by server
       // Removed images and imagesToRemove from form state
     },
