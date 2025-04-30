@@ -1199,6 +1199,14 @@ export default function PropertyForm({
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="images">Property Images</Label>
+                  {existingImages.length > 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-2">
+                      <p className="text-sm text-amber-800 font-medium flex items-center">
+                        <Info className="w-4 h-4 mr-2" />
+                        To remove images, click the red "Delete" button on each image.
+                      </p>
+                    </div>
+                  )}
                   <div className="border rounded-md p-4">
                     {/* Existing Images Display - NEW APPROACH */}
                     {existingImages.length > 0 && (
@@ -1233,19 +1241,29 @@ export default function PropertyForm({
                                     }
                                   }}
                                 />
+                                {/* Large, more visible delete button */}
                                 <button 
                                   type="button"
                                   onClick={() => {
                                     // Ultra-simple direct approach - just update state
                                     setKeptImages(prev => prev.filter(img => img !== imageUrl));
+                                    // Show toast notification confirming removal
+                                    toast({
+                                      title: "Image removed",
+                                      description: "The image has been removed from the property",
+                                      variant: "default"
+                                    });
                                   }}
-                                  className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-bl-md shadow-md opacity-100 hover:opacity-100 transition-opacity z-20"
+                                  className="absolute top-0 right-0 bg-red-600 text-white p-2 rounded-bl-md shadow-md opacity-90 hover:opacity-100 hover:bg-red-700 transition-opacity z-20"
                                   aria-label="Remove image"
+                                  style={{ fontSize: '14px', fontWeight: 'bold' }}
                                 >
                                   <span className="flex items-center">
-                                    <X className="h-4 w-4 mr-1" /> Remove
+                                    <X className="h-5 w-5 mr-1" /> Delete
                                   </span>
                                 </button>
+                                {/* Added an overlay to make it clear this image can be interacted with */}
+                                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-opacity"></div>
                               </div>
                             );
                           })}

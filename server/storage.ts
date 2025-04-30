@@ -1581,13 +1581,21 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`DB: Creating new property: ${insertProperty.title}`);
       
-      // Remove references field from the insert data
-      const { references, ...safePropertyData } = insertProperty as any;
+      // Handle the 'references' field correctly
+      let safePropertyData: any = {...insertProperty};
       
-      console.log('Safe property data to be inserted:', safePropertyData);
+      // If there's a references field in the input, map it to reference_number for the database
+      if ('references' in safePropertyData) {
+        // Copy the value to reference_number field (which is what the database column is named)
+        safePropertyData.reference_number = safePropertyData.references;
+        // Remove the original references field to avoid SQL errors
+        delete safePropertyData.references;
+        console.log(`Mapped 'references' value to 'reference_number': ${safePropertyData.reference_number}`);
+      }
       
-      // We need to handle the 'references' field in a special way since it's a SQL reserved keyword
-      // First, create the property without the references field
+      console.log('Prepared property data for insertion');
+      
+      // Create the property with the properly mapped fields
       const [property] = await db
         .insert(properties)
         .values(safePropertyData)
@@ -1595,39 +1603,17 @@ export class DatabaseStorage implements IStorage {
       
       console.log(`Successfully created property with ID ${property.id}`);
       
-      // If there's a references value, update it separately as reference_number
-      if (references) {
-        try {
-          console.log(`Updating reference_number field for property ${property.id} with value: ${references}`);
-          // Using raw SQL query to handle the reference number column
-          const result = await pool.query(
-            `UPDATE properties SET reference_number = $1 WHERE id = $2 RETURNING *`,
-            [references, property.id]
-          );
-          
-          console.log(`References update affected ${result.rowCount} rows`);
-          
-          if (result.rowCount === 0) {
-            console.error(`Failed to update references field for property ${property.id}`);
-          }
-        } catch (refError) {
-          console.error(`Error updating references field:`, refError);
-          console.error(refError instanceof Error ? refError.stack : 'Unknown error');
-        }
-      } else {
-        console.log('No references value provided, skipping references update');
-      }
-      
       // Get the updated property with all fields
       const [updatedProperty] = await db
         .select()
         .from(properties)
         .where(eq(properties.id, property.id));
       
-      // Add the references field back to the return value if needed
+      // Make sure the references field is available in the return value
+      // Note: reference_number in DB maps to references in the application
       const propertyWithReferences = {
         ...updatedProperty,
-        references: updatedProperty.references || references || '',
+        references: updatedProperty.reference_number || '',
       };
       
       console.log(`DB: Successfully created property with ID ${property.id}`);
