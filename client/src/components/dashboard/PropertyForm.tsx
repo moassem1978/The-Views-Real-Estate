@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Info, Loader2, Upload, X } from "lucide-react";
+import WindowsUploader from "../WindowsUploader";
 import { useForm, useFormState } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -1352,7 +1353,31 @@ export default function PropertyForm({
                       </div>
                     )}
                     
-                    {/* Upload New Images */}
+                    {/* Windows-specific uploader */}
+                    {isEditing && propertyId ? (
+                      <WindowsUploader 
+                        propertyId={propertyId} 
+                        onSuccess={(newImageUrls) => {
+                          // Update kept images with the new ones
+                          setKeptImages(prev => [...prev, ...newImageUrls]);
+                          
+                          // Show success toast
+                          toast({
+                            title: "Windows Upload Successful",
+                            description: `${newImageUrls.length} images were uploaded and added to the property`,
+                            variant: "default"
+                          });
+                        }}
+                      />
+                    ) : (
+                      <div className="p-4 bg-muted/30 border rounded-lg mb-4">
+                        <p className="text-sm text-muted-foreground italic">
+                          Special Windows upload option will be available after saving the property initially.
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Standard Upload Method */}
                     <div className="flex items-center justify-center w-full">
                       <label
                         htmlFor="file-upload"

@@ -1507,6 +1507,136 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // Special dedicated Windows upload endpoint - ultra simple approach
+  app.post("/api/upload/windows", async (req: Request, res: Response) => {
+    console.log("==== WINDOWS-SPECIFIC UPLOAD ENDPOINT CALLED ====");
+    console.log("User agent:", req.headers['user-agent']);
+    console.log("Content type:", req.headers['content-type']);
+    
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Windows image upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Get property ID from query parameters
+      const propertyId = parseInt(req.query.propertyId as string);
+      if (isNaN(propertyId) || propertyId <= 0) {
+        console.error(`Invalid property ID: ${req.query.propertyId}`);
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+      
+      // Get width and height from query parameters (optional)
+      const width = req.query.width ? parseInt(req.query.width as string) : null;
+      const height = req.query.height ? parseInt(req.query.height as string) : null;
+      
+      console.log(`Processing Windows special upload for property ID ${propertyId}`);
+      
+      // Create uploads directory with permissions
+      const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+      fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
+      
+      // Simple diskStorage for multer - failsafe configuration
+      const diskStorage = multer.diskStorage({
+        destination: function (req, file, cb) {
+          cb(null, publicUploadsDir);
+        },
+        filename: function (req, file, cb) {
+          const timestamp = Date.now();
+          const randomness = Math.floor(Math.random() * 1000000000);
+          const safeFilename = `windows-${timestamp}-${randomness}.jpg`;
+          cb(null, safeFilename);
+        }
+      });
+      
+      // Create a simpler uploader with minimal options
+      const windowsUpload = multer({
+        storage: diskStorage,
+        limits: {
+          fileSize: 10 * 1024 * 1024, // 10MB
+          files: 10,
+        }
+      }).array('files', 10); // Accept up to 10 files
+      
+      // Process the upload with the simpler middleware
+      windowsUpload(req, res, async function(err) {
+        if (err) {
+          console.error('Windows upload error:', err);
+          return res.status(500).json({ message: `Upload failed: ${err.message}` });
+        }
+        
+        const files = req.files as Express.Multer.File[];
+        
+        if (!files || files.length === 0) {
+          console.error('No files received in Windows upload');
+          return res.status(400).json({ message: "No files received" });
+        }
+        
+        console.log(`Received ${files.length} files in Windows upload`);
+        
+        // Process the files
+        const fileUrls: string[] = [];
+        
+        for (const file of files) {
+          try {
+            console.log(`Windows upload processing: ${file.originalname} -> ${file.filename}`);
+            
+            // Ensure the file exists and has content
+            const filePath = path.join(publicUploadsDir, file.filename);
+            if (fs.existsSync(filePath)) {
+              const stats = fs.statSync(filePath);
+              console.log(`Windows upload file saved: ${file.filename} (${stats.size} bytes)`);
+              
+              // Set permissions
+              fs.chmodSync(filePath, 0o666);
+              
+              // Add URL to results
+              const fileUrl = `/uploads/properties/${file.filename}`;
+              fileUrls.push(fileUrl);
+            } else {
+              console.error(`Windows upload: File not found at ${filePath}`);
+            }
+          } catch (fileError) {
+            console.error(`Windows upload: Error processing file ${file.originalname}:`, fileError);
+          }
+        }
+        
+        // Update the property with the new images
+        try {
+          const property = await dbStorage.getPropertyById(propertyId);
+          
+          if (!property) {
+            console.error(`Windows upload: Property ${propertyId} not found`);
+            return res.status(404).json({ message: "Property not found" });
+          }
+          
+          // Get existing images and combine with new ones
+          const existingImages = Array.isArray(property.images) ? property.images : [];
+          const updatedImages = [...existingImages, ...fileUrls];
+          
+          // Update the property with the new images
+          const updatedProperty = await dbStorage.updateProperty(propertyId, {
+            images: updatedImages
+          });
+          
+          return res.status(200).json({
+            message: "Windows upload successful",
+            imageUrls: fileUrls,
+            count: fileUrls.length,
+            property: updatedProperty
+          });
+        } catch (dbError) {
+          console.error(`Windows upload: Error updating property:`, dbError);
+          return res.status(500).json({ message: "Failed to update property with new images" });
+        }
+      });
+    } catch (error) {
+      console.error('Windows upload endpoint error:', error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
   // Enhanced cross-platform upload endpoint (works with Windows, iOS, and other platforms)
   app.post("/api/upload/property-images-simple", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     console.log("==== ENHANCED CROSS-PLATFORM UPLOAD ENDPOINT CALLED ====");
