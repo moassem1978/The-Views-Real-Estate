@@ -42,6 +42,11 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  console.log(`FORM SUBMISSION: Making ${method} request to ${url}`);
+  if (data) {
+    console.log("FORM SUBMISSION DATA:", JSON.stringify(data, null, 2));
+  }
+  
   // For GET requests, use request cache to prevent duplicate requests
   const isGet = method.toUpperCase() === 'GET';
   const cacheKey = isGet ? `${method}:${url}` : '';
@@ -69,6 +74,10 @@ export async function apiRequest(
           method: 'POST',
           credentials: 'include'
         });
+        
+        if (refreshResponse.ok) {
+          console.log("Authentication refreshed successfully");
+        }
         
         if (refreshResponse.status === 401) {
           console.error('Session expired and refresh failed');
@@ -98,6 +107,8 @@ export async function apiRequest(
       apiRequestCache.delete(cacheKey);
     }
     
+    console.log(`Response status: ${res.status} ${res.statusText}`);
+    
     if (res.status === 401) {
       // For 401 responses, redirect to login
       console.error('Authentication required');
@@ -105,13 +116,32 @@ export async function apiRequest(
       throw new Error('401: Authentication required');
     }
     
-    await throwIfResNotOk(res);
+    if (!res.ok) {
+      try {
+        // Try to get the error details as JSON
+        const errorData = await res.json();
+        console.error("API error response:", errorData);
+        throw new Error(errorData.message || `Error ${res.status}: ${res.statusText}`);
+      } catch (jsonError) {
+        // If parsing as JSON fails, try to get plain text
+        try {
+          const errorText = await res.text();
+          console.error("API error text:", errorText);
+          throw new Error(errorText || `Error ${res.status}: ${res.statusText}`);
+        } catch (textError) {
+          // If all else fails, throw a generic error
+          throw new Error(`Request failed with status: ${res.status}`);
+        }
+      }
+    }
+    
     return res;
   }).catch(error => {
     // Clear cache on error too
     if (isGet) {
       apiRequestCache.delete(cacheKey);
     }
+    console.error("Network error during form submission:", error);
     throw error;
   });
   
