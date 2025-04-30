@@ -473,11 +473,23 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           req.body[field] = req.body[field].toLowerCase() === 'true';
         }
       });
+      
+      // Add required fields before validation
+      if (!req.body.createdAt) {
+        req.body.createdAt = new Date().toISOString();
+        console.log("Added createdAt:", req.body.createdAt);
+      }
+      
+      if (!req.body.agentId) {
+        req.body.agentId = user.id; // Default to current user as agent
+        console.log("Added agentId:", req.body.agentId);
+      }
 
+      // Validate with added fields
       let propertyData;
       try {
         propertyData = insertPropertySchema.parse(req.body);
-        console.log("Property data validation succeeded");
+        console.log("Property data validation succeeded with all required fields");
       } catch (parseError) {
         console.error("Property data validation failed:", parseError);
         return res.status(400).json({
@@ -485,13 +497,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           details: parseError instanceof Error ? parseError.message : String(parseError)
         });
       }
-
+      
       // Add createdBy field and status
       const propertyWithUser = {
         ...propertyData,
         createdBy: user.id,
         status: 'published', // Admin properties are published immediately
-        createdAt: new Date().toISOString()
       };
 
       // Log property data just before creation

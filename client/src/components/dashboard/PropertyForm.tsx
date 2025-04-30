@@ -255,6 +255,10 @@ export default function PropertyForm({
           console.log(`Added zipCode: ${cleanData.zipCode} for city: ${cleanData.city}`);
         }
         
+        // Add required fields that the server needs
+        cleanData.createdAt = cleanData.createdAt || new Date().toISOString();
+        cleanData.agentId = cleanData.agentId || 1; // Default agent ID is 1 (presumably the owner)
+        
         // Ensure numeric fields are actually numbers
         ['price', 'downPayment', 'installmentAmount', 'installmentPeriod', 
          'bedrooms', 'bathrooms', 'builtUpArea'].forEach(field => {
@@ -373,9 +377,11 @@ export default function PropertyForm({
       }
     },
     onError: (error: any) => {
+      // Don't reset the form on error so the user doesn't lose their data
+      console.error("Submission error:", error);
       toast({
         title: "Error",
-        description: error.message || "Something went wrong",
+        description: "There was a problem saving the property. Please try again.",
         variant: "destructive",
       });
     },
