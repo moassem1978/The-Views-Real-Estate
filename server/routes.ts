@@ -1545,7 +1545,28 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         filename: function (req, file, cb) {
           const timestamp = Date.now();
           const randomness = Math.floor(Math.random() * 1000000000);
-          const safeFilename = `windows-${timestamp}-${randomness}.jpg`;
+          
+          // Get original file extension or default to jpg
+          let fileExt = '.jpg';
+          
+          if (file.originalname) {
+            const origExt = path.extname(file.originalname).toLowerCase();
+            if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(origExt)) {
+              fileExt = origExt;
+            }
+          } else if (file.mimetype) {
+            // Use mimetype as fallback
+            const mimeExtMap: Record<string, string> = {
+              'image/jpeg': '.jpg',
+              'image/png': '.png',
+              'image/gif': '.gif',
+              'image/webp': '.webp'
+            };
+            fileExt = mimeExtMap[file.mimetype] || '.jpg';
+          }
+          
+          const safeFilename = `windows-${timestamp}-${randomness}${fileExt}`;
+          console.log(`Windows upload: Generated filename ${safeFilename} for ${file.originalname || 'unknown file'}`);
           cb(null, safeFilename);
         }
       });
@@ -1602,8 +1623,19 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         }
         
+        // If no files were successfully processed, return an error
+        if (fileUrls.length === 0) {
+          console.error("Windows upload: No files were successfully processed");
+          return res.status(500).json({ 
+            message: "Failed to process any of the uploaded files. Please try again with different images or use the standard uploader." 
+          });
+        }
+        
         // Update the property with the new images
         try {
+          console.log(`Windows upload: Successfully processed ${fileUrls.length} files. Updating property ${propertyId}`);
+          
+          // Get the property
           const property = await dbStorage.getPropertyById(propertyId);
           
           if (!property) {
@@ -1613,12 +1645,21 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           
           // Get existing images and combine with new ones
           const existingImages = Array.isArray(property.images) ? property.images : [];
-          const updatedImages = [...existingImages, ...fileUrls];
+          
+          console.log(`Windows upload: Property has ${existingImages.length} existing images`);
+          
+          // Clean up duplicate file paths
+          const allImages = new Set([...existingImages, ...fileUrls]);
+          const updatedImages = Array.from(allImages);
+          
+          console.log(`Windows upload: Updating property with ${updatedImages.length} total images`);
           
           // Update the property with the new images
           const updatedProperty = await dbStorage.updateProperty(propertyId, {
             images: updatedImages
           });
+          
+          console.log(`Windows upload: Property successfully updated with new images`);
           
           return res.status(200).json({
             message: "Windows upload successful",
@@ -1628,7 +1669,21 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           });
         } catch (dbError) {
           console.error(`Windows upload: Error updating property:`, dbError);
-          return res.status(500).json({ message: "Failed to update property with new images" });
+          
+          // Try to provide more helpful error message
+          let errorMessage = "Failed to update property with new images";
+          
+          if (dbError instanceof Error) {
+            errorMessage = `Database error: ${dbError.message}`;
+          }
+          
+          // Return a 500 error with the error message
+          return res.status(500).json({ 
+            message: errorMessage,
+            success: false,
+            fileUrls: fileUrls, // Still return the URLs so client knows files were uploaded
+            count: fileUrls.length
+          });
         }
       });
     } catch (error) {

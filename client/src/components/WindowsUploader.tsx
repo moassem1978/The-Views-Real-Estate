@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud } from "lucide-react";
+import { Loader2, UploadCloud, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface WindowsUploaderProps {
   propertyId: number;
@@ -13,12 +14,23 @@ interface WindowsUploaderProps {
 export default function WindowsUploader({ propertyId, onSuccess }: WindowsUploaderProps) {
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFiles(e.target.files);
+      setUploadStatus('idle'); // Reset status when new files are selected
     }
+  };
+
+  const resetFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setFiles(null);
   };
 
   const uploadFiles = async () => {
@@ -32,19 +44,52 @@ export default function WindowsUploader({ propertyId, onSuccess }: WindowsUpload
     }
 
     setUploading(true);
+    setUploadStatus('idle');
+    setStatusMessage('');
 
     try {
+      // Validate files before upload
+      const validFiles = Array.from(files).filter(file => {
+        // Check file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: `${file.name} exceeds the 5MB size limit`,
+            variant: "destructive"
+          });
+          return false;
+        }
+        
+        // Check file type (allow only images)
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "Invalid file type",
+            description: `${file.name} is not an image file`,
+            variant: "destructive"
+          });
+          return false;
+        }
+        
+        return true;
+      });
+      
+      if (validFiles.length === 0) {
+        setUploadStatus('error');
+        setStatusMessage('No valid files to upload. Please select valid image files under 5MB each.');
+        return;
+      }
+
       // Create a FormData object
       const formData = new FormData();
       
       // Append each file with the field name 'files'
-      Array.from(files).forEach(file => {
+      validFiles.forEach(file => {
         formData.append('files', file);
       });
 
       // Use the Windows-specific endpoint with propertyId as a query parameter
       const uploadUrl = `/api/upload/windows?propertyId=${propertyId}`;
-      console.log(`Uploading ${files.length} files to ${uploadUrl}`);
+      console.log(`Uploading ${validFiles.length} files to ${uploadUrl}`);
 
       // Make the upload request
       const response = await fetch(uploadUrl, {
@@ -69,6 +114,10 @@ export default function WindowsUploader({ propertyId, onSuccess }: WindowsUpload
       const result = await response.json();
       console.log("Windows upload successful:", result);
 
+      // Set success status
+      setUploadStatus('success');
+      setStatusMessage(`Successfully uploaded ${result.count} images`);
+
       toast({
         title: "Upload Successful",
         description: `Successfully uploaded ${result.count} images`,
@@ -76,7 +125,7 @@ export default function WindowsUploader({ propertyId, onSuccess }: WindowsUpload
       });
 
       // Reset the file input
-      setFiles(null);
+      resetFileInput();
       
       // Call the success callback if provided
       if (onSuccess && result.imageUrls) {
@@ -84,6 +133,11 @@ export default function WindowsUploader({ propertyId, onSuccess }: WindowsUpload
       }
     } catch (error) {
       console.error("Windows upload error:", error);
+      
+      // Set error status
+      setUploadStatus('error');
+      setStatusMessage(error instanceof Error ? error.message : "Failed to upload images");
+      
       toast({
         title: "Upload Failed",
         description: error instanceof Error ? error.message : "Failed to upload images",
@@ -103,11 +157,29 @@ export default function WindowsUploader({ propertyId, onSuccess }: WindowsUpload
         </p>
       </div>
       
+      {uploadStatus !== 'idle' && (
+        <Alert 
+          variant={uploadStatus === 'success' ? "default" : "destructive"}
+          className="mb-4"
+        >
+          {uploadStatus === 'success' ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
+          <AlertTitle>
+            {uploadStatus === 'success' ? 'Upload Successful' : 'Upload Failed'}
+          </AlertTitle>
+          <AlertDescription>{statusMessage}</AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-4">
         <div>
           <Label htmlFor="windows-files">Select Images</Label>
           <Input
             id="windows-files"
+            ref={fileInputRef}
             type="file"
             multiple
             accept="image/*"
@@ -120,7 +192,7 @@ export default function WindowsUploader({ propertyId, onSuccess }: WindowsUpload
           </p>
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center flex-wrap gap-2">
           <Button
             type="button"
             onClick={uploadFiles}
@@ -145,6 +217,29 @@ export default function WindowsUploader({ propertyId, onSuccess }: WindowsUpload
               {files.length} file{files.length !== 1 ? 's' : ''} selected
             </span>
           )}
+          
+          {files && files.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={resetFileInput}
+              disabled={uploading}
+              className="ml-auto"
+            >
+              Clear Selection
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      <div className="mt-4 border-t pt-3">
+        <div className="flex items-start gap-2">
+          <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            If you're still having issues uploading images, make sure each image is under 5MB in size.
+            Try using JPEG format for best compatibility.
+          </p>
         </div>
       </div>
     </div>
