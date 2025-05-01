@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Plus } from "lucide-react";
-import { useLocation } from "wouter";
+import { Loader2, Plus, Home } from "lucide-react";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import ProjectsList from "@/components/projects/ProjectsList";
 import Paginator from "@/components/ui/paginator";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 // Type definitions for projects
 interface Project {
@@ -66,47 +68,61 @@ const Projects: React.FC = () => {
   const projects = data?.data || [];
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex flex-col space-y-6">
-        <div className="flex flex-col items-center mb-8">
-          <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">Our Development Projects</h1>
-          <p className="text-gray-600 max-w-3xl mx-auto mb-4">
-            Explore our exclusive selection of premier real estate development projects, each offering unique 
-            living experiences with exceptional amenities, locations, and design.
-          </p>
-          
-          {canManageProjects && (
-            <Button 
-              onClick={() => setLocation("/project-management")}
-              className="mt-4 bg-[#964B00] hover:bg-[#B87333] text-white"
-            >
-              <Plus className="mr-2 h-4 w-4" /> 
-              Manage Projects
-            </Button>
+    <>
+      <Header />
+      <div className="container mx-auto p-4 mt-4">
+        {/* Navigation breadcrumbs */}
+        <div className="flex items-center text-sm text-gray-500 mb-6">
+          <Link href="/" className="hover:text-copper flex items-center">
+            <Home className="h-4 w-4 mr-1" />
+            Home
+          </Link>
+          <span className="mx-2">/</span>
+          <span className="text-copper">Projects</span>
+        </div>
+        
+        <div className="flex flex-col space-y-6">
+          <div className="flex flex-col items-center mb-8">
+            <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">Our Development Projects</h1>
+            <p className="text-gray-600 max-w-3xl mx-auto mb-4">
+              Explore our exclusive selection of premier real estate development projects, each offering unique 
+              living experiences with exceptional amenities, locations, and design.
+            </p>
+            
+            {canManageProjects && (
+              <Button 
+                onClick={() => setLocation("/project-management")}
+                className="mt-4 bg-[#964B00] hover:bg-[#B87333] text-white"
+              >
+                <Plus className="mr-2 h-4 w-4" /> 
+                Manage Projects
+              </Button>
+            )}
+          </div>
+
+          {projects.length === 0 ? (
+            <div className="text-center p-12 border rounded-md">
+              <p className="text-gray-500">No projects available at the moment.</p>
+            </div>
+          ) : (
+            <>
+              <ProjectsList projects={projects} isLoading={isLoading} />
+
+              {data && data.pageCount > 1 && (
+                <div className="mt-8 flex justify-center">
+                  <Paginator
+                    currentPage={page}
+                    totalPages={data.pageCount}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
-
-        {projects.length === 0 ? (
-          <div className="text-center p-12 border rounded-md">
-            <p className="text-gray-500">No projects available at the moment.</p>
-          </div>
-        ) : (
-          <>
-            <ProjectsList projects={projects} isLoading={isLoading} />
-
-            {data && data.pageCount > 1 && (
-              <div className="mt-8 flex justify-center">
-                <Paginator
-                  currentPage={page}
-                  totalPages={data.pageCount}
-                  onPageChange={handlePageChange}
-                />
-              </div>
-            )}
-          </>
-        )}
       </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 
