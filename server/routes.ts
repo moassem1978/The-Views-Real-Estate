@@ -2546,15 +2546,21 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // New simplified property image upload endpoint - NO AUTHENTICATION REQUIRED
   app.post('/api/upload/property-images-direct', async (req: Request, res: Response) => {
     try {
-      console.log("==== DIRECT PROPERTY IMAGE UPLOAD CALLED ====");
-      console.log("Public upload endpoint - no authentication required");
+      console.log("==== UNIVERSAL PROPERTY IMAGE UPLOAD CALLED ====");
+      console.log("Cross-platform upload endpoint - authenticated or public");
 
-      // Log the incoming request details for debugging
-      console.log("Content-Type:", req.headers['content-type']);
-      console.log("Request method:", req.method);
-      console.log("Query params:", req.query);
+      // Check for device type/info in request
+      const deviceType = req.body?.deviceType || 'Unknown';
+      const userAgent = req.headers['user-agent'] || 'Unknown';
+      console.log(`Device Type: ${deviceType}`);
+      console.log(`User Agent: ${userAgent}`);
+      console.log(`Content-Type: ${req.headers['content-type']}`);
+      
+      // Extract propertyId from request if present
+      const propertyId = req.body?.propertyId;
+      console.log(`Property ID: ${propertyId || 'Not provided'}`);
 
-      // Try to log any form fields that might already be parsed
+      // Log all form fields for debugging
       if (req.body) {
         console.log("Request body keys:", Object.keys(req.body));
       }
@@ -2569,7 +2575,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Force directory permissions
       fs.chmodSync(uploadDir, 0o777);
 
-      // Create a single-use multer instance
+      // Create a single-use multer instance with optimized settings for specific devices
+      let fileSize = 25 * 1024 * 1024; // Default 25MB limit
+      
+      // Adjust for iOS devices which may need smaller file sizes
+      if (deviceType === 'iOS' || userAgent.includes('iPhone') || userAgent.includes('iPad')) {
+        console.log("Using iOS-optimized upload settings");
+        fileSize = 15 * 1024 * 1024; // 15MB for iOS
+      }
+      
       const upload = multer({
         storage: multer.diskStorage({
           destination: (req, file, cb) => {
@@ -2578,49 +2592,47 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           filename: (req, file, cb) => {
             const timestamp = Date.now();
             const random = Math.round(Math.random() * 1000);
-            const ext = path.extname(file.originalname) || '.jpg';
+            // Ensure we have a valid extension
+            let ext = path.extname(file.originalname).toLowerCase();
+            if (!ext || !['.jpg', '.jpeg', '.png'].includes(ext)) {
+              ext = '.jpg'; // Default to jpg if no valid extension
+            }
             const filename = `images-${timestamp}-${random}${ext}`;
             console.log(`Generated filename: ${filename}`);
             cb(null, filename);
           }
         }),
+        fileFilter: (req, file, cb) => {
+          // Only accept images
+          if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+          } else {
+            cb(new Error('Only image files are allowed'));
+          }
+        },
         limits: {
-          fileSize: 25 * 1024 * 1024, // 25MB
+          fileSize: fileSize,
           files: 20
         }
       });
 
-      // First check if there are any files in the request
+      // Check if the request has already been processed by multer (in case middleware already ran)
       if (!req.files && !req.file) {
-        console.log("No files found in the request");
+        console.log("No files found in initial request - applying multer middleware");
 
-        // Try to log the request content
-        try {
-          console.log("Request headers:", req.headers);
-          console.log("Request content type:", req.headers['content-type']);
-          console.log("Request body keys:", Object.keys(req.body || {}));
-        } catch (err) {
-          console.error("Error logging request details:", err);
-        }
-
-        return res.status(400).json({
-          success: false,
-          message: "No files detected in the upload request. Ensure files are being sent correctly with field name 'images'."
+        // Use the upload middleware as a promise
+        const uploadPromise = util.promisify((req: Request, res: Response, callback: (error: any) => void) => {
+          upload.array('images', 20)(req, res, callback);
         });
-      }
 
-      // Use the upload middleware as a promise
-      const uploadPromise = util.promisify((req: Request, res: Response, callback: (error: any) => void) => {
-        upload.array('images', 20)(req, res, callback);
-      });
-
-      try {
-        console.log("Starting file upload process...");
-        await uploadPromise(req, res);
-        console.log("Upload process completed");
-      } catch (uploadError) {
-        console.error("Error during file upload:", uploadError);
-        throw new Error(`File upload process failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
+        try {
+          console.log("Starting file upload process...");
+          await uploadPromise(req, res);
+          console.log("Upload process completed");
+        } catch (uploadError) {
+          console.error("Error during file upload:", uploadError);
+          throw new Error(`File upload process failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
+        }
       }
 
       // Check if files array exists and has content after upload
@@ -2636,13 +2648,41 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
       console.log("File URLs:", fileUrls);
 
+      // If a property ID was provided, update the property with the new images
+      if (propertyId) {
+        try {
+          console.log(`Updating property ${propertyId} with new images`);
+          const property = await dbStorage.getProperty(parseInt(propertyId));
+          
+          if (property) {
+            const currentImages = property.images || [];
+            const updatedImages = [...currentImages, ...fileUrls];
+            
+            // Update the property with new images
+            await dbStorage.updateProperty(parseInt(propertyId), {
+              ...property,
+              images: updatedImages
+            });
+            
+            console.log(`Successfully updated property ${propertyId} with ${fileUrls.length} new images`);
+          } else {
+            console.warn(`Property ID ${propertyId} not found, images uploaded but not associated`);
+          }
+        } catch (dbError) {
+          console.error(`Error updating property ${propertyId} with images:`, dbError);
+          // Continue to return success since files were uploaded, even if association failed
+        }
+      }
+
       return res.status(200).json({
         success: true,
         message: `Successfully uploaded ${files.length} images`,
-        imageUrls: fileUrls
+        imageUrls: fileUrls,
+        propertyId: propertyId || null,
+        deviceType: deviceType
       });
     } catch (error) {
-      console.error("Direct upload error:", error);
+      console.error("Universal uploader error:", error);
       return res.status(500).json({
         success: false,
         message: "Upload failed",
