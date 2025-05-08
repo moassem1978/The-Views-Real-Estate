@@ -178,27 +178,10 @@ export default function PropertyForm({
         isHighlighted: Boolean(property.isHighlighted || property.is_highlighted),
         isNewListing: Boolean(property.isNewListing || property.is_new_listing),
         country: property.country || 'Egypt',
-        zipCode: property.zipCode || property.zip_code || '00000',
-        price: property.price,
-        downPayment: property.downPayment || property.down_payment,
-        installmentAmount: property.installmentAmount || property.installment_amount,
-        installmentPeriod: property.installmentPeriod || property.installment_period,
-        isFullCash: property.isFullCash || property.is_full_cash,
-        city: property.city,
-        projectName: property.projectName || property.project_name,
-        developerName: property.developerName || property.developer_name,
-        address: property.address,
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms,
-        builtUpArea: property.builtUpArea || property.built_up_area,
-        isFeatured: property.isFeatured || property.is_featured,
-        isHighlighted: property.isHighlighted || property.is_highlighted,
-        isNewListing: property.isNewListing || property.is_new_listing,
-        country: property.country,
-        references: property.references,
-        yearBuilt: property.yearBuilt || property.year_built,
+        references: property.references || '',
+        yearBuilt: property.yearBuilt || property.year_built || '',
         zipCode: property.zipCode || property.zip_code || "00000", // Required by server
-        images: property.images
+        images: property.images || []
       };
       
       // Set existing images if available
@@ -1184,11 +1167,26 @@ export default function PropertyForm({
                     {images.length > 0 && (
                       <div className="mt-4">
                         <p className="text-sm font-medium mb-2">New Images Selected ({images.length})</p>
-                        <ul className="text-xs text-muted-foreground">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {Array.from(images).map((file, index) => (
-                            <li key={index}>{file.name}</li>
+                            <div key={index} className="relative group border rounded-md p-2">
+                              <div className="flex items-center">
+                                <div className="w-6 h-6 flex-shrink-0 mr-2 bg-gray-100 rounded-full flex items-center justify-center">
+                                  <span className="text-xs text-gray-500">{index + 1}</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground truncate">{file.name}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeSelectedImage(index)}
+                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full text-white flex items-center justify-center text-xs shadow-md"
+                                title="Remove image"
+                              >
+                                ×
+                              </button>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                       </div>
                     )}
                   </div>
