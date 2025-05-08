@@ -1592,7 +1592,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         
         try {
           // Get the property from the database
-          const property = await storage.getProperty(propertyId);
+          const property = await dbStorage.getPropertyById(propertyId);
           
           if (!property) {
             console.error(`iOS upload: Property with ID ${propertyId} not found`);
@@ -1610,8 +1610,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           // Update property with new images
           const updatedImages = [...currentImages, ...newImagePaths];
           
-          // Save the updated property
-          const updatedProperty = await storage.updateProperty(propertyId, { 
+          // Save the updated property with type assertion to ensure propertyId is a number
+          const propertyIdNumber = propertyId as number;
+          const updatedProperty = await dbStorage.updateProperty(propertyIdNumber, { 
             images: updatedImages 
           });
           
