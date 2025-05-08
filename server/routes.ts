@@ -3150,6 +3150,221 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
     // Last resort, return 404).send('File not found');
   });
+  
+  // Universal cross-platform upload endpoint
+  app.post('/api/universal-upload', (req: Request, res: Response) => {
+    console.log("============================================================");
+    console.log("==== UNIVERSAL CROSS-PLATFORM UPLOAD ENDPOINT CALLED ====");
+    console.log("User agent:", req.headers['user-agent']);
+    console.log("Content type:", req.headers['content-type']);
+    console.log("Device type:", req.headers['x-device-type'] || 'unknown');
+    console.log("============================================================");
+    
+    // Set CORS and cache control headers for maximum compatibility
+    res.set({
+      'Access-Control-Allow-Origin': req.headers.origin || '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    // Detect device type from user agent
+    const userAgent = req.headers['user-agent'] || '';
+    let deviceType = 'other';
+    
+    if (/iphone|ipad|ipod/i.test(userAgent)) {
+      deviceType = 'ios';
+    } else if (/android/i.test(userAgent)) {
+      deviceType = 'android';
+    } else if (/windows/i.test(userAgent)) {
+      deviceType = 'windows';
+    } else if (/macintosh|mac os x/i.test(userAgent)) {
+      deviceType = 'mac';
+    }
+    
+    console.log(`Detected device type: ${deviceType}`);
+    
+    // Get property ID from all possible sources
+    let propertyId: number | null = null;
+    
+    // Check header
+    if (req.headers['x-property-id']) {
+      propertyId = parseInt(req.headers['x-property-id'] as string);
+      console.log(`Found propertyId in header: ${propertyId}`);
+    }
+    
+    // Check query parameter
+    if ((propertyId === null || isNaN(propertyId)) && req.query.propertyId) {
+      propertyId = parseInt(req.query.propertyId as string);
+      console.log(`Found propertyId in query: ${propertyId}`);
+    }
+    
+    // Ensure upload directory exists with proper permissions
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+    fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
+    
+    try {
+      fs.chmodSync(uploadDir, 0o777);
+    } catch (err) {
+      console.warn("Failed to set directory permissions:", err);
+      // Non-fatal error, continue
+    }
+    
+    // Configure multer with device-specific optimizations
+    const upload = multer({
+      storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+          console.log(`Setting destination for ${file.originalname || 'unnamed file'}: ${uploadDir}`);
+          cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+          const timestamp = Date.now();
+          const randomId = Math.round(Math.random() * 1E9);
+          
+          // Get file extension or default to .jpg
+          let ext = '.jpg';
+          if (file.originalname) {
+            const fileExt = path.extname(file.originalname).toLowerCase();
+            if (fileExt && ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(fileExt)) {
+              ext = fileExt;
+            }
+          }
+          
+          // Create device-specific filename
+          const filename = `universal-${deviceType}-${timestamp}-${randomId}${ext}`;
+          console.log(`Generated filename: ${filename}`);
+          cb(null, filename);
+        }
+      }),
+      limits: { 
+        fileSize: 25 * 1024 * 1024, // 25MB 
+        files: 20 // Up to 20 files
+      },
+      fileFilter: (req, file, cb) => {
+        // Accept all image types
+        if (file.mimetype.startsWith('image/')) {
+          cb(null, true);
+        } else {
+          console.log(`Rejected non-image file: ${file.originalname} (${file.mimetype})`);
+          cb(null, false);
+        }
+      }
+    }).array('files', 20); // Accept 'files' field name
+
+    // Process the upload
+    upload(req, res, async (err) => {
+      console.log("Processing upload request...");
+      
+      if (err) {
+        console.error('Universal upload error:', err);
+        if (err instanceof multer.MulterError) {
+          if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(413).json({ 
+              success: false, 
+              status: "error",
+              code: "FILE_TOO_LARGE",
+              message: 'File size exceeds the 25MB limit' 
+            });
+          } else if (err.code === 'LIMIT_FILE_COUNT') {
+            return res.status(413).json({ 
+              success: false,
+              status: "error", 
+              code: "TOO_MANY_FILES",
+              message: 'Maximum of 20 files can be uploaded at once' 
+            });
+          }
+        }
+        return res.status(400).json({ 
+          success: false, 
+          error: err.message 
+        });
+      }
+
+      // Check if files were uploaded
+      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+        console.log("No files were uploaded");
+        return res.status(400).json({ 
+          success: false, 
+          status: "error",
+          code: "NO_FILES",
+          message: 'No files were uploaded. Please select at least one image.' 
+        });
+      }
+
+      // Process the files
+      const files = req.files as Express.Multer.File[];
+      console.log(`Processing ${files.length} uploaded files`);
+      
+      // Collect image URLs
+      const urls = files.map(file => `/uploads/properties/${file.filename}`);
+      
+      // Check if we need to update a property
+      if (propertyId && !isNaN(propertyId) && propertyId > 0) {
+        try {
+          // Get the property
+          const property = await dbStorage.getPropertyById(propertyId);
+          
+          if (property) {
+            console.log(`Found property #${propertyId}: ${property.title}`);
+            
+            // Update the property with new images
+            const existingImages = Array.isArray(property.images) ? property.images : [];
+            const updatedImages = [...existingImages, ...urls];
+            
+            await dbStorage.updateProperty(propertyId, { images: updatedImages });
+            
+            console.log(`Updated property #${propertyId} with ${urls.length} new images`);
+            
+            return res.json({ 
+              success: true, 
+              urls,
+              imageUrls: urls,
+              message: `Successfully uploaded ${urls.length} images to property #${propertyId}`,
+              count: urls.length,
+              property: {
+                id: property.id,
+                title: property.title,
+                totalImages: updatedImages.length
+              }
+            });
+          } else {
+            console.warn(`Property #${propertyId} not found`);
+            // Return success but note that property wasn't found
+            return res.json({ 
+              success: true, 
+              urls,
+              imageUrls: urls,
+              message: `Images uploaded but property #${propertyId} not found`,
+              warning: "PROPERTY_NOT_FOUND",
+              count: urls.length
+            });
+          }
+        } catch (error) {
+          console.error('Error updating property:', error);
+          // Return partial success since files were uploaded
+          return res.json({ 
+            success: true, 
+            urls,
+            imageUrls: urls,
+            message: `Images uploaded but failed to update property`,
+            warning: "PROPERTY_UPDATE_FAILED",
+            error: error instanceof Error ? error.message : 'Unknown error',
+            count: urls.length
+          });
+        }
+      } else {
+        // No property ID, just return the URLs
+        return res.json({ 
+          success: true, 
+          urls,
+          imageUrls: urls,
+          message: `Successfully uploaded ${urls.length} images`,
+          count: urls.length
+        });
+      }
+    });
+  });
 
   // Create HTTP server
   const httpServer = createServer(app);

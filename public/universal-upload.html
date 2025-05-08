@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>Universal Property Image Uploader | The Views Real Estate</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Tahoma', sans-serif;
+      line-height: 1.5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      background-color: #f8f8f8;
+      -webkit-text-size-adjust: 100%;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #B87333;
+      margin-top: 0;
+      font-size: 24px;
+      text-align: center;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      max-width: 200px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      -webkit-appearance: none;
+    }
+    .device-type {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .device-badge {
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .device-badge.ios {
+      background-color: #007AFF;
+      color: white;
+    }
+    .device-badge.android {
+      background-color: #a4c639;
+      color: white;
+    }
+    .device-badge.windows {
+      background-color: #0078D7;
+      color: white;
+    }
+    .device-badge.other {
+      background-color: #777;
+      color: white;
+    }
+    .file-input-container {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px dashed #ddd;
+      border-radius: 4px;
+      text-align: center;
+      background-color: #f9f9f9;
+    }
+    .file-input-button {
+      display: inline-block;
+      padding: 15px 25px;
+      background-color: #B87333;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+    .file-input {
+      position: absolute;
+      left: -9999px;
+    }
+    button {
+      background-color: #B87333;
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 10px;
+      -webkit-appearance: none;
+    }
+    button:hover {
+      background-color: #964B00;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .loading {
+      background-color: #e2e3e5;
+      color: #383d41;
+      border: 1px solid #d6d8db;
+    }
+    .hidden {
+      display: none;
+    }
+    .instructions {
+      background-color: #FFF8E1;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      border-left: 4px solid #FFB300;
+    }
+    .instructions ol {
+      margin-left: 20px;
+      padding-left: 0;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: #B87333;
+      text-decoration: none;
+    }
+    .image-preview {
+      margin-top: 20px;
+    }
+    .image-preview-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .image-preview img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      margin-right: 5px;
+      margin-bottom: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .file-count {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .container {
+        padding: 15px;
+      }
+      .device-type {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="/uploads/logos/logo.png" alt="The Views Real Estate" onerror="this.src='/favicon.ico'; this.onerror=null;">
+    </div>
+    
+    <h1>Universal Property Image Uploader</h1>
+    
+    <div class="device-type">
+      <span id="deviceBadge" class="device-badge other">Detecting Device...</span>
+    </div>
+    
+    <div class="instructions">
+      <strong>Instructions:</strong>
+      <ol>
+        <li>Enter the Property ID from the property you want to add images to</li>
+        <li>Tap "Choose Images" to select photos from your device</li>
+        <li>Tap "Upload Images" to send the photos to the server</li>
+        <li>Wait for confirmation before navigating away</li>
+      </ol>
+    </div>
+    
+    <form id="uploadForm">
+      <div class="form-group">
+        <label for="propertyId">Property ID:</label>
+        <input type="number" inputmode="numeric" id="propertyId" name="propertyId" required placeholder="Enter property ID number" pattern="[0-9]*">
+      </div>
+      
+      <div class="file-input-container">
+        <p>Select photos to upload:</p>
+        <label for="files" class="file-input-button">Choose Images</label>
+        <input type="file" id="files" name="files" class="file-input" multiple accept="image/*">
+        <div id="fileCount" class="file-count hidden">0 photos selected</div>
+      </div>
+      
+      <div id="imagePreview" class="image-preview hidden">
+        <div class="image-preview-title">Selected Photos:</div>
+        <div id="previewContainer"></div>
+      </div>
+      
+      <button type="submit" id="uploadButton">Upload Images</button>
+    </form>
+    
+    <div id="statusMessage" class="status hidden"></div>
+    
+    <a href="/dashboard" class="back-link">← Return to Dashboard</a>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('uploadForm');
+      const statusMessage = document.getElementById('statusMessage');
+      const fileInput = document.getElementById('files');
+      const propertyIdInput = document.getElementById('propertyId');
+      const fileCountDisplay = document.getElementById('fileCount');
+      const uploadButton = document.getElementById('uploadButton');
+      const imagePreview = document.getElementById('imagePreview');
+      const previewContainer = document.getElementById('previewContainer');
+      const deviceBadge = document.getElementById('deviceBadge');
+      
+      // Detect device type
+      function detectDevice() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        let deviceType = 'other';
+        let deviceName = 'Unknown Device';
+        
+        if (/iphone|ipad|ipod/.test(userAgent)) {
+          deviceType = 'ios';
+          deviceName = 'iOS Device';
+        } else if (/android/.test(userAgent)) {
+          deviceType = 'android';
+          deviceName = 'Android Device';
+        } else if (/windows/.test(userAgent)) {
+          deviceType = 'windows';
+          deviceName = 'Windows Device';
+        } else if (/macintosh|mac os x/.test(userAgent)) {
+          deviceType = 'mac';
+          deviceName = 'Mac Device';
+        }
+        
+        deviceBadge.className = `device-badge ${deviceType}`;
+        deviceBadge.textContent = deviceName;
+        
+        return { type: deviceType, name: deviceName };
+      }
+      
+      // Detect device and set badge
+      const device = detectDevice();
+      console.log(`Detected device: ${device.name} (${device.type})`);
+      
+      // Check user authentication status on page load
+      checkAuthStatus();
+      
+      // Check if propertyId was provided in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const propertyIdFromUrl = urlParams.get('propertyId');
+      
+      if (propertyIdFromUrl) {
+        propertyIdInput.value = propertyIdFromUrl;
+      }
+      
+      // Function to check if user is logged in
+      function checkAuthStatus() {
+        fetch('/api/user', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+        .then(response => {
+          if (!response.ok && response.status === 401) {
+            // Show login prompt
+            showStatus(
+              'Authentication Required', 
+              'error', 
+              'You need to be logged in to upload images. Please go back to the dashboard and log in first.'
+            );
+            
+            // Add login link
+            const loginLink = document.createElement('a');
+            loginLink.href = '/dashboard';
+            loginLink.className = 'file-input-button';
+            loginLink.style.display = 'inline-block';
+            loginLink.style.marginTop = '15px';
+            loginLink.style.textDecoration = 'none';
+            loginLink.textContent = 'Go to Dashboard & Login';
+            statusMessage.appendChild(loginLink);
+            
+            // Disable the form
+            form.style.opacity = '0.5';
+            form.style.pointerEvents = 'none';
+          } else {
+            console.log('User is authenticated');
+          }
+        })
+        .catch(error => {
+          console.error('Auth check error:', error);
+        });
+      }
+      
+      // Handle file selection and preview
+      fileInput.addEventListener('change', function() {
+        const files = fileInput.files;
+        
+        if (!files || files.length === 0) {
+          fileCountDisplay.classList.add('hidden');
+          imagePreview.classList.add('hidden');
+          return;
+        }
+        
+        // Display file count
+        fileCountDisplay.textContent = `${files.length} photo${files.length > 1 ? 's' : ''} selected`;
+        fileCountDisplay.classList.remove('hidden');
+        
+        // Clear previous previews
+        previewContainer.innerHTML = '';
+        
+        // Generate previews (limited to first 6 for performance)
+        const previewLimit = Math.min(files.length, 6);
+        for (let i = 0; i < previewLimit; i++) {
+          const file = files[i];
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.alt = `Preview ${i+1}`;
+            previewContainer.appendChild(img);
+          }
+          
+          reader.readAsDataURL(file);
+        }
+        
+        // Show preview section
+        imagePreview.classList.remove('hidden');
+      });
+      
+      // Form submission handler
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get and validate property ID
+        const propertyId = propertyIdInput.value.trim();
+        if (!propertyId || isNaN(parseInt(propertyId)) || parseInt(propertyId) <= 0) {
+          showStatus('Please enter a valid property ID', 'error');
+          return;
+        }
+        
+        // Get and validate files
+        const files = fileInput.files;
+        if (!files || files.length === 0) {
+          showStatus('Please select at least one image', 'error');
+          return;
+        }
+        
+        // Show loading message
+        showStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''} for property #${propertyId}...`, 'loading');
+        uploadButton.disabled = true;
+        
+        // Create FormData
+        const formData = new FormData();
+        const timestamp = Date.now();
+        
+        // Add files to FormData
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          let filename;
+          
+          // Generate clean filename appropriate for the device
+          if (file.name) {
+            filename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+          } else {
+            filename = `image_${timestamp}_${i+1}.jpg`;
+          }
+          
+          // Add with explicit filename for iOS compatibility
+          formData.append('files', file, filename);
+          console.log(`Added file: ${filename}`);
+        }
+        
+        // Add property ID
+        formData.append('propertyId', propertyId);
+        
+        // Use our dedicated universal upload endpoint for all devices
+        const uploadEndpoint = '/api/universal-upload';
+        
+        // Add cache-busting parameters
+        const url = `${uploadEndpoint}?propertyId=${propertyId}&device=${device.type}&t=${timestamp}`;
+        console.log(`Using endpoint: ${url}`);
+        
+        // Send the request
+        fetch(url, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'X-Property-Id': propertyId,
+            'X-Device-Type': device.type,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.text().then(text => {
+              throw new Error(`Upload failed: ${response.status} ${response.statusText}. ${text}`);
+            });
+          }
+          return response.json();
+        })
+        .then(result => {
+          console.log('Upload successful:', result);
+          
+          // Show success message
+          const successCount = result.count || (result.imageUrls ? result.imageUrls.length : 0);
+          const message = `Successfully uploaded ${successCount} image${successCount !== 1 ? 's' : ''}.`;
+          showStatus(message, 'success');
+          
+          // Reset form
+          fileInput.value = '';
+          fileCountDisplay.classList.add('hidden');
+          imagePreview.classList.add('hidden');
+          previewContainer.innerHTML = '';
+          uploadButton.disabled = false;
+          
+          // Add back link to property
+          const backToEditLink = document.createElement('a');
+          backToEditLink.href = `/dashboard/properties/edit/${propertyId}`;
+          backToEditLink.className = 'back-link';
+          backToEditLink.style.display = 'block';
+          backToEditLink.style.marginTop = '10px';
+          backToEditLink.style.fontWeight = 'bold';
+          backToEditLink.textContent = '➡️ Return to property edit page';
+          statusMessage.appendChild(backToEditLink);
+        })
+        .catch(error => {
+          console.error('Upload error:', error);
+          
+          // Detailed error handling
+          const errorMessage = error.message || 'An unknown error occurred';
+          let errorDetails = 'Please make sure you are logged in and try again.';
+          
+          // Provide device-specific troubleshooting tips
+          if (device.type === 'ios') {
+            errorDetails += ' For iOS devices, try refreshing the page or using Safari.';
+          } else if (device.type === 'windows') {
+            errorDetails += ' For Windows devices, make sure you\'re using a modern browser like Chrome or Edge.';
+          }
+          
+          // Show error with details
+          showStatus(`Error: ${errorMessage}`, 'error', errorDetails);
+          
+          // Re-enable upload button
+          uploadButton.disabled = false;
+          
+          // Log diagnostic info
+          console.log('Diagnostic information:', {
+            propertyId: propertyId,
+            fileCount: files ? files.length : 0,
+            deviceType: device.type,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+          });
+        });
+      });
+      
+      // Status display function with optional details
+      function showStatus(message, type, details) {
+        // Clear previous content
+        statusMessage.innerHTML = '';
+        
+        // Add main message
+        const messageElement = document.createElement('div');
+        messageElement.textContent = message;
+        messageElement.style.fontWeight = 'bold';
+        statusMessage.appendChild(messageElement);
+        
+        // If detailed error info is provided, show it
+        if (details && type === 'error') {
+          const detailsElement = document.createElement('div');
+          detailsElement.textContent = details;
+          detailsElement.style.marginTop = '8px';
+          detailsElement.style.fontSize = '14px';
+          statusMessage.appendChild(detailsElement);
+          
+          // Add a retry button for convenience
+          const retryButton = document.createElement('button');
+          retryButton.textContent = 'Try Again';
+          retryButton.style.marginTop = '10px';
+          retryButton.style.padding = '8px 15px';
+          retryButton.style.fontSize = '14px';
+          retryButton.style.width = 'auto';
+          retryButton.style.display = 'inline-block';
+          retryButton.onclick = function() {
+            // Re-enable the form and clear status
+            uploadButton.disabled = false;
+            statusMessage.classList.add('hidden');
+          };
+          statusMessage.appendChild(retryButton);
+        }
+        
+        // Set appropriate class
+        statusMessage.className = `status ${type}`;
+        
+        // Ensure visible
+        if (statusMessage.classList.contains('hidden')) {
+          statusMessage.classList.remove('hidden');
+        }
+        
+        // Scroll to status message
+        statusMessage.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  </script>
+</body>
+</html>
