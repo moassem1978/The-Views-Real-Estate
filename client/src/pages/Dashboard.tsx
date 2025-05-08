@@ -157,7 +157,7 @@ function Dashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <DashboardStatCard 
                     title="Properties" 
-                    value="37" 
+                    value="39" 
                     description="Total properties" 
                     icon={<Building2 className="h-5 w-5" />}
                     linkTo="/dashboard?tab=properties" 
