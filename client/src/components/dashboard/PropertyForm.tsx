@@ -24,8 +24,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Info, Loader2, Upload, X } from "lucide-react";
-import { useForm, useFormState } from "react-hook-form";
+import { Loader2, Upload } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 
@@ -42,11 +42,9 @@ export default function PropertyForm({
 }: PropertyFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  // New approach: Use a single array of retained images instead of tracking removals
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [keptImages, setKeptImages] = useState<string[]>([]);
   const isEditing = !!propertyId;
 
   // Fetch available projects for dropdown
@@ -125,7 +123,7 @@ export default function PropertyForm({
     },
   });
 
-  // Form setup with simpler defaultValues
+  // Form setup
   const form = useForm({
     defaultValues: {
       title: "",
@@ -140,7 +138,7 @@ export default function PropertyForm({
       city: "",
       projectName: "",
       developerName: "",
-      address: "Project Address", // Default address to avoid null error
+      address: "",
       bedrooms: 0,
       bathrooms: 0,
       builtUpArea: 0,
@@ -148,9 +146,8 @@ export default function PropertyForm({
       isHighlighted: false,
       isNewListing: true,
       country: "Egypt", // Default to Egypt
-      references: "", // Reference number field
-      zipCode: "", // Required by server
-      // Removed images and imagesToRemove from form state
+      references: "", // Added default value for references
+      zipCode: "" // Required by server
     },
   });
 
@@ -173,7 +170,7 @@ export default function PropertyForm({
         city: property.city || '',
         projectName: property.projectName || property.project_name || '',
         developerName: property.developerName || property.developer_name || '',
-        address: property.address || 'Project Address', // Default to avoid null
+        address: property.address || '',
         bedrooms: property.bedrooms || 0,
         bathrooms: property.bathrooms || 0,
         builtUpArea: property.builtUpArea || property.built_up_area || 0,
@@ -181,28 +178,33 @@ export default function PropertyForm({
         isHighlighted: Boolean(property.isHighlighted || property.is_highlighted),
         isNewListing: Boolean(property.isNewListing || property.is_new_listing),
         country: property.country || 'Egypt',
-        references: property.references || property.reference_number || '',
-        yearBuilt: property.yearBuilt || property.year_built || '',
+        zipCode: property.zipCode || property.zip_code || '00000',
+        price: property.price,
+        downPayment: property.downPayment || property.down_payment,
+        installmentAmount: property.installmentAmount || property.installment_amount,
+        installmentPeriod: property.installmentPeriod || property.installment_period,
+        isFullCash: property.isFullCash || property.is_full_cash,
+        city: property.city,
+        projectName: property.projectName || property.project_name,
+        developerName: property.developerName || property.developer_name,
+        address: property.address,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        builtUpArea: property.builtUpArea || property.built_up_area,
+        isFeatured: property.isFeatured || property.is_featured,
+        isHighlighted: property.isHighlighted || property.is_highlighted,
+        isNewListing: property.isNewListing || property.is_new_listing,
+        country: property.country,
+        references: property.references,
+        yearBuilt: property.yearBuilt || property.year_built,
         zipCode: property.zipCode || property.zip_code || "00000", // Required by server
-        // Removed problematic images fields
+        images: property.images
       };
       
       // Set existing images if available
       const propertyImages = property.images || [];
       console.log("Setting existing property images:", propertyImages);
-      const imagesArray = Array.isArray(propertyImages) ? propertyImages : [];
-      
-      // Set the master list of images
-      setExistingImages(imagesArray);
-      
-      // Initialize the kept images with all current images
-      // This is our new approach - directly track which images to keep
-      console.log("INITIALIZING: Setting keptImages with all existing images:", imagesArray);
-      setKeptImages([...imagesArray]);
-      
-      // We won't use form.setValue directly for images anymore
-      // Instead, we'll rely on the keptImages state
-      // and use it directly in the form submission
+      setExistingImages(Array.isArray(propertyImages) ? propertyImages : []);
       
       console.log("Form data being set:", formData);
       form.reset(formData);
@@ -231,13 +233,6 @@ export default function PropertyForm({
         // Create a clean data object with primitive values to avoid circular reference errors
         const cleanData = { ...data };
         
-        // NEW APPROACH: Just set the images array directly to what we want to keep
-        console.log(`USING NEW DIRECT IMAGE APPROACH: ${keptImages.length} images to keep`);
-        cleanData.images = keptImages;
-        
-        // Log what's happening with images
-        console.log(`Setting property to keep only these images:`, keptImages);
-        
         // Ensure all fields are properly formatted for transmission
         // Handle zipCode (required by the server)
         if (!cleanData.zipCode && cleanData.city) {
@@ -254,10 +249,6 @@ export default function PropertyForm({
           cleanData.zipCode = (defaultZipCodes[cleanData.city] || '00000');
           console.log(`Added zipCode: ${cleanData.zipCode} for city: ${cleanData.city}`);
         }
-        
-        // Add required fields that the server needs
-        cleanData.createdAt = cleanData.createdAt || new Date().toISOString();
-        cleanData.agentId = cleanData.agentId || 1; // Default agent ID is 1 (presumably the owner)
         
         // Ensure numeric fields are actually numbers
         ['price', 'downPayment', 'installmentAmount', 'installmentPeriod', 
@@ -377,17 +368,15 @@ export default function PropertyForm({
       }
     },
     onError: (error: any) => {
-      // Don't reset the form on error so the user doesn't lose their data
-      console.error("Submission error:", error);
       toast({
         title: "Error",
-        description: "There was a problem saving the property. Please try again.",
+        description: error.message || "Something went wrong",
         variant: "destructive",
       });
     },
   });
 
-  // Enhanced image upload function with better Windows and cross-browser compatibility
+  // Handle image upload with improved error handling and cross-browser compatibility
   const uploadImages = async (propertyId: number | undefined) => {
     if (!propertyId) {
       console.error("Property ID is required for image upload");
@@ -405,388 +394,235 @@ export default function PropertyForm({
       // Create a new FormData object for uploading files
       const formData = new FormData();
       
-      // More thorough file validation
+      // Check if the File objects are valid before appending
       const validImages = Array.from(images).filter(file => {
-        if (!file) {
-          console.warn(`Skipping null/undefined file`);
+        if (!file || !(file instanceof File) || file.size === 0) {
+          console.warn(`Skipping invalid file: ${file?.name || 'unknown'}`);
           return false;
         }
-        
-        if (!(file instanceof File)) {
-          console.warn(`Skipping non-File object:`, file);
-          return false;
-        }
-        
-        if (file.size === 0) {
-          console.warn(`Skipping zero-size file: ${file.name}`);
-          return false;
-        }
-        
-        // Check file type for basic validation
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
-        if (!validTypes.includes(file.type) && file.type !== '') {
-          console.warn(`Skipping file with invalid type: ${file.type} (${file.name})`);
-          return false;
-        }
-        
         return true;
       });
       
       if (validImages.length === 0) {
-        console.warn("No valid images to upload after filtering");
-        throw new Error("No valid images were selected. Please select valid image files.");
+        console.log("No valid images to upload after filtering");
+        return { success: true, message: "No valid images to upload" };
       }
       
       console.log(`Processing ${validImages.length} valid images for upload`);
       
-      // More robust file appending with additional debugging
+      // Append each valid image to the FormData
       validImages.forEach((image, index) => {
-        const fileName = image.name || `image-${index}.jpg`;
+        const fileName = image.name || `image-${index}`;
         console.log(`Adding image to form: ${fileName} (${Math.round(image.size / 1024)}KB)`);
         
-        try {
-          // Only use a single field name for the upload - 'images'
-          formData.append('images', image, fileName);
-        } catch (appendError) {
-          console.error(`Error appending file ${fileName} to form:`, appendError);
-          // Continue despite errors - we'll handle partial uploads on server side
-        }
+        // Only use a single field name for the upload - 'images'
+        // Multiple files with the same field name is properly handled by multer
+        formData.append('images', image, fileName);
       });
       
-      // Add property ID in multiple ways to ensure it's received
-      formData.append('propertyId', propertyId.toString());
+      console.log(`Sending upload request to server for property ID ${propertyId}`);
       
-      // Create a longer timeout for larger uploads
-      const uploadTimeout = Math.max(60000, validImages.length * 15000); // Base 60s + 15s per image
+      // Set explicit timeout for fetch operations
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), uploadTimeout);
-      
-      console.log(`Sending upload request to server with ${uploadTimeout/1000}s timeout`);
-      
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       try {
-        // Always use the cross-platform endpoint
-        const endpoint = `/api/upload/property-images-simple`;
-        console.log(`Using enhanced cross-platform endpoint: ${endpoint}`);
-        
-        // Additional headers for more consistent behavior
-        const headers = new Headers();
-        // Let the browser set content-type with boundary for multipart/form-data
-        headers.append('X-Property-Id', propertyId.toString()); // Backup property ID
-        
-        // Log browser/platform details for diagnostics
+        // Detect device type for compatibility
         const isWindows = navigator.userAgent.indexOf('Windows') !== -1;
         const isiOS = /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
-        const isChrome = navigator.userAgent.indexOf('Chrome') !== -1;
-        const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
-        const isSafari = navigator.userAgent.indexOf('Safari') !== -1 && !isChrome;
+        const useSimpleEndpoint = isWindows || isiOS;
         
-        console.log(`Browser/platform diagnostics:`, { 
-          isWindows, isiOS, isChrome, isFirefox, isSafari,
-          userAgent: navigator.userAgent
-        });
+        console.log(`Detected device: ${isWindows ? 'Windows' : (isiOS ? 'iOS' : 'Other')}`);
         
-        // Try to do the upload with robust error handling
-        let uploadResponse;
-        try {
-          uploadResponse = await fetch(endpoint, {
-            method: 'POST',
-            body: formData,
-            signal: controller.signal,
-            credentials: 'include',
-            headers
-          });
-          
-          clearTimeout(timeoutId);
-          console.log(`Upload response status: ${uploadResponse.status} ${uploadResponse.statusText}`);
-          
-          if (!uploadResponse.ok) {
-            let errorMessage;
-            try {
-              const errorText = await uploadResponse.text();
-              console.error(`Upload failed: ${errorText}`);
-              errorMessage = errorText;
-            } catch (textError) {
-              errorMessage = `Status ${uploadResponse.status} ${uploadResponse.statusText}`;
-            }
-            
-            throw new Error(`Failed to upload images: ${errorMessage}`);
-          }
-        } catch (fetchError: any) {
-          console.error('Fetch error during upload:', fetchError);
-          
-          // Special handling for abort errors
-          if (fetchError.name === 'AbortError') {
-            throw new Error('Upload timed out. Please try with fewer or smaller images.');
-          }
-          
-          // Try to provide a meaningful error message
-          const errorMsg = fetchError.message || 'Network error during upload';
-          throw new Error(`Upload failed: ${errorMsg}`);
+        // Use the simpler endpoint for Windows/iOS which has fewer field restrictions
+        const endpoint = useSimpleEndpoint
+          ? `/api/upload/property-images-simple` 
+          : `/api/upload/property-images/${propertyId}`;
+        
+        // If using simple endpoint, we need to include the property ID in the form data
+        if (useSimpleEndpoint) {
+          formData.append('propertyId', propertyId.toString());
+          console.log(`Added property ID ${propertyId} to form data for simple endpoint`);
         }
         
-        // Parse the response with error handling
+        console.log(`Using ${useSimpleEndpoint ? 'simple-compatible' : 'standard'} endpoint: ${endpoint}`);
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+          credentials: 'include', // Include cookies for auth
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log(`Upload response status: ${response.status} ${response.statusText}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Upload failed: ${errorText}`);
+          throw new Error(`Failed to upload images: ${response.status} ${response.statusText}`);
+        }
+        
         try {
-          const result = await uploadResponse.json();
+          const result = await response.json();
           console.log('Upload successful:', result);
           return result;
         } catch (jsonError) {
-          console.log('Response was received but could not parse JSON');
-          
-          // Try to extract a message from the text response
-          try {
-            const textResponse = await uploadResponse.text();
-            console.log('Text response:', textResponse);
-            
-            // If we have some response text, use it
-            if (textResponse && textResponse.length > 0) {
-              return { 
-                success: true, 
-                message: 'Images uploaded successfully',
-                imageUrls: validImages.map((_, i) => `/uploads/properties/image-${Date.now()}-${i}.jpg`)
-              };
-            }
-          } catch (textError) {
-            console.error('Could not get text response:', textError);
-          }
-          
-          // Last resort - create a basic success response
-          return { 
-            success: true, 
-            message: 'Images uploaded successfully but response could not be parsed'
-          };
+          console.log('Response was received but not JSON. This is OK for uploads.');
+          return { success: true, message: 'Images uploaded successfully' };
         }
-      } catch (networkError) {
-        console.error('Network or processing error during upload:', networkError);
-        clearTimeout(timeoutId);
-        throw networkError;
+      } catch (error) {
+        // Handle abort errors differently
+        const fetchError = error as Error;
+        if (fetchError.name === 'AbortError') {
+          console.error('Upload request timed out');
+          throw new Error('Upload timed out. Please try with fewer or smaller images.');
+        }
+        throw fetchError;
       }
     } catch (error) {
       console.error('Image upload error:', error);
-      
-      // Show a toast with the error
-      toast({
-        title: "Image Upload Error",
-        description: error instanceof Error ? error.message : "Failed to upload images",
-        variant: "destructive"
-      });
-      
       throw error;
     } finally {
       setUploading(false);
     }
   };
 
-  // Simplified form submission using direct fetch for better reliability
+  // Handle form submission
   const onSubmit = async (data: any) => {
     try {
-      console.log("Starting form submission process...");
       console.log("Submitting form data:", data);
-      
-      // Ensure required fields are present
-      if (!data.createdAt) {
-        data.createdAt = new Date().toISOString();
-      }
-      
-      if (!data.agentId) {
-        data.agentId = 1; // Default to admin user
-      }
-      
-      // Set keptImages as the images array
-      data.images = keptImages || [];
-      console.log("USING NEW DIRECT IMAGE APPROACH:", data.images.length, "images to keep");
-      
-      // Ensure all numeric fields are properly parsed as numbers
+      // Ensure all numeric fields are parsed as numbers
       const formattedData = {
         ...data,
         price: typeof data.price === 'string' ? parseInt(data.price) : data.price,
-        downPayment: typeof data.downPayment === 'string' ? parseInt(data.downPayment) : (data.downPayment || 0),
-        installmentAmount: typeof data.installmentAmount === 'string' ? 
-          parseInt(data.installmentAmount) : (data.installmentAmount || 0),
-        installmentPeriod: typeof data.installmentPeriod === 'string' ? 
-          parseInt(data.installmentPeriod) : (data.installmentPeriod || 0),
+        downPayment: typeof data.downPayment === 'string' ? parseInt(data.downPayment) : data.downPayment,
+        installmentAmount: typeof data.installmentAmount === 'string' ? parseInt(data.installmentAmount) : data.installmentAmount,
+        installmentPeriod: typeof data.installmentPeriod === 'string' ? parseInt(data.installmentPeriod) : data.installmentPeriod,
         bedrooms: typeof data.bedrooms === 'string' ? parseInt(data.bedrooms) : data.bedrooms,
         bathrooms: typeof data.bathrooms === 'string' ? parseInt(data.bathrooms) : data.bathrooms,
         builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
-        
-        // Ensure boolean fields are properly formatted
-        isFeatured: Boolean(data.isFeatured),
-        isHighlighted: Boolean(data.isHighlighted),
-        isNewListing: Boolean(data.isNewListing),
-        isFullCash: Boolean(data.isFullCash),
-        
-        // Property status
-        status: data.status || 'active',
-        
-        // For referencing/filtering
-        images: data.images || [],
-        amenities: data.amenities || [],
-        
-        // Fix for the missing state field - this is required by the database
-        state: data.state || 'Cairo', // Default to Cairo if not provided
-        
-        // These fields help with database field mapping
-        reference_number: data.references || '',
-        references: data.references || '',
       };
 
-      console.log("FORM SUBMISSION DATA:", JSON.stringify(formattedData, null, 2));
+      // First save the property data to get an ID (for new properties)
+      console.log("Saving property data first...");
+      const savedProperty = await mutation.mutateAsync(formattedData);
+      console.log("Property saved successfully:", savedProperty);
       
-      setUploading(true);
+      // For new properties, use the returned ID; for editing, use the existing ID prop
+      const savedPropertyId = isEditing ? Number(propertyId) : savedProperty.id;
+      console.log(`Using property ID ${savedPropertyId} for image upload`);
       
-      try {
-        let response;
-        
-        if (isEditing) {
-          // Update existing property
-          console.log(`Updating property ${propertyId}`);
-          response = await fetch(`/api/properties/${propertyId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(formattedData)
-          });
-        } else {
-          // Create new property
-          console.log("Creating new property");
-          response = await fetch('/api/properties', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(formattedData)
-          });
-        }
-        
-        console.log(`Response status: ${response.status} ${response.statusText}`);
-        
-        if (!response.ok) {
-          let errorMessage = `Failed to ${isEditing ? 'update' : 'create'} property`;
+      // Only attempt image upload if there are new images
+      if (images.length > 0) {
+        try {
+          console.log(`Uploading ${images.length} new images...`);
+          const uploadResult = await uploadImages(savedPropertyId);
+          console.log("Image upload result:", uploadResult);
           
-          try {
-            const errorData = await response.json();
-            console.error("API error response:", errorData);
-            errorMessage = errorData.message || errorMessage;
-          } catch (jsonError) {
-            try {
-              const errorText = await response.text();
-              console.error("API error text:", errorText);
-              errorMessage = errorText || errorMessage;
-            } catch (textError) {
-              console.error("Couldn't parse error response");
+          // If we have new image URLs from the upload, update the property with them
+          if (uploadResult && uploadResult.imageUrls && uploadResult.imageUrls.length > 0) {
+            console.log("New image URLs:", uploadResult.imageUrls);
+            
+            // Combine existing and new images
+            const allImages = [
+              ...(existingImages || []),
+              ...(uploadResult.imageUrls || [])
+            ].filter(Boolean);
+            
+            console.log("All images after upload:", allImages);
+            
+            // Update the property with the combined image list if needed
+            if (allImages.length > 0 && !isEditing) {
+              console.log("Updating property with all images...");
+              await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
+                images: allImages 
+              });
             }
           }
-          
-          throw new Error(errorMessage);
+        } catch (uploadError) {
+          console.error("Error during image upload:", uploadError);
+          toast({
+            title: "Warning",
+            description: "Property was saved but there was an issue with image upload.",
+            variant: "destructive"
+          });
         }
+      } else if (isEditing && existingImages.length > 0) {
+        // For editing with existing images but no new ones
+        console.log("No new images to upload, preserving existing images:", existingImages);
         
-        const savedProperty = await response.json();
-        console.log(`Property ${isEditing ? 'updated' : 'created'} successfully:`, savedProperty);
+        // Make sure images are properly formatted for JSON
+        // The server expects an array of strings, not an object
+        let formattedImages: string[] = [];
         
-        // For new properties, use the returned ID; for editing, use the existing ID
-        const savedPropertyId = isEditing ? Number(propertyId) : savedProperty.id;
-        
-        // Upload new images if any
-        if (images.length > 0) {
-          try {
-            console.log(`Uploading ${images.length} new images for property ID ${savedPropertyId}`);
-            
-            const uploadResult = await uploadImages(savedPropertyId);
-            console.log("Upload result:", uploadResult);
-            
-            if (uploadResult && uploadResult.imageUrls && uploadResult.imageUrls.length > 0) {
-              // Combine current and new images
-              const allImages = [
-                ...(keptImages || []),
-                ...(uploadResult.imageUrls || [])
-              ].filter(Boolean);
-              
-              console.log("All images after upload:", allImages);
-              
-              // Update the property with the combined image list
-              const updateImageResponse = await fetch(`/api/properties/${savedPropertyId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ images: allImages })
-              });
-              
-              if (!updateImageResponse.ok) {
-                console.warn("Warning: Failed to update property with new images");
-              } else {
-                console.log("Successfully updated property with new images");
+        try {
+          // Handle different possible input formats
+          formattedImages = existingImages.filter(img => img !== null && img !== undefined).map(img => {
+            // If it's already a string, use it directly
+            if (typeof img === 'string') {
+              return img;
+            }
+            // If it's an object, stringify it safely
+            if (typeof img === 'object' && img !== null) {
+              // If it's not a plain object, try to convert it to a string
+              if (Object.prototype.toString.call(img) !== '[object Object]') {
+                // We know it's not a plain object, so we can safely cast
+                return String(img);
+              }
+              // Otherwise, use JSON.stringify
+              try {
+                return JSON.stringify(img);
+              } catch (e) {
+                console.error('Error stringifying image object:', e);
+                return '';
               }
             }
-          } catch (uploadError) {
-            console.error("Error uploading images:", uploadError);
-            toast({
-              title: "Warning",
-              description: "Property was saved but there was an issue with uploading images",
-              variant: "destructive"
+            // Convert any other types to string
+            return String(img || '');
+          }).filter(Boolean); // Filter out any empty strings
+        } catch (error) {
+          console.error('Error formatting images:', error);
+          // Fallback to simple string conversion if there's an error
+          formattedImages = existingImages
+            .filter(Boolean)
+            .map(img => String(img));
+        }
+        
+        console.log("Formatted images for submission:", formattedImages);
+        // Update property directly with the formatted images
+        if (formattedImages.length > 0) {
+          try {
+            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
+              images: formattedImages 
             });
+          } catch (updateError) {
+            console.error("Error updating property images:", updateError);
           }
         }
-        
-        // Show success message
-        toast({
-          title: isEditing ? "Property updated" : "Property created",
-          description: "Property has been saved successfully",
-          variant: "default"
-        });
-        
-        // Reset the form for a new property
-        if (!isEditing) {
-          form.reset({
-            title: "",
-            description: "",
-            propertyType: "",
-            listingType: "Resale", 
-            price: 0,
-            downPayment: 0,
-            installmentAmount: 0,
-            installmentPeriod: 0,
-            isFullCash: false,
-            city: "",
-            projectName: "",
-            developerName: "",
-            address: "Project Address",
-            bedrooms: 0,
-            bathrooms: 0,
-            builtUpArea: 0,
-            isFeatured: false,
-            isHighlighted: false,
-            isNewListing: true,
-            country: "Egypt",
-            references: "",
-            zipCode: ""
-          });
-          setImages([]);
-          setExistingImages([]);
-          setKeptImages([]);
-        }
-        
-        // Call the onSuccess callback if provided
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-      } catch (error) {
-        console.error("Error saving property:", error);
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to save property",
-          variant: "destructive"
-        });
-      } finally {
-        setUploading(false);
       }
       
-    } catch (error) {
-      console.error("Form submission error:", error);
+      console.log("Property submission completed successfully");
+      
+      // Show success message
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process form data",
+        title: isEditing ? "Property updated" : "Property created",
+        description: "Property has been saved successfully",
+        variant: "default"
+      });
+      
+      // Call the onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast({
+        title: "Error saving property",
+        description: error instanceof Error ? error.message : "Failed to save property data",
         variant: "destructive"
       });
-      setUploading(false);
     }
   };
 
@@ -827,33 +663,6 @@ export default function PropertyForm({
 
   return (
     <Form {...form}>
-      {/* Cross-platform compatibility notice */}
-      {(
-        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
-          <p className="text-amber-800 font-medium mb-1">Having trouble with this form on Windows?</p>
-          <p className="text-amber-700 mb-2">Try our Universal Property Form that works on all platforms.</p>
-          <div className="flex space-x-2">
-            <a 
-              href={`/windows-property.html${propertyId ? `?propertyId=${propertyId}` : ''}`} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 underline"
-            >
-              Open Universal Property Form
-            </a>
-            {propertyId && (
-              <a 
-                href={`/windows-upload.html?propertyId=${propertyId}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline ml-4"
-              >
-                Universal Image Uploader
-              </a>
-            )}
-          </div>
-        </div>
-      )}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Basic Details Section */}
@@ -1058,7 +867,7 @@ export default function PropertyForm({
                             'Dubai': '00000',
                             'London': 'SW1A 1AA',
                             'Zayed': '12311',
-                            'North Coast': '23511',
+                            'North coast': '23511',
                             'Red Sea': '84712'
                           };
                           const zipCode = defaultZipCodes[value] || '00000';
@@ -1075,7 +884,7 @@ export default function PropertyForm({
                         <SelectContent>
                           <SelectItem value="Cairo">Cairo</SelectItem>
                           <SelectItem value="Zayed">Zayed</SelectItem>
-                          <SelectItem value="North Coast">North Coast</SelectItem>
+                          <SelectItem value="North coast">North Coast</SelectItem>
                           <SelectItem value="Red Sea">Red Sea</SelectItem>
                           <SelectItem value="Dubai">Dubai</SelectItem>
                           <SelectItem value="London">London</SelectItem>
@@ -1307,111 +1116,36 @@ export default function PropertyForm({
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="images">Property Images</Label>
-                  {existingImages.length > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-2">
-                      <p className="text-sm text-amber-800 font-medium flex items-center">
-                        <Info className="w-4 h-4 mr-2" />
-                        To remove images, click the red "Delete" button on each image.
-                      </p>
-                    </div>
-                  )}
                   <div className="border rounded-md p-4">
-                    {/* Existing Images Display - NEW APPROACH */}
+                    {/* Existing Images Display */}
                     {existingImages.length > 0 && (
                       <div className="mb-4">
-                        <p className="text-sm font-medium mb-2">
-                          Current Images ({keptImages.length})
-                        </p>
+                        <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {existingImages.map((imageUrl, index) => {
-                            // Simple approach - just don't render images that aren't in our keptImages list
-                            if (!keptImages.includes(imageUrl)) {
-                              return null;
-                            }
-                            
-                            return (
-                              <div 
-                                key={`existing-${index}`} 
-                                className="relative rounded-md overflow-hidden h-24 bg-gray-100 group"
-                              >
-                                <img 
-                                  src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
-                                  alt={`Property image ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    // Try alternate path if image fails to load
-                                    const target = e.target as HTMLImageElement;
-                                    if (!target.src.includes('/public/')) {
-                                      target.src = `/public/uploads/properties/${imageUrl}`;
-                                    } else {
-                                      // If still fails, use a placeholder
-                                      target.src = 'https://placehold.co/300x200?text=Image+Not+Found';
-                                    }
-                                  }}
-                                />
-                                {/* Large, more visible delete button */}
-                                <button 
-                                  type="button"
-                                  onClick={() => {
-                                    // Ultra-simple direct approach - just update state
-                                    setKeptImages(prev => prev.filter(img => img !== imageUrl));
-                                    // Show toast notification confirming removal
-                                    toast({
-                                      title: "Image removed",
-                                      description: "The image has been removed from the property",
-                                      variant: "default"
-                                    });
-                                  }}
-                                  className="absolute top-0 right-0 bg-red-600 text-white p-2 rounded-bl-md shadow-md opacity-90 hover:opacity-100 hover:bg-red-700 transition-opacity z-20"
-                                  aria-label="Remove image"
-                                  style={{ fontSize: '14px', fontWeight: 'bold' }}
-                                >
-                                  <span className="flex items-center">
-                                    <X className="h-5 w-5 mr-1" /> Delete
-                                  </span>
-                                </button>
-                                {/* Added an overlay to make it clear this image can be interacted with */}
-                                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-opacity"></div>
-                              </div>
-                            );
-                          })}
+                          {existingImages.map((imageUrl, index) => (
+                            <div key={`existing-${index}`} className="relative rounded-md overflow-hidden h-24 bg-gray-100">
+                              <img 
+                                src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
+                                alt={`Property image ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Try alternate path if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  if (!target.src.includes('/public/')) {
+                                    target.src = `/public/uploads/properties/${imageUrl}`;
+                                  } else {
+                                    // If still fails, use a placeholder
+                                    target.src = 'https://placehold.co/300x200?text=Image+Not+Found';
+                                  }
+                                }}
+                              />
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* Alternative upload section for all platforms */}
-                    {isEditing && propertyId ? (
-                      <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                        <h3 className="text-sm font-medium mb-2">Alternative Upload Method</h3>
-                        <p className="text-xs text-muted-foreground mb-3">
-                          Having trouble uploading images? Use our simplified uploader that works on all devices:
-                        </p>
-                        <a
-                          href={`/windows-upload.html?propertyId=${propertyId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-[#B87333] hover:bg-[#964B00] text-white py-2 px-4 rounded text-sm inline-flex items-center"
-                          onClick={() => {
-                            // Log that the link was clicked
-                            console.log(`Alternative upload link clicked for property ${propertyId}`);
-                          }}
-                        >
-                          Open Simplified Uploader
-                        </a>
-                        <p className="text-xs text-muted-foreground mt-3">
-                          This will open a dedicated upload page that works on all devices (Windows, iOS, Android).
-                          After uploading, return to this page and refresh to see your images.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="p-4 bg-muted/30 border rounded-lg mb-4">
-                        <p className="text-sm text-muted-foreground italic">
-                          Alternative upload option will be available after saving the property initially.
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Standard Upload Method */}
+                    {/* Upload New Images */}
                     <div className="flex items-center justify-center w-full">
                       <label
                         htmlFor="file-upload"

@@ -62,7 +62,7 @@ export default function PropertiesManager() {
   const [editingPropertyId, setEditingPropertyId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
-  
+
   const pageSize = 10;
 
   // Fetch properties with search and filters
@@ -72,23 +72,23 @@ export default function PropertiesManager() {
       const queryParams = new URLSearchParams();
       queryParams.append('page', page.toString());
       queryParams.append('pageSize', pageSize.toString());
-      
+
       if (searchQuery) {
         queryParams.append('search', searchQuery);
       }
-      
+
       if (listingTypeFilter && listingTypeFilter !== 'all') {
         queryParams.append('listingType', listingTypeFilter);
       }
-      
+
       if (propertyTypeFilter && propertyTypeFilter !== 'all') {
         queryParams.append('propertyType', propertyTypeFilter);
       }
-      
+
       if (cityFilter) {
         queryParams.append('city', cityFilter);
       }
-      
+
       const response = await apiRequest("GET", `/api/properties?${queryParams.toString()}`);
       return response.json();
     },
@@ -171,28 +171,22 @@ export default function PropertiesManager() {
     try {
       console.log("Setting property for edit, ID:", id);
 
-      // Use apiRequest helper for consistent error handling
-      const response = await apiRequest("GET", `/api/properties/${id}`);
-      
-      if (response.status === 404) {
-        toast({
-          title: "Property not found",
-          description: `The property with ID ${id} doesn't exist or was deleted.`,
-          variant: "destructive",
-        });
-        return;
+      // Get the property to pre-populate the form
+      const property = await apiRequest("GET", `/api/properties/${id}`);
+
+      if (!property.ok) {
+        throw new Error(`Failed to fetch property (Status: ${property.status})`);
       }
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch property (Status: ${response.status})`);
-      }
-
-      const propertyData = await response.json();
+      const propertyData = await property.json();
       console.log("Property data loaded:", propertyData);
+
+      // Remove references field to avoid DB error
+      delete propertyData.references;
 
       // If we got here, the property exists and we have its data
       queryClient.setQueryData(["/api/properties", id], propertyData);
-      
+
       setEditingPropertyId(id);
       setShowPropertyForm(true);
     } catch (error) {
@@ -291,7 +285,7 @@ export default function PropertiesManager() {
     <div className="space-y-6">
       {/* Property form modal */}
       <PropertyModal />
-      
+
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -320,35 +314,7 @@ export default function PropertiesManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
-      {/* Cross-platform compatibility notice */}
-      <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
-        <p className="text-amber-800 font-medium mb-1">Windows Users: Use Universal Forms for compatibility</p>
-        <p className="text-amber-700 mb-2">Having trouble with property forms on Windows? Use these cross-platform tools:</p>
-        <div className="flex flex-wrap gap-2 mt-3">
-          <Button 
-            variant="default"
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => {
-              window.open('/windows-property.html', '_blank');
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Universal Property Form
-          </Button>
-          
-          <Button 
-            variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-            onClick={() => {
-              window.open('/windows-upload.html', '_blank');
-            }}
-          >
-            Universal Image Uploader
-          </Button>
-        </div>
-      </div>
-      
+
       {/* Header with add button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -357,20 +323,18 @@ export default function PropertiesManager() {
             Manage property listings ({totalCount} total)
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            className="bg-[#B87333] hover:bg-[#964B00]"
-            onClick={() => {
-              setEditingPropertyId(null);
-              setShowPropertyForm(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Property
-          </Button>
-        </div>
+        <Button 
+          className="bg-[#B87333] hover:bg-[#964B00]"
+          onClick={() => {
+            setEditingPropertyId(null);
+            setShowPropertyForm(true);
+          }}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add Property
+        </Button>
       </div>
-      
+
       {/* Search and filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="md:col-span-2">
@@ -384,7 +348,7 @@ export default function PropertiesManager() {
             />
           </form>
         </div>
-        
+
         <div>
           <Select
             value={listingTypeFilter}
@@ -403,7 +367,7 @@ export default function PropertiesManager() {
             </SelectContent>
           </Select>
         </div>
-        
+
         <div>
           <Select
             value={propertyTypeFilter}
@@ -428,7 +392,7 @@ export default function PropertiesManager() {
           </Select>
         </div>
       </div>
-      
+
       {/* Results table */}
       <div className="border rounded-md">
         <Table>
@@ -570,7 +534,7 @@ export default function PropertiesManager() {
           </TableBody>
         </Table>
       </div>
-      
+
       {/* Pagination */}
       {pageCount > 1 && (
         <Pagination className="justify-center">
@@ -587,10 +551,10 @@ export default function PropertiesManager() {
                 <span>Previous</span>
               </Button>
             </PaginationItem>
-            
+
             {Array.from({ length: Math.min(5, pageCount) }).map((_, i) => {
               let pageNumber: number;
-              
+
               // Logic to show paginated pages around current
               if (pageCount <= 5) {
                 pageNumber = i + 1;
@@ -601,9 +565,9 @@ export default function PropertiesManager() {
               } else {
                 pageNumber = page - 2 + i;
               }
-              
+
               if (pageNumber > pageCount) return null;
-              
+
               return (
                 <PaginationItem key={pageNumber}>
                   <PaginationLink
@@ -615,7 +579,7 @@ export default function PropertiesManager() {
                 </PaginationItem>
               );
             })}
-            
+
             {pageCount > 5 && page < pageCount - 2 && (
               <>
                 <PaginationItem>
@@ -628,7 +592,7 @@ export default function PropertiesManager() {
                 </PaginationItem>
               </>
             )}
-            
+
             <PaginationItem>
               <Button
                 variant="outline"
