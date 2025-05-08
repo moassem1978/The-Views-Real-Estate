@@ -632,6 +632,15 @@ export default function PropertyForm({
       setImages(Array.from(e.target.files));
     }
   };
+  
+  // Remove a selected image before upload
+  const removeSelectedImage = (index: number) => {
+    setImages(prevImages => {
+      const newImages = [...prevImages];
+      newImages.splice(index, 1);
+      return newImages;
+    });
+  };
 
   // Watch the listing type to conditionally render fields
   const listingType = form.watch('listingType');
