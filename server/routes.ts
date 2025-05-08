@@ -1507,7 +1507,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Dedicated iOS upload endpoint - optimized for iOS mobile browsers
+  // Enhanced iOS upload endpoint with better error handling and compatibility
   app.post("/api/upload/ios", async (req: Request, res: Response) => {
     console.log("============================================================");
     console.log("==== iOS SPECIFIC UPLOAD ENDPOINT CALLED ====");
@@ -1515,6 +1515,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     console.log("Content type:", req.headers['content-type']);
     console.log("Request headers:", req.headers);
     console.log("============================================================");
+
+    // Set appropriate headers for iOS
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
     
     try {
       // Authentication check
@@ -1545,18 +1552,40 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       const diskStorage = multer.diskStorage({
         destination: function (req, file, cb) {
+          // Ensure directory exists with proper permissions
+          if (!fs.existsSync(publicUploadsDir)) {
+            fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
+          }
           console.log(`iOS upload: Setting destination for ${file.originalname} to ${publicUploadsDir}`);
           cb(null, publicUploadsDir);
         },
         filename: function (req, file, cb) {
-          // iOS friendly file naming
+          // More robust iOS friendly file naming
           const timestamp = Date.now();
-          const randomString = Math.floor(Math.random() * 1000000).toString();
-          const safeFilename = `ios-${timestamp}-${randomString}.jpg`;
+          const randomString = Math.random().toString(36).substring(2, 15);
+          const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+          const safeFilename = `ios-${timestamp}-${randomString}${ext}`;
           console.log(`iOS upload: Generated filename: ${safeFilename} for ${file.originalname}`);
           cb(null, safeFilename);
         }
       });
+
+      // Configure multer with larger size limits for iOS
+      const iosUpload = multer({
+        storage: diskStorage,
+        limits: { 
+          fileSize: 25 * 1024 * 1024, // 25MB limit
+          files: 20 // Allow more files
+        },
+        fileFilter: (req, file, cb) => {
+          // Accept all image types
+          if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+          } else {
+            cb(null, false);
+          }
+        }
+      }).array('files', 20);
       
       // Create multer instance optimized for iOS
       const iosUpload = multer({
@@ -1592,7 +1621,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         
         try {
           // Get the property from the database
-          const property = await dbStorage.getPropertyById(propertyId);
+          const property = await storage.getProperty(propertyId);
           
           if (!property) {
             console.error(`iOS upload: Property with ID ${propertyId} not found`);
@@ -1610,9 +1639,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           // Update property with new images
           const updatedImages = [...currentImages, ...newImagePaths];
           
-          // Save the updated property with type assertion to ensure propertyId is a number
-          const propertyIdNumber = propertyId as number;
-          const updatedProperty = await dbStorage.updateProperty(propertyIdNumber, { 
+          // Save the updated property
+          const updatedProperty = await storage.updateProperty(propertyId, { 
             images: updatedImages 
           });
           
