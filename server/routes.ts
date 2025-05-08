@@ -1524,11 +1524,32 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     });
     
     try {
-      // Authentication check
+      // Enhanced authentication check with diagnostic info
       if (!req.isAuthenticated()) {
-        console.error("iOS upload: Authentication failed");
-        return res.status(401).json({ message: "Authentication required" });
+        console.error("iOS upload: Authentication failed - user is not logged in");
+        console.log("iOS auth debug:", {
+          session: req.session ? "Session exists" : "No session",
+          cookies: req.headers.cookie ? "Has cookies" : "No cookies",
+          user: req.user ? "User object exists" : "No user object"
+        });
+        
+        return res.status(401).json({ 
+          status: "error",
+          code: "AUTH_REQUIRED",
+          message: "Authentication required. Please log in first.",
+          debug: {
+            timestamp: new Date().toISOString(),
+            authPresent: false,
+            sessionExists: !!req.session
+          }
+        });
       }
+      
+      // Log successful authentication
+      console.log("iOS upload: User authenticated successfully", {
+        userId: req.user.id,
+        username: req.user.username
+      });
       
       // Get the property ID from any possible source
       // Priority: Headers > Query Params > Form Data
@@ -1570,7 +1591,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
       });
 
-      // Configure multer with larger size limits for iOS
+      // Configure multer with optimal settings for iOS
       const iosUpload = multer({
         storage: diskStorage,
         limits: { 
@@ -1586,15 +1607,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         }
       }).array('files', 20);
-      
-      // Create multer instance optimized for iOS
-      const iosUpload = multer({
-        storage: diskStorage,
-        limits: { 
-          fileSize: 15 * 1024 * 1024, // 15MB limit for iOS (lower to avoid Safari issues)
-          files: 10
-        }
-      }).array('files', 10);
       
       // Process the upload with iOS specific handling
       iosUpload(req, res, async function(err) {
@@ -1621,26 +1633,32 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         
         try {
           // Get the property from the database
-          const property = await storage.getProperty(propertyId);
+          const property = await dbStorage.getPropertyById(propertyId);
           
           if (!property) {
             console.error(`iOS upload: Property with ID ${propertyId} not found`);
-            return res.status(404).json({ message: "Property not found" });
+            return res.status(404).json({ 
+              status: "error",
+              code: "PROPERTY_NOT_FOUND",
+              message: `Property with ID ${propertyId} not found`
+            });
           }
           
           console.log(`iOS upload: Found property: ${property.title}`);
           
           // Get the current images array or initialize empty
-          const currentImages = property.images || [];
+          const currentImages = Array.isArray(property.images) ? property.images : [];
           
           // Add new image paths
           const newImagePaths = req.files.map(file => `/uploads/properties/${file.filename}`);
           
-          // Update property with new images
+          console.log(`iOS upload: Adding ${newImagePaths.length} new images to ${currentImages.length} existing images`);
+          
+          // Update property with new images (using dbStorage)
           const updatedImages = [...currentImages, ...newImagePaths];
           
           // Save the updated property
-          const updatedProperty = await storage.updateProperty(propertyId, { 
+          const updatedProperty = await dbStorage.updateProperty(propertyId, { 
             images: updatedImages 
           });
           

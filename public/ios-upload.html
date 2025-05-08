@@ -306,54 +306,82 @@
         imagePreview.classList.remove('hidden');
       });
       
-      // Form submission
+      // Handle form submission with more robust error handling for iOS Safari
       form.addEventListener('submit', function(e) {
         e.preventDefault();
         
+        // Get form values
         const propertyId = propertyIdInput.value.trim();
         const files = fileInput.files;
         
+        // Validate property ID
         if (!propertyId) {
           showStatus('Please enter a property ID', 'error');
           return;
         }
         
+        if (isNaN(parseInt(propertyId)) || parseInt(propertyId) <= 0) {
+          showStatus('Please enter a valid property ID (a positive number)', 'error');
+          return;
+        }
+        
+        // Validate files
         if (!files || files.length === 0) {
           showStatus('Please select at least one image', 'error');
           return;
         }
         
-        // Show loading status
-        showStatus('Uploading images, please wait...', 'loading');
+        // Show detailed loading status
+        showStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''} to property #${propertyId}...`, 'loading');
         uploadButton.disabled = true;
         
-        // Create FormData - crucial for iOS compatibility
+        // Create FormData object - crucial for iOS compatibility
         const formData = new FormData();
         
-        // iOS Safari fix: Add files one by one with explicit filename
+        // Add timestamp to avoid iOS caching issues
+        const timestamp = Date.now();
+        
+        // iOS Safari specific: Add files one by one with explicit filenames to prevent iOS quirks
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          // Use the original filename or generate one if not available
-          const filename = file.name || `image-${i+1}.jpg`;
-          // In iOS Safari, we need to be explicit about the filename
+          
+          // Generate robust filenames for iOS Safari
+          let filename;
+          if (file.name) {
+            // Clean up the original name to avoid problematic characters
+            filename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+          } else {
+            // Fallback if name is not available
+            filename = `ios_image_${timestamp}_${i+1}.jpg`;
+          }
+          
+          // In iOS Safari, we need to be explicit about the third parameter (filename)
           formData.append('files', file, filename);
+          
+          console.log(`Added file: ${filename} (${Math.round(file.size/1024)} KB)`);
         }
         
-        // Add property ID multiple ways for maximum compatibility
+        // Add property ID in multiple formats for maximum compatibility
         formData.append('propertyId', propertyId);
         
-        // iOS Safari has quirks with fetch, so we add query parameters and multiple headers
-        const url = `/api/upload/ios?propertyId=${propertyId}&device=ios&timestamp=${Date.now()}`;
+        // Build URL with cache-busting parameters specifically for iOS Safari issues
+        const url = `/api/upload/ios?propertyId=${propertyId}&device=ios&t=${timestamp}&random=${Math.random().toString(36).substring(2, 10)}`;
         
-        // Send the request - with iOS specific headers and cache prevention
+        // Extra logging for debugging
+        console.log(`Submitting to: ${url} with ${files.length} files for property ID ${propertyId}`);
+        
+        // Send the request with iOS optimized settings
         fetch(url, {
           method: 'POST',
           body: formData,
           credentials: 'include',
+          // Headers optimized for iOS Safari issues
           headers: {
             'Accept': 'application/json',
             'X-Property-Id': propertyId,
             'X-Requested-With': 'XMLHttpRequest',
+            'X-iOS-Upload': 'true',
+            'X-Timestamp': timestamp.toString(),
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'Expires': '0'
