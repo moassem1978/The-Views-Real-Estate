@@ -554,6 +554,35 @@
             
             <div class="form-row">
               <button type="button" class="prev-tab" data-prev="pricing">Previous: Pricing</button>
+              <button type="button" class="next-tab" data-next="images">Next: Images</button>
+            </div>
+          </div>
+          
+          <!-- Tab 5: Images -->
+          <div class="tab-panel" id="images">
+            <div class="form-section">
+              <div class="form-section-title">Property Images</div>
+              <p>Add or manage images for this property. Images will be uploaded immediately when selected.</p>
+              
+              <div class="image-upload-container" id="imageDropZone">
+                <p>Drag images here or click the button below to select files</p>
+                <input type="file" id="imageUploadInput" class="image-upload-input" accept="image/*" multiple>
+                <label for="imageUploadInput" class="upload-label">Choose Images</label>
+                <p class="text-muted" style="font-size: 14px; margin-top: 10px;">You can select multiple images at once (up to 10)</p>
+              </div>
+              
+              <div id="uploadStatus" class="status hidden"></div>
+              
+              <div id="imageGallery" class="image-gallery">
+                <!-- Existing images will appear here -->
+                <div id="existingImages"></div>
+                <!-- New images preview will appear here -->
+                <div id="imagePreview"></div>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <button type="button" class="prev-tab" data-prev="features">Previous: Features</button>
               <button type="submit" id="submitButton">Create Property</button>
             </div>
           </div>
@@ -614,6 +643,9 @@
           
           // Populate the form fields with the property data
           populateFormFields(property);
+          
+          // Load and display existing property images
+          displayExistingImages(property.images || []);
         })
         .catch(error => {
           console.error('Error loading property:', error);
@@ -873,6 +905,234 @@
         // Remove the hidden class
         if (statusMessage.classList.contains('hidden')) {
           statusMessage.classList.remove('hidden');
+        }
+      }
+      
+      // Image handling functionality
+      const imageUploadInput = document.getElementById('imageUploadInput');
+      const imageGallery = document.getElementById('imageGallery');
+      const existingImagesContainer = document.getElementById('existingImages');
+      const imagePreviewContainer = document.getElementById('imagePreview');
+      const uploadStatus = document.getElementById('uploadStatus');
+      
+      // Function to show upload status
+      function showUploadStatus(message, type) {
+        uploadStatus.textContent = message;
+        uploadStatus.className = `status ${type}`;
+        
+        if (uploadStatus.classList.contains('hidden')) {
+          uploadStatus.classList.remove('hidden');
+        }
+      }
+      
+      // Function to display existing images
+      function displayExistingImages(images) {
+        console.log('Displaying existing images:', images);
+        existingImagesContainer.innerHTML = '';
+        
+        if (!images || images.length === 0) {
+          existingImagesContainer.innerHTML = '<p>No images have been uploaded yet.</p>';
+          return;
+        }
+        
+        images.forEach((imagePath, index) => {
+          const imageContainer = document.createElement('div');
+          imageContainer.className = 'image-container';
+          imageContainer.dataset.index = index;
+          
+          const img = document.createElement('img');
+          img.src = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+          img.alt = `Property image ${index + 1}`;
+          
+          const deleteButton = document.createElement('button');
+          deleteButton.className = 'image-delete';
+          deleteButton.innerHTML = '×';
+          deleteButton.title = 'Delete image';
+          deleteButton.setAttribute('data-path', imagePath);
+          deleteButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            deleteImage(imagePath, index);
+          });
+          
+          imageContainer.appendChild(img);
+          imageContainer.appendChild(deleteButton);
+          existingImagesContainer.appendChild(imageContainer);
+        });
+      }
+      
+      // Function to delete an image
+      function deleteImage(imagePath, index) {
+        if (!isEditing || !propertyIdFromUrl) {
+          showUploadStatus('Please save the property first before deleting images.', 'error');
+          return;
+        }
+        
+        // Confirm deletion
+        if (!confirm('Are you sure you want to delete this image? This cannot be undone.')) {
+          return;
+        }
+        
+        showUploadStatus('Deleting image...', 'loading');
+        
+        fetch(`/api/properties/${propertyIdFromUrl}/images`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ imagePath }),
+          credentials: 'include'
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.text().then(text => {
+              throw new Error(`Failed to delete image: ${response.status} ${response.statusText}. ${text}`);
+            });
+          }
+          return response.json();
+        })
+        .then(result => {
+          // Remove the image from the UI immediately
+          const imageContainers = existingImagesContainer.querySelectorAll('.image-container');
+          imageContainers.forEach(container => {
+            if (container.dataset.index == index) {
+              container.remove();
+            }
+          });
+          
+          showUploadStatus('Image deleted successfully!', 'success');
+          
+          // Check if we still have images
+          if (existingImagesContainer.children.length === 0) {
+            existingImagesContainer.innerHTML = '<p>No images have been uploaded yet.</p>';
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting image:', error);
+          showUploadStatus(`Error: ${error.message}`, 'error');
+        });
+      }
+      
+      // Handle image file selection
+      imageUploadInput.addEventListener('change', () => {
+        if (!isEditing || !propertyIdFromUrl) {
+          showUploadStatus('Please save the property first before uploading images.', 'error');
+          imageUploadInput.value = '';
+          return;
+        }
+        
+        const files = imageUploadInput.files;
+        
+        if (!files || files.length === 0) {
+          return;
+        }
+        
+        // Check if too many files selected
+        if (files.length > 10) {
+          showUploadStatus('You can only upload up to 10 images at once.', 'error');
+          imageUploadInput.value = '';
+          return;
+        }
+        
+        // Create FormData
+        const formData = new FormData();
+        
+        // Add files to FormData
+        for (let i = 0; i < files.length; i++) {
+          formData.append('files', files[i]);
+        }
+        
+        // Show loading status
+        showUploadStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''}...`, 'loading');
+        
+        // Upload images to the server
+        fetch(`/api/upload/windows?propertyId=${propertyIdFromUrl}`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+          headers: {
+            'X-Property-Id': propertyIdFromUrl
+          }
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.text().then(text => {
+              throw new Error(`Upload failed: ${response.status} ${response.statusText}. ${text}`);
+            });
+          }
+          return response.json();
+        })
+        .then(result => {
+          console.log('Upload successful:', result);
+          
+          // Show success message
+          showUploadStatus(`Successfully uploaded ${result.count || 0} images.`, 'success');
+          
+          // Reset file input
+          imageUploadInput.value = '';
+          
+          // Refresh current property data and images
+          fetch(`/api/properties/${propertyIdFromUrl}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            credentials: 'include'
+          })
+          .then(response => response.json())
+          .then(property => {
+            // Update displayed images
+            displayExistingImages(property.images || []);
+          })
+          .catch(error => {
+            console.error('Error refreshing property data:', error);
+          });
+        })
+        .catch(error => {
+          console.error('Upload error:', error);
+          showUploadStatus(`Error: ${error.message}`, 'error');
+          imageUploadInput.value = '';
+        });
+      });
+      
+      // Setup drag and drop for image upload
+      const dropZone = document.getElementById('imageDropZone');
+      
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight() {
+        dropZone.style.borderColor = '#B87333';
+        dropZone.style.backgroundColor = '#f9f5f0';
+      }
+      
+      function unhighlight() {
+        dropZone.style.borderColor = '#ddd';
+        dropZone.style.backgroundColor = '#f9f9f9';
+      }
+      
+      dropZone.addEventListener('drop', handleDrop, false);
+      
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+          imageUploadInput.files = files;
+          const event = new Event('change');
+          imageUploadInput.dispatchEvent(event);
         }
       }
     });
