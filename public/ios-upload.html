@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>iOS Image Uploader | The Views Real Estate</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Tahoma', sans-serif;
+      line-height: 1.5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      background-color: #f8f8f8;
+      -webkit-text-size-adjust: 100%;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #B87333;
+      margin-top: 0;
+      font-size: 24px;
+      text-align: center;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      max-width: 200px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      -webkit-appearance: none;
+    }
+    .file-input-container {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px dashed #ddd;
+      border-radius: 4px;
+      text-align: center;
+      background-color: #f9f9f9;
+    }
+    .file-input-button {
+      display: inline-block;
+      padding: 15px 25px;
+      background-color: #B87333;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+    .file-input {
+      position: absolute;
+      left: -9999px;
+    }
+    button {
+      background-color: #B87333;
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 10px;
+      -webkit-appearance: none;
+    }
+    button:hover {
+      background-color: #964B00;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .loading {
+      background-color: #e2e3e5;
+      color: #383d41;
+      border: 1px solid #d6d8db;
+    }
+    .hidden {
+      display: none;
+    }
+    .instructions {
+      background-color: #FFF8E1;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      border-left: 4px solid #FFB300;
+    }
+    .instructions ol {
+      margin-left: 20px;
+      padding-left: 0;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: #B87333;
+      text-decoration: none;
+    }
+    .image-preview {
+      margin-top: 20px;
+    }
+    .image-preview-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .image-preview img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      margin-right: 5px;
+      margin-bottom: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .file-count {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="/uploads/logos/logo.png" alt="The Views Real Estate" onerror="this.src='/favicon.ico'; this.onerror=null;">
+    </div>
+    
+    <h1>iOS Property Image Uploader</h1>
+    <p style="color: #666; margin-bottom: 20px; text-align: center;">This uploader is optimized specifically for iOS devices.</p>
+    
+    <div class="instructions">
+      <strong>Instructions:</strong>
+      <ol>
+        <li>Enter the Property ID from the property you want to add images to</li>
+        <li>Tap "Choose Images" to select photos from your device</li>
+        <li>Tap "Upload Images" to send the photos to the server</li>
+        <li>Wait for confirmation before navigating away</li>
+      </ol>
+    </div>
+    
+    <form id="uploadForm">
+      <div class="form-group">
+        <label for="propertyId">Property ID:</label>
+        <input type="number" inputmode="numeric" id="propertyId" name="propertyId" required placeholder="Enter property ID number" pattern="[0-9]*">
+      </div>
+      
+      <div class="file-input-container">
+        <p>Select photos to upload:</p>
+        <label for="files" class="file-input-button">Choose Images</label>
+        <input type="file" id="files" name="files" class="file-input" multiple accept="image/*">
+        <div id="fileCount" class="file-count hidden">0 photos selected</div>
+      </div>
+      
+      <div id="imagePreview" class="image-preview hidden">
+        <div class="image-preview-title">Selected Photos:</div>
+        <div id="previewContainer"></div>
+      </div>
+      
+      <button type="submit" id="uploadButton">Upload Images</button>
+    </form>
+    
+    <div id="statusMessage" class="status hidden"></div>
+    
+    <a href="/dashboard" class="back-link">← Return to Dashboard</a>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('uploadForm');
+      const statusMessage = document.getElementById('statusMessage');
+      const fileInput = document.getElementById('files');
+      const propertyIdInput = document.getElementById('propertyId');
+      const fileCountDisplay = document.getElementById('fileCount');
+      const uploadButton = document.getElementById('uploadButton');
+      const imagePreview = document.getElementById('imagePreview');
+      const previewContainer = document.getElementById('previewContainer');
+      
+      // Check if propertyId was provided in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const propertyIdFromUrl = urlParams.get('propertyId');
+      
+      if (propertyIdFromUrl) {
+        propertyIdInput.value = propertyIdFromUrl;
+      }
+      
+      // Handle file selection and preview
+      fileInput.addEventListener('change', function() {
+        const files = fileInput.files;
+        
+        if (!files || files.length === 0) {
+          fileCountDisplay.classList.add('hidden');
+          imagePreview.classList.add('hidden');
+          return;
+        }
+        
+        // Display file count
+        fileCountDisplay.textContent = `${files.length} photo${files.length > 1 ? 's' : ''} selected`;
+        fileCountDisplay.classList.remove('hidden');
+        
+        // Clear previous previews
+        previewContainer.innerHTML = '';
+        
+        // Generate previews (limited to first 6 for performance)
+        const previewLimit = Math.min(files.length, 6);
+        for (let i = 0; i < previewLimit; i++) {
+          const file = files[i];
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.alt = `Preview ${i+1}`;
+            previewContainer.appendChild(img);
+          }
+          
+          reader.readAsDataURL(file);
+        }
+        
+        // Show preview section
+        imagePreview.classList.remove('hidden');
+      });
+      
+      // Form submission
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const propertyId = propertyIdInput.value.trim();
+        const files = fileInput.files;
+        
+        if (!propertyId) {
+          showStatus('Please enter a property ID', 'error');
+          return;
+        }
+        
+        if (!files || files.length === 0) {
+          showStatus('Please select at least one image', 'error');
+          return;
+        }
+        
+        // Show loading status
+        showStatus('Uploading images, please wait...', 'loading');
+        uploadButton.disabled = true;
+        
+        // Create FormData - crucial for iOS compatibility
+        const formData = new FormData();
+        
+        // Add files one by one
+        for (let i = 0; i < files.length; i++) {
+          formData.append('files', files[i]);
+        }
+        
+        // Add property ID in a way that works with both PHP and Express
+        formData.append('propertyId', propertyId);
+        
+        // Send the request - with iOS specific headers
+        fetch(`/api/upload/ios?propertyId=${propertyId}`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'X-Property-Id': propertyId,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.text().then(text => {
+              throw new Error(`Upload failed: ${response.status} ${response.statusText}. ${text}`);
+            });
+          }
+          return response.json();
+        })
+        .then(result => {
+          console.log('Upload successful:', result);
+          
+          // Show success message
+          let message = `Successfully uploaded ${result.count || 0} images.`;
+          showStatus(message, 'success');
+          
+          // Reset form
+          fileInput.value = '';
+          fileCountDisplay.classList.add('hidden');
+          imagePreview.classList.add('hidden');
+          previewContainer.innerHTML = '';
+          uploadButton.disabled = false;
+          
+          // Add back link to property
+          const backToEditLink = document.createElement('a');
+          backToEditLink.href = `/dashboard/properties/edit/${propertyId}`;
+          backToEditLink.className = 'back-link';
+          backToEditLink.style.display = 'block';
+          backToEditLink.style.marginTop = '10px';
+          backToEditLink.style.fontWeight = 'bold';
+          backToEditLink.textContent = '➡️ Return to property edit page';
+          statusMessage.appendChild(backToEditLink);
+        })
+        .catch(error => {
+          console.error('Upload error:', error);
+          showStatus(`Error: ${error.message}`, 'error');
+          uploadButton.disabled = false;
+        });
+      });
+      
+      function showStatus(message, type) {
+        statusMessage.textContent = message;
+        statusMessage.className = `status ${type}`;
+        
+        if (statusMessage.classList.contains('hidden')) {
+          statusMessage.classList.remove('hidden');
+        }
+        
+        // Scroll to status message
+        statusMessage.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  </script>
+</body>
+</html>

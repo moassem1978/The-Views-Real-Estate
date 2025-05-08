@@ -1507,6 +1507,138 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // Dedicated iOS upload endpoint - optimized for iOS mobile browsers
+  app.post("/api/upload/ios", async (req: Request, res: Response) => {
+    console.log("============================================================");
+    console.log("==== iOS SPECIFIC UPLOAD ENDPOINT CALLED ====");
+    console.log("User agent:", req.headers['user-agent']);
+    console.log("Content type:", req.headers['content-type']);
+    console.log("Request headers:", req.headers);
+    console.log("============================================================");
+    
+    try {
+      // Authentication check
+      if (!req.isAuthenticated()) {
+        console.error("iOS upload: Authentication failed");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Get the property ID from any possible source
+      // Priority: Headers > Query Params > Form Data
+      let propertyId: number | null = null;
+      
+      // Check custom header first (most reliable)
+      if (req.headers['x-property-id']) {
+        propertyId = parseInt(req.headers['x-property-id'] as string);
+        console.log(`iOS upload: Found propertyId ${propertyId} in custom header`);
+      }
+      
+      // Try query parameters if not in header
+      if (propertyId === null && req.query.propertyId) {
+        propertyId = parseInt(req.query.propertyId as string);
+        console.log(`iOS upload: Found propertyId ${propertyId} in query parameter`);
+      }
+      
+      // Setup multer specifically for iOS
+      const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+      fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
+      
+      const diskStorage = multer.diskStorage({
+        destination: function (req, file, cb) {
+          console.log(`iOS upload: Setting destination for ${file.originalname} to ${publicUploadsDir}`);
+          cb(null, publicUploadsDir);
+        },
+        filename: function (req, file, cb) {
+          // iOS friendly file naming
+          const timestamp = Date.now();
+          const randomString = Math.floor(Math.random() * 1000000).toString();
+          const safeFilename = `ios-${timestamp}-${randomString}.jpg`;
+          console.log(`iOS upload: Generated filename: ${safeFilename} for ${file.originalname}`);
+          cb(null, safeFilename);
+        }
+      });
+      
+      // Create multer instance optimized for iOS
+      const iosUpload = multer({
+        storage: diskStorage,
+        limits: { 
+          fileSize: 15 * 1024 * 1024, // 15MB limit for iOS (lower to avoid Safari issues)
+          files: 10
+        }
+      }).array('files', 10);
+      
+      // Process the upload with iOS specific handling
+      iosUpload(req, res, async function(err) {
+        if (err) {
+          console.error("iOS upload error:", err);
+          if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+              return res.status(413).json({ message: "File too large. Maximum size is 15MB." });
+            } else if (err.code === 'LIMIT_FILE_COUNT') {
+              return res.status(413).json({ message: "Too many files. Maximum is 10 files." });
+            }
+          }
+          return res.status(500).json({ message: "Upload failed: " + err.message });
+        }
+        
+        console.log("iOS upload: Files processed, checking file uploads...");
+        
+        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+          console.error("iOS upload: No files were uploaded");
+          return res.status(400).json({ message: "No files were uploaded" });
+        }
+        
+        console.log(`iOS upload: Received ${req.files.length} files`);
+        
+        try {
+          // Get the property from the database
+          const property = await storage.getProperty(propertyId);
+          
+          if (!property) {
+            console.error(`iOS upload: Property with ID ${propertyId} not found`);
+            return res.status(404).json({ message: "Property not found" });
+          }
+          
+          console.log(`iOS upload: Found property: ${property.title}`);
+          
+          // Get the current images array or initialize empty
+          const currentImages = property.images || [];
+          
+          // Add new image paths
+          const newImagePaths = req.files.map(file => `/uploads/properties/${file.filename}`);
+          
+          // Update property with new images
+          const updatedImages = [...currentImages, ...newImagePaths];
+          
+          // Save the updated property
+          const updatedProperty = await storage.updateProperty(propertyId, { 
+            images: updatedImages 
+          });
+          
+          console.log(`iOS upload: Successfully added ${newImagePaths.length} images to property ${propertyId}`);
+          
+          // Return success response with image data
+          return res.status(200).json({
+            message: "Images uploaded successfully",
+            count: newImagePaths.length,
+            imageUrls: newImagePaths,
+            property: {
+              id: property.id,
+              title: property.title,
+              totalImageCount: updatedImages.length
+            }
+          });
+        } catch (error) {
+          console.error("iOS upload: Error updating property with images:", error);
+          return res.status(500).json({ message: "Failed to update property with images" });
+        }
+      });
+    } catch (error) {
+      console.error("iOS upload: Unexpected error:", error);
+      return res.status(500).json({ message: "An unexpected error occurred" });
+    }
+  });
+
   // Ultra-simplified Windows upload endpoint for maximum compatibility
   app.post("/api/upload/windows", async (req: Request, res: Response) => {
     console.log("============================================================");
