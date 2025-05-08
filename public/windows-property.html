@@ -174,6 +174,7 @@
     
     .tab-buttons {
       display: flex;
+      flex-wrap: wrap;
       border-bottom: 1px solid #ddd;
       margin-bottom: 15px;
     }
@@ -185,6 +186,7 @@
       border-bottom: none;
       border-radius: 4px 4px 0 0;
       margin-right: 5px;
+      margin-bottom: 5px;
       cursor: pointer;
     }
     
@@ -208,6 +210,87 @@
     .tab-panel.active {
       display: block;
     }
+    
+    /* Image gallery styles */
+    .image-gallery {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+    }
+    
+    .image-container {
+      position: relative;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+      padding: 5px;
+    }
+    
+    .image-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 3px;
+    }
+    
+    .image-delete {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: rgba(220, 53, 69, 0.8);
+      color: white;
+      border: none;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0;
+      line-height: 1;
+    }
+    
+    .image-delete:hover {
+      background-color: rgba(220, 53, 69, 1);
+    }
+    
+    .image-upload-container {
+      padding: 20px;
+      border: 2px dashed #ddd;
+      border-radius: 4px;
+      text-align: center;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+    
+    .image-upload-container:hover {
+      border-color: #B87333;
+    }
+    
+    .image-upload-input {
+      display: none;
+    }
+    
+    .image-preview {
+      margin-top: 20px;
+    }
+    
+    .upload-label {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #B87333;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    
+    .upload-label:hover {
+      background-color: #964B00;
+    }
   </style>
 </head>
 <body>
@@ -227,6 +310,7 @@
         <div class="tab-button" data-tab="details">Property Details</div>
         <div class="tab-button" data-tab="pricing">Pricing & Payment</div>
         <div class="tab-button" data-tab="features">Features</div>
+        <div class="tab-button" data-tab="images">Images</div>
       </div>
       
       <form id="propertyForm">
