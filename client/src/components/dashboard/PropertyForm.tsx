@@ -200,12 +200,30 @@ export default function PropertyForm({
       try {
         console.log("Starting form submission process...");
         
-        // First try to refresh the auth session
+        // Check auth status first
         try {
-          await apiRequest("POST", "/api/auth/refresh");
-          console.log("Authentication refreshed successfully");
-        } catch (authError) {
-          console.warn("Authentication refresh failed, will try request anyway", authError);
+          const authStatusResponse = await fetch("/api/auth/status", {
+            method: "GET",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" }
+          });
+          
+          const authStatus = await authStatusResponse.json();
+          console.log("Current auth status:", authStatus);
+          
+          if (!authStatus.authenticated) {
+            console.warn("Not authenticated before form submission, attempting to refresh session");
+            
+            // Try to refresh the auth session
+            const refreshResponse = await apiRequest("POST", "/api/auth/refresh");
+            if (!refreshResponse.ok) {
+              throw new Error("Authentication refresh failed with status: " + refreshResponse.status);
+            }
+            console.log("Authentication explicitly refreshed before form submission");
+          }
+        } catch (authError: any) {
+          console.error("Auth check/refresh failed:", authError.message);
+          // We'll still try the submission, but it will likely fail with 401
         }
         
         const url = isEditing ? `/api/properties/${propertyId}` : '/api/properties';
@@ -369,6 +387,18 @@ export default function PropertyForm({
       setUploading(true);
       console.log(`Starting image upload process for property ID ${propertyId}...`);
       
+      // Check auth status before upload
+      try {
+        const refreshResponse = await apiRequest("POST", "/api/auth/refresh");
+        if (!refreshResponse.ok) {
+          console.warn("Authentication refresh failed before image upload, but continuing anyway");
+        } else {
+          console.log("Authentication refreshed successfully before image upload");
+        }
+      } catch (authError) {
+        console.warn("Authentication refresh attempt failed before image upload", authError);
+      }
+      
       if (images.length === 0) {
         console.log("No new images selected, skipping image upload");
         return { success: true, message: "No new images to upload" };
@@ -430,11 +460,30 @@ export default function PropertyForm({
         
         console.log(`Using ${useSimpleEndpoint ? 'simple-compatible' : 'standard'} endpoint: ${endpoint}`);
         
+        // Add auth-related headers to improve session handling
+        const headers: Record<string, string> = {};
+        
+        // Try to add a manual session cookie if we can detect it
+        try {
+          const sessionCookie = document.cookie.split(';')
+            .find(cookie => cookie.trim().startsWith('theviews.sid='));
+          
+          if (sessionCookie) {
+            console.log("Found session cookie, adding to headers");
+            const sessionId = sessionCookie.split('=')[1];
+            headers['X-Session-ID'] = sessionId;
+          }
+        } catch (cookieError) {
+          console.warn("Error processing cookies:", cookieError);
+        }
+        
+        // Make the fetch request with proper credentials and headers
         const response = await fetch(endpoint, {
           method: 'POST',
           body: formData,
           signal: controller.signal,
           credentials: 'include', // Include cookies for auth
+          headers
         });
         
         clearTimeout(timeoutId);

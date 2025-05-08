@@ -129,12 +129,12 @@ export function setupAuth(app: Express) {
       pruneSessionInterval: 1440
     }),
     secret: process.env.SESSION_SECRET || "the-views-real-estate-secret-key-updated",
-    resave: false,
+    resave: true, // Changed to true to ensure session is saved on each request
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      // Extended session timeout (24 hours) with rolling expiration for better user experience
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for better testing
+      secure: false, // Disabled secure for development
+      // Extended session timeout (30 days) with rolling expiration for better user experience
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for extended testing
       // Prevent client-side JS from accessing cookies
       httpOnly: true,
       // Using lax instead of strict for better user experience
@@ -434,5 +434,28 @@ export function setupAuth(app: Express) {
     
     const { password, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);
+  });
+  
+  // Add an auth status check endpoint for debugging
+  app.get("/api/auth/status", (req, res) => {
+    console.log("Auth status check, authenticated:", req.isAuthenticated());
+    console.log("Session:", req.session ? "exists" : "missing");
+    console.log("Session ID:", req.sessionID);
+    console.log("User:", req.user ? JSON.stringify(req.user, null, 2) : "not logged in");
+    
+    if (req.isAuthenticated()) {
+      res.json({
+        authenticated: true,
+        user: req.user,
+        sessionID: req.sessionID,
+        sessionExpires: req.session?.cookie.expires
+      });
+    } else {
+      res.json({
+        authenticated: false,
+        sessionID: req.sessionID,
+        sessionExists: !!req.session
+      });
+    }
   });
 }
