@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>iOS Image Uploader | The Views Real Estate</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>iOS Property Image Uploader | The Views Real Estate</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Tahoma', sans-serif;
@@ -215,6 +218,49 @@
       const imagePreview = document.getElementById('imagePreview');
       const previewContainer = document.getElementById('previewContainer');
       
+      // Check user authentication status on page load
+      checkAuthStatus();
+      
+      // Function to check if user is logged in
+      function checkAuthStatus() {
+        fetch('/api/user', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+        .then(response => {
+          if (!response.ok && response.status === 401) {
+            // Show login prompt
+            showStatus(
+              'Authentication Required', 
+              'error', 
+              'You need to be logged in to upload images. Please go back to the dashboard and log in first.'
+            );
+            
+            // Add login link
+            const loginLink = document.createElement('a');
+            loginLink.href = '/dashboard';
+            loginLink.className = 'file-input-button';
+            loginLink.style.display = 'inline-block';
+            loginLink.style.marginTop = '15px';
+            loginLink.style.textDecoration = 'none';
+            loginLink.textContent = 'Go to Dashboard & Login';
+            statusMessage.appendChild(loginLink);
+            
+            // Disable the form
+            form.style.opacity = '0.5';
+            form.style.pointerEvents = 'none';
+          } else {
+            console.log('User is authenticated');
+          }
+        })
+        .catch(error => {
+          console.error('Auth check error:', error);
+        });
+      }
+      
       // Check if propertyId was provided in URL
       const urlParams = new URLSearchParams(window.location.search);
       const propertyIdFromUrl = urlParams.get('propertyId');
@@ -284,23 +330,33 @@
         // Create FormData - crucial for iOS compatibility
         const formData = new FormData();
         
-        // Add files one by one
+        // iOS Safari fix: Add files one by one with explicit filename
         for (let i = 0; i < files.length; i++) {
-          formData.append('files', files[i]);
+          const file = files[i];
+          // Use the original filename or generate one if not available
+          const filename = file.name || `image-${i+1}.jpg`;
+          // In iOS Safari, we need to be explicit about the filename
+          formData.append('files', file, filename);
         }
         
-        // Add property ID in a way that works with both PHP and Express
+        // Add property ID multiple ways for maximum compatibility
         formData.append('propertyId', propertyId);
         
-        // Send the request - with iOS specific headers
-        fetch(`/api/upload/ios?propertyId=${propertyId}`, {
+        // iOS Safari has quirks with fetch, so we add query parameters and multiple headers
+        const url = `/api/upload/ios?propertyId=${propertyId}&device=ios&timestamp=${Date.now()}`;
+        
+        // Send the request - with iOS specific headers and cache prevention
+        fetch(url, {
           method: 'POST',
           body: formData,
           credentials: 'include',
           headers: {
             'Accept': 'application/json',
             'X-Property-Id': propertyId,
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
           }
         })
         .then(response => {
@@ -337,15 +393,63 @@
         })
         .catch(error => {
           console.error('Upload error:', error);
-          showStatus(`Error: ${error.message}`, 'error');
+          
+          // Extract the error message for display
+          const errorMessage = error.message || 'An unknown error occurred';
+          const errorDetails = 'Please make sure you are logged in and try again. If the problem persists, return to the dashboard and try a different method.';
+          
+          // Show error with details
+          showStatus(`Error: ${errorMessage}`, 'error', errorDetails);
+          
+          // Re-enable upload button
           uploadButton.disabled = false;
+          
+          // Diagnostic info in console for debugging
+          console.log('Property ID:', propertyId);
+          console.log('Files selected:', files ? files.length : 0);
+          console.log('User agent:', navigator.userAgent);
         });
       });
       
-      function showStatus(message, type) {
-        statusMessage.textContent = message;
+      // Improved status display with optional details for error reporting
+      function showStatus(message, type, details) {
+        // Clear previous content
+        statusMessage.innerHTML = '';
+        
+        // Add main message
+        const messageElement = document.createElement('div');
+        messageElement.textContent = message;
+        messageElement.style.fontWeight = 'bold';
+        statusMessage.appendChild(messageElement);
+        
+        // If detailed error info is provided, show it
+        if (details && type === 'error') {
+          const detailsElement = document.createElement('div');
+          detailsElement.textContent = details;
+          detailsElement.style.marginTop = '8px';
+          detailsElement.style.fontSize = '14px';
+          statusMessage.appendChild(detailsElement);
+          
+          // Add a retry button for convenience
+          const retryButton = document.createElement('button');
+          retryButton.textContent = 'Try Again';
+          retryButton.style.marginTop = '10px';
+          retryButton.style.padding = '8px 15px';
+          retryButton.style.fontSize = '14px';
+          retryButton.style.width = 'auto';
+          retryButton.style.display = 'inline-block';
+          retryButton.onclick = function() {
+            // Re-enable the form and clear status
+            uploadButton.disabled = false;
+            statusMessage.classList.add('hidden');
+          };
+          statusMessage.appendChild(retryButton);
+        }
+        
+        // Set appropriate class
         statusMessage.className = `status ${type}`;
         
+        // Ensure visible
         if (statusMessage.classList.contains('hidden')) {
           statusMessage.classList.remove('hidden');
         }
