@@ -246,6 +246,31 @@ function Dashboard() {
               </CardContent>
             </Card>
             
+            {/* New Cross-Platform Upload Solution */}
+            <Card className="bg-green-50 border-green-200 mb-4">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-green-800">
+                  <AlertCircle className="inline-block mr-2 h-5 w-5 text-green-600" />
+                  NEW! Universal Cross-Platform Image Uploader
+                </CardTitle>
+                <CardDescription className="text-green-700">
+                  Having trouble uploading images on iOS or other devices? Try our new universal uploader that works on all platforms.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  className="bg-green-600 hover:bg-green-700 h-auto py-4 w-full"
+                  onClick={() => window.open('/universal-upload.html', '_blank')}
+                >
+                  <AlertCircle className="mr-2 h-5 w-5" />
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">Open Cross-Platform Uploader</span>
+                    <span className="text-xs text-left opacity-90">Works on iOS, Windows, Mac, and all other devices</span>
+                  </div>
+                </Button>
+              </CardContent>
+            </Card>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
@@ -331,8 +356,19 @@ function Dashboard() {
                   >
                     <PlusCircle className="mr-2 h-5 w-5" />
                     <div className="flex flex-col items-start">
-                      <span className="font-medium">Universal Image Uploader</span>
-                      <span className="text-xs text-left opacity-90">Upload property images on any device</span>
+                      <span className="font-medium">Windows Image Uploader</span>
+                      <span className="text-xs text-left opacity-90">Upload property images on Windows</span>
+                    </div>
+                  </Button>
+                  
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700 h-auto py-4"
+                    onClick={() => window.open('/universal-upload.html', '_blank')}
+                  >
+                    <AlertCircle className="mr-2 h-5 w-5" />
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">NEW! Cross-Platform Uploader</span>
+                      <span className="text-xs text-left opacity-90">Works on iOS, Windows, Mac, and all devices</span>
                     </div>
                   </Button>
                 </div>
