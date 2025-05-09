@@ -583,33 +583,44 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(403).json({ message: "You do not have permission to update this property" });
       }
 
-      const propertyData = req.body;
+      // Create clean copy of request body with all fields
+      const propertyData = {...req.body};
       
-      // COMPLETELY NEW APPROACH: 
-      // Instead of trying to determine what to keep or remove, just set the images directly
-      console.log("USING NEW DIRECT IMAGE REPLACEMENT APPROACH");
+      console.log("*** FIXING PROPERTY UPDATE ***");
       
-      // First, let's see what's currently in the database
-      if (existingProperty && existingProperty.images) {
-        console.log(`Existing property: ${id} has ${Array.isArray(existingProperty.images) ? existingProperty.images.length : 'unknown'} images`);
+      // Make sure we preserve existing images if none are provided in the update
+      if (!propertyData.images && existingProperty && existingProperty.images) {
+        console.log(`Preserving ${Array.isArray(existingProperty.images) ? existingProperty.images.length : 0} existing images`);
+        propertyData.images = existingProperty.images;
       }
       
-      // Now let's look at what's coming in from the request
+      // Ensure images is always a proper array
       if (propertyData.images) {
-        console.log(`Request includes ${Array.isArray(propertyData.images) ? propertyData.images.length : 'unknown'} images`);
-        console.log(`Images in request:`, propertyData.images);
+        if (!Array.isArray(propertyData.images)) {
+          console.log("Converting images to array format");
+          try {
+            // If it's a string that looks like an array, parse it
+            if (typeof propertyData.images === 'string' && 
+                propertyData.images.trim().startsWith('[') && 
+                propertyData.images.trim().endsWith(']')) {
+              propertyData.images = JSON.parse(propertyData.images);
+            } else if (typeof propertyData.images === 'string') {
+              // Handle comma-separated strings
+              propertyData.images = propertyData.images.split(',').map(img => img.trim()).filter(Boolean);
+            }
+          } catch (error) {
+            console.error("Error parsing images string:", error);
+            // Fallback to existing images
+            propertyData.images = existingProperty.images || [];
+          }
+        }
         
-        // Ensure images is an array to prevent errors
+        // Final validation - must be array
         if (!Array.isArray(propertyData.images)) {
           propertyData.images = [];
-          console.log("Converted non-array images field to empty array");
         }
-      } else {
-        // If images is not present, don't touch the existing images
-        console.log("No images field in request, keeping existing images");
-        if (existingProperty.images) {
-          propertyData.images = existingProperty.images;
-        }
+        
+        console.log(`Updating with ${propertyData.images.length} images`);
       }
 
       // If a regular user updates a property, set status back to pending_approval
