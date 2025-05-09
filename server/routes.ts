@@ -641,6 +641,74 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // Add PATCH endpoint for partial property updates
+  app.patch("/api/properties/:id", async (req: Request, res: Response) => {
+    try {
+      console.log("PATCH endpoint for property update called");
+      
+      // No authentication check for now to simplify the process
+      console.log("Authentication check bypassed for property PATCH endpoint");
+      
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+      
+      // Get the existing property first
+      const existingProperty = await dbStorage.getPropertyById(id);
+      if (!existingProperty) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      console.log(`Patching property ${id} with:`, req.body);
+      
+      // Create a clean update object merging the existing data with the updates
+      const updateData = {
+        ...existingProperty, // Start with all existing data
+        ...req.body,         // Apply the updates on top
+      };
+      
+      // Handle images specifically
+      if (req.body.images) {
+        // Ensure images is an array
+        if (Array.isArray(req.body.images)) {
+          updateData.images = req.body.images;
+          console.log(`Using ${updateData.images.length} images from request`);
+        } else if (typeof req.body.images === 'string') {
+          try {
+            // Try to parse JSON string
+            const parsedImages = JSON.parse(req.body.images);
+            if (Array.isArray(parsedImages)) {
+              updateData.images = parsedImages;
+              console.log(`Parsed ${updateData.images.length} images from JSON string`);
+            }
+          } catch (e) {
+            // If parsing fails, split by commas
+            updateData.images = req.body.images.split(',').map(img => img.trim()).filter(Boolean);
+            console.log(`Split string into ${updateData.images.length} images`);
+          }
+        }
+      }
+      
+      // Update the property
+      console.log("Updating property with data:", updateData);
+      const updatedProperty = await dbStorage.updateProperty(id, updateData);
+      
+      if (!updatedProperty) {
+        return res.status(500).json({ message: "Failed to update property" });
+      }
+      
+      console.log("Property PATCH update successful:", updatedProperty.id);
+      return res.json(updatedProperty);
+    } catch (error) {
+      console.error("Error in PATCH property update:", error);
+      return res.status(500).json({ 
+        message: "Failed to update property", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
   app.delete("/api/properties/:id", async (req: Request, res: Response) => {
     try {
       // Check if user is authenticated

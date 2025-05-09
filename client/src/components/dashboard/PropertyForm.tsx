@@ -484,9 +484,25 @@ export default function PropertyForm({
             // Update the property with the combined image list if needed
             if (allImages.length > 0 && !isEditing) {
               console.log("Updating property with all images...");
-              await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
-                images: allImages 
+              // Use a direct fetch for better debugging
+              const response = await fetch(`/api/properties/${savedPropertyId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ images: allImages }),
+                credentials: 'include'
               });
+              
+              // Check response and log it
+              if (!response.ok) {
+                console.error(`Failed to update property images: ${response.status} ${response.statusText}`);
+                const errorText = await response.text();
+                console.error(`Error details: ${errorText}`);
+              } else {
+                const result = await response.json();
+                console.log("Successfully updated property images:", result);
+              }
             }
           }
         } catch (uploadError) {
@@ -542,9 +558,26 @@ export default function PropertyForm({
         // Update property directly with the formatted images
         if (formattedImages.length > 0) {
           try {
-            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, { 
-              images: formattedImages 
+            // Use a direct fetch for better debugging
+            const response = await fetch(`/api/properties/${savedPropertyId}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ images: formattedImages }),
+              credentials: 'include'
             });
+            
+            // Check response
+            if (!response.ok) {
+              console.error(`Failed to update property with existing images: ${response.status} ${response.statusText}`);
+              const errorText = await response.text();
+              console.error(`Error details: ${errorText}`);
+              throw new Error(`Failed to update property: ${response.statusText}`);
+            } else {
+              const result = await response.json();
+              console.log("Successfully updated property with existing images:", result);
+            }
           } catch (updateError) {
             console.error("Error updating property images:", updateError);
           }
