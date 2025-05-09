@@ -200,30 +200,12 @@ export default function PropertyForm({
       try {
         console.log("Starting form submission process...");
         
-        // Check auth status first
+        // Simple auth refresh - no complex checks that might break things
         try {
-          const authStatusResponse = await fetch("/api/auth/status", {
-            method: "GET",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" }
-          });
-          
-          const authStatus = await authStatusResponse.json();
-          console.log("Current auth status:", authStatus);
-          
-          if (!authStatus.authenticated) {
-            console.warn("Not authenticated before form submission, attempting to refresh session");
-            
-            // Try to refresh the auth session
-            const refreshResponse = await apiRequest("POST", "/api/auth/refresh");
-            if (!refreshResponse.ok) {
-              throw new Error("Authentication refresh failed with status: " + refreshResponse.status);
-            }
-            console.log("Authentication explicitly refreshed before form submission");
-          }
-        } catch (authError: any) {
-          console.error("Auth check/refresh failed:", authError.message);
-          // We'll still try the submission, but it will likely fail with 401
+          await apiRequest("POST", "/api/auth/refresh");
+          console.log("Authentication refreshed successfully");
+        } catch (authError) {
+          console.warn("Authentication refresh failed, will try request anyway", authError);
         }
         
         const url = isEditing ? `/api/properties/${propertyId}` : '/api/properties';
@@ -377,7 +359,7 @@ export default function PropertyForm({
     },
   });
 
-  // Handle image upload with improved error handling and cross-browser compatibility
+  // Simplified image upload focused on iOS compatibility
   const uploadImages = async (propertyId: number | undefined) => {
     if (!propertyId) {
       console.error("Property ID is required for image upload");
@@ -387,18 +369,6 @@ export default function PropertyForm({
       setUploading(true);
       console.log(`Starting image upload process for property ID ${propertyId}...`);
       
-      // Check auth status before upload
-      try {
-        const refreshResponse = await apiRequest("POST", "/api/auth/refresh");
-        if (!refreshResponse.ok) {
-          console.warn("Authentication refresh failed before image upload, but continuing anyway");
-        } else {
-          console.log("Authentication refreshed successfully before image upload");
-        }
-      } catch (authError) {
-        console.warn("Authentication refresh attempt failed before image upload", authError);
-      }
-      
       if (images.length === 0) {
         console.log("No new images selected, skipping image upload");
         return { success: true, message: "No new images to upload" };
@@ -407,7 +377,7 @@ export default function PropertyForm({
       // Create a new FormData object for uploading files
       const formData = new FormData();
       
-      // Check if the File objects are valid before appending
+      // Basic validation for images
       const validImages = Array.from(images).filter(file => {
         if (!file || !(file instanceof File) || file.size === 0) {
           console.warn(`Skipping invalid file: ${file?.name || 'unknown'}`);
@@ -427,91 +397,37 @@ export default function PropertyForm({
       validImages.forEach((image, index) => {
         const fileName = image.name || `image-${index}`;
         console.log(`Adding image to form: ${fileName} (${Math.round(image.size / 1024)}KB)`);
-        
-        // Only use a single field name for the upload - 'images'
-        // Multiple files with the same field name is properly handled by multer
         formData.append('images', image, fileName);
       });
       
-      console.log(`Sending upload request to server for property ID ${propertyId}`);
+      // Always use the simple endpoint optimized for iOS
+      const endpoint = `/api/upload/property-images-simple`;
+      formData.append('propertyId', propertyId.toString());
       
-      // Set explicit timeout for fetch operations
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
+      console.log(`Using iOS-optimized endpoint: ${endpoint}`);
+        
+      // Make the fetch request with minimal headers to avoid complexity
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      console.log(`Upload response status: ${response.status} ${response.statusText}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Upload failed: ${errorText}`);
+        throw new Error(`Failed to upload images`);
+      }
+      
       try {
-        // Detect device type for compatibility
-        const isWindows = navigator.userAgent.indexOf('Windows') !== -1;
-        const isiOS = /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
-        const useSimpleEndpoint = isWindows || isiOS;
-        
-        console.log(`Detected device: ${isWindows ? 'Windows' : (isiOS ? 'iOS' : 'Other')}`);
-        
-        // Use the simpler endpoint for Windows/iOS which has fewer field restrictions
-        const endpoint = useSimpleEndpoint
-          ? `/api/upload/property-images-simple` 
-          : `/api/upload/property-images/${propertyId}`;
-        
-        // If using simple endpoint, we need to include the property ID in the form data
-        if (useSimpleEndpoint) {
-          formData.append('propertyId', propertyId.toString());
-          console.log(`Added property ID ${propertyId} to form data for simple endpoint`);
-        }
-        
-        console.log(`Using ${useSimpleEndpoint ? 'simple-compatible' : 'standard'} endpoint: ${endpoint}`);
-        
-        // Add auth-related headers to improve session handling
-        const headers: Record<string, string> = {};
-        
-        // Try to add a manual session cookie if we can detect it
-        try {
-          const sessionCookie = document.cookie.split(';')
-            .find(cookie => cookie.trim().startsWith('theviews.sid='));
-          
-          if (sessionCookie) {
-            console.log("Found session cookie, adding to headers");
-            const sessionId = sessionCookie.split('=')[1];
-            headers['X-Session-ID'] = sessionId;
-          }
-        } catch (cookieError) {
-          console.warn("Error processing cookies:", cookieError);
-        }
-        
-        // Make the fetch request with proper credentials and headers
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          body: formData,
-          signal: controller.signal,
-          credentials: 'include', // Include cookies for auth
-          headers
-        });
-        
-        clearTimeout(timeoutId);
-        
-        console.log(`Upload response status: ${response.status} ${response.statusText}`);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Upload failed: ${errorText}`);
-          throw new Error(`Failed to upload images: ${response.status} ${response.statusText}`);
-        }
-        
-        try {
-          const result = await response.json();
-          console.log('Upload successful:', result);
-          return result;
-        } catch (jsonError) {
-          console.log('Response was received but not JSON. This is OK for uploads.');
-          return { success: true, message: 'Images uploaded successfully' };
-        }
-      } catch (error) {
-        // Handle abort errors differently
-        const fetchError = error as Error;
-        if (fetchError.name === 'AbortError') {
-          console.error('Upload request timed out');
-          throw new Error('Upload timed out. Please try with fewer or smaller images.');
-        }
-        throw fetchError;
+        const result = await response.json();
+        console.log('Upload successful:', result);
+        return result;
+      } catch (jsonError) {
+        console.log('Response was received but not JSON. This is OK for uploads.');
+        return { success: true, message: 'Images uploaded successfully' };
       }
     } catch (error) {
       console.error('Image upload error:', error);
