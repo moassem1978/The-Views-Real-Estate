@@ -161,36 +161,8 @@ function Dashboard() {
           </div>
         </div>
         
-        {/* iOS Upload Banner */}
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-            <div className="flex items-center mb-3 sm:mb-0">
-              <div className="mr-3 bg-amber-100 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600">
-                  <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
-                  <path d="M12 18h.01" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-bold text-amber-800">iOS Upload Tool</h3>
-                <p className="text-amber-700">Using an iOS device? Use our dedicated iOS image uploader for better compatibility.</p>
-              </div>
-            </div>
-            <div>
-              <a 
-                href="/ios-upload.html" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="inline-flex items-center justify-center px-4 py-2 rounded-md font-medium bg-amber-600 text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
-              >
-                Open iOS Upload Tool
-              </a>
-            </div>
-          </div>
-        </div>
-        
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-6 gap-2">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             {sections.map((section) => (
               <TabsTrigger 
                 key={section.id} 
