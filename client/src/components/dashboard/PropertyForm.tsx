@@ -359,82 +359,20 @@ export default function PropertyForm({
     },
   });
 
-  // Simplified image upload focused on iOS compatibility
-  const uploadImages = async (propertyId: number | undefined) => {
-    if (!propertyId) {
-      console.error("Property ID is required for image upload");
-      throw new Error("Property ID is required for image upload");
+  // Simple image preview handling
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setImages(Array.from(e.target.files));
     }
-    try {
-      setUploading(true);
-      console.log(`Starting image upload process for property ID ${propertyId}...`);
-      
-      if (images.length === 0) {
-        console.log("No new images selected, skipping image upload");
-        return { success: true, message: "No new images to upload" };
-      }
-      
-      // Create a new FormData object for uploading files
-      const formData = new FormData();
-      
-      // Basic validation for images
-      const validImages = Array.from(images).filter(file => {
-        if (!file || !(file instanceof File) || file.size === 0) {
-          console.warn(`Skipping invalid file: ${file?.name || 'unknown'}`);
-          return false;
-        }
-        return true;
-      });
-      
-      if (validImages.length === 0) {
-        console.log("No valid images to upload after filtering");
-        return { success: true, message: "No valid images to upload" };
-      }
-      
-      console.log(`Processing ${validImages.length} valid images for upload`);
-      
-      // Append each valid image to the FormData
-      validImages.forEach((image, index) => {
-        const fileName = image.name || `image-${index}`;
-        console.log(`Adding image to form: ${fileName} (${Math.round(image.size / 1024)}KB)`);
-        formData.append('images', image, fileName);
-      });
-      
-      // Always use the simple endpoint optimized for iOS
-      const endpoint = `/api/upload/property-images-simple`;
-      formData.append('propertyId', propertyId.toString());
-      
-      console.log(`Using iOS-optimized endpoint: ${endpoint}`);
-        
-      // Make the fetch request with minimal headers to avoid complexity
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-      
-      console.log(`Upload response status: ${response.status} ${response.statusText}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Upload failed: ${errorText}`);
-        throw new Error(`Failed to upload images`);
-      }
-      
-      try {
-        const result = await response.json();
-        console.log('Upload successful:', result);
-        return result;
-      } catch (jsonError) {
-        console.log('Response was received but not JSON. This is OK for uploads.');
-        return { success: true, message: 'Images uploaded successfully' };
-      }
-    } catch (error) {
-      console.error('Image upload error:', error);
-      throw error;
-    } finally {
-      setUploading(false);
-    }
+  };
+  
+  // Remove selected image before upload
+  const removeSelectedImage = (index: number) => {
+    setImages(prevImages => {
+      const newImages = [...prevImages];
+      newImages.splice(index, 1);
+      return newImages;
+    });
   };
 
   // Handle form submission
@@ -462,125 +400,60 @@ export default function PropertyForm({
       const savedPropertyId = isEditing ? Number(propertyId) : savedProperty.id;
       console.log(`Using property ID ${savedPropertyId} for image upload`);
       
-      // Only attempt image upload if there are new images
+      // SIMPLIFIED IMAGE HANDLING
+      
+      // Step 1: Process existing images (for edit mode)
+      if (isEditing && existingImages.length > 0) {
+        console.log(`Property has ${existingImages.length} existing images`);
+      }
+      
+      // Step 2: Handle image uploads with a single approach for both new and edited properties
       if (images.length > 0) {
         try {
           console.log(`Uploading ${images.length} new images...`);
-          const uploadResult = await uploadImages(savedPropertyId);
-          console.log("Image upload result:", uploadResult);
           
-          // If we have new image URLs from the upload, update the property with them
-          if (uploadResult && uploadResult.imageUrls && uploadResult.imageUrls.length > 0) {
-            console.log("New image URLs:", uploadResult.imageUrls);
-            
-            // Combine existing and new images
-            const allImages = [
-              ...(existingImages || []),
-              ...(uploadResult.imageUrls || [])
-            ].filter(Boolean);
-            
-            console.log("All images after upload:", allImages);
-            
-            // Update the property with the combined image list if needed
-            if (allImages.length > 0 && !isEditing) {
-              console.log("Updating property with all images...");
-              // Use a direct fetch for better debugging
-              const response = await fetch(`/api/properties/${savedPropertyId}`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ images: allImages }),
-                credentials: 'include'
-              });
-              
-              // Check response and log it
-              if (!response.ok) {
-                console.error(`Failed to update property images: ${response.status} ${response.statusText}`);
-                const errorText = await response.text();
-                console.error(`Error details: ${errorText}`);
-              } else {
-                const result = await response.json();
-                console.log("Successfully updated property images:", result);
-              }
-            }
+          // Create simple FormData with just the files
+          const formData = new FormData();
+          images.forEach(image => {
+            console.log(`Adding image: ${image.name} (${Math.round(image.size / 1024)}KB)`);
+            formData.append('images', image);
+          });
+          
+          // Use a simple direct upload endpoint
+          const uploadEndpoint = `/api/upload/property-images/${savedPropertyId}`;
+          console.log(`Uploading to: ${uploadEndpoint}`);
+          
+          const uploadResponse = await fetch(uploadEndpoint, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+          });
+          
+          if (!uploadResponse.ok) {
+            throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
           }
+          
+          const uploadResult = await uploadResponse.json();
+          console.log('Upload successful:', uploadResult);
+          
+          // Verify the images were associated with the property
+          const verifyResponse = await fetch(`/api/properties/${savedPropertyId}`);
+          const updatedProperty = await verifyResponse.json();
+          console.log(`Property now has ${updatedProperty.images?.length || 0} images`);
+          
+          toast({
+            title: "Images uploaded",
+            description: `Successfully uploaded ${images.length} images`,
+            variant: "default"
+          });
+          
         } catch (uploadError) {
           console.error("Error during image upload:", uploadError);
           toast({
-            title: "Warning",
-            description: "Property was saved but there was an issue with image upload.",
+            title: "Image upload failed",
+            description: uploadError instanceof Error ? uploadError.message : "Failed to upload images",
             variant: "destructive"
           });
-        }
-      } else if (isEditing && existingImages.length > 0) {
-        // For editing with existing images but no new ones
-        console.log("No new images to upload, preserving existing images:", existingImages);
-        
-        // Make sure images are properly formatted for JSON
-        // The server expects an array of strings, not an object
-        let formattedImages: string[] = [];
-        
-        try {
-          // Handle different possible input formats
-          formattedImages = existingImages.filter(img => img !== null && img !== undefined).map(img => {
-            // If it's already a string, use it directly
-            if (typeof img === 'string') {
-              return img;
-            }
-            // If it's an object, stringify it safely
-            if (typeof img === 'object' && img !== null) {
-              // If it's not a plain object, try to convert it to a string
-              if (Object.prototype.toString.call(img) !== '[object Object]') {
-                // We know it's not a plain object, so we can safely cast
-                return String(img);
-              }
-              // Otherwise, use JSON.stringify
-              try {
-                return JSON.stringify(img);
-              } catch (e) {
-                console.error('Error stringifying image object:', e);
-                return '';
-              }
-            }
-            // Convert any other types to string
-            return String(img || '');
-          }).filter(Boolean); // Filter out any empty strings
-        } catch (error) {
-          console.error('Error formatting images:', error);
-          // Fallback to simple string conversion if there's an error
-          formattedImages = existingImages
-            .filter(Boolean)
-            .map(img => String(img));
-        }
-        
-        console.log("Formatted images for submission:", formattedImages);
-        // Update property directly with the formatted images
-        if (formattedImages.length > 0) {
-          try {
-            // Use a direct fetch for better debugging
-            const response = await fetch(`/api/properties/${savedPropertyId}`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ images: formattedImages }),
-              credentials: 'include'
-            });
-            
-            // Check response
-            if (!response.ok) {
-              console.error(`Failed to update property with existing images: ${response.status} ${response.statusText}`);
-              const errorText = await response.text();
-              console.error(`Error details: ${errorText}`);
-              throw new Error(`Failed to update property: ${response.statusText}`);
-            } else {
-              const result = await response.json();
-              console.log("Successfully updated property with existing images:", result);
-            }
-          } catch (updateError) {
-            console.error("Error updating property images:", updateError);
-          }
         }
       }
       
