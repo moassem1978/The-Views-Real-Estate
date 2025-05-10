@@ -45,16 +45,29 @@ export default function PropertyForm({
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
   const isEditing = !!propertyId;
   
-  // Simple image handlers
+  // Image handlers with preview functionality
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setImages(Array.from(e.target.files));
     }
   };
   
-  // Remove a selected image before upload
+  // Image preview functionality
+  const handlePreview = (image: string) => {
+    setPreviewImage(image);
+    setPreviewVisible(true);
+  };
+  
+  // Close image preview
+  const handlePreviewClose = () => {
+    setPreviewVisible(false);
+  };
+  
+  // Remove a selected image before upload with X button
   const removeSelectedImage = (index: number) => {
     setImages(prevImages => {
       const newImages = [...prevImages];
@@ -63,7 +76,7 @@ export default function PropertyForm({
     });
   };
 
-  // Remove an existing image 
+  // Remove an existing image with X button
   const removeExistingImage = (index: number) => {
     setExistingImages(prevImages => {
       const newImages = [...prevImages];
@@ -97,6 +110,7 @@ export default function PropertyForm({
       projectName: "",
       propertyType: "",
       listingType: "Primary",
+      reference: "", // Added reference field
       price: 0,
       downPayment: 0,
       installmentAmount: 0,
@@ -132,6 +146,7 @@ export default function PropertyForm({
         projectName: propertyData.projectName || "",
         propertyType: propertyData.propertyType || "",
         listingType: propertyData.listingType || "Primary",
+        reference: propertyData.reference || "",
         price: propertyData.price || 0,
         downPayment: propertyData.downPayment || 0,
         installmentAmount: propertyData.installmentAmount || 0,
@@ -155,10 +170,15 @@ export default function PropertyForm({
   // Create/Update property mutation
   const mutation = useMutation({
     mutationFn: async (data: Partial<Property>) => {
-      if (isEditing && propertyId) {
-        return await apiRequest("PUT", `/api/properties/${propertyId}`, data);
-      } else {
-        return await apiRequest("POST", "/api/properties", data);
+      try {
+        if (isEditing && propertyId) {
+          return await apiRequest("PUT", `/api/properties/${propertyId}`, data);
+        } else {
+          return await apiRequest("POST", "/api/properties", data);
+        }
+      } catch (error) {
+        console.error("Mutation error:", error);
+        throw error;
       }
     },
     onSuccess: () => {
@@ -178,7 +198,8 @@ export default function PropertyForm({
   const onSubmit = async (data: any) => {
     try {
       // Step 1: Save property data first
-      const property = await mutation.mutateAsync(data);
+      const response = await mutation.mutateAsync(data);
+      const property = await response.json();
       
       // Get the property ID (either from the saved property or existing ID)
       const savedPropertyId = isEditing ? propertyId : property.id;
