@@ -141,7 +141,7 @@ function Dashboard() {
     
     // Main dashboard content with tabs for different management sections
     return (
-      <div className="container mx-auto p-4 md:p-8">
+      <div className="container mx-auto p-4 md:p-8 pb-20 overflow-y-auto max-h-screen">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div className="flex items-center gap-4 mb-4 md:mb-0">
             <Link to="/">

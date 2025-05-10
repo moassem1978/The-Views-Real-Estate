@@ -198,11 +198,24 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // Add an overflow-auto class to the html and body elements for better scrolling
+    document.documentElement.classList.add('overflow-auto');
+    document.body.classList.add('overflow-auto', 'min-h-screen');
+    
+    return () => {
+      document.documentElement.classList.remove('overflow-auto');
+      document.body.classList.remove('overflow-auto', 'min-h-screen');
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
+        <div className="min-h-screen flex flex-col">
+          <Router />
+          <Toaster />
+        </div>
       </AuthProvider>
     </QueryClientProvider>
   );
