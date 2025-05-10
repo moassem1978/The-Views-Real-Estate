@@ -287,13 +287,7 @@ function Dashboard() {
           <TabsContent value="announcements" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span>Announcements Management</span>
-                  <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Announcement
-                  </Button>
-                </CardTitle>
+                <CardTitle>Announcements Management</CardTitle>
                 <CardDescription>
                   Create and manage announcements for the website.
                 </CardDescription>
@@ -308,42 +302,9 @@ function Dashboard() {
           
           {/* Projects Tab */}
           <TabsContent value="projects" className="space-y-4">
-            {/* Universal Forms Banner for Projects Tab */}
-            <Card className="bg-amber-50 border-amber-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-amber-800">
-                  <AlertCircle className="inline-block mr-2 h-5 w-5 text-amber-600" />
-                  Universal Project Management Form
-                </CardTitle>
-                <CardDescription className="text-amber-700">
-                  Windows users: Use this universal tool for creating and managing projects on any platform.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-3">
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700 h-auto py-4"
-                    onClick={() => window.open('/windows-project.html', '_blank')}
-                  >
-                    <ClipboardEdit className="mr-2 h-5 w-5" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">Universal Project Management Form</span>
-                      <span className="text-xs text-left opacity-90">Create, edit and manage development projects on any device</span>
-                    </div>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            
             <Card>
               <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span>Projects Management</span>
-                  <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Project
-                  </Button>
-                </CardTitle>
+                <CardTitle>Projects Management</CardTitle>
                 <CardDescription>
                   Create and manage projects for property listings.
                 </CardDescription>
@@ -360,13 +321,7 @@ function Dashboard() {
           <TabsContent value="users" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span>User Management</span>
-                  <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add User
-                  </Button>
-                </CardTitle>
+                <CardTitle>User Management</CardTitle>
                 <CardDescription>
                   Manage users and their roles.
                 </CardDescription>
