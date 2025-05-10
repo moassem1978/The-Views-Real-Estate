@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, AlertCircle, Loader2, Home, Building2, FileText, Users, Settings,
-  PlusCircle, ClipboardEdit, List, Star, X
+  PlusCircle, ClipboardEdit, List, Star, X, Plus
 } from "lucide-react";
 import {
   Card,
@@ -29,10 +29,21 @@ import PropertyForm from "@/components/dashboard/PropertyForm";
 // Dashboard component with full management functionality
 function Dashboard() {
   console.log("Dashboard component rendering");
+  const { user, isLoading: authLoading } = useAuth();
+  console.log("Auth context loaded:", !!user);
+  
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | undefined>(undefined);
+  
+  // Dashboard state
+  const [state, setState] = useState({
+    userExists: !!user,
+    isLoading: authLoading,
+    hasError: false
+  });
+  console.log("Dashboard state:", state);
   
   // Property form handlers
   const handlePropertyEdit = (propertyId: number) => {
