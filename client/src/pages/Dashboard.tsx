@@ -26,6 +26,45 @@ import { useState, useEffect } from "react";
 import PropertiesManager from "@/components/dashboard/PropertiesManager";
 import PropertyForm from "@/components/dashboard/PropertyForm";
 
+// Stat card component for dashboard
+interface DashboardStatCardProps {
+  title: string;
+  value: string;
+  description: string;
+  icon?: React.ReactNode;
+  linkTo?: string;
+}
+
+function DashboardStatCard({ title, value, description, icon, linkTo }: DashboardStatCardProps) {
+  const content = (
+    <Card className="h-full hover:border-[#B87333] transition-colors">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2">
+          {icon}
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold">{value}</div>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </CardContent>
+      {linkTo && (
+        <CardFooter className="pt-0">
+          <Button variant="link" className="p-0 h-auto font-normal text-[#B87333]">
+            View details &rarr;
+          </Button>
+        </CardFooter>
+      )}
+    </Card>
+  );
+  
+  if (linkTo) {
+    return <Link to={linkTo}>{content}</Link>;
+  }
+  
+  return content;
+}
+
 // Dashboard component with full management functionality
 function Dashboard() {
   console.log("Dashboard component rendering");
@@ -78,70 +117,67 @@ function Dashboard() {
     return sections;
   };
   
-  try {
-    // Access authentication context
-    const auth = useAuth();
-    console.log("Auth context loaded:", !!auth);
-    const { user, isLoading, error } = auth;
-    console.log("Dashboard state:", { userExists: !!user, isLoading, hasError: !!error });
-    
-    // Set up sections once user is loaded
-    useEffect(() => {
-      if (user) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-        if (tabParam) {
-          setActiveTab(tabParam);
-        }
+  // Set up sections once user is loaded
+  useEffect(() => {
+    if (user) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam) {
+        setActiveTab(tabParam);
       }
-    }, [user]);
-    
-    // Display loading state
-    if (isLoading) {
-      return (
-        <div className="container mx-auto p-8 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Loading dashboard...</p>
-        </div>
-      );
     }
+  }, [user]);
+  
+  // Authentication context
+  const { isLoading, error } = useAuth();
     
-    // Display error state
-    if (error) {
-      return (
-        <div className="container mx-auto p-8">
-          <h2 className="text-xl font-bold mb-4">Error</h2>
-          <p className="mb-4">{error.message || "Unknown error"}</p>
-          <Button onClick={() => window.location.reload()}>Try Again</Button>
-        </div>
-      );
-    }
-    
-    // Authentication check
-    if (!user) {
-      return (
-        <div className="container mx-auto p-8">
-          <h2 className="text-xl font-bold mb-4">Authentication Required</h2>
-          <p className="mb-4">Please sign in to access the dashboard</p>
-          <Link to="/signin">
-            <Button>Sign In</Button>
-          </Link>
-        </div>
-      );
-    }
-    
-    // Get sections based on user role
-    const sections = getSections(user.role);
-    
-    // Handle tab change
-    const handleTabChange = (value: string) => {
-      setActiveTab(value);
-      window.history.replaceState(null, '', `?tab=${value}`);
-    };
-    
-    // Main dashboard content with tabs for different management sections
+  // Display loading state
+  if (isLoading) {
     return (
-      <div className="container mx-auto p-4 md:p-8 pb-20 overflow-y-auto max-h-screen">
+      <div className="container mx-auto p-8 text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
+  
+  // Display error state
+  if (error) {
+    return (
+      <div className="container mx-auto p-8">
+        <h2 className="text-xl font-bold mb-4">Error</h2>
+        <p className="mb-4">{error.message || "Unknown error"}</p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </div>
+    );
+  }
+  
+  // Authentication check
+  if (!user) {
+    return (
+      <div className="container mx-auto p-8">
+        <h2 className="text-xl font-bold mb-4">Authentication Required</h2>
+        <p className="mb-4">Please sign in to access the dashboard</p>
+        <Link to="/signin">
+          <Button>Sign In</Button>
+        </Link>
+      </div>
+    );
+  }
+  
+  // Get sections based on user role
+  const sections = getSections(user.role);
+  
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    window.history.replaceState(null, '', `?tab=${value}`);
+  };
+  
+  // Main dashboard content with tabs for different management sections
+  return (
+    <div className="dashboard-container">
+      <div className="container mx-auto p-4 md:p-8 dashboard-content">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div className="flex items-center gap-4 mb-4 md:mb-0">
             <Link to="/">
@@ -338,66 +374,8 @@ function Dashboard() {
           </DialogContent>
         </Dialog>
       </div>
-    );
-  } catch (e) {
-    // Fallback error handling
-    console.error("Dashboard render error:", e);
-    return (
-      <div className="container mx-auto p-8 text-center">
-        <AlertCircle className="h-8 w-8 mx-auto mb-4 text-red-500" />
-        <h2 className="text-xl font-bold mb-4">Something went wrong</h2>
-        <p className="mb-4">There was an error rendering the dashboard</p>
-        <div className="flex justify-center gap-4">
-          <Link to="/">
-            <Button variant="outline">Return Home</Button>
-          </Link>
-          <Button onClick={() => window.location.reload()}>
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
-}
-
-// Stat card component for dashboard
-interface DashboardStatCardProps {
-  title: string;
-  value: string;
-  description: string;
-  icon?: React.ReactNode;
-  linkTo?: string;
-}
-
-function DashboardStatCard({ title, value, description, icon, linkTo }: DashboardStatCardProps) {
-  const content = (
-    <Card className="h-full hover:border-[#B87333] transition-colors">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center gap-2">
-          {icon}
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold">{value}</div>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </CardContent>
-      {linkTo && (
-        <CardFooter className="pt-0">
-          <Button variant="link" className="p-0 h-auto font-normal text-[#B87333]">
-            View details &rarr;
-          </Button>
-        </CardFooter>
-      )}
-    </Card>
+    </div>
   );
-  
-  if (linkTo) {
-    return <Link to={linkTo}>{content}</Link>;
-  }
-  
-  return content;
 }
 
-// Export with error boundary
 export default Dashboard;

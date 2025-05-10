@@ -5,6 +5,13 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+  
   :root {
     /* Enhanced luxury brand colors: Copper/Bronze (#B87333), Rich Black (#0D0D0D), Cream Gold (#F5F0E5) */
     --background: 39 42% 96%; /* Cream Gold background (#F5F0E5) */
@@ -298,6 +305,41 @@
 .image-gallery-control:hover {
   background-color: #B87333;
   color: white;
+}
+
+/* Dashboard Styles */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding-bottom: 3rem;
+}
+
+.dashboard-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 2rem;
+}
+
+.dashboard-table-container {
+  overflow-x: auto;
+  max-width: 100%;
+  margin-bottom: 1rem;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.dashboard-table th {
+  position: sticky;
+  top: 0;
+  background-color: #f5f0e5;
+  z-index: 10;
 }
 
 /* News Carousel Styles */

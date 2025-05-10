@@ -339,8 +339,8 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
       </div>
 
       {/* Results table - with responsive handling */}
-      <div className="border rounded-md overflow-x-auto">
-        <Table>
+      <div className="border rounded-md dashboard-table-container">
+        <Table className="dashboard-table">
           <TableHeader>
             <TableRow>
               <TableHead className="whitespace-nowrap min-w-[160px]">Title</TableHead>
