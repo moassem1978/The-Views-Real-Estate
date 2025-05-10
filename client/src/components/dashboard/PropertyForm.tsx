@@ -35,7 +35,7 @@ interface PropertyFormProps {
   onCancel?: () => void;
 }
 
-export default function PropertyFormSimple({
+export default function PropertyForm({
   propertyId,
   onSuccess,
   onCancel,

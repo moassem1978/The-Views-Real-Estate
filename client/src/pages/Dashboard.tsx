@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, AlertCircle, Loader2, Home, Building2, FileText, Users, Settings,
-  PlusCircle, ClipboardEdit, List, Star
+  PlusCircle, ClipboardEdit, List, Star, X
 } from "lucide-react";
 import {
   Card,
@@ -14,16 +14,25 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 
 // Dashboard components
 import PropertiesManager from "@/components/dashboard/PropertiesManager";
+import PropertyForm from "@/components/dashboard/PropertyForm";
 
 // Dashboard component with full management functionality
 function Dashboard() {
   console.log("Dashboard component rendering");
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | undefined>(undefined);
   
   // Define sections based on role permissions
   const getSections = (role: string) => {
@@ -326,49 +335,27 @@ function Dashboard() {
           
           {/* Properties Tab */}
           <TabsContent value="properties" className="space-y-4">
-            {/* Universal Forms Banner for Properties Tab */}
+            {/* Add/Edit Property Banner */}
             <Card className="bg-amber-50 border-amber-200">
               <CardHeader className="pb-2">
                 <CardTitle className="text-amber-800">
-                  <AlertCircle className="inline-block mr-2 h-5 w-5 text-amber-600" />
-                  Universal Forms for Cross-Platform Compatibility
+                  <Building2 className="inline-block mr-2 h-5 w-5 text-amber-600" />
+                  Create or Update Properties
                 </CardTitle>
                 <CardDescription className="text-amber-700">
-                  Windows users: Use these universal tools for creating and editing properties.
+                  Use this button to add new properties or edit existing ones. All your property management in one place.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <Button 
-                    className="bg-blue-600 hover:bg-blue-700 h-auto py-4"
-                    onClick={() => window.open('/windows-property.html', '_blank')}
+                    className="bg-[#B87333] hover:bg-[#964B00] h-auto py-4"
+                    onClick={() => setShowPropertyModal(true)}
                   >
                     <Building2 className="mr-2 h-5 w-5" />
                     <div className="flex flex-col items-start">
-                      <span className="font-medium">Universal Property Form</span>
-                      <span className="text-xs text-left opacity-90">Create & Edit Properties on any device</span>
-                    </div>
-                  </Button>
-                  
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700 h-auto py-4"
-                    onClick={() => window.open('/windows-upload.html', '_blank')}
-                  >
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">Windows Image Uploader</span>
-                      <span className="text-xs text-left opacity-90">Upload property images on Windows</span>
-                    </div>
-                  </Button>
-                  
-                  <Button 
-                    className="bg-green-600 hover:bg-green-700 h-auto py-4"
-                    onClick={() => window.open('/simple-property-form.html', '_blank')}
-                  >
-                    <AlertCircle className="mr-2 h-5 w-5" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">NEW! Simple Property Form</span>
-                      <span className="text-xs text-left opacity-90">One form for adding and editing properties - works on all devices</span>
+                      <span className="font-medium">Property Management</span>
+                      <span className="text-xs text-left opacity-90">Add new properties or edit existing ones</span>
                     </div>
                   </Button>
                 </div>
