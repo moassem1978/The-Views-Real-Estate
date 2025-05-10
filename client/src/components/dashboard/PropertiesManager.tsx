@@ -172,6 +172,13 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
 
   // Handle edit property
   const handleEditProperty = async (id: number) => {
+    // If parent component provided an edit handler, use it
+    if (onEditProperty) {
+      onEditProperty(id);
+      return;
+    }
+    
+    // Otherwise use the local edit functionality
     try {
       console.log("Setting property for edit, ID:", id);
 

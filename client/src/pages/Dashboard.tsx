@@ -511,6 +511,20 @@ function Dashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+        
+        {/* Property Form Modal */}
+        <Dialog open={showPropertyModal} onOpenChange={setShowPropertyModal}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>{selectedPropertyId ? "Edit Property" : "Add New Property"}</DialogTitle>
+            </DialogHeader>
+            <PropertyForm 
+              propertyId={selectedPropertyId} 
+              onSuccess={handlePropertyFormClose}
+              onCancel={handlePropertyFormClose}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     );
   } catch (e) {
