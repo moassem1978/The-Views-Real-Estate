@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import { Client } from '@replit/object-storage';
+import path from 'path';
 
 // Initialize Object Storage client
 const storage = new Client();
@@ -17,101 +18,43 @@ const compressionOptions = {
   webp: { quality: 75 }
 };
 
-/**
- * Optimizes an image and creates multiple sizes for responsive loading
- * Uses Object Storage for persistent storage
- */
-export async function optimizeImage(inputBuffer: Buffer, filename: string): Promise<{ 
-  original: string, 
-  thumbnail: string, 
-  medium: string, 
-  large: string 
-}> {
-  const ext = '.webp'; // WebP format for better compression
-  const basePath = 'properties';
+export async function optimizeImage(inputBuffer: Buffer, options = {}) {
+  const {
+    width = 1200,
+    quality = 80,
+    format = 'jpeg'
+  } = options;
 
-  // Helper function to optimize and upload an image
-  const optimizeAndUpload = async (
-    input: Buffer,
-    width: number | null,
-    height: number | null,
-    outputKey: string,
-    maxSizeBytes: number,
-    startQuality = 80
-  ) => {
-    let quality = startQuality;
-    let outputBuffer: Buffer;
-    let fileSize = Infinity;
+  try {
+    const optimized = await sharp(inputBuffer)
+      .resize(width, null, {
+        withoutEnlargement: true,
+        fit: 'inside'
+      })
+      .toFormat(format, { quality })
+      .toBuffer();
 
-    while (quality >= 30 && fileSize > maxSizeBytes) {
-      const transformer = sharp(input);
+    return optimized;
+  } catch (err) {
+    console.error('Image optimization failed:', err);
+    return inputBuffer; // Fallback to original
+  }
+}
 
-      if (width && height) {
-        transformer.resize(width, height, {
-          fit: 'cover',
-          position: 'centre'
-        });
-      }
+export async function generateThumbnail(inputBuffer: Buffer) {
+  try {
+    const thumbnail = await sharp(inputBuffer)
+      .resize(300, 300, {
+        fit: 'cover'
+      })
+      .toFormat('jpeg', { quality: 70 })
+      .toBuffer();
 
-      outputBuffer = await transformer
-        .webp({ quality })
-        .toBuffer();
-
-      fileSize = outputBuffer.length;
-      quality -= 5;
-    }
-
-    // Upload to Object Storage
-    await storage.upload(outputKey, outputBuffer!);
-    return outputKey;
-  };
-
-  // Generate paths
-  const paths = {
-    original: `${basePath}/${filename}-original${ext}`,
-    thumbnail: `${basePath}/${filename}-thumbnail${ext}`,
-    medium: `${basePath}/${filename}-medium${ext}`,
-    large: `${basePath}/${filename}-large${ext}`
-  };
-
-  // Process and upload all sizes
-  await Promise.all([
-    // Original (compressed)
-    optimizeAndUpload(inputBuffer, null, null, paths.original, 500 * 1024, 75),
-
-    // Thumbnail
-    optimizeAndUpload(
-      inputBuffer,
-      imageSizes.thumbnail.width,
-      imageSizes.thumbnail.height,
-      paths.thumbnail,
-      30 * 1024,
-      65
-    ),
-
-    // Medium
-    optimizeAndUpload(
-      inputBuffer,
-      imageSizes.medium.width,
-      imageSizes.medium.height,
-      paths.medium,
-      100 * 1024,
-      70
-    ),
-
-    // Large
-    optimizeAndUpload(
-      inputBuffer,
-      imageSizes.large.width,
-      imageSizes.large.height,
-      paths.large,
-      200 * 1024,
-      75
-    )
-  ]);
-
-  // Return paths to stored images
-  return paths;
+    return thumbnail;
+  } catch (err) {
+    console.error('Thumbnail generation failed:', err);
+    return inputBuffer;
+  }
 }
 
 /**
