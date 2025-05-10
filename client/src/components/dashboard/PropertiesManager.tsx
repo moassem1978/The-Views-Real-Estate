@@ -50,7 +50,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Loader2, MoreHorizontal, Plus, Search, Edit, Star, Trash2, Filter, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import PropertyForm from "./PropertyForm";
 
-export default function PropertiesManager() {
+interface PropertiesManagerProps {
+  onEditProperty?: (propertyId: number) => void;
+}
+
+export default function PropertiesManager({ onEditProperty }: PropertiesManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");

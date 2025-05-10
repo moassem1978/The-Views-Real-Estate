@@ -34,6 +34,17 @@ function Dashboard() {
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | undefined>(undefined);
   
+  // Property form handlers
+  const handlePropertyEdit = (propertyId: number) => {
+    setSelectedPropertyId(propertyId);
+    setShowPropertyModal(true);
+  };
+  
+  const handlePropertyFormClose = () => {
+    setShowPropertyModal(false);
+    setSelectedPropertyId(undefined);
+  };
+  
   // Define sections based on role permissions
   const getSections = (role: string) => {
     const sections = [
@@ -370,7 +381,7 @@ function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <PropertiesManager />
+                <PropertiesManager onEditProperty={handlePropertyEdit} />
               </CardContent>
             </Card>
           </TabsContent>
