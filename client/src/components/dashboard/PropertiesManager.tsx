@@ -428,13 +428,7 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => window.open(`/properties/${property.id}`, '_blank')}
-                          className="flex items-center gap-2"
-                        >
-                          <Eye className="h-4 w-4" />
-                          View
-                        </DropdownMenuItem>
+                        {/* Removed View link to simplify interface */}
                         <DropdownMenuItem 
                           onClick={() => handleEditProperty(property.id)}
                           className="flex items-center gap-2"
