@@ -223,33 +223,7 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
     }
   };
 
-  // Property modal
-  const PropertyModal = () => (
-    <Dialog open={showPropertyForm} onOpenChange={setShowPropertyForm}>
-      <DialogContent className="max-w-4xl h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{editingPropertyId ? "Edit Property" : "Add New Property"}</DialogTitle>
-          <DialogDescription>
-            {editingPropertyId 
-              ? "Update the property information below" 
-              : "Fill in the details to create a new property listing"
-            }
-          </DialogDescription>
-        </DialogHeader>
-        <PropertyForm 
-          propertyId={editingPropertyId || undefined} 
-          onSuccess={() => {
-            setShowPropertyForm(false);
-            setEditingPropertyId(null);
-          }}
-          onCancel={() => {
-            setShowPropertyForm(false);
-            setEditingPropertyId(null);
-          }}
-        />
-      </DialogContent>
-    </Dialog>
-  );
+  // Property form has been moved to the Dashboard for a single, unified interface
 
   // Reset filters
   const resetFilters = () => {
@@ -294,9 +268,6 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
 
   return (
     <div className="space-y-6">
-      {/* Property form modal */}
-      <PropertyModal />
-
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
