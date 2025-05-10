@@ -338,17 +338,17 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
         </div>
       </div>
 
-      {/* Results table */}
-      <div className="border rounded-md">
+      {/* Results table - with responsive handling */}
+      <div className="border rounded-md overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Price (L.E)</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[160px]">Title</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[120px]">Type</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[130px]">Location</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[120px]">Price (L.E)</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[100px]">Status</TableHead>
+              <TableHead className="text-right whitespace-nowrap min-w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
