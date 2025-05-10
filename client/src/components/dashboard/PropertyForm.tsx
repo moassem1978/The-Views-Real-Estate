@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -46,6 +46,21 @@ export default function PropertyForm({
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const isEditing = !!propertyId;
+  
+  // Simple image handling functions
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setImages(Array.from(e.target.files));
+    }
+  };
+  
+  const removeSelectedImage = (index: number) => {
+    setImages(prevImages => {
+      const newImages = [...prevImages];
+      newImages.splice(index, 1);
+      return newImages;
+    });
+  };
 
   // Fetch available projects for dropdown
   const { data: projects } = useQuery({
@@ -295,11 +310,32 @@ export default function PropertyForm({
           throw new Error("Invalid response from server");
         }
 
-        // Finally, if there are images to upload, upload them
+        // Finally, if there are images to upload, upload them directly
         if (images.length > 0) {
           console.log(`FORM SUBMISSION: Uploading ${images.length} new images`);
           try {
-            await uploadImages(result.id);
+            setUploading(true);
+            
+            // Create FormData for direct image upload
+            const formData = new FormData();
+            images.forEach(image => {
+              formData.append('images', image);
+            });
+            
+            // Upload images to the server using the simple upload endpoint
+            const uploadResponse = await fetch(`/api/upload/property-images/${result.id}`, {
+              method: 'POST',
+              body: formData,
+              credentials: 'include',
+            });
+            
+            if (!uploadResponse.ok) {
+              throw new Error(`Image upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+            }
+            
+            const uploadResult = await uploadResponse.json();
+            console.log('Images uploaded successfully:', uploadResult);
+            
           } catch (uploadError) {
             console.error("Image upload failed but property was saved:", uploadError);
             toast({
@@ -307,6 +343,8 @@ export default function PropertyForm({
               description: "Your property was saved but we couldn't upload the images. You can try again later.",
               variant: "destructive",
             });
+          } finally {
+            setUploading(false);
           }
         }
 
@@ -480,21 +518,7 @@ export default function PropertyForm({
     }
   };
 
-  // Handle image selection
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setImages(Array.from(e.target.files));
-    }
-  };
-  
-  // Remove a selected image before upload
-  const removeSelectedImage = (index: number) => {
-    setImages(prevImages => {
-      const newImages = [...prevImages];
-      newImages.splice(index, 1);
-      return newImages;
-    });
-  };
+
 
   // Watch the listing type to conditionally render fields
   const listingType = form.watch('listingType');
