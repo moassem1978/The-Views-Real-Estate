@@ -47,8 +47,7 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, MoreHorizontal, Plus, Search, Edit, Star, Trash2, Filter, Eye, ChevronLeft, ChevronRight } from "lucide-react";
-import PropertyForm from "./PropertyForm";
+import { Loader2, MoreHorizontal, Search, Edit, Star, Trash2, Filter, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PropertiesManagerProps {
   onEditProperty?: (propertyId: number) => void;
@@ -62,8 +61,6 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
   const [listingTypeFilter, setListingTypeFilter] = useState<string>("all");
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("");
-  const [showPropertyForm, setShowPropertyForm] = useState(false);
-  const [editingPropertyId, setEditingPropertyId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
 
@@ -170,44 +167,20 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
     },
   });
 
-  // Handle edit property
-  const handleEditProperty = async (id: number) => {
-    // If parent component provided an edit handler, use it
-    if (onEditProperty) {
-      onEditProperty(id);
+  // Handle edit property - using only the Dashboard's form
+  const handleEditProperty = (id: number) => {
+    if (!onEditProperty) {
+      console.error("No onEditProperty callback provided");
+      toast({
+        title: "Error",
+        description: "Property editing is not set up correctly. Please contact the administrator.",
+        variant: "destructive"
+      });
       return;
     }
     
-    // Otherwise use the local edit functionality
-    try {
-      console.log("Setting property for edit, ID:", id);
-
-      // Get the property to pre-populate the form
-      const property = await apiRequest("GET", `/api/properties/${id}`);
-
-      if (!property.ok) {
-        throw new Error(`Failed to fetch property (Status: ${property.status})`);
-      }
-
-      const propertyData = await property.json();
-      console.log("Property data loaded:", propertyData);
-
-      // Remove references field to avoid DB error
-      delete propertyData.references;
-
-      // If we got here, the property exists and we have its data
-      queryClient.setQueryData(["/api/properties", id], propertyData);
-
-      setEditingPropertyId(id);
-      setShowPropertyForm(true);
-    } catch (error) {
-      console.error("Error preparing property edit:", error);
-      toast({
-        title: "Error",
-        description: "Failed to prepare property edit. Please try again.",
-        variant: "destructive"
-      });
-    }
+    // Use the callback from the Dashboard component
+    onEditProperty(id);
   };
 
   // Handle delete property
@@ -297,7 +270,7 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Header with add button */}
+      {/* Header without add button - use only Dashboard's button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold mb-1">Properties</h2>
@@ -305,16 +278,6 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
             Manage property listings ({totalCount} total)
           </p>
         </div>
-        <Button 
-          className="bg-[#B87333] hover:bg-[#964B00]"
-          onClick={() => {
-            setEditingPropertyId(null);
-            setShowPropertyForm(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Property
-        </Button>
       </div>
 
       {/* Search and filters */}
