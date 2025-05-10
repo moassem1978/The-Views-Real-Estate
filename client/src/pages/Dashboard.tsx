@@ -277,82 +277,21 @@ function Dashboard() {
               </CardContent>
             </Card>
             
-            {/* New Cross-Platform Upload Solution */}
-            <Card className="bg-green-50 border-green-200 mb-4">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-green-800">
-                  <AlertCircle className="inline-block mr-2 h-5 w-5 text-green-600" />
-                  NEW! Universal Cross-Platform Image Uploader
-                </CardTitle>
-                <CardDescription className="text-green-700">
-                  Having trouble uploading images on iOS or other devices? Try our new universal uploader that works on all platforms.
-                </CardDescription>
+            {/* Dashboard Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Dashboard</CardTitle>
+                <CardDescription>Welcome to the Dashboard</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button 
-                  className="bg-green-600 hover:bg-green-700 h-auto py-4 w-full"
-                  onClick={() => window.open('/universal-upload.html', '_blank')}
-                >
-                  <AlertCircle className="mr-2 h-5 w-5" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-medium">Open Cross-Platform Uploader</span>
-                    <span className="text-xs text-left opacity-90">Works on iOS, Windows, Mac, and all other devices</span>
-                  </div>
-                </Button>
+                <p>Please use the tabs above to navigate to different sections:</p>
+                <ul className="list-disc list-inside mt-4 space-y-2">
+                  <li>Use the <strong>Properties</strong> tab to manage all property listings</li>
+                  <li>Use the <strong>Announcements</strong> tab to manage site announcements</li>
+                  <li>Use the <strong>Projects</strong> tab to manage development projects</li>
+                </ul>
               </CardContent>
             </Card>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="grid grid-cols-1 gap-2">
-                    <Link to="/dashboard?tab=properties">
-                      <Button variant="outline" className="w-full justify-start">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add New Property
-                      </Button>
-                    </Link>
-                    <Link to="/dashboard?tab=announcements">
-                      <Button variant="outline" className="w-full justify-start">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create Announcement
-                      </Button>
-                    </Link>
-                    <Link to="/dashboard?tab=projects">
-                      <Button variant="outline" className="w-full justify-start">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add New Project
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Featured Content</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Link to="/dashboard?tab=properties">
-                      <Button variant="outline" className="w-full justify-start">
-                        <Star className="mr-2 h-4 w-4" />
-                        Manage Featured Properties
-                      </Button>
-                    </Link>
-                    <Link to="/dashboard?tab=announcements">
-                      <Button variant="outline" className="w-full justify-start">
-                        <Star className="mr-2 h-4 w-4" />
-                        Manage Highlighted Announcements
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </TabsContent>
           
           {/* Properties Tab - SIMPLIFIED with ONE interface */}
@@ -400,12 +339,6 @@ function Dashboard() {
               <CardContent>
                 <div className="p-8 text-center">
                   <p className="text-muted-foreground mb-4">Announcement management interface coming soon...</p>
-                  <Link to="/announcements">
-                    <Button variant="outline">
-                      <List className="mr-2 h-4 w-4" />
-                      View Announcements
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>
