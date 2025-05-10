@@ -35,7 +35,7 @@ interface PropertyFormProps {
   onCancel?: () => void;
 }
 
-export default function PropertyForm({
+export default function PropertyFormSimple({
   propertyId,
   onSuccess,
   onCancel,
@@ -47,15 +47,25 @@ export default function PropertyForm({
   const [uploading, setUploading] = useState(false);
   const isEditing = !!propertyId;
   
-  // Simple image handling functions
+  // Simple image handlers
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setImages(Array.from(e.target.files));
     }
   };
   
+  // Remove a selected image before upload
   const removeSelectedImage = (index: number) => {
     setImages(prevImages => {
+      const newImages = [...prevImages];
+      newImages.splice(index, 1);
+      return newImages;
+    });
+  };
+
+  // Remove an existing image 
+  const removeExistingImage = (index: number) => {
+    setExistingImages(prevImages => {
       const newImages = [...prevImages];
       newImages.splice(index, 1);
       return newImages;
@@ -68,325 +78,92 @@ export default function PropertyForm({
     enabled: true,
   });
 
-  // Fetch property data if editing
-  const { data: property, isLoading: isLoadingProperty, error: propertyError } = useQuery<Property>({
-    queryKey: ["/api/properties", propertyId],
-    queryFn: async () => {
-      try {
-        if (!propertyId) {
-          throw new Error("No property ID provided");
-        }
-        
-        console.log(`Fetching property data for ID: ${propertyId}`);
-        
-        // Try to get property from cache first
-        const propertiesCache = queryClient.getQueryData<{ data: Property[] }>(["/api/properties"]);
-        if (propertiesCache?.data) {
-          const cachedProperty = propertiesCache.data.find(p => p.id === propertyId);
-          if (cachedProperty) {
-            console.log("Found property in cache:", cachedProperty);
-            return cachedProperty;
-          }
-        }
-        
-        // If not in cache, fetch from server
-        const res = await apiRequest("GET", `/api/properties/${propertyId}`);
-        
-        // Handle 404 specifically
-        if (res.status === 404) {
-          console.error(`Property with ID ${propertyId} not found`);
-          toast({
-            title: "Property not found",
-            description: `The property with ID ${propertyId} does not exist or was deleted.`,
-            variant: "destructive"
-          });
-          
-          // Return null to immediately close the form
-          setTimeout(() => {
-            if (onCancel) onCancel();
-          }, 1500);
-          
-          throw new Error(`Property with ID ${propertyId} not found`);
-        }
-        
-        if (!res.ok) {
-          console.error(`Error fetching property ${propertyId}: ${res.status} ${res.statusText}`);
-          throw new Error(`Failed to fetch property (Status: ${res.status})`);
-        }
-        
-        const data = await res.json();
-        console.log("Successfully fetched property data:", data);
-        return data;
-      } catch (error) {
-        console.error("Error in property fetch query:", error);
-        toast({
-          title: "Error loading property",
-          description: "Failed to fetch property details. Please try again.",
-          variant: "destructive"
-        });
-        throw error;
-      }
-    },
-    enabled: !!propertyId,
-    retry: (failureCount, error: any) => {
-      // Don't retry if the property doesn't exist
-      if (error?.message?.includes("not found")) {
-        return false;
-      }
-      // Otherwise retry up to 2 times for other errors
-      return failureCount < 2;
-    },
+  // Fetch property data if in edit mode
+  const {
+    data: propertyData,
+    isLoading: isLoadingProperty,
+    error: propertyError,
+  } = useQuery<Property>({
+    queryKey: [`/api/properties/${propertyId}`],
+    enabled: isEditing,
   });
 
-  // Form setup
+  // Form definition
   const form = useForm({
     defaultValues: {
       title: "",
       description: "",
+      city: "",
+      projectName: "",
       propertyType: "",
-      listingType: "Resale", // Default to Resale
+      listingType: "Primary",
       price: 0,
       downPayment: 0,
       installmentAmount: 0,
       installmentPeriod: 0,
-      isFullCash: false,
-      city: "",
-      projectName: "",
-      developerName: "",
-      address: "",
       bedrooms: 0,
       bathrooms: 0,
       builtUpArea: 0,
+      plotSize: 0,
+      gardenSize: 0,
+      floor: 0,
       isFeatured: false,
-      isHighlighted: false,
       isNewListing: true,
-      country: "Egypt", // Default to Egypt
-      references: "", // Added default value for references
-      zipCode: "" // Required by server
+      isHighlighted: false,
+      isGroundUnit: false,
+      isFullCash: false,
+      country: "Egypt",
     },
   });
 
-  // Set form values when property data is loaded
+  // Update form with existing property data when editing
   useEffect(() => {
-    if (property && isEditing) {
-      console.log("Setting form data for property:", property);
+    if (isEditing && propertyData) {
+      // Load existing images if any
+      if (propertyData.images && Array.isArray(propertyData.images)) {
+        setExistingImages(propertyData.images);
+      }
       
-      // Create a clean form data object with consistent field names
-      const formData = {
-        title: property.title || '',
-        description: property.description || '',
-        propertyType: property.propertyType || property.property_type || '',
-        listingType: property.listingType || property.listing_type || 'Primary',
-        price: property.price || 0,
-        downPayment: property.downPayment || property.down_payment || 0,
-        installmentAmount: property.installmentAmount || property.installment_amount || 0,
-        installmentPeriod: property.installmentPeriod || property.installment_period || 0,
-        isFullCash: Boolean(property.isFullCash || property.is_full_cash),
-        city: property.city || '',
-        projectName: property.projectName || property.project_name || '',
-        developerName: property.developerName || property.developer_name || '',
-        address: property.address || '',
-        bedrooms: property.bedrooms || 0,
-        bathrooms: property.bathrooms || 0,
-        builtUpArea: property.builtUpArea || property.built_up_area || 0,
-        isFeatured: Boolean(property.isFeatured || property.is_featured),
-        isHighlighted: Boolean(property.isHighlighted || property.is_highlighted),
-        isNewListing: Boolean(property.isNewListing || property.is_new_listing),
-        country: property.country || 'Egypt',
-        references: property.references || '',
-        yearBuilt: property.yearBuilt || property.year_built || '',
-        zipCode: property.zipCode || property.zip_code || "00000", // Required by server
-        images: property.images || []
-      };
-      
-      // Set existing images if available
-      const propertyImages = property.images || [];
-      console.log("Setting existing property images:", propertyImages);
-      setExistingImages(Array.isArray(propertyImages) ? propertyImages : []);
-      
-      console.log("Form data being set:", formData);
-      form.reset(formData);
+      // Set form values
+      form.reset({
+        title: propertyData.title || "",
+        description: propertyData.description || "",
+        city: propertyData.city || "",
+        projectName: propertyData.projectName || "",
+        propertyType: propertyData.propertyType || "",
+        listingType: propertyData.listingType || "Primary",
+        price: propertyData.price || 0,
+        downPayment: propertyData.downPayment || 0,
+        installmentAmount: propertyData.installmentAmount || 0,
+        installmentPeriod: propertyData.installmentPeriod || 0,
+        bedrooms: propertyData.bedrooms || 0,
+        bathrooms: propertyData.bathrooms || 0,
+        builtUpArea: propertyData.builtUpArea || 0,
+        plotSize: propertyData.plotSize || 0,
+        gardenSize: propertyData.gardenSize || 0,
+        floor: propertyData.floor || 0,
+        isFeatured: propertyData.isFeatured || false,
+        isNewListing: propertyData.isNewListing || false,
+        isHighlighted: propertyData.isHighlighted || false,
+        isGroundUnit: propertyData.isGroundUnit || false,
+        isFullCash: propertyData.isFullCash || false,
+        country: propertyData.country || "Egypt",
+      });
     }
-  }, [property, isEditing, form]);
+  }, [isEditing, propertyData, form]);
 
-  // Create or update property mutation
+  // Create/Update property mutation
   const mutation = useMutation({
-    mutationFn: async (data: any) => {
-      try {
-        console.log("Starting form submission process...");
-        
-        // Simple auth refresh - no complex checks that might break things
-        try {
-          await apiRequest("POST", "/api/auth/refresh");
-          console.log("Authentication refreshed successfully");
-        } catch (authError) {
-          console.warn("Authentication refresh failed, will try request anyway", authError);
-        }
-        
-        const url = isEditing ? `/api/properties/${propertyId}` : '/api/properties';
-        const method = isEditing ? 'PUT' : 'POST';
-        
-        console.log(`FORM SUBMISSION: Making ${method} request to ${url}`);
-        
-        // Create a clean data object with primitive values to avoid circular reference errors
-        const cleanData = { ...data };
-        
-        // Ensure all fields are properly formatted for transmission
-        // Handle zipCode (required by the server)
-        if (!cleanData.zipCode && cleanData.city) {
-          // Default zipCodes for common cities
-          const defaultZipCodes: Record<string, string> = {
-            'Cairo': '11511',
-            'Dubai': '00000',
-            'London': 'SW1A 1AA',
-            'Zayed': '12311',
-            'North coast': '23511',
-            'Gouna': '84513',
-            'Red Sea': '84712'
-          };
-          cleanData.zipCode = (defaultZipCodes[cleanData.city] || '00000');
-          console.log(`Added zipCode: ${cleanData.zipCode} for city: ${cleanData.city}`);
-        }
-        
-        // Ensure numeric fields are actually numbers
-        ['price', 'downPayment', 'installmentAmount', 'installmentPeriod', 
-         'bedrooms', 'bathrooms', 'builtUpArea'].forEach(field => {
-          if (field in cleanData) {
-            const value = cleanData[field];
-            if (typeof value === 'string' && value.trim() !== '') {
-              cleanData[field] = Number(value);
-            } else if (value === '' || value === null || value === undefined) {
-              cleanData[field] = 0;
-            }
-          }
-        });
-        
-        // Handle boolean fields properly
-        ['isFullCash', 'isFeatured', 'isHighlighted', 'isNewListing'].forEach(field => {
-          if (field in cleanData) {
-            // Ensure booleans are actual booleans
-            cleanData[field] = Boolean(cleanData[field]);
-          }
-        });
-        
-        // Log the final clean data object
-        try {
-          console.log("FORM SUBMISSION DATA:", JSON.stringify(cleanData, null, 2));
-        } catch (jsonError) {
-          console.error("Error stringifying form data:", jsonError);
-          console.log("Form data (partial):", Object.keys(cleanData).join(', '));
-        }
-        
-        // Browser compatibility: use direct fetch with careful error handling
-        let response;
-        try {
-          // Then, create or update the property
-          response = await apiRequest(method, url, cleanData);
-          console.log(`FORM SUBMISSION: ${method} request status:`, response.status, response.statusText);
-        } catch (error) {
-          const fetchError = error as Error;
-          console.error("Network error during form submission:", fetchError);
-          throw new Error(`Network error: ${fetchError.message || 'Connection failed'}`);
-        }
-        
-        if (!response.ok) {
-          let errorMessage = `Server error (${response.status})`;
-          try {
-            const errorText = await response.text();
-            console.error(`FORM SUBMISSION: API Error (${response.status}):`, errorText);
-            errorMessage = `API Error (${response.status}): ${errorText || response.statusText}`;
-          } catch (textError) {
-            console.error("Failed to get error details:", textError);
-          }
-          throw new Error(errorMessage);
-        }
-        
-        let result;
-        try {
-          result = await response.json();
-          console.log("FORM SUBMISSION: Success response:", result);
-        } catch (jsonError) {
-          console.error("Error parsing API response:", jsonError);
-          throw new Error("Invalid response from server");
-        }
-
-        // Finally, if there are images to upload, upload them directly
-        if (images.length > 0) {
-          console.log(`FORM SUBMISSION: Uploading ${images.length} new images`);
-          try {
-            setUploading(true);
-            
-            // Create FormData for direct image upload
-            const formData = new FormData();
-            images.forEach(image => {
-              formData.append('images', image);
-            });
-            
-            // Upload images to the server using the simple upload endpoint
-            const uploadResponse = await fetch(`/api/upload/property-images/${result.id}`, {
-              method: 'POST',
-              body: formData,
-              credentials: 'include',
-            });
-            
-            if (!uploadResponse.ok) {
-              throw new Error(`Image upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
-            }
-            
-            const uploadResult = await uploadResponse.json();
-            console.log('Images uploaded successfully:', uploadResult);
-            
-          } catch (uploadError) {
-            console.error("Image upload failed but property was saved:", uploadError);
-            toast({
-              title: "Property saved but images failed",
-              description: "Your property was saved but we couldn't upload the images. You can try again later.",
-              variant: "destructive",
-            });
-          } finally {
-            setUploading(false);
-          }
-        }
-
-        return result;
-      } catch (error: any) {
-        console.error("FORM SUBMISSION: Caught error:", error);
-        
-        // Handle 401 errors specifically
-        if (error.message && error.message.includes('401')) {
-          // Show a more specific error and redirect to login
-          toast({
-            title: "Authentication Required",
-            description: "Please log in again to continue.",
-            variant: "destructive",
-          });
-          
-          // Redirect to login after a brief delay
-          setTimeout(() => {
-            window.location.href = '/auth';
-          }, 2000);
-        }
-        throw error;
+    mutationFn: async (data: Partial<Property>) => {
+      if (isEditing && propertyId) {
+        return await apiRequest("PUT", `/api/properties/${propertyId}`, data);
+      } else {
+        return await apiRequest("POST", "/api/properties", data);
       }
     },
     onSuccess: () => {
-      toast({
-        title: isEditing ? "Property updated" : "Property created",
-        description: isEditing 
-          ? "The property has been successfully updated." 
-          : "The property has been successfully created.",
-      });
-
-      // Invalidate queries to refetch data
+      // Invalidate properties cache to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
-      if (isEditing) {
-        queryClient.invalidateQueries({ queryKey: ["/api/properties", propertyId] });
-      }
-
-      // Call the onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      }
     },
     onError: (error: any) => {
       toast({
@@ -397,132 +174,90 @@ export default function PropertyForm({
     },
   });
 
-  // Simple image preview handling
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setImages(Array.from(e.target.files));
-    }
-  };
-  
-  // Remove selected image before upload
-  const removeSelectedImage = (index: number) => {
-    setImages(prevImages => {
-      const newImages = [...prevImages];
-      newImages.splice(index, 1);
-      return newImages;
-    });
-  };
-
   // Handle form submission
   const onSubmit = async (data: any) => {
     try {
-      console.log("Submitting form data:", data);
-      // Ensure all numeric fields are parsed as numbers
-      const formattedData = {
-        ...data,
-        price: typeof data.price === 'string' ? parseInt(data.price) : data.price,
-        downPayment: typeof data.downPayment === 'string' ? parseInt(data.downPayment) : data.downPayment,
-        installmentAmount: typeof data.installmentAmount === 'string' ? parseInt(data.installmentAmount) : data.installmentAmount,
-        installmentPeriod: typeof data.installmentPeriod === 'string' ? parseInt(data.installmentPeriod) : data.installmentPeriod,
-        bedrooms: typeof data.bedrooms === 'string' ? parseInt(data.bedrooms) : data.bedrooms,
-        bathrooms: typeof data.bathrooms === 'string' ? parseInt(data.bathrooms) : data.bathrooms,
-        builtUpArea: typeof data.builtUpArea === 'string' ? parseInt(data.builtUpArea) : data.builtUpArea,
-      };
-
-      // First save the property data to get an ID (for new properties)
-      console.log("Saving property data first...");
-      const savedProperty = await mutation.mutateAsync(formattedData);
-      console.log("Property saved successfully:", savedProperty);
+      // Step 1: Save property data first
+      const property = await mutation.mutateAsync(data);
       
-      // For new properties, use the returned ID; for editing, use the existing ID prop
-      const savedPropertyId = isEditing ? Number(propertyId) : savedProperty.id;
-      console.log(`Using property ID ${savedPropertyId} for image upload`);
+      // Get the property ID (either from the saved property or existing ID)
+      const savedPropertyId = isEditing ? propertyId : property.id;
       
-      // SIMPLIFIED IMAGE HANDLING
-      
-      // Step 1: Process existing images (for edit mode)
-      if (isEditing && existingImages.length > 0) {
-        console.log(`Property has ${existingImages.length} existing images`);
-      }
-      
-      // Step 2: Handle image uploads with a single approach for both new and edited properties
+      // Step 2: Handle image uploads and existing images
       if (images.length > 0) {
         try {
-          console.log(`Uploading ${images.length} new images...`);
+          setUploading(true);
+          console.log(`Uploading ${images.length} images for property ${savedPropertyId}`);
           
-          // Create simple FormData with just the files
+          // Create FormData
           const formData = new FormData();
           images.forEach(image => {
-            console.log(`Adding image: ${image.name} (${Math.round(image.size / 1024)}KB)`);
             formData.append('images', image);
           });
           
-          // Use a simple direct upload endpoint
-          const uploadEndpoint = `/api/upload/property-images/${savedPropertyId}`;
-          console.log(`Uploading to: ${uploadEndpoint}`);
-          
-          const uploadResponse = await fetch(uploadEndpoint, {
+          // Upload to server
+          const response = await fetch(`/api/upload/property-images/${savedPropertyId}`, {
             method: 'POST',
             body: formData,
             credentials: 'include'
           });
           
-          if (!uploadResponse.ok) {
-            throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+          if (!response.ok) {
+            throw new Error(`Image upload failed: ${response.status}`);
           }
           
-          const uploadResult = await uploadResponse.json();
-          console.log('Upload successful:', uploadResult);
+          const result = await response.json();
+          console.log(`Successfully uploaded ${result.images?.length || 0} images`);
           
-          // Verify the images were associated with the property
-          const verifyResponse = await fetch(`/api/properties/${savedPropertyId}`);
-          const updatedProperty = await verifyResponse.json();
-          console.log(`Property now has ${updatedProperty.images?.length || 0} images`);
+          // Update the property to include existing images that weren't removed
+          if (isEditing && existingImages.length > 0) {
+            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
+              images: existingImages
+            });
+          }
           
+        } catch (error) {
+          console.error("Error uploading images:", error);
           toast({
-            title: "Images uploaded",
-            description: `Successfully uploaded ${images.length} images`,
-            variant: "default"
-          });
-          
-        } catch (uploadError) {
-          console.error("Error during image upload:", uploadError);
-          toast({
-            title: "Image upload failed",
-            description: uploadError instanceof Error ? uploadError.message : "Failed to upload images",
+            title: "Warning",
+            description: "Property was saved but some images failed to upload.",
             variant: "destructive"
           });
+        } finally {
+          setUploading(false);
+        }
+      } else if (isEditing && existingImages.length > 0) {
+        // If editing and we only have existing images (no new ones)
+        try {
+          await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
+            images: existingImages
+          });
+        } catch (error) {
+          console.error("Error updating existing images:", error);
         }
       }
       
-      console.log("Property submission completed successfully");
-      
-      // Show success message
+      // Success notification
       toast({
         title: isEditing ? "Property updated" : "Property created",
-        description: "Property has been saved successfully",
+        description: "Your property has been saved successfully.",
         variant: "default"
       });
       
-      // Call the onSuccess callback if provided
+      // Call success callback
       if (onSuccess) {
         onSuccess();
       }
+      
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error("Form submission error:", error);
       toast({
-        title: "Error saving property",
-        description: error instanceof Error ? error.message : "Failed to save property data",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save property",
         variant: "destructive"
       });
     }
   };
-
-
-
-  // Watch the listing type to conditionally render fields
-  const listingType = form.watch('listingType');
-  const isResale = listingType === 'Resale';
 
   // Show loading state
   if (isLoadingProperty && isEditing) {
@@ -539,7 +274,7 @@ export default function PropertyForm({
       <div className="flex flex-col justify-center items-center h-96 space-y-4">
         <div className="text-red-500 text-xl font-medium">Error Loading Property</div>
         <p className="text-center text-gray-600 max-w-md">
-          We encountered a problem loading this property information. Please try again or contact support.
+          We encountered a problem loading this property information. Please try again.
         </p>
         <Button onClick={onCancel} variant="outline">
           Go Back
@@ -547,6 +282,10 @@ export default function PropertyForm({
       </div>
     );
   }
+
+  // Watch listing type to conditionally render fields
+  const listingType = form.watch('listingType');
+  const isResale = listingType === 'Resale';
 
   return (
     <Form {...form}>
@@ -586,26 +325,6 @@ export default function PropertyForm({
                           required 
                         />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="references"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reference Number</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Enter property reference number"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Unique reference number for this property
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -746,21 +465,7 @@ export default function PropertyForm({
                     <FormItem>
                       <FormLabel>City*</FormLabel>
                       <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Update zipCode based on city selection
-                          const defaultZipCodes: Record<string, string> = {
-                            'Cairo': '11511',
-                            'Dubai': '00000',
-                            'London': 'SW1A 1AA',
-                            'Zayed': '12311',
-                            'North coast': '23511',
-                            'Red Sea': '84712'
-                          };
-                          const zipCode = defaultZipCodes[value] || '00000';
-                          form.setValue('zipCode', zipCode);
-                          console.log(`City selected: ${value}, setting zipCode: ${zipCode}`);
-                        }}
+                        onValueChange={field.onChange} 
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -773,34 +478,19 @@ export default function PropertyForm({
                           <SelectItem value="Zayed">Zayed</SelectItem>
                           <SelectItem value="North coast">North Coast</SelectItem>
                           <SelectItem value="Red Sea">Red Sea</SelectItem>
-                          <SelectItem value="Dubai">Dubai</SelectItem>
-                          <SelectItem value="London">London</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Hidden zipCode field that's populated based on city selection */}
-                <FormField
-                  control={form.control}
-                  name="zipCode"
-                  render={({ field }) => (
-                    <FormItem className="hidden">
-                      <FormControl>
-                        <Input type="hidden" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
+                
                 <FormField
                   control={form.control}
                   name="country"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Country</FormLabel>
+                      <FormLabel>Country*</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
@@ -816,9 +506,6 @@ export default function PropertyForm({
                           <SelectItem value="UK">UK</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        International properties will be featured in the International section
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -841,52 +528,17 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="developerName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Developer Name</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Enter developer name" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Enter property address" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Pricing Section */}
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-medium mb-4">Pricing</h3>
 
               <div className="space-y-4">
+                {/* Basic price field for all listings */}
                 <FormField
                   control={form.control}
                   name="price"
@@ -906,7 +558,8 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-
+                
+                {/* Primary listing fields */}
                 {!isResale && (
                   <>
                     <FormField
@@ -952,7 +605,7 @@ export default function PropertyForm({
                       name="installmentPeriod"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Installment Period (Years)</FormLabel>
+                          <FormLabel>Installment Period (years)</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -968,178 +621,17 @@ export default function PropertyForm({
                     />
                   </>
                 )}
-
+                
+                {/* Payment type switch */}
                 <FormField
                   control={form.control}
                   name="isFullCash"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Full Cash Payment
-                        </FormLabel>
-                        <FormDescription>
-                          Only cash payment is accepted for this property
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Images & Features Section */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Images & Features</h3>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="images">Property Images</Label>
-                  <div className="border rounded-md p-4">
-                    {/* Existing Images Display */}
-                    {existingImages.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm font-medium mb-2">Current Images ({existingImages.length})</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {existingImages.map((imageUrl, index) => (
-                            <div key={`existing-${index}`} className="relative rounded-md overflow-hidden h-24 bg-gray-100">
-                              <img 
-                                src={imageUrl.startsWith('http') ? imageUrl : `/uploads/properties/${imageUrl}`} 
-                                alt={`Property image ${index + 1}`}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  // Try alternate path if image fails to load
-                                  const target = e.target as HTMLImageElement;
-                                  if (!target.src.includes('/public/')) {
-                                    target.src = `/public/uploads/properties/${imageUrl}`;
-                                  } else {
-                                    // If still fails, use a placeholder
-                                    target.src = 'https://placehold.co/300x200?text=Image+Not+Found';
-                                  }
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Upload New Images */}
-                    <div className="flex items-center justify-center w-full">
-                      <label
-                        htmlFor="file-upload"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-                      >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="w-8 h-8 mb-2 text-gray-500" />
-                          <p className="text-sm text-gray-500">
-                            <span className="font-semibold">Click to upload new images</span> or drag and drop
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            PNG, JPG or JPEG (MAX. 5MB per file)
-                          </p>
-                        </div>
-                        <input
-                          id="file-upload"
-                          type="file"
-                          className="hidden"
-                          multiple
-                          accept="image/*"
-                          onChange={handleImageChange}
-                        />
-                      </label>
-                    </div>
-                    
-                    {/* Newly Selected Images */}
-                    {images.length > 0 && (
-                      <div className="mt-4">
-                        <p className="text-sm font-medium mb-2">New Images Selected ({images.length})</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {Array.from(images).map((file, index) => (
-                            <div key={index} className="relative group border rounded-md p-2">
-                              <div className="flex items-center">
-                                <div className="w-6 h-6 flex-shrink-0 mr-2 bg-gray-100 rounded-full flex items-center justify-center">
-                                  <span className="text-xs text-gray-500">{index + 1}</span>
-                                </div>
-                                <span className="text-xs text-muted-foreground truncate">{file.name}</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => removeSelectedImage(index)}
-                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full text-white flex items-center justify-center text-xs shadow-md"
-                                title="Remove image"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="isFeatured"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Featured</FormLabel>
-                          <FormDescription>
-                            Show on featured properties carousel
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="isHighlighted"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Highlighted</FormLabel>
-                          <FormDescription>
-                            Show in highlighted section
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="isNewListing"
-                  render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">New Listing</FormLabel>
+                        <FormLabel className="text-base">Full Cash Payment</FormLabel>
                         <FormDescription>
-                          Show in new listings section
+                          Property requires full cash payment
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -1154,9 +646,253 @@ export default function PropertyForm({
               </div>
             </CardContent>
           </Card>
+
+          {/* Features Section */}
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-medium mb-4">Features</h3>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="plotSize"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Plot Size (m²)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="gardenSize"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Garden Size (m²)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="floor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Floor</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="isGroundUnit"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Ground Floor Unit
+                        </FormLabel>
+                        <FormDescription>
+                          This property is on the ground floor
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Display Options */}
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-medium mb-4">Display Options</h3>
+
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="isFeatured"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Featured Property
+                        </FormLabel>
+                        <FormDescription>
+                          Show in the featured properties section
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="isNewListing"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          New Listing
+                        </FormLabel>
+                        <FormDescription>
+                          Show in the new properties section
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="isHighlighted"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Highlighted Property
+                        </FormLabel>
+                        <FormDescription>
+                          Show in the highlighted section on homepage
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Images Upload */}
+          <Card className="md:col-span-2">
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-medium mb-4">Property Images</h3>
+              
+              {/* Existing images display */}
+              {existingImages.length > 0 && (
+                <div className="mb-6">
+                  <Label className="mb-2 block">Existing Images</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                    {existingImages.map((image, index) => (
+                      <div key={`existing-${index}`} className="relative group">
+                        <img
+                          src={image}
+                          alt={`Property ${index + 1}`}
+                          className="h-24 w-24 object-cover rounded-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(index)}
+                          className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* New images input */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="images">Add New Images</Label>
+                  <div className="mt-2">
+                    <Input
+                      id="images"
+                      type="file"
+                      onChange={handleImageChange}
+                      accept="image/*"
+                      multiple
+                      className="mb-2"
+                    />
+                  </div>
+                  
+                  {/* Selected new images preview */}
+                  {images.length > 0 && (
+                    <div>
+                      <Label className="mb-2 block">Selected Images</Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                        {Array.from(images).map((image, index) => (
+                          <div key={`new-${index}`} className="relative group">
+                            <img
+                              src={URL.createObjectURL(image)}
+                              alt={`Upload preview ${index + 1}`}
+                              className="h-24 w-24 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeSelectedImage(index)}
+                              className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="flex justify-end gap-4">
+        {/* Form Actions */}
+        <div className="flex justify-end space-x-4">
           {onCancel && (
             <Button 
               type="button" 
@@ -1168,10 +904,10 @@ export default function PropertyForm({
           )}
           <Button 
             type="submit" 
-            disabled={mutation.isPending || uploading}
-            className="bg-[#B87333] hover:bg-[#964B00]"
+            disabled={uploading || mutation.isPending}
+            className="bg-[#B87333] hover:bg-[#964B00] text-white"
           >
-            {(mutation.isPending || uploading) && (
+            {(uploading || mutation.isPending) && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
             {isEditing ? "Update Property" : "Create Property"}
