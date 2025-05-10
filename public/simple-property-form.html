@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Property Form - The Views Real Estate</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: #f8f8f8;
+    }
+    h1, h2 {
+      color: #B87333;
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background-color: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 15px;
+    }
+    .form-row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .form-row .form-group {
+      flex: 1;
+      min-width: 250px;
+    }
+    label {
+      font-weight: bold;
+      color: #333;
+    }
+    select, input, textarea, button {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    button {
+      background-color: #B87333;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 12px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #964B00;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .section-title {
+      margin-top: 30px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #B87333;
+      padding-bottom: 5px;
+      color: #333;
+    }
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .preview-item {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .preview-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .remove-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: rgba(255, 0, 0, 0.7);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #B87333;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .status {
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .back-btn {
+      background-color: #6c757d;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .back-btn:hover {
+      background-color: #5a6268;
+    }
+    .required:after {
+      content: " *";
+      color: red;
+    }
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tab-button {
+      flex: 1;
+      background-color: #f1f1f1;
+      border: none;
+      color: #333;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px 4px 0 0;
+    }
+    .tab-button.active {
+      background-color: #B87333;
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .conditional {
+      display: none;
+    }
+    .conditional.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Simple Property Form</h1>
+    <a href="/" class="back-btn">Back to Dashboard</a>
+  </div>
+  
+  <div class="container">
+    <div class="tab-buttons">
+      <button id="newPropertyTab" class="tab-button active" onclick="switchTab('new')">Add New Property</button>
+      <button id="editPropertyTab" class="tab-button" onclick="switchTab('edit')">Edit Existing Property</button>
+    </div>
+    
+    <div id="editPropertySelector" class="tab-content">
+      <div class="form-group">
+        <label for="existingPropertyId">Select Property to Edit:</label>
+        <select id="existingPropertyId" onchange="loadPropertyData()">
+          <option value="">-- Select a property --</option>
+        </select>
+      </div>
+    </div>
+    
+    <form id="propertyForm">
+      <input type="hidden" id="propertyId" value="">
+      
+      <h3 class="section-title">Basic Details</h3>
+      <div class="form-group">
+        <label for="title" class="required">Title</label>
+        <input type="text" id="title" name="title" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="description" class="required">Description</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="propertyType" class="required">Property Type</label>
+          <select id="propertyType" name="propertyType" required>
+            <option value="">-- Select type --</option>
+            <option value="apartment">Apartment</option>
+            <option value="penthouse">Penthouse</option>
+            <option value="villa">Villa</option>
+            <option value="twinhouse">Twinhouse</option>
+            <option value="townhouse">Townhouse</option>
+            <option value="chalet">Chalet</option>
+            <option value="office">Office</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="listingType" class="required">Listing Type</label>
+          <select id="listingType" name="listingType" onchange="togglePrimaryFields()" required>
+            <option value="">-- Select listing type --</option>
+            <option value="Primary">Primary</option>
+            <option value="Resale">Resale</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="bedrooms" class="required">Bedrooms</label>
+          <input type="number" id="bedrooms" name="bedrooms" min="0" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="bathrooms" class="required">Bathrooms</label>
+          <input type="number" id="bathrooms" name="bathrooms" min="0" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="builtUpArea" class="required">Built Up Area (m²)</label>
+          <input type="number" id="builtUpArea" name="builtUpArea" min="0" required>
+        </div>
+      </div>
+      
+      <h3 class="section-title">Location & Project</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="city" class="required">City</label>
+          <select id="city" name="city" required>
+            <option value="">-- Select city --</option>
+            <option value="Cairo">Cairo</option>
+            <option value="Zayed">Zayed</option>
+            <option value="North coast">North Coast</option>
+            <option value="Red Sea">Red Sea</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="country" class="required">Country</label>
+          <select id="country" name="country" required>
+            <option value="Egypt">Egypt</option>
+            <option value="UAE">UAE</option>
+            <option value="UK">UK</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="projectName" class="required">Project Name</label>
+        <input type="text" id="projectName" name="projectName" required>
+      </div>
+      
+      <h3 class="section-title">Pricing</h3>
+      <div class="form-group">
+        <label for="price" class="required">Price (L.E)</label>
+        <input type="number" id="price" name="price" min="0" required>
+      </div>
+      
+      <div id="primaryFields" class="conditional">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="downPayment">Down Payment (L.E)</label>
+            <input type="number" id="downPayment" name="downPayment" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="installmentAmount">Installment Amount (L.E)</label>
+            <input type="number" id="installmentAmount" name="installmentAmount" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="installmentPeriod">Installment Period (years)</label>
+            <input type="number" id="installmentPeriod" name="installmentPeriod" min="0" max="30">
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="isFullCash" name="isFullCash">
+        <label for="isFullCash">Full Cash Payment</label>
+      </div>
+      
+      <h3 class="section-title">Additional Details</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="plotSize">Plot Size (m²)</label>
+          <input type="number" id="plotSize" name="plotSize" min="0">
+        </div>
+        
+        <div class="form-group">
+          <label for="gardenSize">Garden Size (m²)</label>
+          <input type="number" id="gardenSize" name="gardenSize" min="0">
+        </div>
+        
+        <div class="form-group">
+          <label for="floor">Floor</label>
+          <input type="number" id="floor" name="floor" min="0">
+        </div>
+      </div>
+      
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="isGroundUnit" name="isGroundUnit">
+        <label for="isGroundUnit">Ground Floor Unit</label>
+      </div>
+      
+      <h3 class="section-title">Display Options</h3>
+      <div class="form-row">
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="isFeatured" name="isFeatured">
+          <label for="isFeatured">Featured Property</label>
+        </div>
+        
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="isNewListing" name="isNewListing">
+          <label for="isNewListing">New Listing</label>
+        </div>
+        
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="isHighlighted" name="isHighlighted">
+          <label for="isHighlighted">Highlighted Property</label>
+        </div>
+      </div>
+      
+      <h3 class="section-title">Images</h3>
+      
+      <div id="existingImagesContainer" style="display: none;">
+        <label>Existing Images:</label>
+        <div id="existingImagesPreview" class="preview-container"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="images">Add New Images:</label>
+        <input type="file" id="images" name="images" multiple accept="image/*">
+        <p><small>You can select multiple images at once. Click on each image preview to remove it if needed.</small></p>
+      </div>
+      
+      <div id="previewContainer" class="preview-container"></div>
+      
+      <div style="margin-top: 30px; display: flex; justify-content: center;">
+        <button type="submit" id="saveButton">Save Property</button>
+      </div>
+    </form>
+    
+    <div id="loadingIndicator" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <span>Processing...</span>
+    </div>
+    
+    <div id="statusMessage" class="status" style="display: none;"></div>
+  </div>
+
+  <script>
+    // Global variables
+    let existingImages = [];
+    let selectedImages = [];
+    let isEditMode = false;
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchProperties();
+      setupFormHandlers();
+      switchTab('new'); // Start with new property tab
+    });
+    
+    // Set up form event handlers
+    function setupFormHandlers() {
+      // Image selection handler
+      document.getElementById('images').addEventListener('change', handleImageSelection);
+      
+      // Form submission handler
+      document.getElementById('propertyForm').addEventListener('submit', handleFormSubmit);
+      
+      // Listing type change handler
+      document.getElementById('listingType').addEventListener('change', togglePrimaryFields);
+    }
+    
+    // Switch between new and edit tabs
+    function switchTab(tab) {
+      const newTab = document.getElementById('newPropertyTab');
+      const editTab = document.getElementById('editPropertyTab');
+      const editSelector = document.getElementById('editPropertySelector');
+      
+      if (tab === 'new') {
+        newTab.classList.add('active');
+        editTab.classList.remove('active');
+        editSelector.style.display = 'none';
+        resetForm();
+        isEditMode = false;
+      } else {
+        newTab.classList.remove('active');
+        editTab.classList.add('active');
+        editSelector.style.display = 'block';
+        isEditMode = true;
+      }
+    }
+    
+    // Toggle primary listing fields based on listing type
+    function togglePrimaryFields() {
+      const listingType = document.getElementById('listingType').value;
+      const primaryFields = document.getElementById('primaryFields');
+      
+      if (listingType === 'Primary') {
+        primaryFields.classList.add('visible');
+      } else {
+        primaryFields.classList.remove('visible');
+      }
+    }
+    
+    // Fetch properties for the edit dropdown
+    async function fetchProperties() {
+      try {
+        const response = await fetch('/api/properties');
+        if (!response.ok) {
+          throw new Error('Failed to fetch properties');
+        }
+        
+        const data = await response.json();
+        const select = document.getElementById('existingPropertyId');
+        
+        // Clear existing options except the first one
+        select.innerHTML = '<option value="">-- Select a property --</option>';
+        
+        // Add properties to dropdown
+        data.data.forEach(property => {
+          const option = document.createElement('option');
+          option.value = property.id;
+          option.textContent = `${property.title} (ID: ${property.id})`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+        showStatus('Failed to load properties. Please try refreshing the page.', 'error');
+      }
+    }
+    
+    // Load property data when selecting from dropdown
+    async function loadPropertyData() {
+      const propertyId = document.getElementById('existingPropertyId').value;
+      
+      if (!propertyId) {
+        resetForm();
+        return;
+      }
+      
+      // Show loading indicator
+      document.getElementById('loadingIndicator').style.display = 'flex';
+      
+      try {
+        const response = await fetch(`/api/properties/${propertyId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch property data: ${response.status}`);
+        }
+        
+        const property = await response.json();
+        
+        // Fill form with property data
+        document.getElementById('propertyId').value = property.id;
+        document.getElementById('title').value = property.title || '';
+        document.getElementById('description').value = property.description || '';
+        document.getElementById('propertyType').value = property.propertyType || '';
+        document.getElementById('listingType').value = property.listingType || '';
+        document.getElementById('bedrooms').value = property.bedrooms || 0;
+        document.getElementById('bathrooms').value = property.bathrooms || 0;
+        document.getElementById('builtUpArea').value = property.builtUpArea || 0;
+        document.getElementById('city').value = property.city || '';
+        document.getElementById('country').value = property.country || 'Egypt';
+        document.getElementById('projectName').value = property.projectName || '';
+        document.getElementById('price').value = property.price || 0;
+        document.getElementById('downPayment').value = property.downPayment || 0;
+        document.getElementById('installmentAmount').value = property.installmentAmount || 0;
+        document.getElementById('installmentPeriod').value = property.installmentPeriod || 0;
+        document.getElementById('plotSize').value = property.plotSize || 0;
+        document.getElementById('gardenSize').value = property.gardenSize || 0;
+        document.getElementById('floor').value = property.floor || 0;
+        
+        // Set checkbox values
+        document.getElementById('isFullCash').checked = property.isFullCash || false;
+        document.getElementById('isGroundUnit').checked = property.isGroundUnit || false;
+        document.getElementById('isFeatured').checked = property.isFeatured || false;
+        document.getElementById('isNewListing').checked = property.isNewListing || false;
+        document.getElementById('isHighlighted').checked = property.isHighlighted || false;
+        
+        // Toggle primary fields based on listing type
+        togglePrimaryFields();
+        
+        // Load existing images
+        if (property.images && Array.isArray(property.images)) {
+          existingImages = property.images;
+          displayExistingImages();
+        }
+        
+      } catch (error) {
+        console.error('Error loading property data:', error);
+        showStatus('Failed to load property data', 'error');
+        resetForm();
+      } finally {
+        document.getElementById('loadingIndicator').style.display = 'none';
+      }
+    }
+    
+    // Display existing images
+    function displayExistingImages() {
+      const container = document.getElementById('existingImagesPreview');
+      container.innerHTML = '';
+      
+      if (existingImages.length > 0) {
+        document.getElementById('existingImagesContainer').style.display = 'block';
+        
+        existingImages.forEach((imageUrl, index) => {
+          const item = document.createElement('div');
+          item.className = 'preview-item';
+          
+          const img = document.createElement('img');
+          img.className = 'preview-image';
+          img.src = imageUrl;
+          img.alt = `Property image ${index + 1}`;
+          
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'remove-btn';
+          removeBtn.innerHTML = '✕';
+          removeBtn.onclick = () => removeExistingImage(index);
+          
+          item.appendChild(img);
+          item.appendChild(removeBtn);
+          container.appendChild(item);
+        });
+      } else {
+        document.getElementById('existingImagesContainer').style.display = 'none';
+      }
+    }
+    
+    // Remove existing image
+    function removeExistingImage(index) {
+      existingImages.splice(index, 1);
+      displayExistingImages();
+    }
+    
+    // Handle new image selection and preview
+    function handleImageSelection(event) {
+      const files = event.target.files;
+      selectedImages = Array.from(files);
+      
+      const previewContainer = document.getElementById('previewContainer');
+      previewContainer.innerHTML = '';
+      
+      if (selectedImages.length > 0) {
+        selectedImages.forEach((file, index) => {
+          const item = document.createElement('div');
+          item.className = 'preview-item';
+          
+          const img = document.createElement('img');
+          img.className = 'preview-image';
+          img.src = URL.createObjectURL(file);
+          
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'remove-btn';
+          removeBtn.innerHTML = '✕';
+          removeBtn.onclick = () => removeSelectedImage(index);
+          
+          item.appendChild(img);
+          item.appendChild(removeBtn);
+          previewContainer.appendChild(item);
+        });
+      }
+    }
+    
+    // Remove selected image
+    function removeSelectedImage(index) {
+      // Create a new FileList without the removed image
+      const dt = new DataTransfer();
+      selectedImages.forEach((file, i) => {
+        if (i !== index) {
+          dt.items.add(file);
+        }
+      });
+      
+      // Update the file input and re-render previews
+      const fileInput = document.getElementById('images');
+      fileInput.files = dt.files;
+      
+      // Update selected images array
+      selectedImages.splice(index, 1);
+      
+      // Re-render previews
+      const previewContainer = document.getElementById('previewContainer');
+      previewContainer.innerHTML = '';
+      
+      selectedImages.forEach((file, idx) => {
+        const item = document.createElement('div');
+        item.className = 'preview-item';
+        
+        const img = document.createElement('img');
+        img.className = 'preview-image';
+        img.src = URL.createObjectURL(file);
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-btn';
+        removeBtn.innerHTML = '✕';
+        removeBtn.onclick = () => removeSelectedImage(idx);
+        
+        item.appendChild(img);
+        item.appendChild(removeBtn);
+        previewContainer.appendChild(item);
+      });
+    }
+    
+    // Form submission handler
+    async function handleFormSubmit(event) {
+      event.preventDefault();
+      
+      // Show loading indicator
+      document.getElementById('loadingIndicator').style.display = 'flex';
+      document.getElementById('saveButton').disabled = true;
+      
+      try {
+        // Gather form data
+        const formData = new FormData(event.target);
+        const propertyData = {};
+        
+        // Convert form data to JSON
+        for (const [key, value] of formData.entries()) {
+          if (key !== 'images') {
+            // Handle checkboxes
+            if (['isFullCash', 'isGroundUnit', 'isFeatured', 'isNewListing', 'isHighlighted'].includes(key)) {
+              propertyData[key] = document.getElementById(key).checked;
+            } 
+            // Handle numeric fields
+            else if (['price', 'downPayment', 'installmentAmount', 'installmentPeriod', 
+                      'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize', 'floor'].includes(key)) {
+              propertyData[key] = value ? parseInt(value) : 0;
+            } 
+            // Handle other fields
+            else {
+              propertyData[key] = value;
+            }
+          }
+        }
+        
+        // Get property ID if in edit mode
+        const propertyId = document.getElementById('propertyId').value;
+        
+        // Step 1: Save property data
+        let savedProperty;
+        
+        if (isEditMode && propertyId) {
+          // Update existing property
+          const response = await fetch(`/api/properties/${propertyId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(propertyData),
+            credentials: 'include',
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to update property: ${response.status}`);
+          }
+          
+          savedProperty = await response.json();
+          console.log('Property updated successfully:', savedProperty);
+        } else {
+          // Create new property
+          const response = await fetch('/api/properties', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(propertyData),
+            credentials: 'include',
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to create property: ${response.status}`);
+          }
+          
+          savedProperty = await response.json();
+          console.log('Property created successfully:', savedProperty);
+        }
+        
+        // Get the saved property ID
+        const savedPropertyId = savedProperty.id;
+        
+        // Step 2: Upload images if any are selected
+        if (selectedImages.length > 0) {
+          // Create FormData for image upload
+          const imageFormData = new FormData();
+          selectedImages.forEach(image => {
+            imageFormData.append('images', image);
+          });
+          
+          const uploadResponse = await fetch(`/api/upload/property-images/${savedPropertyId}`, {
+            method: 'POST',
+            body: imageFormData,
+            credentials: 'include',
+          });
+          
+          if (!uploadResponse.ok) {
+            throw new Error(`Failed to upload images: ${uploadResponse.status}`);
+          }
+          
+          const uploadResult = await uploadResponse.json();
+          console.log('Images uploaded successfully:', uploadResult);
+        }
+        
+        // Step 3: Update property with existing images if in edit mode
+        if (isEditMode && existingImages.length > 0) {
+          const updateResponse = await fetch(`/api/properties/${savedPropertyId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ images: existingImages }),
+            credentials: 'include',
+          });
+          
+          if (!updateResponse.ok) {
+            console.warn(`Warning: Failed to update existing images: ${updateResponse.status}`);
+          }
+        }
+        
+        // Show success message
+        showStatus(`Property ${isEditMode ? 'updated' : 'created'} successfully!`, 'success');
+        
+        // Reset form
+        resetForm();
+        
+        // Refresh properties list
+        fetchProperties();
+        
+      } catch (error) {
+        console.error('Error saving property:', error);
+        showStatus(`Failed to save property: ${error.message}`, 'error');
+      } finally {
+        document.getElementById('loadingIndicator').style.display = 'none';
+        document.getElementById('saveButton').disabled = false;
+      }
+    }
+    
+    // Reset form
+    function resetForm() {
+      document.getElementById('propertyForm').reset();
+      document.getElementById('propertyId').value = '';
+      document.getElementById('previewContainer').innerHTML = '';
+      document.getElementById('existingImagesPreview').innerHTML = '';
+      document.getElementById('existingImagesContainer').style.display = 'none';
+      existingImages = [];
+      selectedImages = [];
+      togglePrimaryFields();
+    }
+    
+    // Display status message
+    function showStatus(message, type) {
+      const statusElement = document.getElementById('statusMessage');
+      statusElement.textContent = message;
+      statusElement.className = `status ${type}`;
+      statusElement.style.display = 'block';
+      
+      // Scroll to status message
+      statusElement.scrollIntoView({ behavior: 'smooth' });
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        statusElement.style.display = 'none';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

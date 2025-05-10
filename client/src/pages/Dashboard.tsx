@@ -363,12 +363,12 @@ function Dashboard() {
                   
                   <Button 
                     className="bg-green-600 hover:bg-green-700 h-auto py-4"
-                    onClick={() => window.open('/universal-upload.html', '_blank')}
+                    onClick={() => window.open('/simple-property-form.html', '_blank')}
                   >
                     <AlertCircle className="mr-2 h-5 w-5" />
                     <div className="flex flex-col items-start">
-                      <span className="font-medium">NEW! Cross-Platform Uploader</span>
-                      <span className="text-xs text-left opacity-90">Works on iOS, Windows, Mac, and all devices</span>
+                      <span className="font-medium">NEW! Simple Property Form</span>
+                      <span className="text-xs text-left opacity-90">One form for adding and editing properties - works on all devices</span>
                     </div>
                   </Button>
                 </div>
