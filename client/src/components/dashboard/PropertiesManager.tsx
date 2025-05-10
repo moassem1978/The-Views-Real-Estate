@@ -474,10 +474,10 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
         </Table>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination - more responsive design */}
       {pageCount > 1 && (
-        <Pagination className="justify-center">
-          <PaginationContent>
+        <Pagination className="justify-center mt-6">
+          <PaginationContent className="flex flex-wrap justify-center gap-2">
             <PaginationItem>
               <Button
                 variant="outline"
@@ -487,50 +487,58 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
                 className="gap-1 pl-2.5"
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span>Previous</span>
+                <span className="hidden sm:inline">Previous</span>
               </Button>
             </PaginationItem>
 
-            {Array.from({ length: Math.min(5, pageCount) }).map((_, i) => {
-              let pageNumber: number;
+            {/* Display page numbers on tablets and above */}
+            <div className="hidden sm:flex items-center">
+              {Array.from({ length: Math.min(5, pageCount) }).map((_, i) => {
+                let pageNumber: number;
 
-              // Logic to show paginated pages around current
-              if (pageCount <= 5) {
-                pageNumber = i + 1;
-              } else if (page <= 3) {
-                pageNumber = i + 1;
-              } else if (page >= pageCount - 2) {
-                pageNumber = pageCount - 4 + i;
-              } else {
-                pageNumber = page - 2 + i;
-              }
+                // Logic to show paginated pages around current
+                if (pageCount <= 5) {
+                  pageNumber = i + 1;
+                } else if (page <= 3) {
+                  pageNumber = i + 1;
+                } else if (page >= pageCount - 2) {
+                  pageNumber = pageCount - 4 + i;
+                } else {
+                  pageNumber = page - 2 + i;
+                }
 
-              if (pageNumber > pageCount) return null;
+                if (pageNumber > pageCount) return null;
 
-              return (
-                <PaginationItem key={pageNumber}>
-                  <PaginationLink
-                    isActive={pageNumber === page}
-                    onClick={() => setPage(pageNumber)}
-                  >
-                    {pageNumber}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            })}
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink
+                      isActive={pageNumber === page}
+                      onClick={() => setPage(pageNumber)}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
 
-            {pageCount > 5 && page < pageCount - 2 && (
-              <>
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink onClick={() => setPage(pageCount)}>
-                    {pageCount}
-                  </PaginationLink>
-                </PaginationItem>
-              </>
-            )}
+              {pageCount > 5 && page < pageCount - 2 && (
+                <>
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationLink onClick={() => setPage(pageCount)}>
+                      {pageCount}
+                    </PaginationLink>
+                  </PaginationItem>
+                </>
+              )}
+            </div>
+
+            {/* Mobile page indicator */}
+            <div className="sm:hidden px-3 py-2 text-sm">
+              Page {page} of {pageCount}
+            </div>
 
             <PaginationItem>
               <Button
@@ -540,7 +548,7 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
                 disabled={page === pageCount}
                 className="gap-1 pr-2.5"
               >
-                <span>Next</span>
+                <span className="hidden sm:inline">Next</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </PaginationItem>
