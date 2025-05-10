@@ -239,44 +239,6 @@ function Dashboard() {
               </CardContent>
             </Card>
             
-            {/* Universal Forms Banner */}
-            <Card className="bg-amber-50 border-amber-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-amber-800">
-                  <AlertCircle className="inline-block mr-2 h-5 w-5 text-amber-600" />
-                  Universal Forms for Cross-Platform Compatibility
-                </CardTitle>
-                <CardDescription className="text-amber-700">
-                  Having trouble with forms on Windows? Use these universal tools that work on all platforms.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700 h-auto py-4"
-                    onClick={() => window.open('/windows-property.html', '_blank')}
-                  >
-                    <Building2 className="mr-2 h-5 w-5" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">Universal Property Form</span>
-                      <span className="text-xs text-left opacity-90">Create & Edit Properties on any device</span>
-                    </div>
-                  </Button>
-                  
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700 h-auto py-4"
-                    onClick={() => window.open('/windows-upload.html', '_blank')}
-                  >
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">Universal Image Uploader</span>
-                      <span className="text-xs text-left opacity-90">Upload property images on any device</span>
-                    </div>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            
             {/* Dashboard Overview */}
             <Card>
               <CardHeader>
@@ -389,12 +351,6 @@ function Dashboard() {
               <CardContent>
                 <div className="p-8 text-center">
                   <p className="text-muted-foreground mb-4">Project management interface coming soon...</p>
-                  <Link to="/projects">
-                    <Button variant="outline">
-                      <List className="mr-2 h-4 w-4" />
-                      View Projects
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>
