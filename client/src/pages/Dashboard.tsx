@@ -344,40 +344,25 @@ function Dashboard() {
             </div>
           </TabsContent>
           
-          {/* Properties Tab */}
+          {/* Properties Tab - SIMPLIFIED with ONE interface */}
           <TabsContent value="properties" className="space-y-4">
-            {/* Add/Edit Property Banner */}
-            <Card className="bg-amber-50 border-amber-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-amber-800">
-                  <Building2 className="inline-block mr-2 h-5 w-5 text-amber-600" />
-                  Create or Update Properties
-                </CardTitle>
-                <CardDescription className="text-amber-700">
-                  Use this button to add new properties or edit existing ones. All your property management in one place.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-3">
-                  <Button 
-                    className="bg-[#B87333] hover:bg-[#964B00] h-auto py-4"
-                    onClick={() => setShowPropertyModal(true)}
-                  >
-                    <Building2 className="mr-2 h-5 w-5" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">Property Management</span>
-                      <span className="text-xs text-left opacity-90">Add new properties or edit existing ones</span>
-                    </div>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            
             <Card>
               <CardHeader>
-                <CardTitle>Properties Management</CardTitle>
+                <CardTitle className="flex justify-between items-center">
+                  <div className="flex items-center">
+                    <Building2 className="mr-2 h-5 w-5 text-[#B87333]" />
+                    <span>Property Management</span>
+                  </div>
+                  <Button 
+                    className="bg-[#B87333] hover:bg-[#964B00]"
+                    onClick={() => setShowPropertyModal(true)}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Property
+                  </Button>
+                </CardTitle>
                 <CardDescription>
-                  Add, edit, or remove property listings from the website.
+                  Manage all property listings from a single interface
                 </CardDescription>
               </CardHeader>
               <CardContent>
