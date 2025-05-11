@@ -1859,10 +1859,38 @@ export class DatabaseStorage implements IStorage {
         const combinedImages = [...filteredExistingImages, ...uniqueNewImages];
         console.log('Combined images array:', combinedImages);
         
+        // Filter out any undefined, null, or empty string values
+        const sanitizedImages = combinedImages.filter(img => img !== null && img !== undefined && img !== "");
+        console.log(`After sanitization: ${sanitizedImages.length} valid images`);
+        
+        // Make sure the image paths have consistent formatting (start with /)
+        const normalizedImages = sanitizedImages.map(img => {
+          const imgStr = String(img);
+          // If this is a URL or already has a leading slash, leave it as is
+          if (imgStr.startsWith('http') || imgStr.startsWith('/')) {
+            return imgStr;
+          }
+          // Otherwise add a leading slash to make it consistent
+          return `/${imgStr}`;
+        });
+        
+        // Verify we have properly formatted image paths
+        console.log(`Final image paths (${normalizedImages.length}):`);
+        normalizedImages.forEach((img, index) => {
+          if (index < 10) { // Only show first 10 to avoid console spam
+            console.log(`  [${index}]: ${img}`);
+          } else if (index === 10) {
+            console.log(`  ... and ${normalizedImages.length - 10} more`);
+          }
+        });
+        
         // Use JSON.stringify to convert array to proper JSON string format
         // This ensures PostgreSQL will accept it as a valid JSON array
-        dbUpdates.images = JSON.stringify(combinedImages);
-        console.log('Final JSON images format:', dbUpdates.images);
+        dbUpdates.images = JSON.stringify(normalizedImages);
+        console.log(`Final JSON images format (${normalizedImages.length} items)`, 
+                    dbUpdates.images.length > 100 ? 
+                    `${dbUpdates.images.substring(0, 100)}... (truncated)` : 
+                    dbUpdates.images);
       }
       
       console.log(`Converted database updates:`, dbUpdates);
@@ -1908,29 +1936,57 @@ export class DatabaseStorage implements IStorage {
       let imagesArray: string[] = [];
       
       if (updatedProperty.images) {
-        // If images is already an array, use it directly
+        console.log('Raw images data from database:', typeof updatedProperty.images, 
+          Array.isArray(updatedProperty.images) ? `Array[${updatedProperty.images.length}]` : 
+          (typeof updatedProperty.images === 'string' ? 
+            (updatedProperty.images.length > 100 ? updatedProperty.images.substring(0, 100) + '...' : updatedProperty.images) : 
+            JSON.stringify(updatedProperty.images).substring(0, 100)));
+            
+        // Handle different formats of the images field from PostgreSQL
+        
+        // Case 1: Already an array of strings
         if (Array.isArray(updatedProperty.images)) {
-          imagesArray = updatedProperty.images;
+          console.log('Images is already an array with', updatedProperty.images.length, 'items');
+          imagesArray = updatedProperty.images.map(item => String(item));
         } 
-        // If images is a string that starts with [ and ends with ], it's likely a JSON string
+        // Case 2: JSON string representation of an array
         else if (typeof updatedProperty.images === 'string' && 
                 updatedProperty.images.trim().startsWith('[') && 
                 updatedProperty.images.trim().endsWith(']')) {
           try {
-            imagesArray = JSON.parse(updatedProperty.images);
+            console.log('Parsing images JSON string');
+            const parsed = JSON.parse(updatedProperty.images);
+            if (Array.isArray(parsed)) {
+              imagesArray = parsed.map(item => String(item));
+              console.log(`Successfully parsed JSON string to array with ${imagesArray.length} items`);
+            } else {
+              console.error('Parsed JSON is not an array:', typeof parsed);
+              imagesArray = [];
+            }
           } catch (e) {
             console.error('Error parsing images JSON:', e);
             // Fallback to empty array on error
             imagesArray = [];
           }
         }
-        // If it's a string but not JSON-formatted, treat as a single image
+        // Case 3: PostgreSQL sometimes returns objects for JSON arrays
+        else if (typeof updatedProperty.images === 'object') {
+          console.log('Images is an object, extracting values');
+          imagesArray = Object.values(updatedProperty.images).map(item => String(item));
+          console.log(`Extracted ${imagesArray.length} images from object`);
+        }
+        // Case 4: Single string value (treat as one image path)
         else if (typeof updatedProperty.images === 'string') {
+          console.log('Images is a single string, using as single item');
           imagesArray = [updatedProperty.images];
         }
+        
+        // Filter out any null/undefined values and ensure all items are strings
+        imagesArray = imagesArray.filter(item => item !== null && item !== undefined)
+          .map(item => String(item));
       }
       
-      console.log('Parsed images array for frontend:', imagesArray);
+      console.log('Parsed images array for frontend:', imagesArray.length ? imagesArray : 'empty array');
       
       // Convert property back to camelCase for frontend
       const propertyResult = {
