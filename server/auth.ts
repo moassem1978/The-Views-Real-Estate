@@ -263,7 +263,7 @@ export function setupAuth(app: Express) {
         phone: phone || "",
         role: userRoles.USER,
         isAgent: false,
-        isActive: true,
+        // isActive has a default value of true in the schema
         createdAt: new Date().toISOString(),
       });
       
