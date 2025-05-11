@@ -362,15 +362,17 @@ function Dashboard() {
         
         {/* Property Form Modal */}
         <Dialog open={showPropertyModal} onOpenChange={setShowPropertyModal}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl overflow-y-auto max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>{selectedPropertyId ? "Edit Property" : "Add New Property"}</DialogTitle>
             </DialogHeader>
-            <PropertyForm 
-              propertyId={selectedPropertyId} 
-              onSuccess={handlePropertyFormClose}
-              onCancel={handlePropertyFormClose}
-            />
+            <div className="overflow-y-auto pr-1">
+              <PropertyForm 
+                propertyId={selectedPropertyId} 
+                onSuccess={handlePropertyFormClose}
+                onCancel={handlePropertyFormClose}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>

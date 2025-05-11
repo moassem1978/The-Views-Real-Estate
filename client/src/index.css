@@ -342,6 +342,30 @@
   z-index: 10;
 }
 
+/* Modal and Dialog Scrolling Styles */
+[data-radix-popper-content-wrapper] {
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+}
+
+.modal-scrollable {
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  padding-bottom: 1rem;
+}
+
+.modal-dialog-content {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-dialog-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
 /* News Carousel Styles */
 .news-carousel {
   position: relative;
