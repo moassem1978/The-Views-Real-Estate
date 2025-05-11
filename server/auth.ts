@@ -64,7 +64,7 @@ async function ensureOwnerAccount() {
         fullName: "System Owner",
         role: userRoles.OWNER,
         isAgent: true,
-        isActive: true,
+        // isActive is defined with a default value in the schema
         createdAt: new Date().toISOString(),
       };
       
@@ -161,7 +161,7 @@ export function setupAuth(app: Express) {
 
   // Debug authentication attempts
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy(async (username: string, password: string, done: any) => {
       try {
         console.log(`Authentication attempt for username: ${username}`);
         
@@ -331,7 +331,7 @@ export function setupAuth(app: Express) {
   app.post("/api/login", (req, res, next) => {
     console.log(`Login attempt for username: ${req.body.username}`);
     
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         console.error("Login error:", err);
         return next(err);
@@ -418,7 +418,8 @@ export function setupAuth(app: Express) {
             return res.status(500).json({ message: "Error during logout" });
           }
           console.log(`Logout successful for ${username}`);
-          res.clearCookie("theviews.sid");
+          // Make sure to clear the cookie with the updated name
+          res.clearCookie("theviews.sid.20250511", { path: '/' });
           return res.status(200).json({ message: "Logged out successfully" });
         });
       });
