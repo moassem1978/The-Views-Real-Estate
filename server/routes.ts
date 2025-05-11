@@ -505,10 +505,38 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         status: 'published', // Admin properties are published immediately
       };
 
-      // Log property data just before creation
+      // Handle critical fields: Reference number (in multiple formats)
+      if (propertyWithUser.reference) {
+        console.log(`Setting reference number to: ${propertyWithUser.reference}`);
+        // Set in all formats to ensure it's saved properly
+        propertyWithUser.references = propertyWithUser.reference;
+        propertyWithUser.reference_number = propertyWithUser.reference;
+      } else if (propertyWithUser.references) {
+        console.log(`Using references field: ${propertyWithUser.references}`);
+        propertyWithUser.reference = propertyWithUser.references;
+        propertyWithUser.reference_number = propertyWithUser.references;
+      } else if (propertyWithUser.reference_number) {
+        console.log(`Using reference_number field: ${propertyWithUser.reference_number}`);
+        propertyWithUser.reference = propertyWithUser.reference_number;
+        propertyWithUser.references = propertyWithUser.reference_number;
+      }
+      
+      // Critical field: Property Type
+      if (propertyWithUser.propertyType) {
+        console.log(`Processing property type: ${propertyWithUser.propertyType}`);
+        // Ensure it's saved correctly to the database
+        propertyWithUser.property_type = propertyWithUser.propertyType;
+      }
+      
+      // Log property data just before creation with critical fields
       console.log("Attempting to create property with final data:", JSON.stringify({
         title: propertyWithUser.title,
         city: propertyWithUser.city,
+        reference: propertyWithUser.reference || "(empty)",
+        references: propertyWithUser.references || "(empty)",
+        reference_number: propertyWithUser.reference_number || "(empty)",
+        propertyType: propertyWithUser.propertyType || "(empty)",
+        property_type: propertyWithUser.property_type || "(empty)",
         images: Array.isArray(propertyWithUser.images) ? 
           `${propertyWithUser.images.length} images` : 
           propertyWithUser.images
@@ -516,8 +544,21 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       const property = await dbStorage.createProperty(propertyWithUser);
 
-      // Log after DB operation success
-      console.log("Property created successfully with ID:", property.id);
+      // Log after DB operation success with detailed verification of critical fields
+      console.log("Property created successfully:", {
+        id: property.id,
+        title: property.title,
+        // Critical fields verification
+        references: property.references || "(missing)",
+        reference: property.reference || "(missing)",
+        reference_number: property.reference_number || "(missing)",
+        propertyType: property.propertyType || "(missing)",
+        property_type: property.property_type || "(missing)",
+        // Image summary
+        imageCount: Array.isArray(property.images) ? property.images.length : "(unknown)",
+        // Status info
+        status: property.status
+      });
 
       res.status(201).json(property);
     } catch (error) {
