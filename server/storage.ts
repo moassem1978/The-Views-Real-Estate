@@ -1735,8 +1735,15 @@ export class DatabaseStorage implements IStorage {
       }
       
       if ('status' in updates) dbUpdates.status = updates.status;
+      
       // The references field maps to reference_number column
       if ('references' in updates) dbUpdates.reference_number = updates.references;
+      
+      // Also check for reference field which is used on the frontend
+      if ('reference' in updates) dbUpdates.reference_number = updates.reference;
+      
+      // Direct mapping for reference_number field
+      if ('reference_number' in updates) dbUpdates.reference_number = updates.reference_number;
       // Handle images field specially to prevent JSON syntax errors
       if ('images' in updates) {
         console.log('Processing images field for update:', updates.images);
@@ -1925,7 +1932,10 @@ export class DatabaseStorage implements IStorage {
         status: updatedProperty.status,
         createdAt: updatedProperty.created_at,
         updatedAt: updatedProperty.updated_at,
+        // Include both fields for compatibility
         references: updatedProperty.reference_number || '',
+        reference: updatedProperty.reference_number || '',
+        reference_number: updatedProperty.reference_number || '',
         images: imagesArray
       };
       
