@@ -293,11 +293,17 @@ export default function PropertyForm({
           console.log(`Uploaded ${imageUrls.length} images successfully:`, imageUrls);
           
           // Step 3: Update the property with the uploaded image URLs and existing images
-          const validImages = [...existingImages, ...imageUrls];
-          console.log(`Updating property with ${validImages.length} total images`);
           
-          // Not needed for the "direct" upload endpoint which already handles this
-          // Update property with the new images
+          // Create a set of unique image URLs to prevent duplication
+          const uniqueImageUrls = new Set([...existingImages, ...imageUrls]);
+          const validImages = Array.from(uniqueImageUrls);
+          
+          console.log(`Updating property with ${validImages.length} total unique images`);
+          console.log('Existing images:', existingImages);
+          console.log('New image URLs:', imageUrls);
+          console.log('Final unique image list:', validImages);
+          
+          // Update property with the deduplicated images
           const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
             images: validImages
           });

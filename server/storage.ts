@@ -1736,14 +1736,33 @@ export class DatabaseStorage implements IStorage {
       
       if ('status' in updates) dbUpdates.status = updates.status;
       
-      // The references field maps to reference_number column
-      if ('references' in updates) dbUpdates.reference_number = updates.references;
+      // The references field maps to reference_number column - CRITICAL FIELD
+      // Process all possible reference field names to ensure it's saved
+      let refNumber = null;
       
-      // Also check for reference field which is used on the frontend
-      if ('reference' in updates) dbUpdates.reference_number = updates.reference;
+      // Try to get the reference number from any possible field
+      if ('references' in updates && updates.references) {
+        refNumber = updates.references;
+        console.log(`Found reference in 'references' field: ${refNumber}`);
+      }
       
-      // Direct mapping for reference_number field
-      if ('reference_number' in updates) dbUpdates.reference_number = updates.reference_number;
+      if ('reference' in updates && updates.reference) {
+        refNumber = updates.reference;
+        console.log(`Found reference in 'reference' field: ${refNumber}`);
+      }
+      
+      if ('reference_number' in updates && updates.reference_number) {
+        refNumber = updates.reference_number;
+        console.log(`Found reference in 'reference_number' field: ${refNumber}`);
+      }
+      
+      // If we found a reference number, apply it
+      if (refNumber) {
+        console.log(`Setting reference_number to: ${refNumber}`);
+        dbUpdates.reference_number = refNumber;
+      } else {
+        console.log(`No reference number found in update request`);
+      }
       // Handle images field specially to prevent JSON syntax errors
       if ('images' in updates) {
         console.log('Processing images field for update:', updates.images);

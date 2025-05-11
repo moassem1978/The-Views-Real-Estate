@@ -1965,11 +1965,48 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           const existingImages = Array.isArray(property.images) ? property.images : [];
           console.log(`Property has ${existingImages.length} existing images + ${fileUrls.length} new images`);
           
-          // Avoid duplicates
-          const allImages = [...new Set([...existingImages, ...fileUrls])];
+          // Deep check to avoid exact duplicates and similar paths
+          const uniqueUrls = new Set<string>();
           
-          // Update property
-          console.log(`Updating property ${propertyId} with ${allImages.length} total images`);
+          // First add existing images, with de-duplication
+          for (const img of existingImages) {
+            if (typeof img === 'string' && img.trim() !== '') {
+              uniqueUrls.add(img);
+            }
+          }
+          
+          // Then add new images, avoiding duplicates
+          for (const newImg of fileUrls) {
+            if (typeof newImg === 'string' && newImg.trim() !== '') {
+              // Check if any existing image has the same filename component
+              const newImgBasename = newImg.split('/').pop();
+              let isDuplicate = false;
+              
+              // Skip this loop for images that don't have a valid filename
+              if (!newImgBasename) continue;
+              
+              // Check against existing images to prevent duplication
+              for (const existingImg of uniqueUrls) {
+                const existingBasename = existingImg.split('/').pop();
+                if (existingBasename === newImgBasename) {
+                  isDuplicate = true;
+                  console.log(`Found duplicate image: ${newImg} matches ${existingImg}`);
+                  break;
+                }
+              }
+              
+              if (!isDuplicate) {
+                uniqueUrls.add(newImg);
+              }
+            }
+          }
+          
+          const allImages = Array.from(uniqueUrls);
+          
+          // Log what we're doing
+          console.log(`Updating property ${propertyId} with ${allImages.length} unique images out of ${existingImages.length} existing and ${fileUrls.length} new`);
+          
+          // Update property with deduplicated images
           const updatedProperty = await dbStorage.updateProperty(propertyId, {
             images: allImages
           });
