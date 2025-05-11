@@ -2623,9 +2623,18 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.log(`User Agent: ${userAgent}`);
       console.log(`Content-Type: ${req.headers['content-type']}`);
       
-      // Extract propertyId from request if present
-      const propertyId = req.body?.propertyId;
+      // Extract propertyId from request if present - handle different formats
+      let propertyId = null;
+      if (req.body && req.body.propertyId) {
+        propertyId = Number(req.body.propertyId);
+      }
+      
       console.log(`Property ID: ${propertyId || 'Not provided'}`);
+      console.log(`Property ID type: ${typeof propertyId}`);
+      
+      if (propertyId !== null && (isNaN(propertyId) || propertyId <= 0)) {
+        console.error(`Invalid property ID format: ${req.body.propertyId}`);
+      }
 
       // Log all form fields for debugging
       if (req.body) {
@@ -2716,27 +2725,40 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.log("File URLs:", fileUrls);
 
       // If a property ID was provided, update the property with the new images
-      if (propertyId) {
+      if (propertyId && !isNaN(Number(propertyId))) {
         try {
-          console.log(`Updating property ${propertyId} with new images`);
-          const property = await dbStorage.getProperty(parseInt(propertyId));
+          const propId = Number(propertyId);
+          console.log(`Updating property ${propId} with new images`);
+          
+          // Get the property by ID
+          const property = await dbStorage.getPropertyById(propId);
           
           if (property) {
-            const currentImages = property.images || [];
-            const updatedImages = [...currentImages, ...fileUrls];
+            // Ensure current images is an array
+            const currentImages = Array.isArray(property.images) ? property.images : [];
+            console.log(`Property has ${currentImages.length} existing images`);
             
-            // Update the property with new images
-            await dbStorage.updateProperty(parseInt(propertyId), {
-              ...property,
+            // Add new image URLs
+            const updatedImages = [...currentImages, ...fileUrls];
+            console.log(`Updated property will have ${updatedImages.length} images total`);
+            
+            // Update only the images field
+            const updatedProperty = await dbStorage.updateProperty(propId, {
               images: updatedImages
             });
             
-            console.log(`Successfully updated property ${propertyId} with ${fileUrls.length} new images`);
+            if (updatedProperty) {
+              console.log(`Successfully updated property ${propId} with ${fileUrls.length} new images`);
+              console.log(`New image count: ${updatedProperty.images ? updatedProperty.images.length : 0}`);
+            } else {
+              console.error(`Failed to update property ${propId} with new images`);
+            }
           } else {
-            console.warn(`Property ID ${propertyId} not found, images uploaded but not associated`);
+            console.warn(`Property ID ${propId} not found, images uploaded but not associated`);
           }
         } catch (dbError) {
           console.error(`Error updating property ${propertyId} with images:`, dbError);
+          console.error(dbError instanceof Error ? dbError.stack : 'Unknown error');
           // Continue to return success since files were uploaded, even if association failed
         }
       }
