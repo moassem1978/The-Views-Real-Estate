@@ -66,7 +66,11 @@ export default function PropertyForm({
   // Image handlers with preview functionality
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setImages(Array.from(e.target.files));
+      // Add new files to the existing ones instead of replacing them
+      setImages(prevImages => [...prevImages, ...Array.from(e.target.files)]);
+      
+      // Reset the file input to allow selecting more files later
+      e.target.value = '';
     }
   };
   
