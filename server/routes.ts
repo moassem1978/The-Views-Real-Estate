@@ -2834,10 +2834,35 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.log(`User Agent: ${userAgent}`);
       console.log(`Content-Type: ${req.headers['content-type']}`);
       
-      // Extract propertyId from request if present - handle different formats
+      // CRITICAL FIX: Improved propertyId extraction with multiple fallbacks
       let propertyId = null;
-      if (req.body && req.body.propertyId) {
-        propertyId = Number(req.body.propertyId);
+      
+      // Try all possible sources for propertyId in order
+      const possibleSources = [
+        // Form data - multiple possible field names
+        req.body?.propertyId,
+        req.body?.property_id,
+        req.body?.propId,
+        req.body?.id,
+        // Query parameters
+        req.query?.propertyId,
+        req.query?.property_id, 
+        req.query?.id,
+        // Headers
+        req.headers['x-property-id'],
+        req.headers['property-id']
+      ];
+      
+      // Try each source until we find a valid property ID
+      for (const source of possibleSources) {
+        if (source) {
+          const id = Number(source);
+          if (!isNaN(id) && id > 0) {
+            propertyId = id;
+            console.log(`Found valid propertyId ${propertyId} from source: ${source}`);
+            break;
+          }
+        }
       }
       
       console.log(`Property ID: ${propertyId || 'Not provided'}`);
