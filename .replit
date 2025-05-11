@@ -7,7 +7,7 @@ channel = "stable-24_05"
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
+run = ["sh", "-c", "NODE_ENV=production node server/index.js"]
 build = ["sh", "-c", "npm run build"]
 
 [[ports]]
@@ -53,3 +53,12 @@ args = "npm run build"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run check"
+
+[[workflows.workflow]]
+name = "Image Maintenance"
+author = 40723493
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "ts-node server/cleanup-images.ts"

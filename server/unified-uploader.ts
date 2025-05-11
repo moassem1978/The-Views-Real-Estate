@@ -18,12 +18,12 @@ const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     // Save to the public uploads directory for easy access
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-    
+
     // Ensure directory exists
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
     }
-    
+
     cb(null, uploadDir);
   },
   filename: (_req, file, cb) => {
@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const originalExt = path.extname(file.originalname);
     const filename = file.fieldname + '-' + uniqueSuffix + originalExt;
-    
+
     cb(null, filename);
   }
 });
@@ -40,7 +40,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 2 * 1024 * 1024, // 2MB limit
     files: 20 // Maximum 20 files at once
   },
   fileFilter: (_req, file, cb) => {
@@ -48,11 +48,11 @@ const upload = multer({
     const filetypes = /jpeg|jpg|png|gif|webp|svg/;
     const mimetype = filetypes.test(file.mimetype);
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    
+
     if (mimetype && extname) {
       return cb(null, true);
     }
-    
+
     cb(new Error('Only image files are allowed!'));
   }
 });
@@ -68,18 +68,18 @@ router.post('/upload', (req: Request, res: Response) => {
         message: err.message || 'Error uploading files' 
       });
     }
-    
+
     try {
       // Get the files from multer
       const files = req.files as Express.Multer.File[];
-      
+
       if (!files || files.length === 0) {
         return res.status(400).json({ 
           success: false, 
           message: 'No files were uploaded' 
         });
       }
-      
+
       // Create public URLs for the uploaded files
       const urls = files.map(file => {
         // Convert from filesystem path to URL path
@@ -87,12 +87,12 @@ router.post('/upload', (req: Request, res: Response) => {
           path.join(process.cwd(), 'public'),
           file.path
         ).replace(/\\/g, '/'); // Fix for Windows paths
-        
+
         return `/${relativePath}`;
       });
-      
+
       console.log(`Successfully uploaded ${files.length} files:`, urls);
-      
+
       // Return success with URLs
       return res.status(200).json({
         success: true,

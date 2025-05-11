@@ -1,107 +1,77 @@
 import sharp from 'sharp';
-import { Client } from '@replit/object-storage';
 import path from 'path';
+import fs from 'fs';
 
-// Initialize Object Storage client
-const storage = new Client();
-
-// Reduced sizes for better performance
-export const imageSizes = {
-  thumbnail: { width: 150, height: 100 }, // Smaller thumbnails
-  medium: { width: 480, height: 320 },    // Reduced medium size
-  large: { width: 800, height: 600 }      // Reduced large size
-};
-
-// Compression options
-const compressionOptions = {
-  jpeg: { quality: 80, progressive: true },
-  webp: { quality: 75 }
-};
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB max file size
+const MAX_DIMENSION = 1920; // Max width/height
 
 export async function optimizeImage(inputBuffer: Buffer, options = {}) {
-  const {
-    width = 1200,
-    quality = 80,
-    format = 'jpeg'
-  } = options;
-
   try {
-    const optimized = await sharp(inputBuffer)
-      .resize(width, null, {
-        withoutEnlargement: true,
-        fit: 'inside'
-      })
-      .toFormat(format, { quality })
-      .toBuffer();
+    // Get image metadata
+    const metadata = await sharp(inputBuffer).metadata();
 
-    return optimized;
+    // Calculate resize dimensions while maintaining aspect ratio
+    let width = metadata.width || 0;
+    let height = metadata.height || 0;
+    if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+      const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+      width = Math.round(width * ratio);
+      height = Math.round(height * ratio);
+    }
+
+    // Progressive optimization with quality reduction until size limit is met
+    let quality = 85;
+    let outputBuffer: Buffer;
+    let fileSize = Infinity;
+
+    while (quality >= 60 && fileSize > MAX_FILE_SIZE) {
+      outputBuffer = await sharp(inputBuffer)
+        .resize(width, height, {
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .jpeg({ quality, progressive: true })
+        .toBuffer();
+
+      fileSize = outputBuffer.length;
+      quality -= 5;
+    }
+
+    return outputBuffer || inputBuffer;
   } catch (err) {
     console.error('Image optimization failed:', err);
-    return inputBuffer; // Fallback to original
+    throw new Error('Image optimization failed - please ensure image is valid and under 2MB');
   }
 }
 
 export async function generateThumbnail(inputBuffer: Buffer) {
   try {
-    const thumbnail = await sharp(inputBuffer)
+    return await sharp(inputBuffer)
       .resize(300, 300, {
         fit: 'cover'
       })
-      .toFormat('jpeg', { quality: 70 })
+      .jpeg({ quality: 70 })
       .toBuffer();
-
-    return thumbnail;
   } catch (err) {
     console.error('Thumbnail generation failed:', err);
-    return inputBuffer;
+    throw new Error('Thumbnail generation failed');
   }
 }
 
-/**
- * Create an image set object containing different sizes for responsive loading
- * This is useful when you already have the image paths and just need to structure them
- */
-export function createImageSet(basePath: string, filename: string): {
-  original: string, 
-  thumbnail: string, 
-  medium: string, 
-  large: string 
-} {
-  const ext = path.extname(filename) || '.webp';
-  const name = path.basename(filename, ext);
-  
-  return {
-    original: `${basePath}/${name}-original${ext}`,
-    thumbnail: `${basePath}/${name}-thumbnail${ext}`,
-    medium: `${basePath}/${name}-medium${ext}`,
-    large: `${basePath}/${name}-large${ext}`
-  };
-}
+// Cleanup old images - run daily
+export async function cleanupUnusedImages(uploadsDir: string, usedImages: string[]) {
+  const files = await fs.promises.readdir(uploadsDir);
+  const now = Date.now();
+  const oneWeek = 7 * 24 * 60 * 60 * 1000;
 
-/**
- * A simplified utility for legacy images that don't have multiple sizes
- * Creates responsive image URLs with a standard pattern based on a single path
- */
-export function getResponsiveImagePaths(imagePath: string): {
-  original: string, 
-  thumbnail: string, 
-  medium: string, 
-  large: string 
-} {
-  if (!imagePath) {
-    return {
-      original: '',
-      thumbnail: '',
-      medium: '',
-      large: ''
-    };
+  for (const file of files) {
+    const filePath = path.join(uploadsDir, file);
+    const stats = await fs.promises.stat(filePath);
+
+    // Delete if unused and older than 1 week
+    if (!usedImages.includes(file) && now - stats.mtimeMs > oneWeek) {
+      await fs.promises.unlink(filePath);
+      console.log(`Deleted unused image: ${file}`);
+    }
   }
-  
-  // For handling existing non-optimized images
-  return {
-    original: imagePath,
-    thumbnail: imagePath,
-    medium: imagePath,
-    large: imagePath
-  };
 }
