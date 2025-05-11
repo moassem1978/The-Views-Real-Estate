@@ -223,11 +223,16 @@ export default function PropertyForm({
         data.address = data.projectName;
       }
       
-      // Map the reference field to references (which is what the backend expects)
+      // Handle reference number - absolutely critical field
+      // Send it in all possible formats the backend might expect
       if (data.reference) {
+        console.log(`Setting reference number to: ${data.reference}`);
         data.references = data.reference;
-        // Also set reference_number for direct database compatibility
         data.reference_number = data.reference;
+        // Keep the original field for completeness
+        data.reference = data.reference;
+      } else {
+        console.log("WARNING: No reference number provided!");
       }
       
       // Ensure listingType is included 
