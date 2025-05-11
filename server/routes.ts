@@ -588,6 +588,47 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       console.log("*** FIXING PROPERTY UPDATE ***");
       
+      // Critical fields: Reference Number handling - log all possible variations
+      console.log("Reference Number Check:", {
+        reference: propertyData.reference,
+        references: propertyData.references,
+        reference_number: propertyData.reference_number
+      });
+      
+      // Ensure reference number is preserved if it exists in either format
+      if (propertyData.reference) {
+        console.log(`Setting reference number to: ${propertyData.reference}`);
+        // Set in all formats to ensure it's saved
+        propertyData.references = propertyData.reference;
+        propertyData.reference_number = propertyData.reference;
+      } else if (propertyData.references) {
+        console.log(`Using references field: ${propertyData.references}`);
+        propertyData.reference = propertyData.references;
+        propertyData.reference_number = propertyData.references;
+      } else if (propertyData.reference_number) {
+        console.log(`Using reference_number field: ${propertyData.reference_number}`);
+        propertyData.reference = propertyData.reference_number;
+        propertyData.references = propertyData.reference_number;
+      } else if (existingProperty.references) {
+        // Preserve the existing reference if none provided
+        console.log(`Preserving existing reference: ${existingProperty.references}`);
+        propertyData.reference = existingProperty.references;
+        propertyData.references = existingProperty.references;
+        propertyData.reference_number = existingProperty.references;
+      }
+      
+      // Critical field: Property Type
+      if (propertyData.propertyType) {
+        console.log(`Processing property type: ${propertyData.propertyType}`);
+        // Ensure it's saved correctly to the database
+        propertyData.property_type = propertyData.propertyType;
+      } else if (existingProperty.propertyType) {
+        // Preserve existing property type if none provided
+        console.log(`Preserving existing property type: ${existingProperty.propertyType}`);
+        propertyData.propertyType = existingProperty.propertyType;
+        propertyData.property_type = existingProperty.propertyType;
+      }
+      
       // Make sure we preserve existing images if none are provided in the update
       if (!propertyData.images && existingProperty && existingProperty.images) {
         console.log(`Preserving ${Array.isArray(existingProperty.images) ? existingProperty.images.length : 0} existing images`);
@@ -630,8 +671,29 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       console.log("Final property data to save:", propertyData);
 
+      // Final validation and logging of critical fields before saving
+      console.log("Final validation of critical fields:", {
+        reference: propertyData.reference || "(empty)",
+        references: propertyData.references || "(empty)",
+        reference_number: propertyData.reference_number || "(empty)",
+        propertyType: propertyData.propertyType || "(empty)",
+        property_type: propertyData.property_type || "(empty)"
+      });
+
       const property = await dbStorage.updateProperty(id, propertyData);
-      console.log("Property updated successfully:", property);
+      
+      // Log success with verification of saved data
+      console.log("Property updated successfully:", {
+        id: property.id,
+        title: property.title,
+        // Critical fields verification
+        references: property.references || "(missing)",
+        propertyType: property.propertyType || "(missing)",
+        // Image summary
+        imageCount: Array.isArray(property.images) ? property.images.length : "(unknown)",
+        // Status info
+        status: property.status
+      });
 
       res.json(property);
     } catch (error) {
