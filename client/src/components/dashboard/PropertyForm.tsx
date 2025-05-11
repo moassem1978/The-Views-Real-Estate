@@ -125,8 +125,8 @@ export default function PropertyForm({
     defaultValues: {
       title: "",
       description: "",
-      address: "", // Required field
       city: "",
+      state: "", // Required by database
       projectName: "",
       propertyType: "",
       listingType: "Primary",
@@ -162,8 +162,8 @@ export default function PropertyForm({
       form.reset({
         title: propertyData.title || "",
         description: propertyData.description || "",
-        address: propertyData.address || "",
         city: propertyData.city || "",
+        state: propertyData.state || "",
         projectName: propertyData.projectName || "",
         propertyType: propertyData.propertyType || "",
         listingType: propertyData.listingType || "Primary",
@@ -365,19 +365,7 @@ export default function PropertyForm({
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address*</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Property address" {...field} required />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
                 
                 <FormField
                   control={form.control}
@@ -566,6 +554,23 @@ export default function PropertyForm({
                         </SelectContent>
                       </Select>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Hidden state field that gets set based on city */}
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem className="hidden">
+                      <Input 
+                        type="hidden"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                        }}
+                      />
                     </FormItem>
                   )}
                 />
