@@ -128,10 +128,10 @@ export default function PropertyDetails() {
                       {property.title}
                     </h1>
                     
-                    {/* Reference Number */}
-                    {(property.references || property.reference_number) && (
+                    {/* Reference Number - consistent display */}
+                    {(property.references || property.reference_number || property.reference) && (
                       <div className="mt-2 text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded inline-block">
-                        Reference: {property.references || property.reference_number}
+                        Reference: {property.references || property.reference_number || property.reference}
                       </div>
                     )}
                     
