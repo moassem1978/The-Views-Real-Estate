@@ -218,8 +218,15 @@ export default function PropertyForm({
   // Handle form submission
   const onSubmit = async (data: any) => {
     try {
-      // Prevent accidental form closure by setting a flag
-      const submitting = true;
+      // Ensure state matches city if not already set
+      if (!data.state && data.city) {
+        data.state = data.city;
+      }
+      
+      // Backend requires an address - use project name as address if not provided
+      if (!data.address && data.projectName) {
+        data.address = data.projectName;
+      }
       
       // Step 1: Save property data first
       const response = await mutation.mutateAsync(data);
@@ -340,6 +347,15 @@ export default function PropertyForm({
   // Watch listing type to conditionally render fields
   const listingType = form.watch('listingType');
   const isResale = listingType === 'Resale';
+  
+  // Watch city and update state field automatically
+  const city = form.watch('city');
+  useEffect(() => {
+    if (city) {
+      // Set state to match city - required for database validation
+      form.setValue('state', city);
+    }
+  }, [city, form]);
 
   return (
     <Form {...form}>
