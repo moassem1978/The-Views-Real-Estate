@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Property } from "../../types";
@@ -40,6 +40,7 @@ export default function PropertyForm({
   onSuccess,
   onCancel,
 }: PropertyFormProps) {
+  // Component state
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [images, setImages] = useState<File[]>([]);
@@ -110,56 +111,21 @@ export default function PropertyForm({
     enabled: true,
   });
 
-  // Fetch property data if in edit mode
+  // Fetch property data if in edit mode - always declaring the query but conditionally enabling it
   const {
     data: propertyData,
     isLoading: isLoadingProperty,
     error: propertyError,
   } = useQuery<Property>({
-    queryKey: [`/api/properties/${propertyId}`],
-    enabled: isEditing,
+    queryKey: [`/api/properties/${propertyId || 0}`], // Use 0 as fallback to avoid undefined
+    enabled: isEditing && !!propertyId, // Only run query when in edit mode with valid ID
   });
 
-  // Form definition
-  const form = useForm({
-    defaultValues: {
-      title: "",
-      description: "",
-      city: "",
-      state: "", // Required by database
-      projectName: "",
-      propertyType: "",
-      listingType: "Primary",
-      reference: "", // Added reference field
-      price: 0,
-      downPayment: 0,
-      installmentAmount: 0,
-      installmentPeriod: 0,
-      bedrooms: 0,
-      bathrooms: 0,
-      builtUpArea: 0,
-      plotSize: 0,
-      gardenSize: 0,
-      floor: 0,
-      isFeatured: false,
-      isNewListing: true,
-      isHighlighted: false,
-      isGroundUnit: false,
-      isFullCash: false,
-      country: "Egypt",
-    },
-  });
-
-  // Update form with existing property data when editing
-  useEffect(() => {
+  // Get initial form values based on editing mode
+  const getInitialValues = () => {
+    // If editing and data is available, use property data
     if (isEditing && propertyData) {
-      // Load existing images if any
-      if (propertyData.images && Array.isArray(propertyData.images)) {
-        setExistingImages(propertyData.images);
-      }
-      
-      // Set form values
-      form.reset({
+      return {
         title: propertyData.title || "",
         description: propertyData.description || "",
         city: propertyData.city || "",
@@ -184,7 +150,47 @@ export default function PropertyForm({
         isGroundUnit: propertyData.isGroundUnit || false,
         isFullCash: propertyData.isFullCash || false,
         country: propertyData.country || "Egypt",
-      });
+      };
+    }
+    // Otherwise return default values
+    return {
+      title: "",
+      description: "",
+      city: "",
+      state: "",
+      projectName: "",
+      propertyType: "",
+      listingType: "Primary",
+      reference: "",
+      price: 0,
+      downPayment: 0,
+      installmentAmount: 0,
+      installmentPeriod: 0,
+      bedrooms: 0,
+      bathrooms: 0,
+      builtUpArea: 0,
+      plotSize: 0,
+      gardenSize: 0,
+      floor: 0,
+      isFeatured: false,
+      isNewListing: true,
+      isHighlighted: false,
+      isGroundUnit: false,
+      isFullCash: false,
+      country: "Egypt",
+    };
+  };
+
+  // Update form with existing property data when editing
+  useEffect(() => {
+    if (isEditing && propertyData) {
+      // Load existing images if any
+      if (propertyData.images && Array.isArray(propertyData.images)) {
+        setExistingImages(propertyData.images);
+      }
+      
+      // Reset form values
+      form.reset(getInitialValues());
     }
   }, [isEditing, propertyData, form]);
 
