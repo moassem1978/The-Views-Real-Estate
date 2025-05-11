@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 // Dashboard components
 import PropertiesManager from "@/components/dashboard/PropertiesManager";
@@ -75,6 +76,31 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | undefined>(undefined);
+  
+  // Fetch stats for the dashboard
+  const { data: propertyStats } = useQuery({
+    queryKey: ['/api/properties'],
+    select: (data: any) => ({
+      totalCount: data?.totalCount || 0,
+    }),
+    enabled: !!user,
+  });
+  
+  const { data: announcementStats } = useQuery({
+    queryKey: ['/api/announcements'],
+    select: (data: any) => ({
+      totalCount: data?.totalCount || 0,
+    }),
+    enabled: !!user,
+  });
+  
+  const { data: projectStats } = useQuery({
+    queryKey: ['/api/projects'],
+    select: (data: any) => ({
+      totalCount: data?.totalCount || 0,
+    }),
+    enabled: !!user,
+  });
   
   // Dashboard state
   const [state, setState] = useState({
@@ -224,21 +250,21 @@ function Dashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <DashboardStatCard 
                     title="Properties" 
-                    value="39" 
+                    value={propertyStats?.totalCount?.toString() || "0"} 
                     description="Total properties" 
                     icon={<Building2 className="h-5 w-5" />}
                     linkTo="/dashboard?tab=properties" 
                   />
                   <DashboardStatCard 
                     title="Announcements" 
-                    value="1" 
+                    value={announcementStats?.totalCount?.toString() || "0"} 
                     description="Active announcements" 
                     icon={<FileText className="h-5 w-5" />}
                     linkTo="/dashboard?tab=announcements" 
                   />
                   <DashboardStatCard 
                     title="Projects" 
-                    value="5+" 
+                    value={projectStats?.totalCount?.toString() || "0"} 
                     description="Active projects" 
                     icon={<ClipboardEdit className="h-5 w-5" />}
                     linkTo="/dashboard?tab=projects" 
