@@ -14,8 +14,13 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
   useEffect(() => {
     // Set the main image when the property data loads
+    console.log(`PropertyCard: Loading images for property #${property.id}: ${property.title}`);
     const images = getImages() || [];
+    console.log(`PropertyCard: Found ${images.length} images for property #${property.id}`, images);
+    
+    // If we have multiple images, use the first one
     const firstImage = images.length > 0 ? images[0] : '/uploads/default-property.svg';
+    console.log(`PropertyCard: Using main image for property #${property.id}:`, firstImage);
     setMainImage(firstImage);
   }, [property]);
 
@@ -28,7 +33,20 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   // Parse images from JSON string if necessary
   const getImages = () => {
     // Use our utility function to safely parse the images array
-    return parseJsonArray(property.images);
+    console.log(`PropertyCard: Parsing images for property #${property.id}:`, 
+      typeof property.images === 'string' ? 
+        (property.images.length > 100 ? 
+          property.images.substring(0, 100) + '...' : 
+          property.images) : 
+        (Array.isArray(property.images) ? 
+          `Array[${property.images.length}]` : 
+          typeof property.images)
+    );
+    
+    // Use enhanced parseJsonArray with better error handling
+    const result = parseJsonArray(property.images);
+    console.log(`PropertyCard: After parsing, property #${property.id} has ${result.length} images`);
+    return result;
   };
 
   return (

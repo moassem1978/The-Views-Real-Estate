@@ -227,7 +227,7 @@ export default function PropertyForm({
       // Send it in all possible formats the backend might expect
       if (data.reference) {
         console.log(`Setting reference number to: ${data.reference}`);
-        // Set in all possible formats to ensure it's saved properly
+        // Set the field name that matches the schema definition - this is the key fix
         data.references = data.reference;
         data.reference_number = data.reference;
         
@@ -235,10 +235,26 @@ export default function PropertyForm({
         console.log(`Reference data being sent: reference=${data.reference}, references=${data.references}, reference_number=${data.reference_number}`);
       } else {
         console.log("WARNING: No reference number provided!");
+        // If no reference number is provided, set a default one based on property title
+        const defaultRef = `REF-${Date.now().toString().slice(-6)}`;
+        console.log(`Creating default reference number: ${defaultRef}`);
+        data.references = defaultRef;
+        data.reference_number = defaultRef;
+        data.reference = defaultRef;
       }
       
       // Ensure propertyType is included and logged - another critical field
+      if (!data.propertyType) {
+        console.log("WARNING: Property type not set! Setting default to apartment");
+        data.propertyType = "apartment"; // Set a default to ensure it's always present
+      }
       console.log(`Property type being sent: ${data.propertyType}`);
+      
+      // Convert propertyType to lowercase for consistency
+      if (data.propertyType) {
+        data.propertyType = data.propertyType.toLowerCase();
+        console.log(`Normalized property type: ${data.propertyType}`);
+      }
       
       // Ensure listingType is included 
       if (!data.listingType) {

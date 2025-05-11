@@ -14,15 +14,30 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
   // Process and normalize all images when the component first renders
   // This ensures we're using the same path format for all images
   useEffect(() => {
-    if (!images || images.length === 0) return;
+    console.log("PropertyGallery: Processing images array:", images);
+    
+    if (!images || images.length === 0) {
+      console.log("PropertyGallery: No images to process");
+      return;
+    }
     
     // Process all image paths to ensure uniform format
     const normalizedImages = images.map(img => {
+      // Make sure img is a string
+      const imgStr = typeof img === 'string' ? img : String(img);
       // Remove quotes and normalize slashes
-      return img.replace(/"/g, '').replace(/\\/g, '/');
+      const normalized = imgStr.replace(/"/g, '').replace(/\\/g, '/');
+      return normalized;
     });
     
+    console.log(`PropertyGallery: Normalized ${normalizedImages.length} images:`, normalizedImages);
     setProcessedImages(normalizedImages);
+    
+    // If we haven't set an active image yet, set it to the first one
+    if (activeImage >= normalizedImages.length) {
+      console.log("PropertyGallery: Resetting activeImage to 0");
+      setActiveImage(0);
+    }
   }, [images]);
   
   const handleThumbnailClick = (index: number) => {

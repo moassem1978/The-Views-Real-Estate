@@ -38,21 +38,59 @@ export function formatPrice(price: number, maximumFractionDigits = 0): string {
  * @returns Parsed array or empty array if parsing fails
  */
 export function parseJsonArray(jsonString: string | string[] | unknown): string[] {
+  // Debug info
+  console.log("parseJsonArray called with:", typeof jsonString, 
+    Array.isArray(jsonString) ? `array[${jsonString.length}]` : 
+    (jsonString === null ? 'null' : 
+     jsonString === undefined ? 'undefined' : 
+     typeof jsonString === 'string' ? (jsonString.length > 100 ? jsonString.substring(0, 100) + '...' : jsonString) : 
+     String(jsonString))
+  );
+
   // Fast path for arrays
   if (Array.isArray(jsonString)) {
+    console.log(`Returning original array with ${jsonString.length} items`);
     return jsonString;
   }
   
   // Handle string parsing with try/catch
   if (typeof jsonString === 'string') {
     try {
+      // First try direct JSON parsing
       const parsed = JSON.parse(jsonString);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
+      if (Array.isArray(parsed)) {
+        console.log(`Successfully parsed string to array with ${parsed.length} items`);
+        return parsed;
+      } else if (parsed && typeof parsed === 'object') {
+        // Handle case where it parses to an object with numeric keys (like a PHP array)
+        const values = Object.values(parsed);
+        console.log(`Parsed object to values array with ${values.length} items`);
+        return values.map(v => String(v));
+      }
+      console.log("Parsed to non-array type:", typeof parsed);
+      return [];
+    } catch (err) {
+      console.log("JSON parse error:", err instanceof Error ? err.message : String(err));
+      
+      // If it's a single path that failed parsing, return it as a single-item array
+      if (jsonString.trim().startsWith('/')) {
+        console.log("String looks like a file path, returning as single item array");
+        return [jsonString];
+      }
       return [];
     }
   }
   
+  // Handle object case directly (PostgreSQL sometimes returns objects for JSON arrays)
+  if (jsonString && typeof jsonString === 'object') {
+    const values = Object.values(jsonString);
+    if (values.length > 0) {
+      console.log(`Converting object to values array with ${values.length} items`);
+      return values.map(v => String(v));
+    }
+  }
+  
+  console.log("Returning empty array as fallback");
   return [];
 }
 
