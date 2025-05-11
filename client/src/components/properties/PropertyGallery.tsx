@@ -21,7 +21,46 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
       return;
     }
     
-    // Process all image paths to ensure uniform format
+    // Check if we're dealing with a JSON string that represents an array
+    if (images.length === 1 && typeof images[0] === 'string' && 
+        (images[0].startsWith('[') || images[0].startsWith('"['))) {
+      console.log("PropertyGallery: Detected JSON string representation of image array");
+      
+      try {
+        // Remove any leading/trailing quotes from JSON string
+        const jsonStr = images[0].replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
+        const parsedImages = JSON.parse(jsonStr);
+        
+        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
+          console.log(`PropertyGallery: Successfully parsed JSON to array with ${parsedImages.length} images`);
+          
+          // Process the parsed array instead
+          const normalizedImages = parsedImages.map(img => {
+            // Make sure img is a string
+            const imgStr = typeof img === 'string' ? img : String(img);
+            // Remove quotes and normalize slashes
+            const normalized = imgStr.replace(/"/g, '').replace(/\\/g, '/');
+            return normalized;
+          });
+          
+          console.log(`PropertyGallery: Normalized ${normalizedImages.length} images from JSON:`, normalizedImages);
+          setProcessedImages(normalizedImages);
+          
+          // If we haven't set an active image yet, set it to the first one
+          if (activeImage >= normalizedImages.length) {
+            console.log("PropertyGallery: Resetting activeImage to 0");
+            setActiveImage(0);
+          }
+          
+          return; // Exit early as we've processed the JSON case
+        }
+      } catch (e) {
+        console.error("PropertyGallery: Failed to parse JSON image string:", e);
+        // Fall through to standard processing if JSON parsing fails
+      }
+    }
+    
+    // Standard processing for regular image array
     const normalizedImages = images.map(img => {
       // Make sure img is a string
       const imgStr = typeof img === 'string' ? img : String(img);
@@ -38,7 +77,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
       console.log("PropertyGallery: Resetting activeImage to 0");
       setActiveImage(0);
     }
-  }, [images]);
+  }, [images, activeImage]);
   
   const handleThumbnailClick = (index: number) => {
     setActiveImage(index);

@@ -41,8 +41,49 @@ export default function PropertyImage({
       return;
     }
     
+    // Special case: If the source is JSON or looks like a JSON array, try to extract a usable path
+    if (typeof src === 'string' && (src.startsWith('[') || src.startsWith('"['))) {
+      console.log('PropertyImage: Source appears to be JSON format -', src);
+      try {
+        // Remove any outer quotes that might surround JSON
+        const cleanJson = src.replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
+        
+        // Parse the JSON
+        const parsed = JSON.parse(cleanJson);
+        
+        // If it's an array, use the first item
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const firstItem = parsed[0];
+          console.log('PropertyImage: Extracted first item from JSON array -', firstItem);
+          
+          // Recursively process this item instead
+          if (firstItem && typeof firstItem === 'string') {
+            // Set source to the first item and continue processing
+            const singleImage = String(firstItem).trim();
+            console.log('PropertyImage: Using first image from array -', singleImage);
+            
+            // Now process this single image using the rest of the logic
+            if (singleImage) {
+              // Continue with the single image path instead
+              processImagePath(singleImage);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.log('PropertyImage: Failed to parse JSON source -', e);
+        // Continue with normal processing if JSON parsing fails
+      }
+    }
+    
+    // Process the image path
+    processImagePath(src);
+  }, [src]);
+  
+  // Extracted the image processing logic to a separate function for clarity and reuse
+  const processImagePath = (imageSrc: string | any) => {
     // Ensure we're working with a string
-    const srcString = typeof src === 'string' ? src : String(src);
+    const srcString = typeof imageSrc === 'string' ? imageSrc : String(imageSrc);
     
     // Remove any extra quotes that might be from JSON serialization
     // and normalize path separators
@@ -104,7 +145,7 @@ export default function PropertyImage({
     console.log('PropertyImage: Final path -', finalPath);
     
     setFormattedSrc(finalPath);
-  }, [src]);
+  };
   
   const handleLoad = () => {
     setIsLoaded(true);

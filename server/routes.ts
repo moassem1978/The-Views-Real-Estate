@@ -3388,8 +3388,34 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             // Sort by last modified date, most recent first
             fileStats.sort((a, b) => b.stats.mtimeMs - a.stats.mtimeMs);
 
-            // Check the 5 most recent files first
-            const recentFiles = fileStats.slice(0, 5);
+            // Check the 10 most recent files first, but with better hash matching
+            const recentFiles = fileStats.slice(0, 10);
+            // Only use this when we have a specific hash to look for
+            if (hashMatch && hashMatch[1]) {
+              const hashToFind = hashMatch[1].toLowerCase();
+              
+              // First try to find exact hash matches in recent files
+              for (const fileInfo of recentFiles) {
+                console.log(`Checking recent file for exact hash match: ${fileInfo.file}`);
+                if (fileInfo.file.toLowerCase().includes(hashToFind)) {
+                  console.log(`Found exact hash match in filename: ${fileInfo.file} matches ${hashToFind}`);
+                  return res.sendFile(fileInfo.fullPath);
+                }
+              }
+              
+              // If no exact match in recent files, search all files but still require hash in filename
+              for (const fileInfo of fileStats) {
+                if (fileInfo.file.toLowerCase().includes(hashToFind)) {
+                  console.log(`Found exact hash match in all files: ${fileInfo.file} matches ${hashToFind}`);
+                  return res.sendFile(fileInfo.fullPath);
+                }
+              }
+              
+              // Don't default to just any file with a hash-like pattern now
+              // Only fall through to more general matching if we couldn't find a match for our specific hash
+            }
+            
+            // Original fallback for when we don't have a specific hash to match
             for (const fileInfo of recentFiles) {
               console.log(`Checking recent file: ${fileInfo.file}`);
               if (fileInfo.file.match(/[a-f0-9]{8,32}/i)) {  // Has a hash-like pattern
