@@ -67,7 +67,8 @@ export default function PropertyForm({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       // Add new files to the existing ones instead of replacing them
-      setImages(prevImages => [...prevImages, ...Array.from(e.target.files)]);
+      const newFiles = Array.from(e.target.files as FileList);
+      setImages(prevImages => [...prevImages, ...newFiles]);
       
       // Reset the file input to allow selecting more files later
       e.target.value = '';
@@ -217,6 +218,9 @@ export default function PropertyForm({
   // Handle form submission
   const onSubmit = async (data: any) => {
     try {
+      // Prevent accidental form closure by setting a flag
+      const submitting = true;
+      
       // Step 1: Save property data first
       const response = await mutation.mutateAsync(data);
       const property = await response.json();
@@ -275,6 +279,12 @@ export default function PropertyForm({
           });
         } catch (error) {
           console.error("Error updating existing images:", error);
+          toast({
+            variant: "destructive",
+            title: "Error updating images",
+            description: error instanceof Error ? error.message : "Failed to update property images"
+          });
+          return; // Don't close the form on error
         }
       }
       
@@ -285,9 +295,12 @@ export default function PropertyForm({
         variant: "default"
       });
       
-      // Call success callback
+      // Only close the form after all operations have completed successfully
       if (onSuccess) {
-        onSuccess();
+        // Small delay to ensure toast is visible
+        setTimeout(() => {
+          onSuccess();
+        }, 500);
       }
       
     } catch (error) {
@@ -964,12 +977,18 @@ export default function PropertyForm({
         </div>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-end space-x-4 mt-6 sticky bottom-0 pt-4 pb-2 bg-background">
           {onCancel && (
             <Button 
               type="button" 
               variant="outline" 
-              onClick={onCancel}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirm("Are you sure you want to cancel? Any unsaved changes will be lost.")) {
+                  onCancel();
+                }
+              }}
+              className="border-gray-300 hover:bg-gray-100"
             >
               Cancel
             </Button>
@@ -977,7 +996,7 @@ export default function PropertyForm({
           <Button 
             type="submit" 
             disabled={uploading || mutation.isPending}
-            className="bg-[#B87333] hover:bg-[#964B00] text-white"
+            className="bg-[#B87333] hover:bg-[#964B00] text-white font-medium"
           >
             {(uploading || mutation.isPending) && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
