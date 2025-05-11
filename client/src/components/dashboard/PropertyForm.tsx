@@ -167,7 +167,7 @@ export default function PropertyForm({
         projectName: propertyData.projectName || "",
         propertyType: propertyData.propertyType || "",
         listingType: propertyData.listingType || "Primary",
-        reference: propertyData.reference || "",
+        reference: propertyData.reference || propertyData.references || "",
         price: propertyData.price || 0,
         downPayment: propertyData.downPayment || 0,
         installmentAmount: propertyData.installmentAmount || 0,
@@ -227,6 +227,14 @@ export default function PropertyForm({
       if (!data.address && data.projectName) {
         data.address = data.projectName;
       }
+      
+      // Map the reference field to references (which is what the backend expects)
+      if (data.reference) {
+        data.references = data.reference;
+      }
+      
+      console.log("Sending property data with reference:", data.reference);
+      console.log("References field value:", data.references);
       
       // Step 1: Save property data first
       const response = await mutation.mutateAsync(data);

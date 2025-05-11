@@ -2720,9 +2720,25 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Files have been uploaded, extract file info
       const files = req.files as Express.Multer.File[];
       console.log(`Processed ${files.length} files`);
-
-      const fileUrls = files.map(file => `/uploads/properties/${file.filename}`);
-      console.log("File URLs:", fileUrls);
+      
+      // Create a map of file names to prevent duplicating the same filename
+      const fileNames = new Map<string, string>();
+      
+      // Generate unique file URLs and avoid duplicates
+      const fileUrls: string[] = [];
+      
+      // Process each file, avoiding duplicates
+      files.forEach(file => {
+        // Skip if we already have this filename
+        if (!fileNames.has(file.filename)) {
+          fileNames.set(file.filename, file.originalname);
+          fileUrls.push(`/uploads/properties/${file.filename}`);
+        } else {
+          console.log(`Skipping duplicate file: ${file.filename} (original: ${file.originalname})`);
+        }
+      });
+      
+      console.log("Unique file URLs:", fileUrls);
 
       // If a property ID was provided, update the property with the new images
       if (propertyId && !isNaN(Number(propertyId))) {
