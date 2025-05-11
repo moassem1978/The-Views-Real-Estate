@@ -49,6 +49,20 @@ export default function PropertyForm({
   const [previewImage, setPreviewImage] = useState('');
   const isEditing = !!propertyId;
   
+  // Set up scroll handler for modal
+  useEffect(() => {
+    // Ensure modal content is scrollable
+    const modalContent = document.querySelector('[role="dialog"]');
+    if (modalContent) {
+      modalContent.classList.add('modal-scrollable');
+    }
+    return () => {
+      if (modalContent) {
+        modalContent.classList.remove('modal-scrollable');
+      }
+    };
+  }, []);
+  
   // Image handlers with preview functionality
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -310,7 +324,7 @@ export default function PropertyForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 modal-dialog-body">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Basic Details Section */}
           <Card>
