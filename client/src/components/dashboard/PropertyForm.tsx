@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Property } from "../../types";
 import { apiRequest } from "../../lib/queryClient";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +39,6 @@ export default function PropertyForm({
   onSuccess,
   onCancel,
 }: PropertyFormProps) {
-  // Component state
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [images, setImages] = useState<File[]>([]);
@@ -50,6 +48,52 @@ export default function PropertyForm({
   const [previewImage, setPreviewImage] = useState('');
   const isEditing = !!propertyId;
   
+  // Form definition with default values
+  const form = useForm({
+    defaultValues: {
+      title: "",
+      description: "",
+      city: "",
+      state: "",
+      projectName: "",
+      propertyType: "",
+      listingType: "Primary",
+      reference: "",
+      price: 0,
+      downPayment: 0,
+      installmentAmount: 0,
+      installmentPeriod: 0,
+      bedrooms: 0,
+      bathrooms: 0,
+      builtUpArea: 0,
+      plotSize: 0,
+      gardenSize: 0, 
+      floor: 0,
+      isFeatured: false,
+      isNewListing: true,
+      isHighlighted: false,
+      isGroundUnit: false,
+      isFullCash: false,
+      country: "Egypt",
+    }
+  });
+  
+  // Fetch available projects for dropdown
+  const { data: projects } = useQuery({
+    queryKey: ["/api/projects"],
+    enabled: true,
+  });
+
+  // Fetch property data if in edit mode
+  const {
+    data: propertyData,
+    isLoading: isLoadingProperty,
+    error: propertyError,
+  } = useQuery<Property>({
+    queryKey: [`/api/properties/${propertyId || 0}`],
+    enabled: isEditing && !!propertyId,
+  });
+
   // Set up scroll handler for modal
   useEffect(() => {
     // Ensure modal content is scrollable
@@ -63,6 +107,44 @@ export default function PropertyForm({
       }
     };
   }, []);
+  
+  // Update form when property data is loaded
+  useEffect(() => {
+    if (isEditing && propertyData) {
+      // Load existing images if any
+      if (propertyData.images && Array.isArray(propertyData.images)) {
+        setExistingImages(propertyData.images);
+      }
+      
+      // Update form values with property data
+      form.reset({
+        title: propertyData.title || "",
+        description: propertyData.description || "",
+        city: propertyData.city || "",
+        state: propertyData.state || "",
+        projectName: propertyData.projectName || "",
+        propertyType: propertyData.propertyType || "",
+        listingType: propertyData.listingType || "Primary",
+        reference: propertyData.reference || propertyData.references || "",
+        price: propertyData.price || 0,
+        downPayment: propertyData.downPayment || 0,
+        installmentAmount: propertyData.installmentAmount || 0,
+        installmentPeriod: propertyData.installmentPeriod || 0,
+        bedrooms: propertyData.bedrooms || 0,
+        bathrooms: propertyData.bathrooms || 0,
+        builtUpArea: propertyData.builtUpArea || 0,
+        plotSize: propertyData.plotSize || 0,
+        gardenSize: propertyData.gardenSize || 0,
+        floor: propertyData.floor || 0,
+        isFeatured: propertyData.isFeatured || false,
+        isNewListing: propertyData.isNewListing || false,
+        isHighlighted: propertyData.isHighlighted || false,
+        isGroundUnit: propertyData.isGroundUnit || false,
+        isFullCash: propertyData.isFullCash || false,
+        country: propertyData.country || "Egypt",
+      });
+    }
+  }, [isEditing, propertyData, form]);
   
   // Image handlers with preview functionality
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -25,7 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 
 // Dashboard components
 import PropertiesManager from "@/components/dashboard/PropertiesManager";
-import PropertyForm from "@/components/dashboard/PropertyForm";
+import PropertyForm from "@/components/dashboard/PropertyFormNew";
 
 // Stat card component for dashboard
 interface DashboardStatCardProps {
