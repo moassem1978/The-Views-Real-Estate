@@ -120,6 +120,7 @@ export default function PropertyForm({
     defaultValues: {
       title: "",
       description: "",
+      address: "", // Required field
       city: "",
       projectName: "",
       propertyType: "",
@@ -156,6 +157,7 @@ export default function PropertyForm({
       form.reset({
         title: propertyData.title || "",
         description: propertyData.description || "",
+        address: propertyData.address || "",
         city: propertyData.city || "",
         projectName: propertyData.projectName || "",
         propertyType: propertyData.propertyType || "",
@@ -340,6 +342,20 @@ export default function PropertyForm({
                       <FormLabel>Title*</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter property title" {...field} required />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address*</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Property address" {...field} required />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
