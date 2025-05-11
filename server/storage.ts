@@ -1761,8 +1761,16 @@ export class DatabaseStorage implements IStorage {
         console.log(`Setting reference_number to: ${refNumber}`);
         dbUpdates.reference_number = refNumber;
       } else {
-        console.log(`No reference number found in update request`);
+        // Check if we're editing an existing property
+        console.log(`Looking for existing reference number in property ${id}`);
+        // Don't set to null or empty string - leaving it as is
       }
+      // Important: Explicitly ensure propertyType is handled correctly
+      if ('propertyType' in updates) {
+        console.log(`Explicitly setting property_type to: ${updates.propertyType}`);
+        dbUpdates.property_type = updates.propertyType;
+      }
+      
       // Handle images field specially to prevent JSON syntax errors
       if ('images' in updates) {
         console.log('Processing images field for update:', updates.images);

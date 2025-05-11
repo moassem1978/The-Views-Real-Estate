@@ -227,13 +227,18 @@ export default function PropertyForm({
       // Send it in all possible formats the backend might expect
       if (data.reference) {
         console.log(`Setting reference number to: ${data.reference}`);
+        // Set in all possible formats to ensure it's saved properly
         data.references = data.reference;
         data.reference_number = data.reference;
-        // Keep the original field for completeness
-        data.reference = data.reference;
+        
+        // Log clearly for debugging
+        console.log(`Reference data being sent: reference=${data.reference}, references=${data.references}, reference_number=${data.reference_number}`);
       } else {
         console.log("WARNING: No reference number provided!");
       }
+      
+      // Ensure propertyType is included and logged - another critical field
+      console.log(`Property type being sent: ${data.propertyType}`);
       
       // Ensure listingType is included 
       if (!data.listingType) {
