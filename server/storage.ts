@@ -2010,19 +2010,43 @@ export class DatabaseStorage implements IStorage {
         isFeatured: updatedProperty.is_featured,
         isHighlighted: updatedProperty.is_highlighted,
         isNewListing: updatedProperty.is_new_listing,
+        plotSize: updatedProperty.plot_size,
+        gardenSize: updatedProperty.garden_size,
+        floor: updatedProperty.floor,
+        isGroundUnit: updatedProperty.is_ground_unit,
+        views: updatedProperty.views,
         country: updatedProperty.country,
         yearBuilt: updatedProperty.year_built,
         status: updatedProperty.status,
         createdAt: updatedProperty.created_at,
         updatedAt: updatedProperty.updated_at,
-        // Include both fields for compatibility
+        createdBy: updatedProperty.created_by,
+        approvedBy: updatedProperty.approved_by,
+        agentId: updatedProperty.agent_id,
+        zipCode: updatedProperty.zip_code,
+        state: updatedProperty.state,
+        
+        // Include reference number in all possible formats for compatibility
         references: updatedProperty.reference_number || '',
         reference: updatedProperty.reference_number || '',
         reference_number: updatedProperty.reference_number || '',
-        images: imagesArray
+        
+        // Ensure amenities is always an array
+        amenities: Array.isArray(updatedProperty.amenities) ? 
+                    updatedProperty.amenities : 
+                    (typeof updatedProperty.amenities === 'string' && updatedProperty.amenities ? 
+                      JSON.parse(updatedProperty.amenities) : 
+                      []),
+                      
+        // Make sure images is always a valid array
+        images: Array.isArray(imagesArray) && imagesArray.length > 0 ? 
+                imagesArray : 
+                (Array.isArray(updatedProperty.images) ? 
+                  updatedProperty.images : 
+                  [])
       };
       
-      console.log(`DB: Successfully updated property ${id}`);
+      console.log(`DB: Successfully updated property ${id} with ${propertyResult.images.length} images`);
       return propertyResult as Property;
     } catch (error) {
       console.error(`DB Error updating property ${id}:`, error);

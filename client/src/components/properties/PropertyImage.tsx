@@ -28,23 +28,31 @@ export default function PropertyImage({
   const [isLoaded, setIsLoaded] = useState(false);
   const [formattedSrc, setFormattedSrc] = useState('');
   
-  // Simplified approach - process the src once and don't retry with multiple strategies
+  // Enhanced image path processing
   useEffect(() => {
     // For fast loading, start with hiding the image
     setIsLoaded(false);
     
     // Handle empty or invalid sources directly
-    if (!src || src === 'undefined' || src === 'null') {
+    if (!src || src === 'undefined' || src === 'null' || src === '[object Object]') {
+      console.log('PropertyImage: Invalid source -', src);
       setFormattedSrc('/placeholder-property.svg');
       setIsLoaded(true); // Assume placeholder is always available
       return;
     }
     
+    // Ensure we're working with a string
+    const srcString = typeof src === 'string' ? src : String(src);
+    
     // Remove any extra quotes that might be from JSON serialization
-    const cleanSrc = src.replace(/"/g, '').replace(/\\/g, '/');
+    // and normalize path separators
+    const cleanSrc = srcString.replace(/"/g, '').replace(/\\/g, '/').trim();
+    
+    console.log('PropertyImage: Processing source -', cleanSrc);
     
     // Check if this image is already known to fail
     if (knownFailedImages.has(cleanSrc)) {
+      console.log('PropertyImage: Using placeholder for known failed image -', cleanSrc);
       setFormattedSrc('/placeholder-property.svg');
       setIsLoaded(true);
       return;
@@ -54,27 +62,48 @@ export default function PropertyImage({
     if (cleanSrc === '/placeholder-property.svg' || 
         cleanSrc.includes('placeholder-property.svg') ||
         cleanSrc === '/uploads/default-property.svg') {
+      console.log('PropertyImage: Using direct placeholder path -', cleanSrc);
       setFormattedSrc(cleanSrc);
       setIsLoaded(true);
       return;
     }
     
-    // We previously had special handling for hash-pattern files here,
-    // but now that we have a robust server-side image matcher, we'll
-    // allow all paths to be processed normally
+    // Special case: if it looks like a hash but doesn't have a proper path,
+    // use the pattern the server recognizes for hash lookups
+    if (hashPattern.test(cleanSrc) && !cleanSrc.includes('/')) {
+      console.log('PropertyImage: Hash pattern detected, using properties path -', cleanSrc);
+      const hashPath = `/properties/${cleanSrc}`;
+      setFormattedSrc(hashPath);
+      return;
+    }
     
-    // For any other image, use a simple URL with timestamp to avoid caching
-    // but without multiple retry strategies
-    
-    // Add initial forward slash if missing
+    // Add initial forward slash if missing for relative paths
     let normalizedSrc = cleanSrc;
     if (!normalizedSrc.startsWith('/') && !normalizedSrc.startsWith('http')) {
       normalizedSrc = `/${normalizedSrc}`;
+      console.log('PropertyImage: Added leading slash -', normalizedSrc);
     }
     
-    // Simple timestamp to prevent caching
+    // Handle common path issues
+    
+    // Case 1: Path includes "uploads/properties" but needs a leading slash
+    if (normalizedSrc.includes('uploads/properties') && !normalizedSrc.includes('/uploads/properties')) {
+      normalizedSrc = normalizedSrc.replace('uploads/properties', '/uploads/properties');
+      console.log('PropertyImage: Fixed uploads path format -', normalizedSrc);
+    }
+    
+    // Case 2: Fix double slashes (but not in http://)
+    if (normalizedSrc.includes('//') && !normalizedSrc.includes('http')) {
+      normalizedSrc = normalizedSrc.replace(/\/\//g, '/');
+      console.log('PropertyImage: Fixed double slashes -', normalizedSrc);
+    }
+    
+    // Add cache busting parameter to ensure fresh images
     const timestamp = new Date().getTime();
-    setFormattedSrc(`${normalizedSrc}?t=${timestamp}`);
+    const finalPath = `${normalizedSrc}?t=${timestamp}`;
+    console.log('PropertyImage: Final path -', finalPath);
+    
+    setFormattedSrc(finalPath);
   }, [src]);
   
   const handleLoad = () => {
