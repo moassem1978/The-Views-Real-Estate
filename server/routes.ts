@@ -771,30 +771,101 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         ...req.body,         // Apply the updates on top
       };
       
-      // Handle images specifically
+      // CRITICAL FIX: Handle reference fields
+      console.log("REFERENCE FIELD FIX: Checking reference fields");
+      
+      // Handle all possible reference field formats
+      if (req.body.reference) {
+        console.log(`Reference field found in request: ${req.body.reference}`);
+        // Make sure to set all reference field variants
+        updateData.reference = req.body.reference;
+        updateData.references = req.body.reference;
+        updateData.reference_number = req.body.reference;
+      } else if (req.body.references) {
+        console.log(`References field found in request: ${req.body.references}`);
+        updateData.reference = req.body.references;
+        updateData.references = req.body.references;
+        updateData.reference_number = req.body.references;
+      } else if (req.body.reference_number) {
+        console.log(`Reference_number field found in request: ${req.body.reference_number}`);
+        updateData.reference = req.body.reference_number;
+        updateData.references = req.body.reference_number;
+        updateData.reference_number = req.body.reference_number;
+      } else if (existingProperty.references) {
+        // Preserve existing reference value if none provided in update
+        console.log(`Using existing reference value: ${existingProperty.references}`);
+        updateData.reference = existingProperty.references;
+        updateData.references = existingProperty.references;
+        updateData.reference_number = existingProperty.references;
+      } else if (existingProperty.reference) {
+        console.log(`Using existing reference value: ${existingProperty.reference}`);
+        updateData.reference = existingProperty.reference;
+        updateData.references = existingProperty.reference;
+        updateData.reference_number = existingProperty.reference;
+      }
+      
+      // CRITICAL FIX: Handle images properly
       if (req.body.images) {
+        console.log("IMAGE FIELD FIX: Processing image data");
+        
         // Ensure images is an array
         if (Array.isArray(req.body.images)) {
           updateData.images = req.body.images;
-          console.log(`Using ${updateData.images.length} images from request`);
+          console.log(`Using ${updateData.images.length} images from request array`);
         } else if (typeof req.body.images === 'string') {
           try {
             // Try to parse JSON string
-            const parsedImages = JSON.parse(req.body.images);
+            const cleanJson = req.body.images.replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
+            const parsedImages = JSON.parse(cleanJson);
+            
             if (Array.isArray(parsedImages)) {
               updateData.images = parsedImages;
               console.log(`Parsed ${updateData.images.length} images from JSON string`);
+            } else {
+              // If parse result is not an array, create an array with the item
+              updateData.images = [parsedImages];
+              console.log(`Created single-item array from parsed JSON`);
             }
           } catch (e) {
-            // If parsing fails, split by commas
-            updateData.images = req.body.images.split(',').map(img => img.trim()).filter(Boolean);
-            console.log(`Split string into ${updateData.images.length} images`);
+            console.error("JSON parsing failed:", e);
+            // If parsing fails, try to split by commas
+            if (req.body.images.includes(',')) {
+              updateData.images = req.body.images.split(',').map(img => img.trim()).filter(Boolean);
+              console.log(`Split string into ${updateData.images.length} images by comma`);
+            } else {
+              // Use it as a single image path
+              updateData.images = [req.body.images.trim()].filter(Boolean);
+              console.log(`Using single image path: ${updateData.images[0]}`);
+            }
           }
+        } else {
+          // Unknown format, preserve existing images
+          console.log(`Unknown image format, preserving existing ${existingProperty.images?.length || 0} images`);
+          updateData.images = existingProperty.images || [];
         }
+      } else {
+        // No images in the update, preserve existing ones
+        console.log(`No images in update, preserving existing ${existingProperty.images?.length || 0} images`);
+        updateData.images = existingProperty.images || [];
       }
       
+      // Ensure the images array is valid
+      if (!Array.isArray(updateData.images)) {
+        console.log("Converting images to array as final validation");
+        updateData.images = updateData.images ? [updateData.images] : [];
+      }
+      
+      // Debugging - print final reference field values and image count
+      console.log("Final property update data:", {
+        id: updateData.id,
+        reference: updateData.reference,
+        references: updateData.references,
+        reference_number: updateData.reference_number,
+        imageCount: Array.isArray(updateData.images) ? updateData.images.length : 'not an array',
+        firstImage: Array.isArray(updateData.images) && updateData.images.length > 0 ? updateData.images[0] : 'none'
+      });
+      
       // Update the property
-      console.log("Updating property with data:", updateData);
       const updatedProperty = await dbStorage.updateProperty(id, updateData);
       
       if (!updatedProperty) {
