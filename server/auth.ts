@@ -125,24 +125,30 @@ export function setupAuth(app: Express) {
       pool,
       tableName: 'session', // Default table name
       createTableIfMissing: true,
-      // Cleanup expired sessions every 24 hours
-      pruneSessionInterval: 1440
+      // Cleanup expired sessions less frequently to prevent issues
+      pruneSessionInterval: 86400 // Once per day in minutes
     }),
-    secret: process.env.SESSION_SECRET || "the-views-real-estate-secret-key-updated",
-    resave: true, // Changed to true to ensure session is saved on each request
+    secret: process.env.SESSION_SECRET || "the-views-real-estate-secret-key-updated-2025-05-11",
+    // Keep sessions alive even for idle clients
+    resave: true,
+    // Don't create empty sessions
     saveUninitialized: false,
     cookie: {
-      secure: false, // Disabled secure for development
-      // Extended session timeout (30 days) with rolling expiration for better user experience
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for extended testing
+      // Disabled secure for development - important for Replit environment
+      secure: false,
+      // Extended session timeout (45 days) for maximum stability
+      maxAge: 45 * 24 * 60 * 60 * 1000, // 45 days
       // Prevent client-side JS from accessing cookies
       httpOnly: true,
-      // Using lax instead of strict for better user experience
-      sameSite: 'lax'
+      // Using lax for better user experience
+      sameSite: 'lax',
+      // Enforce path to prevent conflicts
+      path: '/'
     },
-    // Enable rolling sessions to extend the session timeout on activity
+    // Enable rolling sessions to extend the session timeout on any activity
     rolling: true,
-    name: 'theviews.sid' // Custom name to avoid conflicts
+    // Use a custom name with timestamp to force new sessions on update
+    name: 'theviews.sid.20250511'
   };
   
   // Ensure owner account exists with correct credentials
@@ -321,7 +327,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Enhanced login endpoint with detailed logging
+  // Enhanced login endpoint with improved session handling
   app.post("/api/login", (req, res, next) => {
     console.log(`Login attempt for username: ${req.body.username}`);
     
@@ -342,29 +348,54 @@ export function setupAuth(app: Express) {
         return res.status(403).json({ message: "Your account has been deactivated" });
       }
       
-      req.login(user, (err) => {
-        if (err) {
-          console.error(`Session creation error for ${req.body.username}:`, err);
-          return next(err);
-        }
-        
-        // Log successful login
-        console.log(`Login successful for ${user.username} (${user.role})`);
-        console.log(`Session ID: ${req.sessionID}`);
-        
-        // Set session to expire in 30 days
-        if (req.session) {
-          req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
-          console.log(`Session created with 30-day expiration for ${user.username}`);
-          if (req.session.cookie.expires) {
-            console.log(`Session expires: ${req.session.cookie.expires}`);
+      // Process login with retry mechanism
+      const processLogin = (attempt = 1) => {
+        req.login(user, (loginErr) => {
+          if (loginErr) {
+            console.error(`Session creation error for ${req.body.username} (attempt ${attempt}):`, loginErr);
+            
+            // Retry login if session creation fails (up to 3 attempts)
+            if (attempt < 3) {
+              console.log(`Retrying login for ${req.body.username}, attempt ${attempt + 1}`);
+              return setTimeout(() => processLogin(attempt + 1), 100);
+            }
+            
+            return next(loginErr);
           }
-        }
-        
-        // Return the user without the password
-        const { password, ...userWithoutPassword } = user;
-        return res.json(userWithoutPassword);
-      });
+          
+          // Log successful login
+          console.log(`Login successful for ${user.username} (${user.role})`);
+          console.log(`Session ID: ${req.sessionID}`);
+          
+          // Set session to expire in 45 days
+          if (req.session) {
+            req.session.cookie.maxAge = 45 * 24 * 60 * 60 * 1000;
+            
+            // Force session save to ensure it's properly persisted
+            req.session.save((saveErr) => {
+              if (saveErr) {
+                console.error(`Error saving session for ${user.username}:`, saveErr);
+              } else {
+                console.log(`Session created with 45-day expiration for ${user.username}`);
+                if (req.session.cookie.expires) {
+                  console.log(`Session expires: ${req.session.cookie.expires}`);
+                }
+              }
+              
+              // Return the user without the password
+              const { password, ...userWithoutPassword } = user;
+              res.json(userWithoutPassword);
+            });
+          } else {
+            // Return the user even if session save fails
+            const { password, ...userWithoutPassword } = user;
+            res.json(userWithoutPassword);
+          }
+        });
+      };
+      
+      // Start the login process
+      processLogin();
     })(req, res, next);
   });
 
@@ -399,41 +430,72 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Not authenticated" });
+    try {
+      // Check authentication status
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const user = req.user as SelectUser;
+      
+      // Enhanced session management
+      if (req.session) {
+        // Extend session to 45 days with each authenticated request
+        req.session.cookie.maxAge = 45 * 24 * 60 * 60 * 1000;
+        
+        // Explicitly touch the session to update activity time
+        req.session.touch();
+        
+        // Force session save to ensure it's persisted
+        req.session.save((err) => {
+          if (err) {
+            console.error(`Error saving session for ${user.username}:`, err);
+          } else {
+            console.log(`Session extended for ${user.username}, new expiry: ${req.session.cookie.expires}`);
+          }
+        });
+      }
+      
+      // Return user without password
+      const { password, ...userWithoutPassword } = user;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Error in /api/user endpoint:', error);
+      res.status(500).json({ message: "Internal server error" });
     }
-    
-    const user = req.user as SelectUser;
-    
-    // Extend session expiration with each user request
-    if (req.session) {
-      // Extend session to 30 days with each authenticated request
-      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
-      req.session.touch();
-      console.log(`Session extended for ${user.username}, new expiry: ${req.session.cookie.expires}`);
-    }
-    
-    // Return user without password
-    const { password, ...userWithoutPassword } = user;
-    
-    res.json(userWithoutPassword);
   });
   
-  // Add a session refresh endpoint
+  // Enhanced session refresh endpoint
   app.post("/api/auth/refresh", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Not authenticated" });
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Get user and extend session
+      const user = req.user as SelectUser;
+      
+      if (req.session) {
+        // Use longer 45-day expiration
+        req.session.cookie.maxAge = 45 * 24 * 60 * 60 * 1000;
+        
+        // Explicitly save to ensure persistence
+        req.session.save((err) => {
+          if (err) {
+            console.error(`Error saving refreshed session for ${user.username}:`, err);
+          } else {
+            console.log(`Session explicitly refreshed for ${user.username}, new expiry: ${req.session.cookie.expires}`);
+          }
+        });
+      }
+      
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Error in session refresh endpoint:', error);
+      res.status(500).json({ message: "Failed to refresh session" });
     }
-    
-    // Extend session
-    const user = req.user as SelectUser;
-    if (req.session) {
-      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
-      console.log(`Session explicitly refreshed for ${user.username}, new expiry: ${req.session.cookie.expires}`);
-    }
-    
-    const { password, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
   });
   
   // Add an auth status check endpoint for debugging
