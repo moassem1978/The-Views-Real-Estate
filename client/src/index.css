@@ -356,7 +356,7 @@
 }
 
 .modal-dialog-content {
-  max-height: 90vh;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
 }
@@ -364,6 +364,27 @@
 .modal-dialog-body {
   overflow-y: auto;
   flex: 1;
+  padding-right: 0.5rem;
+  margin-right: -0.5rem;
+  max-height: calc(80vh - 100px);
+}
+
+/* Fix for dialog scrolling */
+[role="dialog"] {
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  overflow-y: hidden;
+}
+
+[role="dialog"] > div {
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+[role="dialog"] form {
+  overflow-y: auto;
+  max-height: calc(80vh - 150px);
 }
 
 /* News Carousel Styles */
