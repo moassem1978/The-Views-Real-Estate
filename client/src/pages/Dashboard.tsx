@@ -361,8 +361,27 @@ function Dashboard() {
         </Tabs>
         
         {/* Property Form Modal */}
-        <Dialog open={showPropertyModal} onOpenChange={setShowPropertyModal}>
-          <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+        <Dialog 
+          open={showPropertyModal} 
+          onOpenChange={(open) => {
+            // Only allow closing if explicitly requested via button click
+            // This prevents accidental closes when clicking outside
+            if (!open && confirm("Are you sure you want to close the form? Any unsaved changes will be lost.")) {
+              setShowPropertyModal(false);
+            }
+          }}
+        >
+          <DialogContent 
+            className="max-w-4xl h-[80vh] flex flex-col" 
+            onEscapeKeyDown={(e) => {
+              // Prevent closing with Escape key
+              e.preventDefault();
+            }}
+            onPointerDownOutside={(e) => {
+              // Prevent closing when clicking outside
+              e.preventDefault();
+            }}
+          >
             <DialogHeader className="flex-shrink-0">
               <DialogTitle>{selectedPropertyId ? "Edit Property" : "Add New Property"}</DialogTitle>
             </DialogHeader>
