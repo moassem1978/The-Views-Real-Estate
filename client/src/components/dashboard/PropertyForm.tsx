@@ -243,12 +243,17 @@ export default function PropertyForm({
           
           // Create FormData
           const formData = new FormData();
+          
+          // Add property ID to help the server associate images with the right property
+          formData.append('propertyId', savedPropertyId.toString());
+          
+          // Add each image to the form data
           images.forEach(image => {
             formData.append('images', image);
           });
           
-          // Upload to server
-          const response = await fetch(`/api/upload/property-images/${savedPropertyId}`, {
+          // More reliable direct upload endpoint
+          const response = await fetch(`/api/upload/property-images-direct`, {
             method: 'POST',
             body: formData,
             credentials: 'include'
@@ -259,14 +264,18 @@ export default function PropertyForm({
           }
           
           const result = await response.json();
-          console.log(`Successfully uploaded ${result.images?.length || 0} images`);
+          console.log(`Successfully uploaded ${result.imageUrls?.length || 0} images`);
           
-          // Update the property to include existing images that weren't removed
-          if (isEditing && existingImages.length > 0) {
-            await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-              images: existingImages
-            });
-          }
+          // Update property with both existing and new images
+          const newImageUrls = result.imageUrls || [];
+          
+          // Combine existing images with newly uploaded ones
+          const combinedImages = [...(existingImages || []), ...newImageUrls];
+          
+          // Update the property with all images
+          await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
+            images: combinedImages
+          });
           
         } catch (error) {
           console.error("Error uploading images:", error);
@@ -281,9 +290,17 @@ export default function PropertyForm({
       } else if (isEditing && existingImages.length > 0) {
         // If editing and we only have existing images (no new ones)
         try {
+          console.log(`Updating property ${savedPropertyId} with ${existingImages.length} existing images`);
+          
+          // Make sure we're not saving empty image paths
+          const validImages = existingImages.filter(img => img && img.trim() !== '');
+          
+          // Update the property with the existing images
           await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-            images: existingImages
+            images: validImages
           });
+          
+          console.log(`Successfully updated property ${savedPropertyId} with ${validImages.length} existing images`);
         } catch (error) {
           console.error("Error updating existing images:", error);
           toast({
