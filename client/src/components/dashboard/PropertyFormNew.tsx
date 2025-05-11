@@ -56,6 +56,7 @@ export default function PropertyForm({
       city: "",
       state: "",
       projectName: "",
+      developerName: "",
       propertyType: "",
       listingType: "Primary",
       reference: "",
@@ -103,12 +104,15 @@ export default function PropertyForm({
       }
       
       // Update form values with property data
+      console.log("Loading property data for editing:", propertyData);
+      
       form.reset({
         title: propertyData.title || "",
         description: propertyData.description || "",
         city: propertyData.city || "",
         state: propertyData.state || "",
         projectName: propertyData.projectName || "",
+        developerName: propertyData.developerName || "",
         propertyType: propertyData.propertyType || "",
         listingType: propertyData.listingType || "Primary",
         reference: propertyData.reference || propertyData.references || "",
@@ -222,10 +226,24 @@ export default function PropertyForm({
       // Map the reference field to references (which is what the backend expects)
       if (data.reference) {
         data.references = data.reference;
+        // Also set reference_number for direct database compatibility
+        data.reference_number = data.reference;
       }
       
-      console.log("Sending property data with reference:", data.reference);
-      console.log("References field value:", data.references);
+      // Ensure listingType is included 
+      if (!data.listingType) {
+        data.listingType = "Primary";
+      }
+      
+      console.log("Sending property data:", {
+        reference: data.reference,
+        references: data.references,
+        reference_number: data.reference_number, 
+        city: data.city,
+        propertyType: data.propertyType,
+        listingType: data.listingType,
+        developerName: data.developerName
+      });
       
       // Step 1: Save property data first
       const response = await mutation.mutateAsync(data);
@@ -512,6 +530,20 @@ export default function PropertyForm({
                     <FormLabel>Project Name*</FormLabel>
                     <FormControl>
                       <Input placeholder="Enter project name" {...field} required />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="developerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Developer Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter developer name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
