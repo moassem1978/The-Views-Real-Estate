@@ -771,38 +771,44 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         ...req.body,         // Apply the updates on top
       };
       
-      // CRITICAL FIX: Handle reference fields
-      console.log("REFERENCE FIELD FIX: Checking reference fields");
+      // CRITICAL FIX: Make sure reference fields are properly synchronized
+      console.log("REFERENCE FIELD FIX: Processing reference fields");
       
-      // Handle all possible reference field formats
+      // Handle all possible reference field formats and synchronize them
       if (req.body.reference) {
-        console.log(`Reference field found in request: ${req.body.reference}`);
-        // Make sure to set all reference field variants
+        console.log(`Found reference field in request: ${req.body.reference}`);
+        // Apply to all reference field variants to ensure it's saved properly
         updateData.reference = req.body.reference;
         updateData.references = req.body.reference;
         updateData.reference_number = req.body.reference;
       } else if (req.body.references) {
-        console.log(`References field found in request: ${req.body.references}`);
+        console.log(`Found references field in request: ${req.body.references}`);
         updateData.reference = req.body.references;
         updateData.references = req.body.references;
         updateData.reference_number = req.body.references;
       } else if (req.body.reference_number) {
-        console.log(`Reference_number field found in request: ${req.body.reference_number}`);
+        console.log(`Found reference_number field in request: ${req.body.reference_number}`);
         updateData.reference = req.body.reference_number;
         updateData.references = req.body.reference_number;
         updateData.reference_number = req.body.reference_number;
       } else if (existingProperty.references) {
-        // Preserve existing reference value if none provided in update
-        console.log(`Using existing reference value: ${existingProperty.references}`);
+        // Preserve existing reference if none provided
+        console.log(`Preserving existing reference: ${existingProperty.references}`);
         updateData.reference = existingProperty.references;
         updateData.references = existingProperty.references;
         updateData.reference_number = existingProperty.references;
       } else if (existingProperty.reference) {
-        console.log(`Using existing reference value: ${existingProperty.reference}`);
+        console.log(`Preserving existing reference: ${existingProperty.reference}`);
         updateData.reference = existingProperty.reference;
         updateData.references = existingProperty.reference;
         updateData.reference_number = existingProperty.reference;
       }
+      
+      console.log("Final reference fields:", {
+        reference: updateData.reference,
+        references: updateData.references,
+        reference_number: updateData.reference_number
+      });
       
       // CRITICAL FIX: Handle images properly
       if (req.body.images) {
@@ -2986,15 +2992,54 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           const property = await dbStorage.getPropertyById(propId);
           
           if (property) {
-            // Ensure current images is an array
-            const currentImages = Array.isArray(property.images) ? property.images : [];
-            console.log(`Property has ${currentImages.length} existing images`);
+            // CRITICAL FIX: Handle ALL possible image formats
+            console.log("IMAGES FIELD FIX: Processing raw property.images:", property.images);
             
-            // Add new image URLs
-            const updatedImages = [...currentImages, ...fileUrls];
+            let currentImages: string[] = [];
+            
+            // Try to handle all possible image formats
+            if (Array.isArray(property.images)) {
+              // Already an array (ideal)
+              currentImages = property.images;
+              console.log("Image format: Array of strings");
+            } else if (typeof property.images === 'string') {
+              try {
+                // Try to parse JSON string - common pattern
+                const parsed = JSON.parse(property.images);
+                if (Array.isArray(parsed)) {
+                  currentImages = parsed;
+                  console.log("Image format: JSON string of array");
+                } else {
+                  // String but not a valid JSON array, treat as single image
+                  currentImages = [property.images];
+                  console.log("Image format: Single string (not JSON)");
+                }
+              } catch (e) {
+                // Not valid JSON, assume it's a single image URL
+                currentImages = [property.images];
+                console.log("Image format: Single string URL");
+              }
+            } else if (property.images && typeof property.images === 'object') {
+              // Handle strange object formats by extracting values
+              console.log("Image format: Object (not array)");
+              currentImages = Object.values(property.images).filter(v => typeof v === 'string');
+            } else if (!property.images) {
+              // No images
+              console.log("Image format: No images (empty)");
+              currentImages = [];
+            }
+            
+            console.log(`Property has ${currentImages.length} existing images:`, currentImages);
+            
+            // Make sure there are no duplicates before adding new images
+            const uniqueImages = new Set(currentImages);
+            fileUrls.forEach(url => uniqueImages.add(url));
+            
+            // Convert back to array
+            const updatedImages = Array.from(uniqueImages);
             console.log(`Updated property will have ${updatedImages.length} images total`);
             
-            // Update only the images field
+            // Update only the images field with the array format
             const updatedProperty = await dbStorage.updateProperty(propId, {
               images: updatedImages
             });
