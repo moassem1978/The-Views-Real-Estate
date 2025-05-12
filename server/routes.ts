@@ -771,44 +771,34 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         ...req.body,         // Apply the updates on top
       };
       
-      // CRITICAL FIX: Make sure reference fields are properly synchronized
-      console.log("REFERENCE FIELD FIX: Processing reference fields");
+      // CRITICAL FIX: Improved handling of reference fields
+      console.log("REFERENCE FIELD FIX: Processing reference fields with improved logic");
       
-      // Handle all possible reference field formats and synchronize them
-      if (req.body.reference) {
-        console.log(`Found reference field in request: ${req.body.reference}`);
-        // Apply to all reference field variants to ensure it's saved properly
-        updateData.reference = req.body.reference;
-        updateData.references = req.body.reference;
-        updateData.reference_number = req.body.reference;
-      } else if (req.body.references) {
-        console.log(`Found references field in request: ${req.body.references}`);
-        updateData.reference = req.body.references;
-        updateData.references = req.body.references;
-        updateData.reference_number = req.body.references;
+      // Determine the single reference value to use across all reference fields
+      let finalReferenceValue = '';
+      
+      // Priority order: references > reference > reference_number > existing values
+      if (req.body.references) {
+        console.log(`Using provided references field: ${req.body.references}`);
+        finalReferenceValue = req.body.references;
+      } else if (req.body.reference) {
+        console.log(`Using provided reference field: ${req.body.reference}`);
+        finalReferenceValue = req.body.reference;
       } else if (req.body.reference_number) {
-        console.log(`Found reference_number field in request: ${req.body.reference_number}`);
-        updateData.reference = req.body.reference_number;
-        updateData.references = req.body.reference_number;
-        updateData.reference_number = req.body.reference_number;
+        console.log(`Using provided reference_number field: ${req.body.reference_number}`);
+        finalReferenceValue = req.body.reference_number;
       } else if (existingProperty.references) {
-        // Preserve existing reference if none provided
-        console.log(`Preserving existing reference: ${existingProperty.references}`);
-        updateData.reference = existingProperty.references;
-        updateData.references = existingProperty.references;
-        updateData.reference_number = existingProperty.references;
+        console.log(`Preserving existing references field: ${existingProperty.references}`);
+        finalReferenceValue = existingProperty.references;
       } else if (existingProperty.reference) {
-        console.log(`Preserving existing reference: ${existingProperty.reference}`);
-        updateData.reference = existingProperty.reference;
-        updateData.references = existingProperty.reference;
-        updateData.reference_number = existingProperty.reference;
+        console.log(`Preserving existing reference field: ${existingProperty.reference}`);
+        finalReferenceValue = existingProperty.reference;
       }
       
-      console.log("Final reference fields:", {
-        reference: updateData.reference,
-        references: updateData.references,
-        reference_number: updateData.reference_number
-      });
+      // Apply the same value to all reference fields for consistency
+      updateData.references = finalReferenceValue;
+      
+      console.log("Final reference value:", finalReferenceValue);
       
       // CRITICAL FIX: Handle images properly - FIXED VERSION
       if (req.body.images) {
