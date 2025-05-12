@@ -47,7 +47,7 @@ export default function PropertyForm({
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const isEditing = !!propertyId;
-  
+
   // Form definition with default values
   const form = useForm({
     defaultValues: {
@@ -100,7 +100,7 @@ export default function PropertyForm({
     if (isEditing && propertyData) {
       // CRITICAL FIX: Enhanced handling of existing images
       console.log("Checking existing images in property data:", propertyData.images);
-      
+
       if (propertyData.images) {
         try {
           // Try to handle various image field formats
@@ -158,10 +158,10 @@ export default function PropertyForm({
         console.log("No existing images found");
         setExistingImages([]);
       }
-      
+
       // Update form values with property data
       console.log("Loading property data for editing:", propertyData);
-      
+
       form.reset({
         title: propertyData.title || "",
         description: propertyData.description || "",
@@ -206,30 +206,30 @@ export default function PropertyForm({
       }
     };
   }, []);
-  
+
   // Image handlers with preview functionality
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       // Add new files to the existing ones instead of replacing them
       const newFiles = Array.from(e.target.files as FileList);
       setImages(prevImages => [...prevImages, ...newFiles]);
-      
+
       // Reset the file input to allow selecting more files later
       e.target.value = '';
     }
   };
-  
+
   // Image preview functionality
   const handlePreview = (image: string) => {
     setPreviewImage(image);
     setPreviewVisible(true);
   };
-  
+
   // Close image preview
   const handlePreviewClose = () => {
     setPreviewVisible(false);
   };
-  
+
   // Remove a selected image before upload with X button
   const removeSelectedImage = (index: number) => {
     setImages(prevImages => {
@@ -238,7 +238,7 @@ export default function PropertyForm({
       return newImages;
     });
   };
-  
+
   // Remove an existing image with X button
   const removeExistingImage = (index: number) => {
     setExistingImages(prevImages => {
@@ -260,7 +260,7 @@ export default function PropertyForm({
     onSuccess: () => {
       // Invalidate properties queries
       queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
-      
+
       if (isEditing) {
         queryClient.invalidateQueries({ queryKey: [`/api/properties/${propertyId}`] });
       }
@@ -274,35 +274,12 @@ export default function PropertyForm({
       if (!data.state && data.city) {
         data.state = data.city;
       }
-      
+
       // Backend requires an address - use project name as address if not provided
       if (!data.address && data.projectName) {
         data.address = data.projectName;
       }
-      
-      // CRITICAL FIX: Improved handling of reference field
-      if (data.reference && data.reference.trim()) {
-        // Use the provided reference from the form
-        const cleanRef = data.reference.trim();
-        console.log(`Using provided reference: ${cleanRef}`);
-        
-        // In the database we standardize on the 'references' field, but keep legacy fields too
-        data.references = cleanRef;
-        
-        // Log what we're doing for easier debugging
-        console.log(`Reference value being sent: ${cleanRef}`);
-      } else {
-        console.log("WARNING: No reference number provided!");
-        
-        // Generate a unique reference number 
-        const defaultRef = `REF-${Date.now().toString().slice(-6)}`;
-        console.log(`Created default reference number: ${defaultRef}`);
-        
-        // Set both fields (form uses 'reference', server standardizes on 'references')
-        data.reference = defaultRef;
-        data.references = defaultRef;
-      }
-      
+
       // CRITICAL FIX: Improved handling of property type
       if (data.propertyType && data.propertyType.trim()) {
         // Normalize propertyType to lowercase for consistency
@@ -313,21 +290,43 @@ export default function PropertyForm({
         console.log("WARNING: Property type not set! Setting default to apartment");
         data.propertyType = "apartment"; 
       }
-      
+
       // Ensure we have a valid property type from our standard list
       const validPropertyTypes = ["apartment", "penthouse", "chalet", "twinhouse", "villa", "office", "townhouse"];
       if (!validPropertyTypes.includes(data.propertyType)) {
         console.log(`WARNING: Invalid property type "${data.propertyType}", defaulting to apartment`);
         data.propertyType = "apartment";
       }
-      
+
       console.log(`Final property type being sent: ${data.propertyType}`);
-      
+
       // Ensure listingType is included 
       if (!data.listingType) {
         data.listingType = "Primary";
       }
-      
+
+      // Ensure reference field is properly set and preserved
+      if (data.reference) {
+        data.references = data.reference; // Copy to references field
+        data.reference_number = data.reference; // Copy to reference_number field
+      } else if (!data.reference && data.references) {
+        data.reference = data.references;
+        data.reference_number = data.references;
+      } else if (!data.reference && !data.references) {
+        // Generate a unique reference if none provided
+        const timestamp = Date.now().toString().slice(-6);
+        const uniqueRef = `REF-${timestamp}`;
+        data.reference = uniqueRef;
+        data.references = uniqueRef;
+        data.reference_number = uniqueRef;
+      }
+
+      console.log('Saving property with reference:', {
+        reference: data.reference,
+        references: data.references,
+        reference_number: data.reference_number
+      });
+
       console.log("Sending property data:", {
         reference: data.reference,
         references: data.references,
@@ -337,69 +336,69 @@ export default function PropertyForm({
         listingType: data.listingType,
         developerName: data.developerName
       });
-      
+
       // Step 1: Save property data first
       const response = await mutation.mutateAsync(data);
       const property = await response.json();
-      
+
       // Get the property ID (either from the saved property or existing ID)
       const savedPropertyId = isEditing ? propertyId : property.id;
-      
+
       // Step 2: Handle image uploads and existing images
       if (images.length > 0) {
         try {
           setUploading(true);
           console.log(`Uploading ${images.length} images for property ${savedPropertyId}`);
-          
+
           // Create FormData
           const formData = new FormData();
-          
+
           // Add property ID to help the server associate images with the right property
           formData.append('propertyId', savedPropertyId.toString());
-          
+
           // Log what we're doing
           console.log(`Uploading ${images.length} images for property ID: ${savedPropertyId}`);
-          
+
           // Add each image to the form data
           images.forEach((image, idx) => {
             console.log(`Adding image ${idx + 1}/${images.length}: ${image.name} (${Math.round(image.size/1024)}KB)`);
             formData.append('images', image);
           });
-          
+
           // Use direct upload endpoint which doesn't require authentication
           const response = await fetch(`/api/upload/property-images-direct`, {
             method: 'POST',
             body: formData,
           });
-          
+
           if (!response.ok) {
             throw new Error(`Image upload failed with status: ${response.status}`);
           }
-          
+
           const uploadResult = await response.json();
           const imageUrls = uploadResult.fileUrls || [];
           console.log(`Uploaded ${imageUrls.length} images successfully:`, imageUrls);
-          
+
           // Step 3: Update the property with the uploaded image URLs and existing images
-          
+
           // Create a set of unique image URLs to prevent duplication
           const uniqueImageUrls = new Set([...existingImages, ...imageUrls]);
           const validImages = Array.from(uniqueImageUrls);
-          
+
           console.log(`Updating property with ${validImages.length} total unique images`);
           console.log('Existing images:', existingImages);
           console.log('New image URLs:', imageUrls);
           console.log('Final unique image list:', validImages);
-          
+
           // Update property with the deduplicated images
           const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
             images: validImages
           });
-          
+
           if (!updateResponse.ok) {
             throw new Error(`Property image update failed with status: ${updateResponse.status}`);
           }
-          
+
           console.log(`Successfully updated property ${savedPropertyId} with ${validImages.length} images`);
         } catch (error) {
           console.error("Error updating property images:", error);
@@ -417,23 +416,23 @@ export default function PropertyForm({
         try {
           console.log(`Updating property ${savedPropertyId} with ${existingImages.length} existing images`);
           console.log("Existing images to preserve:", existingImages);
-          
+
           // First, ensure all images are properly formatted strings
           const validatedImages = existingImages.map(img => 
             typeof img === 'string' ? img.trim() : String(img)
           ).filter(Boolean);
-          
+
           console.log(`Prepared ${validatedImages.length} validated image strings`);
-          
+
           // Send the update request with proper images array format
           const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
             images: validatedImages
           });
-          
+
           if (!updateResponse.ok) {
             throw new Error(`Property image update failed with status: ${updateResponse.status}`);
           }
-          
+
           console.log(`Successfully updated property ${savedPropertyId} with ${validatedImages.length} images`);
         } catch (error) {
           console.error("Error updating property images:", error);
@@ -445,14 +444,14 @@ export default function PropertyForm({
           return; // Don't close the form on error
         }
       }
-      
+
       // Success notification
       toast({
         title: isEditing ? "Property updated" : "Property created",
         description: "Your property has been saved successfully.",
         variant: "default"
       });
-      
+
       // Only close the form after all operations have completed successfully
       if (onSuccess) {
         // Small delay to ensure toast is visible
@@ -460,7 +459,7 @@ export default function PropertyForm({
           onSuccess();
         }, 500);
       }
-      
+
     } catch (error) {
       console.error("Form submission error:", error);
       toast({
@@ -479,7 +478,7 @@ export default function PropertyForm({
       </div>
     );
   }
-  
+
   // Show error state 
   if (propertyError && isEditing) {
     return (
@@ -534,7 +533,7 @@ export default function PropertyForm({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="reference"
@@ -644,7 +643,7 @@ export default function PropertyForm({
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="developerName"
@@ -995,7 +994,7 @@ export default function PropertyForm({
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
-                      </FormControl>
+                      </</FormControl>
                     </FormItem>
                   )}
                 />
@@ -1005,7 +1004,7 @@ export default function PropertyForm({
             {/* Image Upload Section */}
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-2">Property Images</h3>
-              
+
               {/* Image upload button */}
               <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-md p-6 cursor-pointer hover:border-gray-400 transition-colors" onClick={() => document.getElementById('image-upload')?.click()}>
                 <input
@@ -1022,7 +1021,7 @@ export default function PropertyForm({
                   <p className="text-xs mt-1">Maximum 10 images, 25MB each</p>
                 </div>
               </div>
-              
+
               {/* Preview of selected images */}
               {images.length > 0 && (
                 <div className="mt-4">
@@ -1048,7 +1047,7 @@ export default function PropertyForm({
                   </div>
                 </div>
               )}
-              
+
               {/* Existing images (when editing) */}
               {existingImages.length > 0 && (
                 <div className="mt-4">

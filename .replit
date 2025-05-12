@@ -62,3 +62,16 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "ts-node server/cleanup-images.ts"
+
+[[workflows.workflow]]
+name = "Fix Permissions"
+author = 40723493
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "chmod -R 777 public/uploads"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "chmod -R 777 uploads"
