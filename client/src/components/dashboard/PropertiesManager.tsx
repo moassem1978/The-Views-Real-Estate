@@ -207,6 +207,27 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
     setPage(1);
   };
 
+  const exportToCSV = () => {
+    const headers = ['ID', 'Title', 'Type', 'Location', 'Price', 'Status'];
+    const csvContent = [
+      headers.join(','),
+      ...properties.map(p => [
+        p.id,
+        `"${p.title}"`,
+        p.propertyType || p.property_type,
+        `"${p.city}"`,
+        p.price,
+        p.status
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `properties_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,6 +302,12 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
       </div>
 
       {/* Search and filters */}
+      <div className="flex justify-end mb-4">
+        <Button onClick={exportToCSV} variant="outline" className="flex items-center gap-2">
+          <DownloadIcon className="h-4 w-4" />
+          Export Properties
+        </Button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="sm:col-span-2">
           <form onSubmit={handleSearch} className="relative">
@@ -343,6 +370,7 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
         <Table className="dashboard-table">
           <TableHeader>
             <TableRow>
+              <TableHead className="whitespace-nowrap min-w-[80px]">ID</TableHead>
               <TableHead className="whitespace-nowrap min-w-[160px]">Title</TableHead>
               <TableHead className="whitespace-nowrap min-w-[120px]">Type</TableHead>
               <TableHead className="whitespace-nowrap min-w-[130px]">Location</TableHead>
@@ -371,7 +399,8 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
             ) : (
               properties.map((property: Property) => (
                 <TableRow key={property.id}>
-                  <TableCell className="font-medium">{property.title}</TableCell>
+                  <TableCell className="font-medium">{property.id}</TableCell>
+                  <TableCell>{property.title}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span>{property.listingType || property.listing_type}</span>

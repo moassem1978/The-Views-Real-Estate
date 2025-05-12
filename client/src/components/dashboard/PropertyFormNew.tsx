@@ -534,22 +534,7 @@ export default function PropertyForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="reference"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Reference Number*</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter reference number" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    This is your property's unique reference number
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Reference number field removed */}
 
             <FormField
               control={form.control}
