@@ -280,38 +280,48 @@ export default function PropertyForm({
         data.address = data.projectName;
       }
       
-      // Handle reference number - absolutely critical field
-      // Send it in all possible formats the backend might expect
-      if (data.reference) {
-        console.log(`Setting reference number to: ${data.reference}`);
-        // Set the field name that matches the schema definition - this is the key fix
-        data.references = data.reference;
-        data.reference_number = data.reference;
+      // CRITICAL FIX: Improved handling of reference field
+      if (data.reference && data.reference.trim()) {
+        // Use the provided reference from the form
+        const cleanRef = data.reference.trim();
+        console.log(`Using provided reference: ${cleanRef}`);
         
-        // Log clearly for debugging
-        console.log(`Reference data being sent: reference=${data.reference}, references=${data.references}, reference_number=${data.reference_number}`);
+        // In the database we standardize on the 'references' field, but keep legacy fields too
+        data.references = cleanRef;
+        
+        // Log what we're doing for easier debugging
+        console.log(`Reference value being sent: ${cleanRef}`);
       } else {
         console.log("WARNING: No reference number provided!");
-        // If no reference number is provided, set a default one based on property title
+        
+        // Generate a unique reference number 
         const defaultRef = `REF-${Date.now().toString().slice(-6)}`;
-        console.log(`Creating default reference number: ${defaultRef}`);
-        data.references = defaultRef;
-        data.reference_number = defaultRef;
+        console.log(`Created default reference number: ${defaultRef}`);
+        
+        // Set both fields (form uses 'reference', server standardizes on 'references')
         data.reference = defaultRef;
+        data.references = defaultRef;
       }
       
-      // Ensure propertyType is included and logged - another critical field
-      if (!data.propertyType) {
+      // CRITICAL FIX: Improved handling of property type
+      if (data.propertyType && data.propertyType.trim()) {
+        // Normalize propertyType to lowercase for consistency
+        data.propertyType = data.propertyType.trim().toLowerCase();
+        console.log(`Using normalized property type: ${data.propertyType}`);
+      } else {
+        // Default to apartment if no property type is provided
         console.log("WARNING: Property type not set! Setting default to apartment");
-        data.propertyType = "apartment"; // Set a default to ensure it's always present
+        data.propertyType = "apartment"; 
       }
-      console.log(`Property type being sent: ${data.propertyType}`);
       
-      // Convert propertyType to lowercase for consistency
-      if (data.propertyType) {
-        data.propertyType = data.propertyType.toLowerCase();
-        console.log(`Normalized property type: ${data.propertyType}`);
+      // Ensure we have a valid property type from our standard list
+      const validPropertyTypes = ["apartment", "penthouse", "chalet", "twinhouse", "villa", "office", "townhouse"];
+      if (!validPropertyTypes.includes(data.propertyType)) {
+        console.log(`WARNING: Invalid property type "${data.propertyType}", defaulting to apartment`);
+        data.propertyType = "apartment";
       }
+      
+      console.log(`Final property type being sent: ${data.propertyType}`);
       
       // Ensure listingType is included 
       if (!data.listingType) {
