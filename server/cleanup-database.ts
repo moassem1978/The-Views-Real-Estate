@@ -1,20 +1,18 @@
 
 import { db } from './db';
 import { properties } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 
 async function cleanupDatabase() {
   try {
-    // Get all active properties
-    const activeProps = await db.select().from(properties);
-    console.log(`Found ${activeProps.length} active properties`);
+    // Delete all properties
+    await db.delete(properties);
     
-    // Reset auto-increment to match actual count
+    // Reset auto-increment sequence
     await db.execute(
-      `ALTER SEQUENCE properties_id_seq RESTART WITH ${activeProps.length + 1}`
+      `ALTER SEQUENCE properties_id_seq RESTART WITH 1`
     );
     
-    console.log('Reset auto-increment sequence');
+    console.log('Database cleaned and reset successfully');
     
   } catch (error) {
     console.error('Cleanup failed:', error);
