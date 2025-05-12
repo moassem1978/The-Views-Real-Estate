@@ -26,9 +26,8 @@ if (!fs.existsSync(BACKUP_DIR)) {
 
 // Backup function
 export async function backupDatabase() {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const filename = path.join(BACKUP_DIR, `backup-${timestamp}.sql`);
-
+  const filename = path.join(BACKUP_DIR, 'daily-backup.sql');
+  
   // Use --no-owner and --no-acl for better compatibility
   // Skip backup on version mismatch to allow app to continue running
   const command = `PGPASSWORD=${process.env.PGPASSWORD} pg_dump --no-owner --no-acl -h ${process.env.PGHOST} -U ${process.env.PGUSER} -d ${process.env.PGDATABASE} -F p > "${filename}"`;
