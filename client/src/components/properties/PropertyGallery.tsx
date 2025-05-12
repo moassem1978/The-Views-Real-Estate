@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import PropertyImage from "./PropertyImage";
+import { parseJsonArray } from "@/lib/utils";
 
 interface PropertyGalleryProps {
-  images: string[];
+  images: string[] | string | any;
   title: string;
 }
 
@@ -11,68 +12,48 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [processedImages, setProcessedImages] = useState<string[]>([]);
   
-  // Process and normalize all images when the component first renders
-  // This ensures we're using the same path format for all images
+  // CRITICAL FIX: Improved image processing with better fallbacks and format handling
   useEffect(() => {
-    console.log("PropertyGallery: Processing images array:", images);
+    console.log("PropertyGallery: Processing images input:", 
+      typeof images === 'object' ? JSON.stringify(images).substring(0, 100) + '...' : images);
     
-    if (!images || images.length === 0) {
-      console.log("PropertyGallery: No images to process");
+    // Use our robust parseJsonArray helper that can handle all formats
+    // This will work whether images is an array, string, or even a raw hash
+    const parsedImages = parseJsonArray(images);
+    
+    if (!parsedImages || parsedImages.length === 0) {
+      console.log("PropertyGallery: No images found after parsing");
+      setProcessedImages([]);
       return;
     }
     
-    // Check if we're dealing with a JSON string that represents an array
-    if (images.length === 1 && typeof images[0] === 'string' && 
-        (images[0].startsWith('[') || images[0].startsWith('"['))) {
-      console.log("PropertyGallery: Detected JSON string representation of image array");
-      
-      try {
-        // Remove any leading/trailing quotes from JSON string
-        const jsonStr = images[0].replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
-        const parsedImages = JSON.parse(jsonStr);
-        
-        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
-          console.log(`PropertyGallery: Successfully parsed JSON to array with ${parsedImages.length} images`);
-          
-          // Process the parsed array instead
-          const normalizedImages = parsedImages.map(img => {
-            // Make sure img is a string
-            const imgStr = typeof img === 'string' ? img : String(img);
-            // Remove quotes and normalize slashes
-            const normalized = imgStr.replace(/"/g, '').replace(/\\/g, '/');
-            return normalized;
-          });
-          
-          console.log(`PropertyGallery: Normalized ${normalizedImages.length} images from JSON:`, normalizedImages);
-          setProcessedImages(normalizedImages);
-          
-          // If we haven't set an active image yet, set it to the first one
-          if (activeImage >= normalizedImages.length) {
-            console.log("PropertyGallery: Resetting activeImage to 0");
-            setActiveImage(0);
-          }
-          
-          return; // Exit early as we've processed the JSON case
-        }
-      } catch (e) {
-        console.error("PropertyGallery: Failed to parse JSON image string:", e);
-        // Fall through to standard processing if JSON parsing fails
-      }
-    }
+    console.log(`PropertyGallery: Successfully parsed to array with ${parsedImages.length} images`);
     
-    // Standard processing for regular image array
-    const normalizedImages = images.map(img => {
-      // Make sure img is a string
+    // Additional processing to ensure all images are correctly formatted
+    const normalizedImages = parsedImages.map(img => {
+      // Ensure we're working with a string
       const imgStr = typeof img === 'string' ? img : String(img);
+      
+      // Format hash-only strings as property paths
+      if (/^[0-9a-f]{32}$/i.test(imgStr.trim())) {
+        return `/properties/${imgStr.trim()}`;
+      }
+      
       // Remove quotes and normalize slashes
       const normalized = imgStr.replace(/"/g, '').replace(/\\/g, '/');
+      
+      // Ensure path starts with a slash if it's not an absolute URL
+      if (!normalized.startsWith('/') && !normalized.startsWith('http')) {
+        return '/' + normalized;
+      }
+      
       return normalized;
     });
     
     console.log(`PropertyGallery: Normalized ${normalizedImages.length} images:`, normalizedImages);
     setProcessedImages(normalizedImages);
     
-    // If we haven't set an active image yet, set it to the first one
+    // If active image index is out of bounds, reset it
     if (activeImage >= normalizedImages.length) {
       console.log("PropertyGallery: Resetting activeImage to 0");
       setActiveImage(0);

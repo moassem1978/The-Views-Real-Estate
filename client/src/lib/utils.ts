@@ -47,20 +47,60 @@ export function parseJsonArray(jsonString: string | string[] | unknown): string[
      String(jsonString))
   );
 
+  // CRITICAL FIX: Handle direct hash values first (common in Windows uploads)
+  // These are MD5-like hashes that are often used instead of proper file paths
+  if (typeof jsonString === 'string' && /^[0-9a-f]{32}$/i.test(jsonString.trim())) {
+    console.log("Direct hash value detected, converting to properties path");
+    const hashPath = `/properties/${jsonString.trim()}`;
+    return [hashPath];
+  }
+
   // Fast path for arrays
   if (Array.isArray(jsonString)) {
-    console.log(`Returning original array with ${jsonString.length} items`);
-    return jsonString;
+    // Process array items to ensure each one is properly formatted
+    const processedArray = jsonString.map(item => {
+      if (typeof item === 'string') {
+        // Check if the string is just a hash
+        if (/^[0-9a-f]{32}$/i.test(item.trim())) {
+          return `/properties/${item.trim()}`;
+        }
+        // Otherwise return the string as is
+        return item;
+      }
+      // Convert non-string values to string
+      return String(item);
+    });
+    console.log(`Returning processed array with ${processedArray.length} items`);
+    return processedArray;
   }
   
   // Handle string parsing with try/catch
   if (typeof jsonString === 'string') {
     try {
+      // Check for common format: A string with comma-separated values
+      if (jsonString.includes(',') && !jsonString.includes('{') && !jsonString.includes('[')) {
+        console.log("String appears to be comma-separated list");
+        const values = jsonString.split(',').map(s => s.trim()).filter(Boolean);
+        if (values.length > 0) {
+          return values;
+        }
+      }
+      
       // First try direct JSON parsing
       const parsed = JSON.parse(jsonString);
       if (Array.isArray(parsed)) {
         console.log(`Successfully parsed string to array with ${parsed.length} items`);
-        return parsed;
+        // Ensure each item is properly formatted
+        return parsed.map(item => {
+          if (typeof item === 'string') {
+            // Check if the string is just a hash
+            if (/^[0-9a-f]{32}$/i.test(item.trim())) {
+              return `/properties/${item.trim()}`;
+            }
+            return item;
+          }
+          return String(item);
+        });
       } else if (parsed && typeof parsed === 'object') {
         // Handle case where it parses to an object with numeric keys (like a PHP array)
         const values = Object.values(parsed);
@@ -77,6 +117,27 @@ export function parseJsonArray(jsonString: string | string[] | unknown): string[
         console.log("String looks like a file path, returning as single item array");
         return [jsonString];
       }
+      
+      // CRITICAL FIX: Check for multiple paths separated by commas or spaces
+      if (jsonString.includes('/uploads/') || jsonString.includes('/properties/')) {
+        console.log("String contains path-like content, splitting by separators");
+        // Try to split by common separators
+        const possibleItems = jsonString
+          .split(/[\s,;|]+/)  // Split by spaces, commas, semicolons, or pipes
+          .map(s => s.trim())
+          .filter(s => s.includes('/uploads/') || s.includes('/properties/') || /^[0-9a-f]{32}$/i.test(s));
+        
+        if (possibleItems.length > 0) {
+          return possibleItems.map(item => {
+            // Format hash-only items
+            if (/^[0-9a-f]{32}$/i.test(item)) {
+              return `/properties/${item}`;
+            }
+            return item;
+          });
+        }
+      }
+      
       return [];
     }
   }
@@ -86,7 +147,14 @@ export function parseJsonArray(jsonString: string | string[] | unknown): string[
     const values = Object.values(jsonString);
     if (values.length > 0) {
       console.log(`Converting object to values array with ${values.length} items`);
-      return values.map(v => String(v));
+      return values.map(v => {
+        const valueStr = String(v);
+        // Check if the string is just a hash
+        if (/^[0-9a-f]{32}$/i.test(valueStr.trim())) {
+          return `/properties/${valueStr.trim()}`;
+        }
+        return valueStr;
+      });
     }
   }
   
