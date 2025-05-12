@@ -810,39 +810,87 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         reference_number: updateData.reference_number
       });
       
-      // CRITICAL FIX: Handle images properly
+      // CRITICAL FIX: Handle images properly - FIXED VERSION
       if (req.body.images) {
         console.log("IMAGE FIELD FIX: Processing image data");
+        console.log("Raw image data from request:", req.body.images);
         
         // Ensure images is an array
         if (Array.isArray(req.body.images)) {
-          updateData.images = req.body.images;
+          // Make sure all array entries are strings
+          updateData.images = req.body.images.map(img => String(img)).filter(Boolean);
           console.log(`Using ${updateData.images.length} images from request array`);
         } else if (typeof req.body.images === 'string') {
-          try {
-            // Try to parse JSON string
-            const cleanJson = req.body.images.replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
-            const parsedImages = JSON.parse(cleanJson);
-            
-            if (Array.isArray(parsedImages)) {
-              updateData.images = parsedImages;
-              console.log(`Parsed ${updateData.images.length} images from JSON string`);
+          // Handle different types of string formats for images
+          
+          // Case 1: Empty string - keep existing images
+          if (!req.body.images.trim()) {
+            console.log("Empty images string, preserving existing images");
+            if (existingProperty.images && Array.isArray(existingProperty.images)) {
+              updateData.images = existingProperty.images;
             } else {
-              // If parse result is not an array, create an array with the item
-              updateData.images = [parsedImages];
-              console.log(`Created single-item array from parsed JSON`);
+              updateData.images = [];
             }
-          } catch (e) {
-            console.error("JSON parsing failed:", e);
-            // If parsing fails, try to split by commas
-            if (req.body.images.includes(',')) {
-              updateData.images = req.body.images.split(',').map(img => img.trim()).filter(Boolean);
-              console.log(`Split string into ${updateData.images.length} images by comma`);
-            } else {
-              // Use it as a single image path
-              updateData.images = [req.body.images.trim()].filter(Boolean);
-              console.log(`Using single image path: ${updateData.images[0]}`);
+          } 
+          // Case 2: JSON string
+          else if (req.body.images.includes('[') || req.body.images.includes('{') || 
+                  req.body.images.includes('"') || req.body.images.includes("'")) {
+            try {
+              // Try to parse JSON string with extra handling for escaped quotes
+              let cleanJson = req.body.images;
+              
+              // Remove outer quotes if present
+              if ((cleanJson.startsWith('"') && cleanJson.endsWith('"')) || 
+                  (cleanJson.startsWith("'") && cleanJson.endsWith("'"))) {
+                cleanJson = cleanJson.substring(1, cleanJson.length - 1);
+              }
+              
+              // Replace escaped quotes with real quotes
+              cleanJson = cleanJson.replace(/\\"/g, '"').replace(/\\'/g, "'");
+              
+              console.log("Cleaned JSON for parsing:", cleanJson);
+              const parsedImages = JSON.parse(cleanJson);
+              
+              if (Array.isArray(parsedImages)) {
+                updateData.images = parsedImages.map(img => String(img)).filter(Boolean);
+                console.log(`Parsed ${updateData.images.length} images from JSON string`);
+              } else if (parsedImages && typeof parsedImages === 'object') {
+                // Handle object format by taking values
+                updateData.images = Object.values(parsedImages).map(img => String(img)).filter(Boolean);
+                console.log(`Extracted ${updateData.images.length} images from JSON object`);
+              } else {
+                // Single value
+                updateData.images = [String(parsedImages)].filter(Boolean);
+                console.log(`Created single-item array from parsed JSON value`);
+              }
+            } catch (e) {
+              console.error("JSON parsing failed:", e);
+              console.error("Failed JSON string:", req.body.images);
+              
+              // If parsing fails, try to split by commas
+              if (req.body.images.includes(',')) {
+                updateData.images = req.body.images.split(',')
+                  .map(img => img.trim())
+                  .filter(Boolean);
+                console.log(`Split string into ${updateData.images.length} images by comma`);
+              } else {
+                // Use it as a single image path
+                updateData.images = [req.body.images.trim()].filter(Boolean);
+                console.log(`Using single image path: ${updateData.images[0]}`);
+              }
             }
+          }
+          // Case 3: Simple comma-separated list
+          else if (req.body.images.includes(',')) {
+            updateData.images = req.body.images.split(',')
+              .map(img => img.trim())
+              .filter(Boolean);
+            console.log(`Split string into ${updateData.images.length} images by comma`);
+          } 
+          // Case 4: Single image path
+          else {
+            updateData.images = [req.body.images.trim()].filter(Boolean);
+            console.log(`Using single image path: ${updateData.images[0]}`);
           }
         } else {
           // Unknown format, preserve existing images
