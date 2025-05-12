@@ -98,9 +98,65 @@ export default function PropertyForm({
   // Update form when property data is loaded
   useEffect(() => {
     if (isEditing && propertyData) {
-      // Load existing images if any
-      if (propertyData.images && Array.isArray(propertyData.images)) {
-        setExistingImages(propertyData.images);
+      // CRITICAL FIX: Enhanced handling of existing images
+      console.log("Checking existing images in property data:", propertyData.images);
+      
+      if (propertyData.images) {
+        try {
+          // Try to handle various image field formats
+          if (Array.isArray(propertyData.images)) {
+            // Already an array, use it directly
+            console.log(`Found ${propertyData.images.length} images as array`);
+            setExistingImages(propertyData.images);
+          } else if (typeof propertyData.images === 'string') {
+            // String format could be JSON or comma-separated
+            if (propertyData.images.includes('[') || propertyData.images.includes('{')) {
+              // Likely JSON string, try to parse
+              try {
+                const parsedImages = JSON.parse(propertyData.images);
+                if (Array.isArray(parsedImages)) {
+                  console.log(`Parsed ${parsedImages.length} images from JSON string`);
+                  setExistingImages(parsedImages);
+                } else {
+                  // Parsed but not an array - might be an object with image values
+                  console.log("Parsed JSON but got non-array result:", parsedImages);
+                  const imageValues = typeof parsedImages === 'object' ? 
+                                     Object.values(parsedImages).filter(Boolean) : 
+                                     [parsedImages].filter(Boolean);
+                  console.log(`Extracted ${imageValues.length} images from parsed JSON`);
+                  setExistingImages(imageValues);
+                }
+              } catch (e) {
+                console.error("Failed to parse image JSON:", e);
+                // Fallback - treat as comma-separated
+                if (propertyData.images.includes(',')) {
+                  const imageArray = propertyData.images.split(',').map(img => img.trim()).filter(Boolean);
+                  console.log(`Split string into ${imageArray.length} comma-separated images`);
+                  setExistingImages(imageArray);
+                } else {
+                  // Single image string
+                  console.log("Using single image string");
+                  setExistingImages([propertyData.images.trim()]);
+                }
+              }
+            } else if (propertyData.images.includes(',')) {
+              // Simple comma-separated list
+              const imageArray = propertyData.images.split(',').map(img => img.trim()).filter(Boolean);
+              console.log(`Split string into ${imageArray.length} comma-separated images`);
+              setExistingImages(imageArray);
+            } else if (propertyData.images.trim()) {
+              // Single image URL
+              console.log("Using single image URL");
+              setExistingImages([propertyData.images.trim()]);
+            }
+          }
+        } catch (error) {
+          console.error("Error processing existing images:", error);
+          setExistingImages([]);
+        }
+      } else {
+        console.log("No existing images found");
+        setExistingImages([]);
       }
       
       // Update form values with property data
@@ -115,7 +171,8 @@ export default function PropertyForm({
         developerName: propertyData.developerName || "",
         propertyType: propertyData.propertyType || "",
         listingType: propertyData.listingType || "Primary",
-        reference: propertyData.reference || propertyData.references || "",
+        // Fix reference field by prioritizing the standardized field name first
+        reference: propertyData.references || propertyData.reference || propertyData.reference_number || "",
         price: propertyData.price || 0,
         downPayment: propertyData.downPayment || 0,
         installmentAmount: propertyData.installmentAmount || 0,
@@ -346,18 +403,28 @@ export default function PropertyForm({
           setUploading(false);
         }
       } else if (existingImages.length > 0 && isEditing) {
-        // Only update existing images if editing
+        // CRITICAL FIX: Enhanced handling of existing images in update requests
         try {
           console.log(`Updating property ${savedPropertyId} with ${existingImages.length} existing images`);
+          console.log("Existing images to preserve:", existingImages);
+          
+          // First, ensure all images are properly formatted strings
+          const validatedImages = existingImages.map(img => 
+            typeof img === 'string' ? img.trim() : String(img)
+          ).filter(Boolean);
+          
+          console.log(`Prepared ${validatedImages.length} validated image strings`);
+          
+          // Send the update request with proper images array format
           const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-            images: existingImages
+            images: validatedImages
           });
           
           if (!updateResponse.ok) {
             throw new Error(`Property image update failed with status: ${updateResponse.status}`);
           }
           
-          console.log(`Successfully updated property ${savedPropertyId} with ${existingImages.length} images`);
+          console.log(`Successfully updated property ${savedPropertyId} with ${validatedImages.length} images`);
         } catch (error) {
           console.error("Error updating property images:", error);
           toast({
