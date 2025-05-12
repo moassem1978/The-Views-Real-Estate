@@ -1239,8 +1239,12 @@ export class DatabaseStorage implements IStorage {
     try {
       const offset = (page - 1) * pageSize;
       
-      // Use raw SQL to avoid issues with reserved keywords
-      const countQuery = `SELECT COUNT(*) AS total FROM properties`;
+      // Add condition to exclude international properties by default
+      // Properties in Egypt or with NULL country will be included
+      const domesticCondition = '(country IS NULL OR country = \'Egypt\')';
+      
+      // Use raw SQL to avoid issues with reserved keywords but include domestic filter
+      const countQuery = `SELECT COUNT(*) AS total FROM properties WHERE ${domesticCondition}`;
       const countResult = await db.execute(countQuery);
       console.log('Count result:', countResult);
       
@@ -1250,6 +1254,7 @@ export class DatabaseStorage implements IStorage {
       // Get paginated data with numeric parameters
       const query = `
         SELECT * FROM properties 
+        WHERE ${domesticCondition}
         ORDER BY created_at DESC 
         LIMIT ${pageSize} OFFSET ${offset}
       `;
