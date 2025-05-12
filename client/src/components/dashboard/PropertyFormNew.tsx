@@ -994,7 +994,7 @@ export default function PropertyForm({
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
-                      </</FormControl>
+                      </FormControl>
                     </FormItem>
                   )}
                 />
