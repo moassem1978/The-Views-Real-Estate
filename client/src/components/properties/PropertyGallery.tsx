@@ -159,7 +159,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
         <div className="container mx-auto px-4 -mt-12 relative z-10">
           <div className="bg-white shadow-md rounded-md p-3">
             <div className="flex space-x-2 overflow-x-auto pb-2">
-              {(processedImages.length > 0 ? processedImages : images).map((image, index) => (
+              {(processedImages.length > 0 ? processedImages : images).map((image: string, index: number) => (
                 <div 
                   key={index}
                   onClick={() => handleThumbnailClick(index)}

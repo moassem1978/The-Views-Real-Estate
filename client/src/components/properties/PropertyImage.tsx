@@ -14,9 +14,11 @@ interface PropertyImageProps {
 // Only populated after the server-side image matcher has already tried
 const knownFailedImages = new Set<string>();
 
-// We keep this but don't use it for skipping image loading now
-// Our server-side image matcher can handle these patterns
+// Pattern for matching MD5 hash strings commonly found in Windows uploads
 const hashPattern = /[a-f0-9]{32}/i;
+
+// Known image extensions for validation
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
 
 export default function PropertyImage({ 
   src, 
