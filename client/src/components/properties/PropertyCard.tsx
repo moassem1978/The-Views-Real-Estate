@@ -10,19 +10,23 @@ interface PropertyCardProps {
 
 export default function PropertyCard({ property }: PropertyCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
-  const [mainImage, setMainImage] = useState<string>('');
+  const [mainImage, setMainImage] = useState<string>('/placeholder-property.svg');
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // Set the main image when the property data loads
-    console.log(`PropertyCard: Loading images for property #${property.id}: ${property.title}`);
-    const images = getImages() || [];
-    console.log(`PropertyCard: Found ${images.length} images for property #${property.id}`, images);
-    
-    // If we have multiple images, use the first one
-    const firstImage = images.length > 0 ? images[0] : '/uploads/default-property.svg';
-    console.log(`PropertyCard: Using main image for property #${property.id}:`, firstImage);
-    setMainImage(firstImage);
+    const images = getImages();
+    if (images && images.length > 0) {
+      setMainImage(images[0]);
+      setImageError(false);
+    } else {
+      setMainImage('/placeholder-property.svg');
+    }
   }, [property]);
+
+  const handleImageError = () => {
+    setImageError(true);
+    setMainImage('/placeholder-property.svg');
+  };
 
   const toggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,10 +57,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     <div className="property-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">
       <Link href={`/properties/${property.id}`} className="block relative overflow-hidden">
         <div className="group-hover:after:opacity-100 after:opacity-0 after:absolute after:inset-0 after:bg-black/20 after:transition-opacity after:duration-300 relative h-64 overflow-hidden rounded-t-lg">
-          <PropertyImage 
-            src={mainImage} 
-            alt={property.title} 
-            priority={property.isFeatured}
+          <img 
+            src={imageError ? '/placeholder-property.svg' : mainImage}
+            alt={property.title}
+            onError={handleImageError}
             className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
           />
 

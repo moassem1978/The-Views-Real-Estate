@@ -140,3 +140,85 @@ const DirectUploader: React.FC<DirectUploaderProps> = ({
 };
 
 export default DirectUploader;
+import { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
+
+interface DirectUploaderProps {
+  onUploadComplete?: (urls: string[]) => void;
+  propertyId?: number;
+}
+
+export default function DirectUploader({ onUploadComplete, propertyId }: DirectUploaderProps) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    
+    Array.from(e.target.files).forEach(file => {
+      formData.append('images', file);
+    });
+
+    if (propertyId) {
+      formData.append('propertyId', propertyId.toString());
+    }
+
+    try {
+      const response = await fetch('/api/upload/property-images-direct', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const data = await response.json();
+      
+      if (data.success && data.imageUrls) {
+        toast({
+          title: "Upload successful",
+          description: `Uploaded ${data.imageUrls.length} images`,
+        });
+        
+        if (onUploadComplete) {
+          onUploadComplete(data.imageUrls);
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-4">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={handleUpload}
+        disabled={uploading}
+        className="hidden"
+      />
+      <Button 
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        variant="outline"
+      >
+        {uploading ? 'Uploading...' : 'Upload Images'}
+      </Button>
+    </div>
+  );
+}
