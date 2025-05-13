@@ -1105,18 +1105,21 @@ export default function PropertyForm({
                 </div>
               )}
               
-              {/* New images input */}
+              {/* New images input using DirectUploader */}
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="images">Add New Images</Label>
+                  <Label>Add New Images</Label>
                   <div className="mt-2">
-                    <Input
-                      id="images"
-                      type="file"
-                      onChange={handleImageChange}
-                      accept="image/*"
-                      multiple
-                      className="mb-2"
+                    <DirectUploader
+                      propertyId={propertyId}
+                      onUploadComplete={(urls) => {
+                        if (urls && urls.length > 0) {
+                          // Combine with existing images
+                          const allImages = [...existingImages, ...urls];
+                          setExistingImages(allImages);
+                          form.setValue('images', allImages);
+                        }
+                      }}
                     />
                   </div>
                   

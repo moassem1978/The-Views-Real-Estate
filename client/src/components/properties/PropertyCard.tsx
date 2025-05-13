@@ -14,9 +14,27 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    const images = getImages();
-    if (images && images.length > 0) {
-      setMainImage(images[0]);
+    // Set the main image when the property data loads
+    console.log(`PropertyCard: Loading images for property #${property.id}`);
+
+    // Handle different image formats
+    let images: string[] = [];
+    if (Array.isArray(property.images)) {
+      images = property.images;
+    } else if (typeof property.images === 'string') {
+      try {
+        const parsed = JSON.parse(property.images);
+        images = Array.isArray(parsed) ? parsed : [property.images];
+      } catch {
+        images = [property.images];
+      }
+    }
+
+    // Filter out empty or invalid URLs
+    const validImages = images.filter(img => img && typeof img === 'string' && img.trim() !== '');
+
+    if (validImages.length > 0) {
+      setMainImage(validImages[0]);
       setImageError(false);
     } else {
       setMainImage('/placeholder-property.svg');
@@ -46,7 +64,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           `Array[${property.images.length}]` : 
           typeof property.images)
     );
-    
+
     // Use enhanced parseJsonArray with better error handling
     const result = parseJsonArray(property.images);
     console.log(`PropertyCard: After parsing, property #${property.id} has ${result.length} images`);
@@ -149,7 +167,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             )}
 
             <h3 className="mt-1 font-serif text-xl font-semibold text-gray-800 leading-tight">{property.title}</h3>
-            
+
             {/* Reference Number - Enhanced display with fallbacks for all possible field names */}
             {(property.references || property.reference_number || property.reference) && (
               <div className="mt-1 text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded inline-block">
