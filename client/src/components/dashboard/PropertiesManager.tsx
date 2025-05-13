@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, MoreHorizontal, Search, Edit, Star, Trash2, Filter, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, MoreHorizontal, Search, Edit, Star, Trash2, Filter, Eye, ChevronLeft, ChevronRight, Download } from "lucide-react";
 
 interface PropertiesManagerProps {
   onEditProperty?: (propertyId: number) => void;
@@ -304,7 +304,7 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
       {/* Search and filters */}
       <div className="flex justify-end mb-4">
         <Button onClick={exportToCSV} variant="outline" className="flex items-center gap-2">
-          <DownloadIcon className="h-4 w-4" />
+          <Download className="h-4 w-4" />
           Export Properties
         </Button>
       </div>
