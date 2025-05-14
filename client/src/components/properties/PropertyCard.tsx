@@ -14,31 +14,28 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // Set the main image when the property data loads
-    console.log(`PropertyCard: Loading images for property #${property.id}`);
-
     // Handle different image formats
-    let images: string[] = [];
-    if (Array.isArray(property.images)) {
-      images = property.images;
-    } else if (typeof property.images === 'string') {
-      try {
-        const parsed = JSON.parse(property.images);
-        images = Array.isArray(parsed) ? parsed : [property.images];
-      } catch {
-        images = [property.images];
+    let imageSource = '/placeholder-property.svg';
+
+    if (property.images) {
+      if (Array.isArray(property.images) && property.images.length > 0) {
+        imageSource = property.images[0];
+      } else if (typeof property.images === 'string') {
+        try {
+          const parsed = JSON.parse(property.images);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            imageSource = parsed[0];
+          }
+        } catch {
+          // Use single string as image path if not JSON
+          imageSource = property.images;
+        }
       }
     }
 
-    // Filter out empty or invalid URLs
-    const validImages = images.filter(img => img && typeof img === 'string' && img.trim() !== '');
+    setMainImage(imageSource);
+    setImageError(false);
 
-    if (validImages.length > 0) {
-      setMainImage(validImages[0]);
-      setImageError(false);
-    } else {
-      setMainImage('/placeholder-property.svg');
-    }
   }, [property]);
 
   const handleImageError = () => {
