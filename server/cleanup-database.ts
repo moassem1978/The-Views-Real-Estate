@@ -1,15 +1,19 @@
 
 import { db } from './db';
-import { properties } from '@shared/schema';
+import { properties, announcements } from '@shared/schema';
 
 async function cleanupDatabase() {
   try {
     // Delete all properties
     await db.delete(properties);
     
-    // Reset auto-increment sequence
+    // Delete all announcements
+    await db.delete(announcements);
+    
+    // Reset auto-increment sequences
     await db.execute(
-      `ALTER SEQUENCE properties_id_seq RESTART WITH 1`
+      `ALTER SEQUENCE properties_id_seq RESTART WITH 1;
+       ALTER SEQUENCE announcements_id_seq RESTART WITH 1;`
     );
     
     console.log('Database cleaned and reset successfully');

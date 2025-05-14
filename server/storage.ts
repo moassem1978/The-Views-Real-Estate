@@ -6,7 +6,7 @@ import {
 } from "@shared/schema";
 import { faker } from '@faker-js/faker';
 import { formatISO } from 'date-fns';
-import * as fs from 'fs';
+import * * as fs from 'fs';
 import * as path from 'path';
 import { db, pool } from "./db";
 import { eq, and, like, gte, lte, desc, sql, asc } from "drizzle-orm";
@@ -1238,19 +1238,19 @@ export class DatabaseStorage implements IStorage {
   async getAllProperties(page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
     try {
       const offset = (page - 1) * pageSize;
-      
+
       // Add condition to exclude international properties by default
       // Properties in Egypt or with NULL country will be included
       const domesticCondition = '(country IS NULL OR country = \'Egypt\')';
-      
+
       // Use raw SQL to avoid issues with reserved keywords but include domestic filter
       const countQuery = `SELECT COUNT(*) AS total FROM properties WHERE ${domesticCondition}`;
       const countResult = await db.execute(countQuery);
       console.log('Count result:', countResult);
-      
+
       const totalCount = Number(countResult.rows?.[0]?.total || 0);
       const pageCount = Math.ceil(totalCount / pageSize);
-      
+
       // Get paginated data with numeric parameters
       const query = `
         SELECT * FROM properties 
@@ -1258,9 +1258,9 @@ export class DatabaseStorage implements IStorage {
         ORDER BY created_at DESC 
         LIMIT ${pageSize} OFFSET ${offset}
       `;
-      
+
       const data = await db.execute(query);
-      
+
       return {
         data: data.rows || [],
         totalCount,
@@ -1299,7 +1299,7 @@ export class DatabaseStorage implements IStorage {
           ORDER BY created_at DESC 
           LIMIT ${limit}
         `;
-        
+
         const data = await db.execute(query);
 
         return {
@@ -1318,7 +1318,7 @@ export class DatabaseStorage implements IStorage {
         ORDER BY created_at DESC 
         LIMIT ${pageSize} OFFSET ${offset}
       `;
-      
+
       const data = await db.execute(query);
 
       return {
@@ -1343,7 +1343,7 @@ export class DatabaseStorage implements IStorage {
 
   async getHighlightedProperties(limit = 10): Promise<Property[]> {
     console.log(`DEBUG: Fetching highlighted properties with limit: ${limit}`);
-    
+
     try {
       // Use raw SQL to avoid keyword issues with direct parameter
       const query = `
@@ -1352,19 +1352,19 @@ export class DatabaseStorage implements IStorage {
         ORDER BY created_at DESC 
         LIMIT ${limit}
       `;
-      
+
       // Use db.execute
       const results = await db.execute(query);
-      
+
       console.log(`DEBUG: Query returned ${results.rows?.length || 0} highlighted properties`);
-      
+
       // Log each property for debugging
       if (results.rows?.length > 0) {
         results.rows.forEach((p: any) => {
           console.log(`DEBUG: Highlighted property: ID ${p.id}, Title: ${p.title}, isHighlighted: ${p.is_highlighted}`);
         });
       }
-      
+
       return results.rows || [];
     } catch (error) {
       console.error('Error in getHighlightedProperties:', error);
@@ -1391,7 +1391,7 @@ export class DatabaseStorage implements IStorage {
           ORDER BY created_at DESC 
           LIMIT ${limit}
         `;
-        
+
         const data = await db.execute(query);
 
         return {
@@ -1410,7 +1410,7 @@ export class DatabaseStorage implements IStorage {
         ORDER BY created_at DESC 
         LIMIT ${pageSize} OFFSET ${offset}
       `;
-      
+
       const data = await db.execute(query);
 
       return {
@@ -1436,29 +1436,29 @@ export class DatabaseStorage implements IStorage {
   async getPropertyById(id: number): Promise<Property | undefined> {
     try {
       console.log(`DB: Fetching property with ID ${id} using pool.query`);
-      
+
       // Use pool.query with parameterized query for better security and reliability
       const result = await pool.query(
         "SELECT * FROM properties WHERE id = $1", 
         [id]
       );
-      
+
       // Check if we found a property
       if (!result || result.rowCount === 0) {
         console.log(`DB: No property found with ID ${id}`);
         return undefined;
       }
-      
+
       // Get the raw property data
       const dbProperty = result.rows[0];
-      
+
       if (!dbProperty) {
         console.log(`DB: Empty result for property ${id}`);
         return undefined;
       }
-      
+
       console.log(`DB: Found property ${id} with title: ${dbProperty.title || 'Unknown'}`);
-      
+
       // Map database fields (snake_case) to property fields (camelCase)
       const property: Property = {
         id: dbProperty.id,
@@ -1491,32 +1491,32 @@ export class DatabaseStorage implements IStorage {
         yearBuilt: dbProperty.year_built || null,
         references: dbProperty.references || ""
       };
-      
+
       console.log(`DB: Successfully returned property data for ID ${id}`);
       return property;
-      
+
     } catch (error) {
       console.error(`DB Error fetching property ${id}:`, error);
-      
+
       // Try with a more basic query as a last resort
       try {
         console.log(`DB: Trying minimalist query for property ${id}`);
-        
+
         const basicResult = await pool.query(
           "SELECT id, title, description, price, status FROM properties WHERE id = $1",
           [id]
         );
-        
+
         if (!basicResult || basicResult.rowCount === 0) {
           console.log(`DB: Property ${id} not found with basic query`);
           return undefined;
         }
-        
+
         const basicProperty = basicResult.rows[0];
-        
+
         if (basicProperty && basicProperty.id) {
           console.log(`DB: Found basic property data for ID ${id}`);
-          
+
           // Create minimal property to avoid errors
           return {
             id: basicProperty.id,
@@ -1576,7 +1576,7 @@ export class DatabaseStorage implements IStorage {
       } catch (fallbackError) {
         console.error(`DB: Ultimate fallback also failed for property ${id}:`, fallbackError);
       }
-      
+
       // If all methods fail, return undefined
       return undefined;
     }
@@ -1585,10 +1585,10 @@ export class DatabaseStorage implements IStorage {
   async createProperty(insertProperty: InsertProperty): Promise<Property> {
     try {
       console.log(`DB: Creating new property: ${insertProperty.title}`);
-      
+
       // Handle the 'references' field correctly
       let safePropertyData: any = {...insertProperty};
-      
+
       // If there's a references field in the input, map it to reference_number for the database
       if ('references' in safePropertyData) {
         // Copy the value to reference_number field (which is what the database column is named)
@@ -1597,14 +1597,14 @@ export class DatabaseStorage implements IStorage {
         delete safePropertyData.references;
         console.log(`Mapped 'references' value to 'reference_number': ${safePropertyData.reference_number}`);
       }
-      
+
       // Handle images field specially to ensure it's stored as proper JSON
       if (safePropertyData.images) {
         console.log(`Processing images array for new property with ${Array.isArray(safePropertyData.images) ? safePropertyData.images.length : 'unknown'} images`);
-        
+
         // Convert images to a standard array format
         let imagesArray: string[] = [];
-        
+
         if (Array.isArray(safePropertyData.images)) {
           // Already an array, make sure all elements are strings
           imagesArray = safePropertyData.images
@@ -1632,31 +1632,31 @@ export class DatabaseStorage implements IStorage {
             imagesArray = [safePropertyData.images];
           }
         }
-        
+
         // Use JSON.stringify to convert to proper JSON format for PostgreSQL
         safePropertyData.images = JSON.stringify(imagesArray);
         console.log(`Prepared images JSON for storage: ${safePropertyData.images}`);
       }
-      
+
       console.log('Prepared property data for insertion');
-      
+
       // Create the property with the properly mapped fields
       const [property] = await db
         .insert(properties)
         .values(safePropertyData)
         .returning();
-      
+
       console.log(`Successfully created property with ID ${property.id}`);
-      
+
       // Get the updated property with all fields
       const [updatedProperty] = await db
         .select()
         .from(properties)
         .where(eq(properties.id, property.id));
-      
+
       // Process image array for the frontend
       let imagesArray: string[] = [];
-      
+
       if (updatedProperty.images) {
         // Handle different possible formats returning from PostgreSQL
         if (Array.isArray(updatedProperty.images)) {
@@ -1687,7 +1687,7 @@ export class DatabaseStorage implements IStorage {
             .map(img => String(img));
         }
       }
-      
+
       // Make sure the references field is available in the return value
       // Note: reference_number in DB maps to references in the application
       const propertyWithReferences = {
@@ -1697,12 +1697,12 @@ export class DatabaseStorage implements IStorage {
         // Ensure images is always an array
         images: imagesArray
       };
-      
+
       console.log(`DB: Successfully created property with ID ${property.id}`);
       if (imagesArray.length > 0) {
         console.log(`Property has ${imagesArray.length} images: ${imagesArray.slice(0, 3).join(', ')}${imagesArray.length > 3 ? '...' : ''}`);
       }
-      
+
       return propertyWithReferences;
     } catch (error) {
       console.error(`DB Error creating property:`, error);
@@ -1714,47 +1714,47 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`DB: Updating property with ID ${id}`);
       console.log(`Received update data:`, updates);
-      
+
       // Handle image removal before database update if imagesToRemove array is present
       if (updates.imagesToRemove && Array.isArray(updates.imagesToRemove) && updates.imagesToRemove.length > 0) {
         console.log(`Processing request to remove ${updates.imagesToRemove.length} images from property ${id}`);
         console.log(`Images to remove:`, updates.imagesToRemove);
-        
+
         // First, get the current property to access its images
         const currentProperty = await this.getPropertyById(id);
         if (!currentProperty) {
           console.error(`Cannot remove images - property ${id} not found`);
           throw new Error(`Property ${id} not found`);
         }
-        
+
         // Make sure we have the images array
         if (currentProperty.images && Array.isArray(currentProperty.images)) {
           console.log(`Current property has ${currentProperty.images.length} images:`, currentProperty.images);
-          
+
           // Filter out the images that are marked for removal - with enhanced matching
           const updatedImages = currentProperty.images.filter(img => {
             // Check if any of the imagesToRemove matches this image path
             // in any of the possible formats
             let shouldRemove = false;
-            
+
             if (updates.imagesToRemove && Array.isArray(updates.imagesToRemove)) {
               for (const removeUrl of updates.imagesToRemove) {
                 // Normalize both the current image and the one to remove
                 const imgBasename = typeof img === 'string' ? img.split('/').pop() : '';
                 const removeBasename = typeof removeUrl === 'string' ? removeUrl.split('/').pop() : '';
-                
+
                 // Check for exact match
                 if (img === removeUrl) {
                   shouldRemove = true;
                   break;
                 }
-                
+
                 // Check for basename match 
                 if (imgBasename && removeBasename && imgBasename === removeBasename) {
                   shouldRemove = true;
                   break;
                 }
-                
+
                 // Check if the full URL contains the path to remove or vice versa
                 if (typeof img === 'string' && typeof removeUrl === 'string') {
                   if (img.includes(removeUrl) || removeUrl.includes(img)) {
@@ -1762,33 +1762,35 @@ export class DatabaseStorage implements IStorage {
                     break;
                   }
                 }
+```python
+                }
               }
             }
-            
+
             if (shouldRemove) {
               console.log(`REMOVING IMAGE: ${img}`);
               return false;
             }
-            
+
             return true;
           });
-          
+
           console.log(`After filtering, property will have ${updatedImages.length} images`);
           console.log(`Remaining images:`, updatedImages);
-          
+
           // Update the images array in the updates object
           updates.images = updatedImages;
         } else {
           console.log(`Property has no images or images is not an array`);
         }
-        
+
         // Remove the imagesToRemove field so it doesn't confuse the database
         delete updates.imagesToRemove;
       }
-      
+
       // Convert camelCase keys to snake_case for database
       const dbUpdates: any = {};
-      
+
       // Map camelCase to snake_case for all possible property fields
       if ('title' in updates) dbUpdates.title = updates.title;
       if ('description' in updates) dbUpdates.description = updates.description;
@@ -1819,29 +1821,29 @@ export class DatabaseStorage implements IStorage {
             updates.yearBuilt : parseInt(String(updates.yearBuilt)) || null;
         }
       }
-      
+
       if ('status' in updates) dbUpdates.status = updates.status;
-      
+
       // The references field maps to reference_number column - CRITICAL FIELD
       // Process all possible reference field names to ensure it's saved
       let refNumber = null;
-      
+
       // Try to get the reference number from any possible field
       if ('references' in updates && updates.references) {
         refNumber = updates.references;
         console.log(`Found reference in 'references' field: ${refNumber}`);
       }
-      
+
       if ('reference' in updates && updates.reference) {
         refNumber = updates.reference;
         console.log(`Found reference in 'reference' field: ${refNumber}`);
       }
-      
+
       if ('reference_number' in updates && updates.reference_number) {
         refNumber = updates.reference_number;
         console.log(`Found reference in 'reference_number' field: ${refNumber}`);
       }
-      
+
       // If we found a reference number, apply it
       if (refNumber) {
         console.log(`Setting reference_number to: ${refNumber}`);
@@ -1856,21 +1858,21 @@ export class DatabaseStorage implements IStorage {
         console.log(`Explicitly setting property_type to: ${updates.propertyType}`);
         dbUpdates.property_type = updates.propertyType;
       }
-      
+
       // Handle images field specially to prevent JSON syntax errors
       if ('images' in updates) {
         console.log('Processing images field for update:', updates.images);
-        
+
         // First, retrieve the existing property to get current images
         const existingQuery = 'SELECT images FROM properties WHERE id = $1';
         const existingResult = await pool.query(existingQuery, [id]);
         let existingImages: string[] = [];
-        
+
         if (existingResult && existingResult.rows && existingResult.rows.length > 0) {
           // Get existing images from the database
           const existingData = existingResult.rows[0].images;
           console.log('Existing images from database:', existingData);
-          
+
           if (Array.isArray(existingData)) {
             // Already parsed as an array by pg
             existingImages = existingData
@@ -1895,12 +1897,12 @@ export class DatabaseStorage implements IStorage {
             }
           }
         }
-        
+
         console.log('Existing images array:', existingImages);
-        
+
         // Process new images to add
         let newImagesArray: string[] = [];
-        
+
         if (Array.isArray(updates.images)) {
           // Filter out any non-string elements and ensure they're all simple strings
           newImagesArray = updates.images
@@ -1925,30 +1927,30 @@ export class DatabaseStorage implements IStorage {
             newImagesArray = [updates.images];
           }
         }
-        
+
         console.log('New images to add:', newImagesArray);
-        
+
         // IMPORTANT: If updates.images already contains filtered images from the imagesToRemove process,
         // we must use that instead of the raw database values
         const filteredExistingImages = Array.isArray(updates.images) ? updates.images : existingImages;
         console.log('Using images array after removal processing:', filteredExistingImages);
         console.log('Existing images after removal:', filteredExistingImages);
-        
+
         // Remove duplicate images before combining arrays
         const uniqueNewImages = newImagesArray.filter(newImg => {
           // Check if this image URL already exists in existing images
           return !filteredExistingImages.some(existingImg => existingImg === newImg);
         });
         console.log('Unique new images after deduplication:', uniqueNewImages);
-        
+
         // Combine filtered existing and unique new images
         const combinedImages = [...filteredExistingImages, ...uniqueNewImages];
         console.log('Combined images array:', combinedImages);
-        
+
         // Filter out any undefined, null, or empty string values
         const sanitizedImages = combinedImages.filter(img => img !== null && img !== undefined && img !== "");
         console.log(`After sanitization: ${sanitizedImages.length} valid images`);
-        
+
         // Make sure the image paths have consistent formatting (start with /)
         const normalizedImages = sanitizedImages.map(img => {
           const imgStr = String(img);
@@ -1959,7 +1961,7 @@ export class DatabaseStorage implements IStorage {
           // Otherwise add a leading slash to make it consistent
           return `/${imgStr}`;
         });
-        
+
         // Verify we have properly formatted image paths
         console.log(`Final image paths (${normalizedImages.length}):`);
         normalizedImages.forEach((img, index) => {
@@ -1969,7 +1971,7 @@ export class DatabaseStorage implements IStorage {
             console.log(`  ... and ${normalizedImages.length - 10} more`);
           }
         });
-        
+
         // Use JSON.stringify to convert array to proper JSON string format
         // This ensures PostgreSQL will accept it as a valid JSON array
         dbUpdates.images = JSON.stringify(normalizedImages);
@@ -1978,14 +1980,14 @@ export class DatabaseStorage implements IStorage {
                     `${dbUpdates.images.substring(0, 100)}... (truncated)` : 
                     dbUpdates.images);
       }
-      
+
       console.log(`Converted database updates:`, dbUpdates);
-      
+
       // Build the SET clause parts of the SQL query and parameters array
       const setClauseParts = [];
       const queryParams = [];
       let paramIndex = 1;
-      
+
       for (const [key, value] of Object.entries(dbUpdates)) {
         // Handle images special case - special treatment for JSON arrays
         if (key === 'images' && value !== null && value !== undefined) {
@@ -1994,7 +1996,7 @@ export class DatabaseStorage implements IStorage {
           // This uses PostgreSQL's specific casting syntax
           setClauseParts.push(`${key} = $${paramIndex}::jsonb`);
           queryParams.push(value);
-          
+
           // Logging the actual value for debugging
           console.log(`Images value being stored: ${value}`);
         } else {
@@ -2004,10 +2006,10 @@ export class DatabaseStorage implements IStorage {
         }
         paramIndex++;
       }
-      
+
       // Add the ID as the last parameter
       queryParams.push(id);
-      
+
       // Construct the full query
       const query = `
         UPDATE properties 
@@ -2015,33 +2017,33 @@ export class DatabaseStorage implements IStorage {
         WHERE id = $${paramIndex} 
         RETURNING *
       `;
-      
+
       console.log(`Executing query: ${query}`);
       console.log(`With parameters:`, queryParams);
-      
+
       // Execute the query using pool.query
       const result = await pool.query(query, queryParams);
-      
+
       if (!result || result.rowCount === 0) {
         console.log(`DB: Failed to update property ${id}`);
         return undefined;
       }
-      
+
       const updatedProperty = result.rows[0];
       console.log('Raw property from database:', updatedProperty);
-      
+
       // Parse images field from database if it's a JSON string
       let imagesArray: string[] = [];
-      
+
       if (updatedProperty.images) {
         console.log('Raw images data from database:', typeof updatedProperty.images, 
           Array.isArray(updatedProperty.images) ? `Array[${updatedProperty.images.length}]` : 
           (typeof updatedProperty.images === 'string' ? 
             (updatedProperty.images.length > 100 ? updatedProperty.images.substring(0, 100) + '...' : updatedProperty.images) : 
             JSON.stringify(updatedProperty.images).substring(0, 100)));
-            
+
         // Handle different formats of the images field from PostgreSQL with improved error handling
-        
+
         // Enhanced debugging for the raw images value
         console.log('Raw images value type:', typeof updatedProperty.images);
         console.log('Is Array?', Array.isArray(updatedProperty.images));
@@ -2050,7 +2052,7 @@ export class DatabaseStorage implements IStorage {
             updatedProperty.images.substring(0, 100) : 
             JSON.stringify(updatedProperty.images).substring(0, 100)
         );
-        
+
         try {
           // Case 1: Already an array of strings
           if (Array.isArray(updatedProperty.images)) {
@@ -2060,13 +2062,13 @@ export class DatabaseStorage implements IStorage {
           // Case 2: JSON string representation of an array
           else if (typeof updatedProperty.images === 'string') {
             console.log('Images is a string, attempting to parse as JSON if it looks like an array');
-            
+
             // Clean the string - remove any extra quotes that might be causing parsing issues
             const cleanedStr = updatedProperty.images.replace(/\\"/g, '"').replace(/^"/, '').replace(/"$/, '');
-            
+
             // Improved debugging
             console.log('Cleaned string for parsing:', cleanedStr.substring(0, 100));
-            
+
             // If it looks like a JSON array, parse it
             if (cleanedStr.trim().startsWith('[') && cleanedStr.trim().endsWith(']')) {
               try {
@@ -2104,7 +2106,7 @@ export class DatabaseStorage implements IStorage {
               .map(item => String(item));
             console.log(`Extracted ${imagesArray.length} images from object`);
           }
-          
+
           // Fallback - if we still don't have images but we know they exist, try to get them directly
           if (imagesArray.length === 0 && dbUpdates.images) {
             console.log('No images extracted, but we have images in the update data, using those directly');
@@ -2125,19 +2127,19 @@ export class DatabaseStorage implements IStorage {
           // Safety fallback
           imagesArray = [];
         }
-        
+
         // Filter out any null/undefined values and ensure all items are strings
         imagesArray = imagesArray.filter(item => item !== null && item !== undefined && item !== '')
           .map(item => String(item));
       }
-      
+
       console.log('Parsed images array for frontend:', imagesArray.length ? imagesArray : 'empty array');
-      
+
       // Ensure we have the most up-to-date images array
       if (imagesArray.length === 0 && dbUpdates.images) {
         // This is a last-resort safeguard to ensure we don't lose images during an update
         console.log("No images found in DB result, but we have images in the update data - restoring them");
-        
+
         try {
           // Try to parse from our update object
           const rawUpdates = typeof dbUpdates.images === 'string' ? dbUpdates.images : JSON.stringify(dbUpdates.images);
@@ -2150,9 +2152,9 @@ export class DatabaseStorage implements IStorage {
           console.error("Error restoring images from update data:", e);
         }
       }
-      
+
       console.log(`Final images array for frontend has ${imagesArray.length} images`);
-      
+
       // Convert property back to camelCase for frontend
       const propertyResult = {
         id: updatedProperty.id,
@@ -2190,19 +2192,19 @@ export class DatabaseStorage implements IStorage {
         agentId: updatedProperty.agent_id,
         zipCode: updatedProperty.zip_code,
         state: updatedProperty.state,
-        
+
         // Include reference number in all possible formats for compatibility
         references: updatedProperty.reference_number || '',
         reference: updatedProperty.reference_number || '',
         reference_number: updatedProperty.reference_number || '',
-        
+
         // Ensure amenities is always an array
         amenities: Array.isArray(updatedProperty.amenities) ? 
                     updatedProperty.amenities : 
                     (typeof updatedProperty.amenities === 'string' && updatedProperty.amenities ? 
                       JSON.parse(updatedProperty.amenities) : 
                       []),
-                      
+
         // Make sure images is always a valid array
         images: imagesArray.length > 0 ? 
                 imagesArray : 
@@ -2210,13 +2212,13 @@ export class DatabaseStorage implements IStorage {
                   updatedProperty.images : 
                   [])
       };
-      
+
       // Final logging to confirm the image array is valid
       console.log(`Final property result has ${propertyResult.images.length} images`);
       if (propertyResult.images.length > 0) {
         console.log(`Sample images: ${propertyResult.images.slice(0, 3).join(', ')}${propertyResult.images.length > 3 ? '...' : ''}`);
       }
-      
+
       console.log(`DB: Successfully updated property ${id} with ${propertyResult.images.length} images`);
       return propertyResult as Property;
     } catch (error) {
@@ -2237,12 +2239,12 @@ export class DatabaseStorage implements IStorage {
     try {
       // Calculate pagination parameters
       const offset = (page - 1) * pageSize;
-      
+
       // Build SQL query conditions
       let conditions = [];
       let params: any[] = [];
       let paramCounter = 1;
-      
+
       // Filter by location (city, state, zip)
       if (filters.location) {
         const locationTerm = `%${filters.location}%`;
@@ -2250,21 +2252,21 @@ export class DatabaseStorage implements IStorage {
         params.push(locationTerm);
         paramCounter++;
       }
-      
+
       // Filter by property type
       if (filters.propertyType && filters.propertyType !== "all") {
         conditions.push(`property_type = $${paramCounter}`);
         params.push(filters.propertyType);
         paramCounter++;
       }
-      
+
       // Filter by listing type (Primary or Resale)
       if (filters.listingType && filters.listingType !== "all") {
         conditions.push(`listing_type = $${paramCounter}`);
         params.push(filters.listingType);
         paramCounter++;
       }
-      
+
       // Filter by project name
       if (filters.projectName) {
         const projectTerm = `%${filters.projectName}%`;
@@ -2272,7 +2274,7 @@ export class DatabaseStorage implements IStorage {
         params.push(projectTerm);
         paramCounter++;
       }
-      
+
       // Filter by developer name
       if (filters.developerName) {
         const developerTerm = `%${filters.developerName}%`;
@@ -2280,43 +2282,43 @@ export class DatabaseStorage implements IStorage {
         params.push(developerTerm);
         paramCounter++;
       }
-      
+
       // Filter by price range
       if (filters.minPrice) {
         conditions.push(`price >= $${paramCounter}`);
         params.push(filters.minPrice);
         paramCounter++;
       }
-      
+
       if (filters.maxPrice) {
         conditions.push(`price <= $${paramCounter}`);
         params.push(filters.maxPrice);
         paramCounter++;
       }
-      
+
       // Filter by bedrooms
       if (filters.minBedrooms) {
         conditions.push(`bedrooms >= $${paramCounter}`);
         params.push(filters.minBedrooms);
         paramCounter++;
       }
-      
+
       // Filter by bathrooms
       if (filters.minBathrooms) {
         conditions.push(`bathrooms >= $${paramCounter}`);
         params.push(filters.minBathrooms);
         paramCounter++;
       }
-      
+
       // Filter by payment options
       if (filters.isFullCash === true) {
         conditions.push(`is_full_cash = true`);
       }
-      
+
       if (filters.hasInstallments === true) {
         conditions.push(`installment_amount IS NOT NULL`);
       }
-      
+
       // Filter by country (international properties)
       if (filters.international !== undefined) {
         if (filters.international) {
@@ -2327,16 +2329,16 @@ export class DatabaseStorage implements IStorage {
           conditions.push(`(country IS NULL OR country = 'Egypt')`);
         }
       }
-      
+
       // Build the WHERE clause
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-      
+
       // Count query
       const countQuery = `SELECT COUNT(*) AS total FROM properties ${whereClause}`;
       const countResult = await db.execute(countQuery, params);
       const totalCount = Number(countResult[0]?.total || 0);
       const pageCount = Math.ceil(totalCount / pageSize);
-      
+
       // Data query with pagination
       const dataQuery = `
         SELECT * FROM properties 
@@ -2344,13 +2346,13 @@ export class DatabaseStorage implements IStorage {
         ORDER BY created_at DESC
         LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
       `;
-      
+
       // Add pagination parameters
       params.push(pageSize, offset);
-      
+
       // Execute query
       const data = await db.execute(dataQuery, params);
-      
+
       return {
         data,
         totalCount,
@@ -2578,7 +2580,7 @@ export class DatabaseStorage implements IStorage {
   // Site settings operations using file persistence
   private defaultSiteSettings: SiteSettings = {
     companyName: "The Views Real Estate",
-    companyLogo: "/uploads/logos/logo-1743513611120-669479078.png", // Use the most recent logo
+    companyLogo: "/uploads/logos/views-logo.png", // Use the most recent logo
     primaryColor: "#B87333",
     contactEmail: "info@theviewsrealestate.com",
     contactPhone: "1-800-555-VIEWS",
