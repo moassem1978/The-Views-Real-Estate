@@ -6,7 +6,7 @@ import {
 } from "@shared/schema";
 import { faker } from '@faker-js/faker';
 import { formatISO } from 'date-fns';
-import * * as fs from 'fs';
+import * as fs from 'fs';
 import * as path from 'path';
 import { db, pool } from "./db";
 import { eq, and, like, gte, lte, desc, sql, asc } from "drizzle-orm";
