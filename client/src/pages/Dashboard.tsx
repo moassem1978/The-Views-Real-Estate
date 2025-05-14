@@ -361,7 +361,7 @@ function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <AnnouncementsManager onEditAnnouncement={handleAnnouncementEdit} />
+                <AnnouncementsManager onAddClick={() => setShowAnnouncementModal(true)} onEditClick={handleAnnouncementEdit} />
               </CardContent>
             </Card>
           </TabsContent>

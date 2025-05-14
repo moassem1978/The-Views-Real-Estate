@@ -26,12 +26,23 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Loader2, Calendar, ImageIcon, X } from "lucide-react";
+import { Loader2, ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AnnouncementFormProps {
   announcementId?: number;
   onClose: () => void;
+}
+
+interface AnnouncementFormValues {
+  title: string;
+  content: string;
+  imageUrl: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  isFeatured: boolean;
+  isHighlighted: boolean;
+  status: string;
 }
 
 export default function AnnouncementForm({ announcementId, onClose }: AnnouncementFormProps) {
@@ -45,13 +56,13 @@ export default function AnnouncementForm({ announcementId, onClose }: Announceme
   const [isUploading, setIsUploading] = useState(false);
   
   // Form
-  const form = useForm({
+  const form = useForm<AnnouncementFormValues>({
     defaultValues: {
       title: "",
       content: "",
       imageUrl: "",
       startDate: new Date(),
-      endDate: null as Date | null,
+      endDate: null,
       isFeatured: false,
       isHighlighted: false,
       status: "active",
@@ -117,7 +128,7 @@ export default function AnnouncementForm({ announcementId, onClose }: Announceme
   
   // Create/Update announcement mutation
   const announcementMutation = useMutation({
-    mutationFn: async (formData: any) => {
+    mutationFn: async (formData: AnnouncementFormValues) => {
       if (announcementId) {
         // Update existing announcement
         return apiRequest('PUT', `/api/announcements/${announcementId}`, formData);
@@ -200,7 +211,7 @@ export default function AnnouncementForm({ announcementId, onClose }: Announceme
   };
   
   // Form submission
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: AnnouncementFormValues) => {
     // Format dates
     const formattedData = {
       ...data,
@@ -209,7 +220,7 @@ export default function AnnouncementForm({ announcementId, onClose }: Announceme
     };
     
     // Submit the form data
-    announcementMutation.mutate(formattedData);
+    announcementMutation.mutate(formattedData as any);
   };
   
   // Loading state when fetching announcement data
@@ -266,7 +277,7 @@ export default function AnnouncementForm({ announcementId, onClose }: Announceme
                 <FormLabel>Start Date*</FormLabel>
                 <DatePicker
                   date={field.value ? new Date(field.value) : undefined}
-                  setDate={(date) => field.onChange(date)}
+                  setDate={(date: Date | undefined) => field.onChange(date)}
                 />
                 <FormMessage />
               </FormItem>
@@ -281,7 +292,7 @@ export default function AnnouncementForm({ announcementId, onClose }: Announceme
                 <FormLabel>End Date (Optional)</FormLabel>
                 <DatePicker
                   date={field.value ? new Date(field.value) : undefined}
-                  setDate={(date) => field.onChange(date)}
+                  setDate={(date: Date | undefined) => field.onChange(date)}
                 />
                 <FormDescription>
                   Leave empty for indefinite announcements

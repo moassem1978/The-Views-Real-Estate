@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "../../lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -13,13 +19,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,53 +45,57 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { 
+  Edit, 
+  MoreVertical, 
+  Plus, 
+  Trash2, 
+  Check, 
+  X, 
+  Star, 
+  Calendar, 
+  MessageSquare,
+  Loader2
+} from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MoreHorizontal, Search, Edit, Star, Trash2, Plus, Calendar, Eye } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface AnnouncementsManagerProps {
-  onEditAnnouncement?: (announcementId: number) => void;
+  onAddClick: () => void;
+  onEditClick: (id: number) => void;
 }
 
-// Main component for managing announcements
-export default function AnnouncementsManager({ onEditAnnouncement }: AnnouncementsManagerProps) {
+export default function AnnouncementsManager({ onAddClick, onEditClick }: AnnouncementsManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // State variables
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [pageSize, setPageSize] = useState(10);
+  
+  // Delete confirmation state
+  const [deleteAnnouncementId, setDeleteAnnouncementId] = useState<number | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
-  // Fetch announcements with pagination and search
-  const { data, isLoading: isLoadingAnnouncements, error } = useQuery({
-    queryKey: ['/api/announcements', currentPage, searchQuery],
+  // Fetch announcements
+  const { 
+    data: announcementsData, 
+    isLoading: isLoadingAnnouncements,
+    isError 
+  } = useQuery({
+    queryKey: ['/api/announcements', currentPage, pageSize],
     queryFn: async () => {
-      let url = `/api/announcements?page=${currentPage}&pageSize=10`;
-      if (searchQuery) {
-        url += `&search=${encodeURIComponent(searchQuery)}`;
-      }
-      const response = await fetch(url);
+      const response = await fetch(`/api/announcements?page=${currentPage}&limit=${pageSize}`);
       if (!response.ok) {
         throw new Error('Failed to fetch announcements');
       }
@@ -83,72 +103,23 @@ export default function AnnouncementsManager({ onEditAnnouncement }: Announcemen
     },
   });
   
-  // Toggle featured status mutation
-  const toggleFeatureMutation = useMutation({
-    mutationFn: async (announcementId: number) => {
-      const announcement = data?.data.find((a: any) => a.id === announcementId);
-      if (!announcement) return;
-      
-      return apiRequest('PUT', `/api/announcements/${announcementId}`, {
-        ...announcement,
-        isFeatured: !announcement.isFeatured
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/announcements'] });
-      toast({
-        title: "Success",
-        description: "Announcement status updated",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update announcement",
-        variant: "destructive",
-      });
-    }
-  });
-  
-  // Toggle highlighted status mutation
-  const toggleHighlightMutation = useMutation({
-    mutationFn: async (announcementId: number) => {
-      const announcement = data?.data.find((a: any) => a.id === announcementId);
-      if (!announcement) return;
-      
-      return apiRequest('PUT', `/api/announcements/${announcementId}`, {
-        ...announcement,
-        isHighlighted: !announcement.isHighlighted
-      });
+  // Delete announcement mutation
+  const deleteAnnouncementMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/announcements/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/announcements'] });
       queryClient.invalidateQueries({ queryKey: ['/api/announcements/highlighted'] });
-      toast({
-        title: "Success",
-        description: "Announcement highlight status updated",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update announcement",
-        variant: "destructive",
-      });
-    }
-  });
-  
-  // Delete announcement mutation
-  const deleteAnnouncementMutation = useMutation({
-    mutationFn: async (announcementId: number) => {
-      return apiRequest('DELETE', `/api/announcements/${announcementId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/announcements/featured'] });
+      
       toast({
         title: "Success",
         description: "Announcement deleted successfully",
       });
+      
+      // Reset delete state
+      setDeleteAnnouncementId(null);
       setShowDeleteDialog(false);
     },
     onError: (error) => {
@@ -157,281 +128,358 @@ export default function AnnouncementsManager({ onEditAnnouncement }: Announcemen
         description: error instanceof Error ? error.message : "Failed to delete announcement",
         variant: "destructive",
       });
-      setShowDeleteDialog(false);
-    }
+    },
   });
   
-  // Handle search
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-  };
+  // Toggle highlight/feature mutation
+  const toggleAnnouncementFeatureMutation = useMutation({
+    mutationFn: async ({ id, field, value }: { id: number; field: string; value: boolean }) => {
+      return apiRequest('PATCH', `/api/announcements/${id}`, { [field]: value });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/announcements/highlighted'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/announcements/featured'] });
+      
+      toast({
+        title: "Success",
+        description: "Announcement updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update announcement",
+        variant: "destructive",
+      });
+    },
+  });
   
-  // Handle edit click
-  const handleEdit = (announcementId: number) => {
-    if (onEditAnnouncement) {
-      onEditAnnouncement(announcementId);
-    }
-  };
-  
-  // Initialize delete dialog
-  const handleDelete = (announcementId: number) => {
-    setDeleteId(announcementId);
-    setShowDeleteDialog(true);
-  };
-  
-  // Confirm and execute deletion
-  const confirmDelete = () => {
-    if (deleteId) {
-      deleteAnnouncementMutation.mutate(deleteId);
-    }
-  };
-  
-  // Handle page change
+  // Handlers
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
   
-  // View announcement details
-  const handleViewDetails = (announcementId: number) => {
-    window.open(`/announcements/${announcementId}`, '_blank');
+  const handleDeleteClick = (id: number) => {
+    setDeleteAnnouncementId(id);
+    setShowDeleteDialog(true);
   };
   
-  // Render loading state
-  if (isLoadingAnnouncements) {
-    return (
-      <div className="w-full py-8 flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const handleConfirmDelete = () => {
+    if (deleteAnnouncementId) {
+      deleteAnnouncementMutation.mutate(deleteAnnouncementId);
+    }
+  };
   
-  // Render error state
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        An error occurred while loading announcements. Please try again.
-      </div>
+  const handleToggleFeature = (id: number, featured: boolean) => {
+    toggleAnnouncementFeatureMutation.mutate({
+      id,
+      field: 'isFeatured',
+      value: !featured,
+    });
+  };
+  
+  const handleToggleHighlight = (id: number, highlighted: boolean) => {
+    toggleAnnouncementFeatureMutation.mutate({
+      id,
+      field: 'isHighlighted',
+      value: !highlighted,
+    });
+  };
+  
+  // Format date
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (e) {
+      return 'Invalid date';
+    }
+  };
+  
+  // Render pagination
+  const renderPagination = () => {
+    if (!announcementsData || !announcementsData.pageCount) return null;
+    
+    const pageCount = announcementsData.pageCount;
+    const pages = [];
+    
+    // Previous button
+    pages.push(
+      <PaginationItem key="prev">
+        <PaginationPrevious 
+          href="#" 
+          onClick={(e) => {
+            e.preventDefault();
+            if (currentPage > 1) handlePageChange(currentPage - 1);
+          }}
+          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+        />
+      </PaginationItem>
     );
-  }
+    
+    // Page numbers
+    for (let i = 1; i <= pageCount; i++) {
+      // Show first, last, and pages around current page
+      if (
+        i === 1 || 
+        i === pageCount || 
+        (i >= currentPage - 1 && i <= currentPage + 1)
+      ) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationLink 
+              href="#" 
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(i);
+              }}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      } else if (
+        (i === currentPage - 2 && currentPage > 3) || 
+        (i === currentPage + 2 && currentPage < pageCount - 2)
+      ) {
+        pages.push(
+          <PaginationItem key={`ellipsis-${i}`}>
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+    }
+    
+    // Next button
+    pages.push(
+      <PaginationItem key="next">
+        <PaginationNext 
+          href="#" 
+          onClick={(e) => {
+            e.preventDefault();
+            if (currentPage < pageCount) handlePageChange(currentPage + 1);
+          }}
+          className={currentPage === pageCount ? "pointer-events-none opacity-50" : ""}
+        />
+      </PaginationItem>
+    );
+    
+    return <PaginationContent>{pages}</PaginationContent>;
+  };
   
   return (
-    <div className="space-y-6">
-      {/* Search and filters */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
-          <div className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div>
+          <CardTitle>Announcements</CardTitle>
+          <CardDescription>
+            Manage site announcements and promotional content
+          </CardDescription>
+        </div>
+        <Button className="bg-[#B87333] hover:bg-[#964B00]" onClick={onAddClick}>
+          <Plus className="mr-2 h-4 w-4" /> Add Announcement
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {/* Filters and search */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Select 
+              value={pageSize.toString()} 
+              onValueChange={(value) => {
+                setPageSize(parseInt(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="10 per page" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 per page</SelectItem>
+                <SelectItem value="10">10 per page</SelectItem>
+                <SelectItem value="20">20 per page</SelectItem>
+                <SelectItem value="50">50 per page</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
             <Input
-              type="text"
               placeholder="Search announcements..."
-              className="pl-8 bg-white"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-[250px]"
+              // TODO: Implement search functionality
             />
           </div>
-          <Button 
-            type="submit" 
-            className="whitespace-nowrap bg-[#B87333] hover:bg-[#964B00]"
-          >
-            Search
-          </Button>
-        </form>
-      </div>
-      
-      {/* Announcements table */}
-      <div className="bg-white rounded-md shadow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40">
-              <TableHead>Title</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.data?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  No announcements found. Create your first announcement to get started.
-                </TableCell>
-              </TableRow>
-            ) : (
-              data?.data?.map((announcement: any) => (
-                <TableRow key={announcement.id}>
-                  <TableCell className="font-medium max-w-xs truncate">
-                    {announcement.title}
-                  </TableCell>
-                  <TableCell className="flex items-center">
-                    <Calendar className="mr-1 h-4 w-4 text-gray-500" />
-                    <span>{formatDate(announcement.createdAt)}</span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      {announcement.isFeatured && (
-                        <Badge className="bg-[#B87333]">Featured</Badge>
-                      )}
-                      {announcement.isHighlighted && (
-                        <Badge variant="outline" className="border-[#B87333] text-[#B87333]">
-                          Highlighted
-                        </Badge>
-                      )}
-                      {!announcement.isFeatured && !announcement.isHighlighted && (
-                        <Badge variant="outline">Standard</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-[180px]">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleViewDetails(announcement.id)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(announcement.id)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleFeatureMutation.mutate(announcement.id)}>
-                          <Star className={`mr-2 h-4 w-4 ${announcement.isFeatured ? "text-yellow-500 fill-yellow-500" : ""}`} />
-                          {announcement.isFeatured ? "Unfeature" : "Feature"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleHighlightMutation.mutate(announcement.id)}>
-                          <Star className={`mr-2 h-4 w-4 ${announcement.isHighlighted ? "text-blue-500 fill-blue-500" : ""}`} />
-                          {announcement.isHighlighted ? "Unhighlight" : "Highlight"}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => handleDelete(announcement.id)}
-                          className="text-red-600 hover:text-red-700 focus:text-red-700"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        </div>
+        
+        {/* Announcements Table */}
+        {isLoadingAnnouncements ? (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : isError ? (
+          <div className="text-center py-8 text-red-500">
+            Error loading announcements. Please try again.
+          </div>
+        ) : announcementsData?.data?.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No announcements found. Click "Add Announcement" to create one.
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[250px]">Title</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead className="text-center">Featured</TableHead>
+                  <TableHead className="text-center">Highlighted</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {announcementsData?.data?.map((announcement: any) => (
+                  <TableRow key={announcement.id}>
+                    <TableCell className="font-medium">
+                      {announcement.title}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={
+                          announcement.status === 'active' 
+                            ? 'default' 
+                            : announcement.status === 'draft'
+                            ? 'outline'
+                            : 'secondary'
+                        }
+                      >
+                        {announcement.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(announcement.startDate)}
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(announcement.endDate)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleToggleFeature(announcement.id, announcement.isFeatured)}
+                        title={announcement.isFeatured ? "Remove from featured" : "Add to featured"}
+                      >
+                        {announcement.isFeatured ? (
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        ) : (
+                          <Star className="h-4 w-4" />
+                        )}
+                        <span className="sr-only">
+                          {announcement.isFeatured ? "Featured" : "Not featured"}
+                        </span>
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleToggleHighlight(announcement.id, announcement.isHighlighted)}
+                        title={announcement.isHighlighted ? "Remove from highlighted" : "Add to highlighted"}
+                      >
+                        {announcement.isHighlighted ? (
+                          <Check className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <X className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span className="sr-only">
+                          {announcement.isHighlighted ? "Highlighted" : "Not highlighted"}
+                        </span>
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onEditClick(announcement.id)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteClick(announcement.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        
+        {/* Pagination */}
+        {announcementsData?.data?.length > 0 && (
+          <div className="mt-4">
+            <Pagination>
+              {renderPagination()}
+            </Pagination>
+            <div className="text-xs text-muted-foreground mt-2 text-center">
+              Showing {announcementsData?.data?.length} of {announcementsData?.totalCount} announcements
+            </div>
+          </div>
+        )}
+      </CardContent>
       
-      {/* Pagination */}
-      {data?.pageCount > 1 && (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage > 1) {
-                    handlePageChange(currentPage - 1);
-                  }
-                }}
-                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-              />
-            </PaginationItem>
-            
-            {Array.from({ length: Math.min(5, data.pageCount) }, (_, i) => {
-              let pageNum;
-              if (data.pageCount <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= data.pageCount - 2) {
-                pageNum = data.pageCount - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-              
-              return (
-                <PaginationItem key={pageNum}>
-                  <PaginationLink
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(pageNum);
-                    }}
-                    isActive={pageNum === currentPage}
-                  >
-                    {pageNum}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            })}
-            
-            {data.pageCount > 5 && currentPage < data.pageCount - 2 && (
-              <>
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(data.pageCount);
-                    }}
-                  >
-                    {data.pageCount}
-                  </PaginationLink>
-                </PaginationItem>
-              </>
-            )}
-            
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage < data.pageCount) {
-                    handlePageChange(currentPage + 1);
-                  }
-                }}
-                className={currentPage === data.pageCount ? "pointer-events-none opacity-50" : ""}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
-      
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete this announcement. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-red-600 text-white hover:bg-red-700"
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this announcement? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deleteAnnouncementMutation.isPending}
             >
               {deleteAnnouncementMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
               ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </>
               )}
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
