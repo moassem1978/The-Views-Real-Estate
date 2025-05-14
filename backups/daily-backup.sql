@@ -314,7 +314,8 @@ COPY public.projects (id, created_by, created_at, updated_at, project_name, desc
 
 COPY public.properties (id, title, description, address, city, state, zip_code, price, down_payment, installment_amount, installment_period, is_full_cash, listing_type, project_name, developer_name, bedrooms, bathrooms, built_up_area, plot_size, garden_size, floor, is_ground_unit, property_type, is_featured, is_new_listing, is_highlighted, year_built, views, amenities, images, latitude, longitude, created_at, agent_id, status, created_by, approved_by, updated_at, country, reference_number) FROM stdin;
 1	Stand-alone Villa for sale in Dyar	Standalone Villa -      Ground + 1st + Roof      - Semi Finished\n\nDyar compound is one of the top-notch residential compounds in New Cairo. It is brought to the real estate scene by ARCO developments. The compound is full of high-end amenities and services that make your life there a unique one. \n\nAlso, Dyar Compound enjoys a wide range of unique selling points, including its premium location in New Cairo City and the amenities it has to offer to its residents.\n	Dyar	Cairo	Cairo	11511	35000000	\N	\N	\N	t	Resale	Dyar	Arco	4	5	370	694	0	0	f	villa	t	t	t	\N	\N	[]	[]	\N	\N	2025-05-13T08:44:46.335Z	1	published	1	\N	\N	Egypt	
-2	Corner town house in Sodic East	Ground + 1st.  -   Shell & Core. \n\nSODIC East Compound is an elite project in New Heliopolis, developed for those not only looking for a luxurious home but also a one-of-a-kind community. It is a multi-generation destination, offering a tranquil and sustainable living experience in the heart of the city.\nSODIC East spreads across 665 acres of land in New Heliopolis, outlined by a unique master plan filled with exclusive facilities and fancy homes. SODIC made sure everything you need is near the comfort of your luxurious unit in the compound.\nThe comfortable lifestyle you will experience in SODIC East extends outwards as well, as the prime location of the compound grants you access to many popular destinations and easy commuting to anywhere you want to reach.\n	Sodic East	Cairo	Cairo	11511	30000000	1550000	\N	\N	f	Primary	Sodic East	Sodic	3	2	221	0	0	0	f	townhouse	t	t	t	\N	\N	[]	[]	\N	\N	2025-05-13T09:07:35.615Z	1	published	1	\N	\N	Egypt	
+2	Corner town house in Sodic East	Ground + 1st.  -   Shell & Core. \n\nSODIC East Compound is an elite project in New Heliopolis, developed for those not only looking for a luxurious home but also a one-of-a-kind community. It is a multi-generation destination, offering a tranquil and sustainable living experience in the heart of the city.\nSODIC East spreads across 665 acres of land in New Heliopolis, outlined by a unique master plan filled with exclusive facilities and fancy homes. SODIC made sure everything you need is near the comfort of your luxurious unit in the compound.\nThe comfortable lifestyle you will experience in SODIC East extends outwards as well, as the prime location of the compound grants you access to many popular destinations and easy commuting to anywhere you want to reach.\n	Sodic East	Cairo	Cairo	11511	30000000	1550000	\N	\N	f	Primary	Sodic East	Sodic	3	2	221	0	0	0	f	townhouse	t	t	t	\N	\N	[]	[]	\N	\N	2025-05-13T09:07:35.615Z	1	published	1	\N	\N	Egypt	REF-421524
+3	Duplex for sale in village gate	Village gate	Village gate	Cairo	Cairo	11511	17500000	0	0	0	f	Resale	Village gate	Palm hills	3	2	195	0	0	0	f	apartment	t	t	t	\N	\N	[]	[]	\N	\N	2025-05-13T20:19:51.886Z	1	published	1	\N	\N	Egypt	REF-740059
 \.
 
 
@@ -355,6 +356,7 @@ nAN9tMAGflHeRPO90DfHPeCmWHff2lN0	{"cookie":{"originalMaxAge":2592000000,"expires
 q-HLyejXFgASNSBamZi4OZvW65cr1JCE	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-22T18:39:42.103Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 06:11:17
 k7e8t-Un5r6F3aTHZJWzfxO8rRMW7JNc	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-23T18:29:11.249Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 18:29:18
 t_pFjWVr21Q2t5eamtoTabx-x9A4cI7E	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-22T17:18:48.781Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-22 18:39:08
+TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-28T04:09:07.338Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-28 04:09:08
 AhPiwXeInSvSCqWUjEF50pPf7xygismc	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-23T20:57:55.912Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 20:58:58
 wAw1hCyk6GHqN7dpRyuJ4m9gkWx95fRJ	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T11:22:50.423Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 16:12:48
 y3GzV1dFfAgJ7RAQhz5kVkZY67NhR7U6	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-30T20:02:23.221Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-31 09:35:47
@@ -368,9 +370,8 @@ K0Y7Iabhe6KCH1AesTXMBUEXlvn8Qf6Y	{"cookie":{"originalMaxAge":2592000000,"expires
 jmPl_FaVRnuEFBpd20jSKFOkSskNRG-8	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T09:30:35.349Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 11:16:35
 tt_QJi4v87u_WwkRDWeI7hqeNx168L9k	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-08T11:52:22.893Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-08 12:08:04
 YrmaV_5ScaP_Q6ljmxpEDHsftaaXRjdr	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-09T09:44:22.511Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-09 09:44:23
+uY1tNQ2x2CZojFzMHXmLbFHLbFmWqh4r	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-27T20:22:23.368Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-27 20:22:24
 TnSxEF8M9HHiol1S2Fsl2rVLmU-fp4Mh	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T12:59:19.606Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 12:59:20
-uY1tNQ2x2CZojFzMHXmLbFHLbFmWqh4r	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-27T09:08:16.316Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-27 09:08:17
-TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-27T20:14:12.275Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-27 20:14:13
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
 \.
 
@@ -388,8 +389,8 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
-1	owner	496c3561ce1613e41faa3e964050342e632a9ffb0e07716953ee7a37636ba1665b51add5bc18a06a20b0802657a986da6bcedd4506de372e62c7dcbfeb016fbf.a152928fc5c6c1e712a866df1a5558ac	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
+1	owner	ebc3b9d4175b30897a8d4514181204e61ce07210eab4a40c0cc93eaa386113687a126ed45e6357363e55edc7369379fbc096fadf3284af22c8bf7a67908c568c.cedde528f2458634f922bcbab4745bfe	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 \.
 
 
@@ -411,7 +412,7 @@ SELECT pg_catalog.setval('public.projects_id_seq', 3, true);
 -- Name: properties_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.properties_id_seq', 2, true);
+SELECT pg_catalog.setval('public.properties_id_seq', 3, true);
 
 
 --
