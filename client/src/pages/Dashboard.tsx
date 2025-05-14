@@ -452,6 +452,39 @@ function Dashboard() {
             </div>
           </DialogContent>
         </Dialog>
+        
+        {/* Announcement Form Modal */}
+        <Dialog 
+          open={showAnnouncementModal} 
+          onOpenChange={(open) => {
+            // Only allow closing if explicitly requested via button click
+            if (!open && confirm("Are you sure you want to close the form? Any unsaved changes will be lost.")) {
+              setShowAnnouncementModal(false);
+            }
+          }}
+        >
+          <DialogContent 
+            className="max-w-4xl h-[80vh] flex flex-col" 
+            onEscapeKeyDown={(e) => {
+              // Prevent closing with Escape key
+              e.preventDefault();
+            }}
+            onPointerDownOutside={(e) => {
+              // Prevent closing when clicking outside
+              e.preventDefault();
+            }}
+          >
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle>{selectedAnnouncementId ? "Edit Announcement" : "Add New Announcement"}</DialogTitle>
+            </DialogHeader>
+            <div className="flex-grow overflow-y-auto pr-2 -mr-2">
+              <AnnouncementForm 
+                announcementId={selectedAnnouncementId}
+                onClose={handleAnnouncementFormClose}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
