@@ -26,6 +26,8 @@ import { useQuery } from "@tanstack/react-query";
 // Dashboard components
 import PropertiesManager from "@/components/dashboard/PropertiesManager";
 import PropertyForm from "@/components/dashboard/PropertyFormNew";
+import AnnouncementsManager from "@/components/dashboard/AnnouncementsManager";
+import AnnouncementForm from "@/components/dashboard/AnnouncementForm";
 
 // Stat card component for dashboard
 interface DashboardStatCardProps {
@@ -74,8 +76,14 @@ function Dashboard() {
   
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Property management state
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | undefined>(undefined);
+  
+  // Announcement management state
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<number | undefined>(undefined);
   
   // Fetch stats for the dashboard
   const { data: propertyStats } = useQuery({
@@ -119,6 +127,17 @@ function Dashboard() {
   const handlePropertyFormClose = () => {
     setShowPropertyModal(false);
     setSelectedPropertyId(undefined);
+  };
+  
+  // Announcement form handlers
+  const handleAnnouncementEdit = (announcementId: number) => {
+    setSelectedAnnouncementId(announcementId);
+    setShowAnnouncementModal(true);
+  };
+  
+  const handleAnnouncementFormClose = () => {
+    setShowAnnouncementModal(false);
+    setSelectedAnnouncementId(undefined);
   };
   
   // Define sections based on role permissions
@@ -321,15 +340,28 @@ function Dashboard() {
           <TabsContent value="announcements" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Announcements Management</CardTitle>
+                <CardTitle className="flex justify-between items-center">
+                  <div className="flex items-center">
+                    <FileText className="mr-2 h-5 w-5 text-muted-foreground" />
+                    <span>Announcements Management</span>
+                  </div>
+                  <Button 
+                    className="bg-[#B87333] hover:bg-[#964B00]"
+                    onClick={() => {
+                      setSelectedAnnouncementId(undefined);
+                      setShowAnnouncementModal(true);
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Announcement
+                  </Button>
+                </CardTitle>
                 <CardDescription>
                   Create and manage announcements for the website.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="p-8 text-center">
-                  <p className="text-muted-foreground mb-4">Announcement management interface coming soon...</p>
-                </div>
+                <AnnouncementsManager onEditAnnouncement={handleAnnouncementEdit} />
               </CardContent>
             </Card>
           </TabsContent>
