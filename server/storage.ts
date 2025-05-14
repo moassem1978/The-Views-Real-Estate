@@ -1762,8 +1762,6 @@ export class DatabaseStorage implements IStorage {
                     break;
                   }
                 }
-```python
-                }
               }
             }
 
