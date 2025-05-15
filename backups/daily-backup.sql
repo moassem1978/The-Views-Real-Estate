@@ -385,7 +385,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
-1	owner	8ddc5843979e96489e152b48268ec2a2c90fe590e9b4ae027ba1df6b2e98dd9aee20f02084f1c79ae9a3e6a6054351488644bcc75c03983281835945eaf72224.867ab831ed85619b1f71c4edad735ea6	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
+1	owner	4d67c316302bf2ea7c5821e0d134d9a7de017cd57f72882146cf126b7d50f44b0f268a525d14d6b9f55b0d9dbbe1edd5778f66f052f939534e0098eb29f5f95e.51fcc8c6f15c58d76daf95a8cf9c3ca0	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
 \.
 

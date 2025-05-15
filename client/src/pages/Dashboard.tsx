@@ -28,6 +28,7 @@ import PropertiesManager from "@/components/dashboard/PropertiesManager";
 import PropertyForm from "@/components/dashboard/PropertyFormNew";
 import AnnouncementsManager from "@/components/dashboard/AnnouncementsManager";
 import AnnouncementForm from "@/components/dashboard/AnnouncementForm";
+import SiteSettingsForm from "@/components/dashboard/SiteSettingsForm";
 
 // Stat card component for dashboard
 interface DashboardStatCardProps {
@@ -404,15 +405,16 @@ function Dashboard() {
           <TabsContent value="settings" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Site Settings</CardTitle>
+                <CardTitle className="flex items-center">
+                  <Settings className="mr-2 h-5 w-5 text-[#B87333]" />
+                  <span>Site Settings</span>
+                </CardTitle>
                 <CardDescription>
                   Configure global settings for the website.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="p-8 text-center">
-                  <p className="text-muted-foreground mb-4">Settings interface coming soon...</p>
-                </div>
+                <SiteSettingsForm />
               </CardContent>
             </Card>
           </TabsContent>
