@@ -198,7 +198,7 @@ function Router() {
   );
 }
 
-function ErrorFallback({error, resetErrorBoundary}) {
+function ErrorFallback({error, resetErrorBoundary}: {error: Error; resetErrorBoundary: () => void}) {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="p-6 bg-white rounded shadow-lg">
