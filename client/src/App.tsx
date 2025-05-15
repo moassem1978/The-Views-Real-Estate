@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { clearImageCache } from "./lib/utils";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
+import { ErrorBoundary } from "react-error-boundary";
 
 // Streamlined loading fallback
 const LoadingFallback = () => (
