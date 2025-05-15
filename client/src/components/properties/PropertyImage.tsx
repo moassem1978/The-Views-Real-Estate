@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, normalizeImagePath, getFirstImageSafely } from "@/lib/utils";
 
 interface PropertyImageProps {
   src?: string | string[] | any; // Support different image source formats
@@ -30,7 +30,7 @@ export default function PropertyImage({
   const [isLoaded, setIsLoaded] = useState(false);
   const [formattedSrc, setFormattedSrc] = useState('');
 
-  // Enhanced image path processing
+  // Enhanced image path processing with our utility functions
   useEffect(() => {
     // For fast loading, start with hiding the image
     setIsLoaded(false);
@@ -43,138 +43,39 @@ export default function PropertyImage({
       return;
     }
 
-    // Handle array type directly (from proper DB deserialization)
-    if (Array.isArray(src)) {
-      if (src.length > 0) {
-        const firstItem = src[0];
-        console.log('PropertyImage: Using first item from array source -', firstItem);
-        processImagePath(firstItem);
-      } else {
-        console.log('PropertyImage: Empty array source');
-        setFormattedSrc('/placeholder-property.svg');
-        setIsLoaded(true);
-      }
+    // Use our utility function to extract the first image path
+    const firstImagePath = getFirstImageSafely(src);
+    console.log('PropertyImage: First image path -', firstImagePath);
+    
+    // Skip processing if it's already the placeholder
+    if (firstImagePath === '/placeholder-property.svg') {
+      setFormattedSrc('/placeholder-property.svg');
+      setIsLoaded(true);
       return;
     }
-
-    // Special case: If the source is JSON or looks like a JSON array, try to extract a usable path
-    if (typeof src === 'string' && (src.startsWith('[') || src.startsWith('"['))) {
-      console.log('PropertyImage: Source appears to be JSON format -', src);
-      try {
-        // Remove any outer quotes that might surround JSON
-        const cleanJson = src.replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
-
-        // Parse the JSON
-        const parsed = JSON.parse(cleanJson);
-
-        // If it's an array, use the first item
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const firstItem = parsed[0];
-          console.log('PropertyImage: Extracted first item from JSON array -', firstItem);
-
-          // Recursively process this item instead
-          if (firstItem && typeof firstItem === 'string') {
-            // Set source to the first item and continue processing
-            const singleImage = String(firstItem).trim();
-            console.log('PropertyImage: Using first image from array -', singleImage);
-
-            // Now process this single image using the rest of the logic
-            if (singleImage) {
-              // Continue with the single image path instead
-              processImagePath(singleImage);
-              return;
-            }
-          }
-        }
-      } catch (e) {
-        console.log('PropertyImage: Failed to parse JSON source -', e);
-        // Continue with normal processing if JSON parsing fails
-      }
-    }
-
-    // Process the image path
-    processImagePath(src);
-  }, [src]);
-
-  // Extracted the image processing logic to a separate function for clarity and reuse
-  const processImagePath = (imageSrc: string | any) => {
-    // Ensure we're working with a string
-    const srcString = typeof imageSrc === 'string' ? imageSrc : String(imageSrc);
-
-    // Remove any extra quotes that might be from JSON serialization
-    // and normalize path separators (including escape sequences)
-    let cleanSrc = srcString.replace(/"/g, '').replace(/\\"/g, '').replace(/\\\\/g, '\\').replace(/\\/g, '/').trim();
     
-    // Remove escaped slashes that cause issues (\/)
-    cleanSrc = cleanSrc.replace(/\\\//g, '/');
-
-    console.log('PropertyImage: Processing source -', cleanSrc);
-
     // Check if this image is already known to fail
-    if (knownFailedImages.has(cleanSrc)) {
-      console.log('PropertyImage: Using placeholder for known failed image -', cleanSrc);
+    if (knownFailedImages.has(firstImagePath)) {
+      console.log('PropertyImage: Using placeholder for known failed image -', firstImagePath);
       setFormattedSrc('/placeholder-property.svg');
       setIsLoaded(true);
       return;
     }
 
-    // Known placeholders - use directly without modifications
-    if (cleanSrc === '/placeholder-property.svg' || 
-        cleanSrc.includes('placeholder-property.svg') ||
-        cleanSrc === '/uploads/default-property.svg') {
-      console.log('PropertyImage: Using direct placeholder path -', cleanSrc);
-      setFormattedSrc(cleanSrc);
-      setIsLoaded(true);
-      return;
-    }
-
-    // Special case: if it looks like a hash but doesn't have a proper path,
-    // use the pattern the server recognizes for hash lookups
-    if (hashPattern.test(cleanSrc) && !cleanSrc.includes('/')) {
-      console.log('PropertyImage: Hash pattern detected, using properties path -', cleanSrc);
-      const hashPath = `/properties/${cleanSrc}`;
-      setFormattedSrc(hashPath);
-      return;
-    }
-
-    // Add initial forward slash if missing for relative paths
-    let normalizedSrc = cleanSrc;
-    if (!normalizedSrc.startsWith('/') && !normalizedSrc.startsWith('http')) {
-      normalizedSrc = `/${normalizedSrc}`;
-      console.log('PropertyImage: Added leading slash -', normalizedSrc);
-    }
-
-    // Handle common path issues
-
-    // Case 1: Path includes "uploads/properties" but needs a leading slash
-    if (normalizedSrc.includes('uploads/properties') && !normalizedSrc.includes('/uploads/properties')) {
-      normalizedSrc = normalizedSrc.replace('uploads/properties', '/uploads/properties');
-      console.log('PropertyImage: Fixed uploads path format -', normalizedSrc);
-    }
-
-    // Case 2: Fix double slashes (but not in http://)
-    if (normalizedSrc.includes('//') && !normalizedSrc.includes('http')) {
-      normalizedSrc = normalizedSrc.replace(/\/\//g, '/');
-      console.log('PropertyImage: Fixed double slashes -', normalizedSrc);
-    }
+    // Clean and normalize the image path
+    const normalizedPath = normalizeImagePath(firstImagePath);
+    console.log('PropertyImage: Normalized path -', normalizedPath);
     
-    // Case 3: Handle specific format from our database
-    if (normalizedSrc.includes('/uploads/properties/') && !normalizedSrc.startsWith('/uploads/properties/')) {
-      // Extract the filename after /uploads/properties/
-      const match = normalizedSrc.match(/\/uploads\/properties\/([^?]+)/);
-      if (match && match[1]) {
-        normalizedSrc = `/uploads/properties/${match[1]}`;
-        console.log('PropertyImage: Extracted clean path -', normalizedSrc);
-      }
-    }
-
-    // Add cache busting parameter to ensure fresh images
-    const timestamp = new Date().getTime();
-    const finalPath = `${normalizedSrc}?t=${timestamp}`;
+    // Add cache busting parameter
+    const timestamp = Date.now();
+    const finalPath = `${normalizedPath}?t=${timestamp}`;
     console.log('PropertyImage: Final path -', finalPath);
-
+    
     setFormattedSrc(finalPath);
-  };
+  }, [src]);
+
+  // We're now using the utility functions from @/lib/utils
+  // No need for a separate processImagePath function
 
   const handleLoad = () => {
     setIsLoaded(true);

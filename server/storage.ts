@@ -455,6 +455,10 @@ export class DatabaseStorage implements IStorage {
       }
       dbProperty.images = imagesArray;
       
+      // Add created_at field with current date
+      const currentDate = new Date().toISOString();
+      dbProperty.created_at = currentDate;
+      
       // Insert the property into the database
       const insertQuery = `
         INSERT INTO properties (
@@ -465,11 +469,11 @@ export class DatabaseStorage implements IStorage {
           plot_size, garden_size, floor, is_ground_unit, views, 
           country, year_built, created_by, agent_id, zip_code, 
           state, status, reference_number, latitude, longitude, 
-          amenities, images
+          amenities, images, created_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 
           $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, 
-          $30, $31, $32, $33, $34, $35, $36
+          $30, $31, $32, $33, $34, $35, $36, $37
         ) RETURNING *
       `;
       
@@ -483,7 +487,7 @@ export class DatabaseStorage implements IStorage {
         dbProperty.floor, dbProperty.is_ground_unit, dbProperty.views, dbProperty.country, 
         dbProperty.year_built, dbProperty.created_by, dbProperty.agent_id, dbProperty.zip_code, 
         dbProperty.state, dbProperty.status, dbProperty.reference_number, 
-        dbProperty.latitude, dbProperty.longitude, dbProperty.amenities, dbProperty.images
+        dbProperty.latitude, dbProperty.longitude, dbProperty.amenities, dbProperty.images, dbProperty.created_at
       ];
       
       const result = await pool.query(insertQuery, values);

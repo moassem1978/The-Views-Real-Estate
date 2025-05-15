@@ -14,28 +14,50 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // Handle different image formats
-    let imageSource = '/placeholder-property.svg';
-
-    if (property.images) {
-      if (Array.isArray(property.images) && property.images.length > 0) {
-        imageSource = property.images[0];
-      } else if (typeof property.images === 'string') {
-        try {
-          const parsed = JSON.parse(property.images);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            imageSource = parsed[0];
-          }
-        } catch {
-          // Use single string as image path if not JSON
-          imageSource = property.images;
-        }
+    console.log(`PropertyCard: Initializing for property #${property.id}`);
+    console.log(`PropertyCard: Raw images data:`, property.images);
+    
+    // Use our utility function to safely parse the images array
+    const images = parseJsonArray(property.images);
+    console.log(`PropertyCard: Parsed images:`, images);
+    
+    // Set image source with fallback
+    if (images.length > 0) {
+      // Process image path to handle escaping and formatting issues
+      let imagePath = images[0];
+      
+      // Remove any escaping and normalize slashes
+      imagePath = imagePath
+        .replace(/"/g, '')
+        .replace(/\\"/g, '')
+        .replace(/\\\\/g, '\\')
+        .replace(/\\/g, '/')
+        .replace(/\\\//g, '/')
+        .trim();
+      
+      // Add leading slash if missing
+      if (!imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+        imagePath = `/${imagePath}`;
       }
+      
+      // Fix path format issues
+      if (imagePath.includes('uploads/properties') && !imagePath.includes('/uploads/properties')) {
+        imagePath = imagePath.replace('uploads/properties', '/uploads/properties');
+      }
+      
+      // Add timestamp to avoid caching issues
+      const timestamp = Date.now();
+      const finalPath = `${imagePath}?t=${timestamp}`;
+      
+      console.log(`PropertyCard: Setting image path to:`, finalPath);
+      setMainImage(finalPath);
+    } else {
+      // Fallback to placeholder
+      console.log(`PropertyCard: No images found, using placeholder`);
+      setMainImage('/placeholder-property.svg');
     }
-
-    setMainImage(imageSource);
+    
     setImageError(false);
-
   }, [property]);
 
   const handleImageError = () => {
