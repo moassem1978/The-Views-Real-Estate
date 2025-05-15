@@ -355,6 +355,23 @@ export function getImageUrl(path: string | undefined): string {
   if (path === '/placeholder-property.svg') return path;
   if (path.startsWith('http')) return path;
   
+  // Handle logo image paths
+  if (path.includes('/logos/')) {
+    // Logo paths should be more carefully handled to ensure consistency
+    let normalizedLogoPath = path.replace(/\\/g, '/').replace(/"/g, '');
+    
+    // Ensure logo path starts with proper format
+    if (!normalizedLogoPath.startsWith('/')) {
+      normalizedLogoPath = `/${normalizedLogoPath}`;
+    }
+    
+    // Fix double slashes in path
+    normalizedLogoPath = normalizedLogoPath.replace(/\/\//g, '/');
+    
+    // Add a timestamp cache-buster for logos too
+    return `${normalizedLogoPath}?t=${Date.now()}`;
+  }
+  
   // Note: We removed the hash-pattern check here since we now have a robust server-side
   // image matcher that can handle these Windows-uploaded images correctly
   
