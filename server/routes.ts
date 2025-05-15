@@ -800,103 +800,68 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       console.log("Final reference value:", finalReferenceValue);
       
-      // CRITICAL FIX: Handle images properly - FIXED VERSION
+      // IMPROVED CRITICAL FIX: Simplified image handling that's reliable
       if (req.body.images) {
         console.log("IMAGE FIELD FIX: Processing image data");
-        console.log("Raw image data from request:", req.body.images);
         
-        // Ensure images is an array
         if (Array.isArray(req.body.images)) {
-          // Make sure all array entries are strings
+          // Direct array - most reliable case
           updateData.images = req.body.images.map(img => String(img)).filter(Boolean);
           console.log(`Using ${updateData.images.length} images from request array`);
         } else if (typeof req.body.images === 'string') {
-          // Handle different types of string formats for images
-          
-          // Case 1: Empty string - keep existing images
-          if (!req.body.images.trim()) {
-            console.log("Empty images string, preserving existing images");
-            if (existingProperty.images && Array.isArray(existingProperty.images)) {
-              updateData.images = existingProperty.images;
-            } else {
-              updateData.images = [];
-            }
-          } 
-          // Case 2: JSON string
-          else if (req.body.images.includes('[') || req.body.images.includes('{') || 
-                  req.body.images.includes('"') || req.body.images.includes("'")) {
-            try {
-              // Try to parse JSON string with extra handling for escaped quotes
-              let cleanJson = req.body.images;
-              
-              // Remove outer quotes if present
-              if ((cleanJson.startsWith('"') && cleanJson.endsWith('"')) || 
-                  (cleanJson.startsWith("'") && cleanJson.endsWith("'"))) {
-                cleanJson = cleanJson.substring(1, cleanJson.length - 1);
-              }
-              
-              // Replace escaped quotes with real quotes
-              cleanJson = cleanJson.replace(/\\"/g, '"').replace(/\\'/g, "'");
-              
-              console.log("Cleaned JSON for parsing:", cleanJson);
-              const parsedImages = JSON.parse(cleanJson);
-              
+          try {
+            // Try to parse as JSON if it looks like JSON
+            if (req.body.images.trim().startsWith('[')) {
+              const parsedImages = JSON.parse(req.body.images);
               if (Array.isArray(parsedImages)) {
                 updateData.images = parsedImages.map(img => String(img)).filter(Boolean);
                 console.log(`Parsed ${updateData.images.length} images from JSON string`);
-              } else if (parsedImages && typeof parsedImages === 'object') {
-                // Handle object format by taking values
-                updateData.images = Object.values(parsedImages).map(img => String(img)).filter(Boolean);
-                console.log(`Extracted ${updateData.images.length} images from JSON object`);
               } else {
-                // Single value
-                updateData.images = [String(parsedImages)].filter(Boolean);
-                console.log(`Created single-item array from parsed JSON value`);
+                // Fallback for non-array JSON
+                updateData.images = [req.body.images];
+                console.log("Using string as single image path");
               }
-            } catch (e) {
-              console.error("JSON parsing failed:", e);
-              console.error("Failed JSON string:", req.body.images);
-              
-              // If parsing fails, try to split by commas
-              if (req.body.images.includes(',')) {
-                updateData.images = req.body.images.split(',')
-                  .map(img => img.trim())
-                  .filter(Boolean);
-                console.log(`Split string into ${updateData.images.length} images by comma`);
-              } else {
-                // Use it as a single image path
-                updateData.images = [req.body.images.trim()].filter(Boolean);
-                console.log(`Using single image path: ${updateData.images[0]}`);
-              }
+            } else if (req.body.images.includes(',')) {
+              // Comma-separated list
+              updateData.images = req.body.images.split(',')
+                .map(img => img.trim())
+                .filter(Boolean);
+              console.log(`Split string into ${updateData.images.length} images by comma`);
+            } else if (!req.body.images.trim()) {
+              // Empty string - keep existing
+              updateData.images = existingProperty.images || [];
+              console.log("Empty string, keeping existing images");
+            } else {
+              // Single image path
+              updateData.images = [req.body.images.trim()];
+              console.log(`Using as single image path: ${updateData.images[0]}`);
+            }
+          } catch (e) {
+            console.error("Error processing images:", e);
+            // If parsing fails, use as simple string or preserve existing
+            if (req.body.images.trim()) {
+              updateData.images = [req.body.images.trim()];
+              console.log("Using as single image after parsing failure");
+            } else {
+              updateData.images = existingProperty.images || [];
+              console.log("Keeping existing images after parsing failure");
             }
           }
-          // Case 3: Simple comma-separated list
-          else if (req.body.images.includes(',')) {
-            updateData.images = req.body.images.split(',')
-              .map(img => img.trim())
-              .filter(Boolean);
-            console.log(`Split string into ${updateData.images.length} images by comma`);
-          } 
-          // Case 4: Single image path
-          else {
-            updateData.images = [req.body.images.trim()].filter(Boolean);
-            console.log(`Using single image path: ${updateData.images[0]}`);
-          }
         } else {
-          // Unknown format, preserve existing images
-          console.log(`Unknown image format, preserving existing ${existingProperty.images?.length || 0} images`);
+          // Unknown format, preserve existing
+          console.log("Unknown image format, preserving existing images");
           updateData.images = existingProperty.images || [];
         }
       } else {
-        // No images in the update, preserve existing ones
-        console.log(`No images in update, preserving existing ${existingProperty.images?.length || 0} images`);
+        // No images in request, preserve existing
         updateData.images = existingProperty.images || [];
+        console.log("No images in request, preserving existing images");
       }
       
-      // Ensure the images array is valid
+      // Ensure we have a valid array
       if (!Array.isArray(updateData.images)) {
-        console.log("Converting images to array as final validation");
-        updateData.images = updateData.images ? [updateData.images] : [];
+        updateData.images = [];
+        console.log("Fixed non-array images value to empty array");
       }
       
       // Debugging - print final reference field values and image count
