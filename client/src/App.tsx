@@ -197,9 +197,25 @@ function Router() {
   );
 }
 
+function ErrorFallback({error, resetErrorBoundary}) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="p-6 bg-white rounded shadow-lg">
+        <h2 className="text-xl font-bold text-red-600 mb-4">Something went wrong</h2>
+        <pre className="text-sm bg-gray-100 p-4 rounded mb-4">{error.message}</pre>
+        <button
+          onClick={resetErrorBoundary}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   useEffect(() => {
-    // Add an overflow-auto class to the html and body elements for better scrolling
     document.documentElement.classList.add('overflow-auto');
     document.body.classList.add('overflow-auto', 'min-h-screen');
     
@@ -211,12 +227,16 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <div className="min-h-screen flex flex-col">
-          <Router />
-          <Toaster />
-        </div>
-      </AuthProvider>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <AuthProvider>
+          <div className="min-h-screen flex flex-col">
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading...</div>}>
+              <Router />
+            </Suspense>
+            <Toaster />
+          </div>
+        </AuthProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }
