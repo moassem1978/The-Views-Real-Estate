@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getImageUrl } from "@/lib/utils";
 
 interface PropertyImageProps {
-  src?: string;
+  src?: string | string[] | any; // Support different image source formats
   alt: string;
   priority?: boolean;
   className?: string;
@@ -40,6 +40,20 @@ export default function PropertyImage({
       console.log('PropertyImage: Invalid source -', src);
       setFormattedSrc('/placeholder-property.svg');
       setIsLoaded(true); // Assume placeholder is always available
+      return;
+    }
+
+    // Handle array type directly (from proper DB deserialization)
+    if (Array.isArray(src)) {
+      if (src.length > 0) {
+        const firstItem = src[0];
+        console.log('PropertyImage: Using first item from array source -', firstItem);
+        processImagePath(firstItem);
+      } else {
+        console.log('PropertyImage: Empty array source');
+        setFormattedSrc('/placeholder-property.svg');
+        setIsLoaded(true);
+      }
       return;
     }
 
@@ -88,8 +102,11 @@ export default function PropertyImage({
     const srcString = typeof imageSrc === 'string' ? imageSrc : String(imageSrc);
 
     // Remove any extra quotes that might be from JSON serialization
-    // and normalize path separators
-    const cleanSrc = srcString.replace(/"/g, '').replace(/\\/g, '/').trim();
+    // and normalize path separators (including escape sequences)
+    let cleanSrc = srcString.replace(/"/g, '').replace(/\\"/g, '').replace(/\\\\/g, '\\').replace(/\\/g, '/').trim();
+    
+    // Remove escaped slashes that cause issues (\/)
+    cleanSrc = cleanSrc.replace(/\\\//g, '/');
 
     console.log('PropertyImage: Processing source -', cleanSrc);
 
@@ -139,6 +156,16 @@ export default function PropertyImage({
     if (normalizedSrc.includes('//') && !normalizedSrc.includes('http')) {
       normalizedSrc = normalizedSrc.replace(/\/\//g, '/');
       console.log('PropertyImage: Fixed double slashes -', normalizedSrc);
+    }
+    
+    // Case 3: Handle specific format from our database
+    if (normalizedSrc.includes('/uploads/properties/') && !normalizedSrc.startsWith('/uploads/properties/')) {
+      // Extract the filename after /uploads/properties/
+      const match = normalizedSrc.match(/\/uploads\/properties\/([^?]+)/);
+      if (match && match[1]) {
+        normalizedSrc = `/uploads/properties/${match[1]}`;
+        console.log('PropertyImage: Extracted clean path -', normalizedSrc);
+      }
     }
 
     // Add cache busting parameter to ensure fresh images

@@ -32,6 +32,84 @@ export function formatPrice(price: number, maximumFractionDigits = 0): string {
 }
 
 /**
+ * Safely extracts the first image from an image source that could be in various formats
+ * @param imageSource - Source that could be array, JSON string, or single path
+ * @returns First image path or placeholder
+ */
+export function getFirstImageSafely(imageSource: any): string {
+  if (!imageSource) {
+    return '/placeholder-property.svg';
+  }
+  
+  // Already an array
+  if (Array.isArray(imageSource)) {
+    return imageSource.length > 0 ? String(imageSource[0]) : '/placeholder-property.svg';
+  }
+  
+  // JSON string
+  if (typeof imageSource === 'string') {
+    if (imageSource.startsWith('[') || imageSource.startsWith('"[')) {
+      try {
+        const cleanJson = imageSource
+          .replace(/^"/, '')
+          .replace(/"$/, '')
+          .replace(/\\"/g, '"');
+        
+        const parsed = JSON.parse(cleanJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return String(parsed[0]);
+        }
+      } catch {
+        // If parsing fails, just return the string if it looks like a path
+        if (imageSource.includes('/')) {
+          return imageSource;
+        }
+      }
+    } else if (imageSource.includes('/')) {
+      // Probably a direct path
+      return imageSource;
+    }
+  }
+  
+  return '/placeholder-property.svg';
+}
+
+/**
+ * Normalizes an image path by removing quotes and fixing common issues
+ * @param path - The image path to normalize
+ * @returns Cleaned image path
+ */
+export function normalizeImagePath(path: string): string {
+  if (!path) return '/placeholder-property.svg';
+  
+  // Clean up common issues
+  let cleanPath = path
+    .replace(/"/g, '')
+    .replace(/\\"/g, '')
+    .replace(/\\\\/g, '\\')
+    .replace(/\\/g, '/')
+    .replace(/\\\//g, '/')
+    .trim();
+    
+  // Add leading slash if needed
+  if (!cleanPath.startsWith('/') && !cleanPath.startsWith('http')) {
+    cleanPath = `/${cleanPath}`;
+  }
+  
+  // Fix path format issues
+  if (cleanPath.includes('uploads/properties') && !cleanPath.includes('/uploads/properties')) {
+    cleanPath = cleanPath.replace('uploads/properties', '/uploads/properties');
+  }
+  
+  // Fix double slashes
+  if (cleanPath.includes('//') && !cleanPath.includes('http')) {
+    cleanPath = cleanPath.replace(/\/\//g, '/');
+  }
+  
+  return cleanPath;
+}
+
+/**
  * Attempts to parse a JSON string to an array.
  * If the input is already an array, it returns it as is.
  * @param jsonString - The JSON string to parse or an array

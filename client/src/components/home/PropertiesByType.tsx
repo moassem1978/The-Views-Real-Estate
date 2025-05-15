@@ -45,9 +45,43 @@ const PropertyCard = memo(({ property }: { property: Property }) => {
     return prop[camelKey] !== undefined ? prop[camelKey] : prop[snakeKey];
   };
 
-  // Fix the potentially undefined images array
-  const images = property.images || [];
-  const firstImage = images.length > 0 ? (typeof images[0] === 'string' ? images[0] : '') : '/placeholder-property.svg';
+  // Enhanced image array handling for all possible data formats
+  let images = [];
+  
+  // Handle different possible image formats from backend
+  if (property.images) {
+    // Case 1: Already an array
+    if (Array.isArray(property.images)) {
+      images = property.images;
+    } 
+    // Case 2: JSON string representation of an array
+    else if (typeof property.images === 'string' && 
+            (property.images.startsWith('[') || property.images.startsWith('"['))) {
+      try {
+        // Clean up the string for parsing
+        const cleanJson = property.images
+          .replace(/^"/, '')
+          .replace(/"$/, '')
+          .replace(/\\"/g, '"');
+        
+        const parsed = JSON.parse(cleanJson);
+        if (Array.isArray(parsed)) {
+          images = parsed;
+        }
+      } catch (e) {
+        console.error('Failed to parse images JSON:', property.images);
+        images = [];
+      }
+    }
+    // Case 3: Single image path as string
+    else if (typeof property.images === 'string' && property.images.trim() !== '') {
+      images = [property.images];
+    }
+  }
+  
+  const firstImage = images.length > 0 ? 
+    (typeof images[0] === 'string' ? images[0] : '') : 
+    '/placeholder-property.svg';
   const isNewListing = getPropertyValue(property, 'isNewListing', 'is_new_listing');
   const listingType = getPropertyValue(property, 'listingType', 'listing_type');
   const propertyType = getPropertyValue(property, 'propertyType', 'property_type');
@@ -197,8 +231,13 @@ export default function PropertiesByType() {
         return listingType === "Primary" && isFeatured === true;
       })
       .sort((a: Property, b: Property) => {
-        const aDate = new Date(a.createdAt || a.created_at);
-        const bDate = new Date(b.createdAt || b.created_at);
+        // Safe date parsing with defaults
+        const aCreatedAt = a.createdAt || a.created_at || '';
+        const bCreatedAt = b.createdAt || b.created_at || '';
+        
+        const aDate = aCreatedAt ? new Date(aCreatedAt) : new Date(0);
+        const bDate = bCreatedAt ? new Date(bCreatedAt) : new Date(0);
+        
         // Sort by newest first
         return bDate.getTime() - aDate.getTime();
       });
@@ -210,8 +249,13 @@ export default function PropertiesByType() {
         return listingType === "Resale" && isFeatured === true;
       })
       .sort((a: Property, b: Property) => {
-        const aDate = new Date(a.createdAt || a.created_at);
-        const bDate = new Date(b.createdAt || b.created_at);
+        // Safe date parsing with defaults
+        const aCreatedAt = a.createdAt || a.created_at || '';
+        const bCreatedAt = b.createdAt || b.created_at || '';
+        
+        const aDate = aCreatedAt ? new Date(aCreatedAt) : new Date(0);
+        const bDate = bCreatedAt ? new Date(bCreatedAt) : new Date(0);
+        
         // Sort by newest first
         return bDate.getTime() - aDate.getTime();
       });
