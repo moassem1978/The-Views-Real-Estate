@@ -216,7 +216,7 @@ export default function PropertyDetails() {
                     )}
                     
                     {/* Add Floor Number as a feature for vertical units */}
-                    {['Apartment', 'Studio', 'Penthouse', 'Chalet'].includes(property.propertyType) && 
+                    {property.propertyType && ['Apartment', 'Studio', 'Penthouse', 'Chalet'].includes(property.propertyType) && 
                      property.floor !== undefined && property.floor > 0 && (
                       <div className="flex items-center bg-[#F5F0E6] p-3 rounded-md">
                         <div className="h-8 w-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center mr-3">
@@ -268,7 +268,7 @@ export default function PropertyDetails() {
                       )}
 
                       {/* Only show floor for vertical building units */}
-                      {['Apartment', 'Studio', 'Penthouse', 'Chalet'].includes(property.propertyType) && 
+                      {property.propertyType && ['Apartment', 'Studio', 'Penthouse', 'Chalet'].includes(property.propertyType) && 
                        property.floor !== undefined && property.floor > 0 && (
                         <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
                           <span className="text-gray-600">Floor</span>
