@@ -319,6 +319,7 @@ COPY public.properties (id, title, description, address, city, state, zip_code, 
 3	Luxury Apartment in Downtown Dubai	Premium international property in the heart of Dubai with stunning views of Burj Khalifa. This exclusive apartment offers modern design, top-notch amenities, and an unbeatable location.	Downtown Dubai	Dubai	Dubai	00000	3500000	\N	\N	\N	t	Resale	Emaar Downtown	Emaar Properties	3	3.5	220	\N	\N	24	f	Apartment	t	t	t	2019	City View	["Pool", "Gym", "Security", "Parking", "Concierge", "Spa"]	["/uploads/properties/dubai-apartment-1.jpg", "/uploads/properties/dubai-apartment-2.jpg"]	\N	\N	2025-05-15T11:00:00Z	1	published	1	\N	\N	UAE	
 1	Luxury Penthouse in Zayed	Stunning penthouse with panoramic views of the city. Perfect for those seeking luxury living at its finest. Features high-end finishes, smart home technology, and exclusive building amenities.	Crystal Towers	Zayed	6th of October	00000	8500000	2125000	177625	36	f	Primary	Crystal Towers	Elite Developers	4	4.5	320	0	\N	\N	f	penthouse	t	t	t	2024	City View	["Pool", "Gym", "Security", "Parking", "Elevator", "Garden"]	["/uploads/properties/penthouse-primary-1.jpg", "/uploads/properties/penthouse-primary-2.jpg"]	\N	\N	2025-05-15T09:00:00Z	1	published	1	\N	\N	Egypt	REF-414458
 2	Elegant Villa in New Cairo	Beautifully maintained resale villa in one of New Cairo's most prestigious neighborhoods. The property features lush gardens, a private swimming pool, and high-quality finishes throughout.	Mountain View	Cairo	New Cairo	11511	12000000	\N	\N	\N	t	Resale	Mountain View	Mountain View Developers	5	6	450	620	180	\N	t	villa	t	t	t	2020	Garden View	["Pool", "Garden", "Security", "Parking", "Smart Home", "BBQ Area"]	["/uploads/properties/villa-resale-1.jpg", "/uploads/properties/villa-resale-2.jpg"]	\N	\N	2025-05-15T10:00:00Z	1	published	1	\N	\N	Egypt	REF-501106
+11	Hello	Property test	Mivida	Cairo	Cairo	11511	20000000	0	0	0	t	Resale	Mivida	Emaar	3	4	200	0	0	0	f	apartment	f	t	f	\N	\N	{}	{}	\N	\N	2025-05-16T22:14:42.714Z	1	published	1	\N	\N	Egypt	REF-680569
 \.
 
 
@@ -368,7 +369,7 @@ WVqjbPWsB4tEQbOKRY2Tr4HRWEfb9MEZ	{"cookie":{"originalMaxAge":2592000000,"expires
 lpdCJWFDVE2WbwMl1VOXgpWeqTJuywQv	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-31T09:46:01.066Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 17:40:55
 O9Xbw7MJhGAvOL-jPt9hyTuaWYGhn0T1	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-30T08:32:25.679Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-30 08:32:26
 fGO0xmPGwEfDX5bjtbGuXEJXcmfMGret	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-31T09:36:11.606Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-08 11:51:40
-X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-30T19:39:40.634Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-30 19:39:41
+X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-30T22:15:14.016Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-30 22:15:15
 p1nw0jNB8-gPIqiUuHVHUiVFM2RzsZ2k	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T13:00:43.863Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 13:00:44
 K0Y7Iabhe6KCH1AesTXMBUEXlvn8Qf6Y	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-18T19:48:07.513Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-24 18:23:27
 0f-aRaM3BiNmyYibIYkcaeOd8DNG6Dam	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-11T14:33:28.029Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-17 11:27:42
@@ -395,7 +396,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
-1	owner	c59e59e9ea93fc1f069f1187342db40b30482ff99b514c7b26258d6721b1fc69b013ee312314713fa33d4a67cdb6f6ff9d1e631c689faf51f83179aab00c055f.8e5a0a157f2802d8a0288066f580d33b	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
+1	owner	33f851cc330f0b2bffb0a48ae0101387cb585cee0f5d5d1ead48d3f0d2b45a3ce28524fcecd5dc0e99daf84fb8d5342230937d569cacb59f18b8735816c74c35.6387cad8415e6ff458e392fb289a344f	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 \.
 
 
@@ -417,7 +418,7 @@ SELECT pg_catalog.setval('public.projects_id_seq', 3, true);
 -- Name: properties_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.properties_id_seq', 10, true);
+SELECT pg_catalog.setval('public.properties_id_seq', 11, true);
 
 
 --

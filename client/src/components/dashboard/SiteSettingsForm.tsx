@@ -18,8 +18,13 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Lock, AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 // Interface for site settings
 interface SiteSettings {
@@ -48,19 +53,30 @@ const siteSettingsSchema = z.object({
   linkedin: z.string().url("Invalid URL").optional().or(z.literal("")),
 });
 
+// Contact details form schema (only for owner)
+const contactDetailsSchema = z.object({
+  businessAddress: z.string().optional().or(z.literal("")),
+  businessHours: z.string().optional().or(z.literal("")),
+  emergencyContact: z.string().optional().or(z.literal("")),
+  whatsappNumber: z.string().optional().or(z.literal("")),
+});
+
 type FormValues = z.infer<typeof siteSettingsSchema>;
+type ContactFormValues = z.infer<typeof contactDetailsSchema>;
 
 export default function SiteSettingsForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
+  const { user } = useAuth();
+  const isOwner = user?.role === 'owner';
   
   // Fetch current site settings
   const { data: settings, isLoading } = useQuery<SiteSettings>({
     queryKey: ['/api/site-settings'],
   });
   
-  // Form setup
+  // Form setup for regular settings
   const form = useForm<FormValues>({
     resolver: zodResolver(siteSettingsSchema),
     defaultValues: {
@@ -72,6 +88,17 @@ export default function SiteSettingsForm() {
       twitter: settings?.socialLinks?.twitter || "",
       instagram: settings?.socialLinks?.instagram || "",
       linkedin: settings?.socialLinks?.linkedin || "",
+    },
+  });
+  
+  // Form setup for contact details (owner only)
+  const contactForm = useForm<ContactFormValues>({
+    resolver: zodResolver(contactDetailsSchema),
+    defaultValues: {
+      businessAddress: settings?.businessAddress || "",
+      businessHours: settings?.businessHours || "",
+      emergencyContact: settings?.emergencyContact || "",
+      whatsappNumber: settings?.whatsappNumber || "",
     },
   });
   
@@ -88,8 +115,18 @@ export default function SiteSettingsForm() {
         instagram: settings.socialLinks?.instagram || "",
         linkedin: settings.socialLinks?.linkedin || "",
       });
+      
+      // Also update contact form if owner
+      if (isOwner) {
+        contactForm.reset({
+          businessAddress: settings.businessAddress || "",
+          businessHours: settings.businessHours || "",
+          emergencyContact: settings.emergencyContact || "",
+          whatsappNumber: settings.whatsappNumber || "",
+        });
+      }
     }
-  }, [settings, form]);
+  }, [settings, form, contactForm, isOwner]);
   
   // Mutation to update site settings
   const updateSettingsMutation = useMutation({
@@ -127,9 +164,45 @@ export default function SiteSettingsForm() {
     },
   });
   
+  // Mutation to update contact details (owner only)
+  const updateContactDetailsMutation = useMutation({
+    mutationFn: async (data: ContactFormValues) => {
+      const res = await apiRequest("PATCH", "/api/site-settings", data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/site-settings'] });
+      toast({
+        title: "Contact Details Updated",
+        description: "Company contact details have been successfully updated.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update contact details: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Handle form submission
   const onSubmit = (data: FormValues) => {
     updateSettingsMutation.mutate(data);
+  };
+  
+  // Handle contact form submission (owner only)
+  const onContactSubmit = (data: ContactFormValues) => {
+    if (!isOwner) {
+      toast({
+        title: "Permission Denied",
+        description: "Only the owner can update contact details.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    updateContactDetailsMutation.mutate(data);
   };
   
   // Handle logo upload
@@ -205,44 +278,47 @@ export default function SiteSettingsForm() {
     <div className="space-y-6">
       {/* Logo Upload Section */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">Company Logo</h3>
-            <div className="flex items-center space-x-4">
-              <div className="relative h-28 w-28 rounded-md border overflow-hidden bg-muted">
-                {settings?.companyLogo ? (
-                  <img 
-                    src={settings.companyLogo} 
-                    alt="Company Logo" 
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                    No Logo
-                  </div>
+        <CardHeader className="pb-3">
+          <CardTitle>Company Logo</CardTitle>
+          <CardDescription>
+            Upload and manage your company logo that will appear across the site
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center space-x-4">
+            <div className="relative h-28 w-28 rounded-md border overflow-hidden bg-muted">
+              {settings?.companyLogo ? (
+                <img 
+                  src={`${settings.companyLogo}?t=${Date.now()}`}
+                  alt="Company Logo" 
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                  No Logo
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <label className="block mb-2 text-sm font-medium">
+                Upload New Logo
+              </label>
+              <div className="flex items-center">
+                <Input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  disabled={isUploading}
+                  className="max-w-xs"
+                />
+                {isUploading && (
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                 )}
               </div>
-              <div className="flex-1">
-                <label className="block mb-2 text-sm font-medium">
-                  Upload New Logo
-                </label>
-                <div className="flex items-center">
-                  <Input
-                    id="logo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    disabled={isUploading}
-                    className="max-w-xs"
-                  />
-                  {isUploading && (
-                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  )}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Recommended size: 200x200px. PNG or JPG.
-                </p>
-              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Recommended size: 200x200px. PNG or JPG.
+              </p>
             </div>
           </div>
         </CardContent>
@@ -252,9 +328,13 @@ export default function SiteSettingsForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">General Information</h3>
-              
+            <CardHeader className="pb-3">
+              <CardTitle>General Information</CardTitle>
+              <CardDescription>
+                Update your company's basic information and contact details
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
@@ -322,9 +402,13 @@ export default function SiteSettingsForm() {
           </Card>
           
           <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">Social Media Links</h3>
-              
+            <CardHeader className="pb-3">
+              <CardTitle>Social Media Links</CardTitle>
+              <CardDescription>
+                Add your company's social media profiles
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
@@ -399,6 +483,108 @@ export default function SiteSettingsForm() {
           </div>
         </form>
       </Form>
+      
+      {/* Extended Contact Details (Owner Only) */}
+      <Card className={isOwner ? "" : "opacity-70"}>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              Extended Contact Details
+              {!isOwner && <Lock className="h-4 w-4" />}
+            </CardTitle>
+            <CardDescription>
+              Additional contact information for business operations
+            </CardDescription>
+          </div>
+        </CardHeader>
+        
+        {!isOwner ? (
+          <CardContent>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Restricted Access</AlertTitle>
+              <AlertDescription>
+                Only the owner account can edit these extended contact details.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        ) : (
+          <Form {...contactForm}>
+            <form onSubmit={contactForm.handleSubmit(onContactSubmit)}>
+              <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={contactForm.control}
+                  name="businessAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business Address</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="123 Main St, Cairo, Egypt" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={contactForm.control}
+                  name="businessHours"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business Hours</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Mon-Fri: 9AM-5PM, Sat: 10AM-2PM" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={contactForm.control}
+                  name="emergencyContact"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Contact</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="+20 123 456 7890" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={contactForm.control}
+                  name="whatsappNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>WhatsApp Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="+20 123 456 7890" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="col-span-2 flex justify-end mt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={updateContactDetailsMutation.isPending}
+                    className="bg-[#B87333] hover:bg-[#964B00]"
+                  >
+                    {updateContactDetailsMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Save Contact Details
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Form>
+        )}
+      </Card>
     </div>
   );
 }
