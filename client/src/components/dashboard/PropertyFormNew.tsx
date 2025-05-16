@@ -59,7 +59,7 @@ export default function PropertyForm({
       developerName: "",
       propertyType: "",
       listingType: "Primary",
-      reference: "",
+      // Removed reference field
       price: 0,
       downPayment: 0,
       installmentAmount: 0,
