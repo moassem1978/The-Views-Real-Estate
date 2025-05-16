@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
+import { getImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -210,16 +211,33 @@ export default function SiteSettingsForm() {
     updateContactDetailsMutation.mutate(data);
   };
   
-  // Handle logo upload
+  // Enhanced logo upload with improved error handling and logging
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected for logo upload');
+      return;
+    }
     
-    // Validate file type
+    console.log('Logo upload initiated:', { fileName: file.name, fileType: file.type, fileSize: `${(file.size / 1024).toFixed(2)} KB` });
+    
+    // Validate file type and size
     if (!file.type.startsWith('image/')) {
+      console.error('Invalid file type:', file.type);
       toast({
-        title: "Invalid File",
-        description: "Please upload an image file.",
+        title: "Invalid File Type",
+        description: "Please upload a valid image file (JPG, PNG, SVG, etc.).",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      console.error('File too large:', `${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      toast({
+        title: "File Too Large",
+        description: "Please upload an image smaller than 2MB.",
         variant: "destructive",
       });
       return;
@@ -231,26 +249,41 @@ export default function SiteSettingsForm() {
     
     try {
       setIsUploading(true);
+      console.log('Starting logo upload to server...');
       
-      // Upload the logo
+      // Upload the logo with improved error handling
       const response = await fetch('/api/upload/logo', {
         method: 'POST',
         body: formData,
       });
       
+      // Check for server errors with detailed logging
       if (!response.ok) {
-        throw new Error('Failed to upload logo');
+        const errorText = await response.text();
+        console.error('Logo upload failed:', { 
+          status: response.status, 
+          statusText: response.statusText,
+          responseBody: errorText
+        });
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
       }
       
       const result = await response.json();
+      console.log('Logo upload successful, received:', result);
       
       // Update site settings with new logo path
       if (result && result.logoUrl) {
+        console.log('Updating site settings with new logo path:', result.logoUrl);
+        
         // Update site settings with new logo path using separate API call
-        await apiRequest("PATCH", "/api/site-settings", {
-          companyName: settings?.companyName || "The Views Real Estate",
+        const updateResponse = await apiRequest("PATCH", "/api/site-settings", {
           companyLogo: result.logoUrl
         });
+        
+        if (!updateResponse.ok) {
+          console.error('Failed to update site settings with new logo');
+          throw new Error('Failed to update settings with new logo');
+        }
         
         toast({
           title: "Logo Updated",
@@ -259,8 +292,12 @@ export default function SiteSettingsForm() {
         
         // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['/api/site-settings'] });
+      } else {
+        console.error('Missing logo URL in server response:', result);
+        throw new Error('Server response missing logo URL');
       }
     } catch (error) {
+      console.error('Logo upload error:', error);
       toast({
         title: "Upload Failed",
         description: error instanceof Error ? error.message : "Failed to upload logo",
@@ -294,9 +331,14 @@ export default function SiteSettingsForm() {
             <div className="relative h-28 w-28 rounded-md border overflow-hidden bg-muted">
               {settings?.companyLogo ? (
                 <img 
-                  src={`${settings.companyLogo}?t=${Date.now()}`}
+                  src={getImageUrl(settings.companyLogo)}
                   alt="Company Logo" 
                   className="h-full w-full object-contain"
+                  onError={(e) => {
+                    console.error('Logo failed to load:', settings.companyLogo);
+                    e.currentTarget.onerror = null; // Prevent infinite error loop
+                    e.currentTarget.src = '/placeholder-logo.svg';
+                  }}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-muted-foreground">

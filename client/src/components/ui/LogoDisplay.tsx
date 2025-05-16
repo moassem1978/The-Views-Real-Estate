@@ -42,8 +42,10 @@ export default function LogoDisplay({
       return;
     }
     
-    // Handle both absolute and relative URLs
-    const url = logoUrl.startsWith('http') ? logoUrl : logoUrl;
+    // Use the getImageUrl utility to properly format the URL
+    // This handles cache-busting and path normalization
+    const url = getImageUrl(logoUrl);
+    console.log('LogoDisplay: formatted logo URL:', url);
     setFormattedUrl(url);
     
   }, [logoUrl]);

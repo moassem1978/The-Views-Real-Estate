@@ -7,7 +7,7 @@ import Footer from "@/components/layout/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
 import PropertyGallery from "@/components/properties/PropertyGallery";
 import ContactCTA from "@/components/home/ContactCTA";
-import { formatPrice, parseJsonArray } from "@/lib/utils";
+import { formatPrice, parseJsonArray, getImageUrl } from "@/lib/utils";
 
 export default function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
