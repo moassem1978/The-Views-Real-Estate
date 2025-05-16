@@ -42,8 +42,9 @@ export default function LogoDisplay({
       return;
     }
     
-    // Use our utility function to get the correct URL
-    setFormattedUrl(getImageUrl(logoUrl));
+    // Handle both absolute and relative URLs
+    const url = logoUrl.startsWith('http') ? logoUrl : logoUrl;
+    setFormattedUrl(url);
     
   }, [logoUrl]);
   

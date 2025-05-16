@@ -46,14 +46,14 @@ export default function PropertyImage({
     // Use our utility function to extract the first image path
     const firstImagePath = getFirstImageSafely(src);
     console.log('PropertyImage: First image path -', firstImagePath);
-    
+
     // Skip processing if it's already the placeholder
     if (firstImagePath === '/placeholder-property.svg') {
       setFormattedSrc('/placeholder-property.svg');
       setIsLoaded(true);
       return;
     }
-    
+
     // Check if this image is already known to fail
     if (knownFailedImages.has(firstImagePath)) {
       console.log('PropertyImage: Using placeholder for known failed image -', firstImagePath);
@@ -65,12 +65,12 @@ export default function PropertyImage({
     // Clean and normalize the image path
     const normalizedPath = normalizeImagePath(firstImagePath);
     console.log('PropertyImage: Normalized path -', normalizedPath);
-    
+
     // Add cache busting parameter
     const timestamp = Date.now();
     const finalPath = `${normalizedPath}?t=${timestamp}`;
     console.log('PropertyImage: Final path -', finalPath);
-    
+
     setFormattedSrc(finalPath);
   }, [src]);
 
