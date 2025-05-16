@@ -33,6 +33,11 @@ interface SiteSettings {
   primaryColor?: string;
   contactEmail?: string;
   contactPhone?: string;
+  // Extended contact details (owner-only fields)
+  businessAddress?: string;
+  businessHours?: string;
+  emergencyContact?: string;
+  whatsappNumber?: string;
   socialLinks?: {
     facebook?: string;
     twitter?: string;
