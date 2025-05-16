@@ -171,8 +171,7 @@ export default function PropertyForm({
         developerName: propertyData.developerName || "",
         propertyType: propertyData.propertyType || "",
         listingType: propertyData.listingType || "Primary",
-        // Fix reference field by prioritizing the standardized field name first
-        reference: propertyData.references || propertyData.reference || propertyData.reference_number || "",
+        // Reference field completely removed
         price: propertyData.price || 0,
         downPayment: propertyData.downPayment || 0,
         installmentAmount: propertyData.installmentAmount || 0,
@@ -305,32 +304,9 @@ export default function PropertyForm({
         data.listingType = "Primary";
       }
 
-      // Ensure reference field is properly set and preserved
-      if (data.reference) {
-        data.references = data.reference; // Copy to references field
-        data.reference_number = data.reference; // Copy to reference_number field
-      } else if (!data.reference && data.references) {
-        data.reference = data.references;
-        data.reference_number = data.references;
-      } else if (!data.reference && !data.references) {
-        // Generate a unique reference if none provided
-        const timestamp = Date.now().toString().slice(-6);
-        const uniqueRef = `REF-${timestamp}`;
-        data.reference = uniqueRef;
-        data.references = uniqueRef;
-        data.reference_number = uniqueRef;
-      }
-
-      console.log('Saving property with reference:', {
-        reference: data.reference,
-        references: data.references,
-        reference_number: data.reference_number
-      });
+      // Reference field completely removed - no reference, references, or reference_number
 
       console.log("Sending property data:", {
-        reference: data.reference,
-        references: data.references,
-        reference_number: data.reference_number, 
         city: data.city,
         propertyType: data.propertyType,
         listingType: data.listingType,
