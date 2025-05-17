@@ -1,6 +1,7 @@
 
 import { db } from './db';
 import { properties, announcements } from '@shared/schema';
+import { sql } from 'drizzle-orm';
 
 async function cleanupDatabase() {
   try {
@@ -10,11 +11,9 @@ async function cleanupDatabase() {
     // Delete all announcements 
     await db.delete(announcements);
     
-    // Reset auto-increment sequences
-    await db.execute(
-      `ALTER SEQUENCE properties_id_seq RESTART WITH 1;
-       ALTER SEQUENCE announcements_id_seq RESTART WITH 1;`
-    );
+    // Reset auto-increment sequences - use separate parameterized statements
+    await db.execute(sql`ALTER SEQUENCE properties_id_seq RESTART WITH 1`);
+    await db.execute(sql`ALTER SEQUENCE announcements_id_seq RESTART WITH 1`);
     
     console.log('Database cleaned and reset successfully');
     
