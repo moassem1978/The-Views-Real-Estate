@@ -50,7 +50,8 @@ async function ensureOwnerAccount() {
     
     // First check if the owner exists - use lowercase as in database
     let owner = await storage.getUserByUsername("owner");
-    const ownerPassword = "owner123"; // Known expected password - lowercase
+    // Use environment variable with fallback for development only
+    const ownerPassword = process.env.OWNER_PASSWORD || "owner123"; // Fallback only for development
     
     if (!owner) {
       // Create new owner account with lowercase username
