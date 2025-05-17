@@ -58,6 +58,11 @@ export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle({ client: pool, schema });
 // Restore function
 export async function restoreDatabase(timestamp: string) {
+  // Validate timestamp to prevent command injection
+  if (!/^[0-9a-zA-Z-_]+$/.test(timestamp)) {
+    throw new Error('Invalid timestamp format. Only alphanumeric characters, hyphens, and underscores are allowed.');
+  }
+
   const backupFile = path.join(BACKUP_DIR, `backup-${timestamp}.sql`);
   if (!fs.existsSync(backupFile)) {
     throw new Error(`Backup file ${backupFile} not found`);
