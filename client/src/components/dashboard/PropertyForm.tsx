@@ -58,7 +58,6 @@ export default function PropertyForm({
       projectName: "",
       propertyType: "",
       listingType: "Primary",
-      reference: "",
       price: 0,
       downPayment: 0,
       installmentAmount: 0,

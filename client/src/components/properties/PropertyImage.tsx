@@ -20,13 +20,26 @@ const hashPattern = /[a-f0-9]{32}/i;
 // Known image extensions for validation
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
 
-export default function PropertyImage({ 
-  src, 
-  alt, 
-  priority = false, 
-  className = "", 
-  onClick 
-}: PropertyImageProps) {
+export default function PropertyImage({ src, alt, className }: PropertyImageProps) {
+  const [error, setError] = useState(false);
+  const [imageSrc, setImageSrc] = useState(src);
+
+  // Add timestamp to prevent caching
+  useEffect(() => {
+    if (src) {
+      const timestamp = Date.now();
+      setImageSrc(`${src}?t=${timestamp}`);
+    }
+  }, [src]);
+
+  if (error || !imageSrc) {
+    return <img 
+      src="/placeholder-property.svg" 
+      alt={alt || "Property"} 
+      className={className}
+    />;
+  }
+
   const [isLoaded, setIsLoaded] = useState(false);
   const [formattedSrc, setFormattedSrc] = useState('');
 
@@ -102,7 +115,6 @@ export default function PropertyImage({
   return (
     <div 
       className={`relative overflow-hidden ${className}`}
-      onClick={onClick}
     >
       {/* Simplified loading - show placeholder immediately while real image loads */}
       {!isLoaded && (
@@ -121,7 +133,7 @@ export default function PropertyImage({
           src={formattedSrc}
           alt={alt}
           className={`w-full h-full object-cover transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-          loading={priority ? "eager" : "lazy"}
+          loading="lazy"
           onLoad={handleLoad}
           onError={handleError}
         />
