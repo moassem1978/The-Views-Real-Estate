@@ -7,7 +7,7 @@ async function cleanupDatabase() {
     // Delete all properties
     await db.delete(properties);
     
-    // Delete all announcements
+    // Delete all announcements 
     await db.delete(announcements);
     
     // Reset auto-increment sequences

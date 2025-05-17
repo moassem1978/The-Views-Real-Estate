@@ -295,7 +295,6 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.announcements (id, title, content, image_url, start_date, end_date, is_active, is_featured, is_highlighted, created_at, status, created_by, approved_by, updated_at) FROM stdin;
-6	New Luxury Development Launch	We are thrilled to announce our newest luxury development in North Coast, offering beachfront properties with exclusive amenities. Limited units available - contact us today for early investor pricing and premier selection.	/uploads/announcements/new-development-launch.jpg	2025-05-15 00:00:00	2025-06-15 00:00:00	t	t	t	2025-05-15 05:20:52.22447	published	1	\N	\N
 \.
 
 
@@ -313,13 +312,6 @@ COPY public.projects (id, created_by, created_at, updated_at, project_name, desc
 --
 
 COPY public.properties (id, title, description, address, city, state, zip_code, price, down_payment, installment_amount, installment_period, is_full_cash, listing_type, project_name, developer_name, bedrooms, bathrooms, built_up_area, plot_size, garden_size, floor, is_ground_unit, property_type, is_featured, is_new_listing, is_highlighted, year_built, views, amenities, images, latitude, longitude, created_at, agent_id, status, created_by, approved_by, updated_at, country, reference_number) FROM stdin;
-4	Prime location Villa in Marassi	Lake view in Verona Marassi 	Marassi	North coast	North coast	23511	111	\N	\N	\N	f	Resale	Marassi	Emaar	5	7	466	700	0	0	f	villa	t	t	t	\N	\N	[]	["/uploads/properties/images-1747307123204-434.jpeg", "/uploads/properties/images-1747307131247-176.jpeg"]	\N	\N	2025-05-15T08:32:27.741Z	1	published	1	\N	\N	Egypt	REF-283452
-5	LV for sale in Sodic East	Sodic East	Sodic East	Cairo	Cairo	11511	62237000	3111850	\N	\N	f	Primary	Sodic East	Sodic	3	4	231	0	0	0	f	villa	t	t	t	\N	\N	[]	["/uploads/properties/images-1747307286519-28.jpeg", "/uploads/properties/images-1747307294006-110.jpeg"]	\N	\N	2025-05-15T11:26:50.617Z	1	published	1	\N	\N	Egypt	
-10	New Villa for sale in west cairo	Sodic west	Sodic West	Zayed	Zayed	00000	22000000	0	0	0	f	Primary	Sodic West	Sodic	4	5	234	0	0	0	f	villa	f	t	f	\N	\N	{}	{}	\N	\N	2025-05-16T08:19:06.790Z	1	published	1	\N	\N	Egypt	REF-542212
-3	Luxury Apartment in Downtown Dubai	Premium international property in the heart of Dubai with stunning views of Burj Khalifa. This exclusive apartment offers modern design, top-notch amenities, and an unbeatable location.	Downtown Dubai	Dubai	Dubai	00000	3500000	\N	\N	\N	t	Resale	Emaar Downtown	Emaar Properties	3	3.5	220	\N	\N	24	f	Apartment	t	t	t	2019	City View	["Pool", "Gym", "Security", "Parking", "Concierge", "Spa"]	["/uploads/properties/dubai-apartment-1.jpg", "/uploads/properties/dubai-apartment-2.jpg"]	\N	\N	2025-05-15T11:00:00Z	1	published	1	\N	\N	UAE	
-1	Luxury Penthouse in Zayed	Stunning penthouse with panoramic views of the city. Perfect for those seeking luxury living at its finest. Features high-end finishes, smart home technology, and exclusive building amenities.	Crystal Towers	Zayed	6th of October	00000	8500000	2125000	177625	36	f	Primary	Crystal Towers	Elite Developers	4	4.5	320	0	\N	\N	f	penthouse	t	t	t	2024	City View	["Pool", "Gym", "Security", "Parking", "Elevator", "Garden"]	["/uploads/properties/penthouse-primary-1.jpg", "/uploads/properties/penthouse-primary-2.jpg"]	\N	\N	2025-05-15T09:00:00Z	1	published	1	\N	\N	Egypt	REF-414458
-2	Elegant Villa in New Cairo	Beautifully maintained resale villa in one of New Cairo's most prestigious neighborhoods. The property features lush gardens, a private swimming pool, and high-quality finishes throughout.	Mountain View	Cairo	New Cairo	11511	12000000	\N	\N	\N	t	Resale	Mountain View	Mountain View Developers	5	6	450	620	180	\N	t	villa	t	t	t	2020	Garden View	["Pool", "Garden", "Security", "Parking", "Smart Home", "BBQ Area"]	["/uploads/properties/villa-resale-1.jpg", "/uploads/properties/villa-resale-2.jpg"]	\N	\N	2025-05-15T10:00:00Z	1	published	1	\N	\N	Egypt	REF-501106
-11	Hello	Property test	Mivida	Cairo	Cairo	11511	20000000	0	0	0	t	Resale	Mivida	Emaar	3	4	200	0	0	0	f	apartment	f	t	f	\N	\N	{}	{}	\N	\N	2025-05-16T22:14:42.714Z	1	published	1	\N	\N	Egypt	REF-680569
 \.
 
 
@@ -377,7 +369,7 @@ tt_QJi4v87u_WwkRDWeI7hqeNx168L9k	{"cookie":{"originalMaxAge":2592000000,"expires
 YrmaV_5ScaP_Q6ljmxpEDHsftaaXRjdr	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-09T09:44:22.511Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-09 09:44:23
 TnSxEF8M9HHiol1S2Fsl2rVLmU-fp4Mh	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T12:59:19.606Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 12:59:20
 TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T16:40:00.464Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 16:40:01
-X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-01T14:07:05.990Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-01 14:07:06
+X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-01T14:59:16.849Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-01 14:59:17
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
 \.
 
@@ -395,7 +387,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
-1	owner	fecb74f202ec1b173ecc1d26cb2fcba9a31cbd5511bd6984fe6bf56412880e1ef1d21af6e0419b8fce8c22a616e40425db69e7b5f1da88c180492b71cf560f04.7326d375454fb24f7792d85133cced09	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
+1	owner	55b03644739f66844a450f4af08776ce5e347883078b20257577472fa247f1fa9731ab57b8e52b5ca98fa994f5d168610630994aab3f0fa25e6cca58fc037fea.e436216c68c444cca1163b6987670c4d	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
 \.
 
@@ -404,7 +396,7 @@ COPY public.users (id, username, password, email, full_name, phone, is_agent, cr
 -- Name: announcements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.announcements_id_seq', 6, true);
+SELECT pg_catalog.setval('public.announcements_id_seq', 1, false);
 
 
 --
@@ -418,7 +410,7 @@ SELECT pg_catalog.setval('public.projects_id_seq', 3, true);
 -- Name: properties_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.properties_id_seq', 11, true);
+SELECT pg_catalog.setval('public.properties_id_seq', 1, false);
 
 
 --
