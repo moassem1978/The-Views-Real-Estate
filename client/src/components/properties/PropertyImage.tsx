@@ -1,7 +1,4 @@
-` tags. I will pay close attention to indentation, structure, and completeness, and avoid any forbidden words or placeholders.
 
-```typescript
-<replit_final_file>
 import { useState, useEffect } from "react";
 
 interface PropertyImageProps {
