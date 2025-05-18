@@ -103,7 +103,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
           {/* Price Tag */}
           <div className="absolute bottom-0 left-0 z-10 px-3 py-1.5 bg-[#B87333] text-white font-medium rounded-tr-md">
-            {property.price.toLocaleString()} L.E
+            {property.price === 0 ? "L.E" : `${property.price.toLocaleString()} L.E`}
           </div>
         </div>
 
@@ -165,12 +165,12 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </div>
 
             {/* Price Info */}
-            <span className="text-[#D4AF37] font-medium">{property.price.toLocaleString()} L.E</span>
+            <span className="text-[#D4AF37] font-medium">{property.price === 0 ? "L.E" : `${property.price.toLocaleString()} L.E`}</span>
 
             {/* Payment Details */}
             {property.listingType === 'Primary' && property.installmentAmount && (
               <div className="text-xs text-gray-600 mt-1">
-                <span className="font-medium">Installments:</span> {property.installmentAmount?.toLocaleString()} L.E/month
+                <span className="font-medium">Installments:</span> {!property.installmentAmount || property.installmentAmount === 0 ? "L.E" : `${property.installmentAmount.toLocaleString()} L.E`}/month
                 {property.installmentPeriod && (
                   <span className="ml-1">({Math.floor(property.installmentPeriod/12)} years)</span>
                 )}
@@ -178,7 +178,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             )}
             {property.downPayment && (
               <div className="text-xs text-gray-600">
-                <span className="font-medium">Down Payment:</span> {property.downPayment?.toLocaleString()} L.E
+                <span className="font-medium">Down Payment:</span> {!property.downPayment || property.downPayment === 0 ? "L.E" : `${property.downPayment.toLocaleString()} L.E`}
               </div>
             )}
             {property.isFullCash && (
