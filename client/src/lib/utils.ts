@@ -25,7 +25,7 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatPrice(price: number, maximumFractionDigits = 0): string {
   // Return quickly for common cases
-  if (price === 0) return "0 L.E";
+  if (price === 0) return "L.E";
   
   // Simply return number with thousand separators using toLocaleString and "L.E" suffix
   return `${price.toLocaleString()} L.E`;
