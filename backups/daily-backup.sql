@@ -313,7 +313,7 @@ COPY public.projects (id, created_by, created_at, updated_at, project_name, desc
 
 COPY public.properties (id, title, description, address, city, state, zip_code, price, down_payment, installment_amount, installment_period, is_full_cash, listing_type, project_name, developer_name, bedrooms, bathrooms, built_up_area, plot_size, garden_size, floor, is_ground_unit, property_type, is_featured, is_new_listing, is_highlighted, year_built, views, amenities, images, latitude, longitude, created_at, agent_id, status, created_by, approved_by, updated_at, country, reference_number) FROM stdin;
 2	Best property 	Best ever	Mivida	Cairo	Cairo	11511	33333400	0	0	0	t	Resale	Mivida	Emaar	4	5	320	0	0	0	f	penthouse	f	t	f	\N	\N	{}	["/uploads/properties/images-1747551149741-410.jpeg", "/uploads/properties/images-1747551149108-24.jpeg", "/uploads/properties/images-1747551148263-406.jpeg"]	\N	\N	2025-05-18T06:52:27.128Z	1	published	1	\N	\N	Egypt	\N
-1	Villa for sale in Sodic East	Large Villa for sale	Sodic East	Cairo	Cairo	11511	62237000	3111850	0	0	f	Resale	Sodic East	Sodic	3	4	329	0	0	0	f	villa	t	t	t	\N	\N	{}	["/uploads/properties/IMG_0983.png", "/uploads/properties/IMG_0984.jpeg"]	\N	\N	2025-05-17T20:27:49.364Z	1	published	1	\N	\N	Egypt	\N
+1	Villa for sale in Sodic East	Large Villa for sale	Sodic East	Cairo	Cairo	11511	62237000	3111850	0	0	f	Resale	Sodic East	Sodic	3	4	329	0	0	0	f	villa	t	t	t	\N	\N	{}	["/uploads/properties/images-1747513670087-825.png", "/uploads/properties/images-1747513675470-560.png", "/uploads/properties/images-1747513682730-875.jpeg"]	\N	\N	2025-05-17T20:27:49.364Z	1	published	1	\N	\N	Egypt	\N
 \.
 
 
@@ -369,8 +369,8 @@ K0Y7Iabhe6KCH1AesTXMBUEXlvn8Qf6Y	{"cookie":{"originalMaxAge":2592000000,"expires
 EVVJRsdA7NxXxv3jE2OdORiAAh0lEaJy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-01T20:32:54.111Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-01 20:32:55
 jmPl_FaVRnuEFBpd20jSKFOkSskNRG-8	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T09:30:35.349Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 11:16:35
 tt_QJi4v87u_WwkRDWeI7hqeNx168L9k	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-08T11:52:22.893Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-08 12:08:04
-LJVqzlsFrvsYCPbRYd3P1bZ9nZBrgpXy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-02T07:11:26.848Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-02 07:11:27
 YrmaV_5ScaP_Q6ljmxpEDHsftaaXRjdr	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-09T09:44:22.511Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-09 09:44:23
+LJVqzlsFrvsYCPbRYd3P1bZ9nZBrgpXy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-02T07:14:44.619Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-02 07:14:45
 TnSxEF8M9HHiol1S2Fsl2rVLmU-fp4Mh	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T12:59:19.606Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 12:59:20
 TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T16:40:00.464Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 16:40:01
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
@@ -390,7 +390,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
-1	owner	207dbab7847f23fbcc790268c8a54561e8b7e80aebbb5433f296b2eec84228ca0b0f3f2e34b1d88355ef3d749d56c24c41f7dbd2e70ed0ff07fb207bac6b564b.5801d70603c7500aa7db1f451b9f3c3c	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
+1	owner	83ce04739349e5129e9b61a43ec77bcf3a7566154b65be852a168b736d6163d5fc1ca4b7b8d4c9aa22661b21d187cc8b2214d63d9e723d65325efd52251f0dc3.434fd8258407afa3c7534c0702395db9	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
 \.
 
