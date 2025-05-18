@@ -312,7 +312,7 @@ COPY public.projects (id, created_by, created_at, updated_at, project_name, desc
 --
 
 COPY public.properties (id, title, description, address, city, state, zip_code, price, down_payment, installment_amount, installment_period, is_full_cash, listing_type, project_name, developer_name, bedrooms, bathrooms, built_up_area, plot_size, garden_size, floor, is_ground_unit, property_type, is_featured, is_new_listing, is_highlighted, year_built, views, amenities, images, latitude, longitude, created_at, agent_id, status, created_by, approved_by, updated_at, country, reference_number) FROM stdin;
-1	Villa for sale in Sodic East	Large Villa for sale	Sodic East	Cairo	Cairo	11511	62237000	3111850	0	0	f	Resale	Sodic East	Sodic	3	4	329	0	0	0	f	villa	t	t	t	\N	\N	{}	{}	\N	\N	2025-05-17T20:27:49.364Z	1	published	1	\N	\N	Egypt	\N
+1	Villa for sale in Sodic East	Large Villa for sale	Sodic East	Cairo	Cairo	11511	62237000	3111850	0	0	f	Resale	Sodic East	Sodic	3	4	329	0	0	0	f	villa	t	t	t	\N	\N	{}	["/uploads/properties/images-1747513670087-825.png", "/uploads/properties/images-1747513675470-560.png", "/uploads/properties/images-1747513682730-875.jpeg", "/uploads/properties/images-1747513826716-643.jpeg", "/uploads/properties/images-1747513839169-32.png", "/uploads/properties/images-1747513963480-821.png"]	\N	\N	2025-05-17T20:27:49.364Z	1	published	1	\N	\N	Egypt	\N
 \.
 
 
@@ -360,6 +360,7 @@ y3GzV1dFfAgJ7RAQhz5kVkZY67NhR7U6	{"cookie":{"originalMaxAge":2592000000,"expires
 a5eiF1w-fLjhV9_f5yB7EvwH2DH6sA_U	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-09T21:22:35.459Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-09 21:22:36
 WVqjbPWsB4tEQbOKRY2Tr4HRWEfb9MEZ	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T16:07:20.757Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-08 08:08:07
 lpdCJWFDVE2WbwMl1VOXgpWeqTJuywQv	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-31T09:46:01.066Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 17:40:55
+X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-02T04:14:55.281Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-02 04:14:56
 fGO0xmPGwEfDX5bjtbGuXEJXcmfMGret	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-31T09:36:11.606Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-08 11:51:40
 p1nw0jNB8-gPIqiUuHVHUiVFM2RzsZ2k	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T13:00:43.863Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 13:00:44
 K0Y7Iabhe6KCH1AesTXMBUEXlvn8Qf6Y	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-18T19:48:07.513Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-24 18:23:27
@@ -368,7 +369,6 @@ EVVJRsdA7NxXxv3jE2OdORiAAh0lEaJy	{"cookie":{"originalMaxAge":3888000000,"expires
 jmPl_FaVRnuEFBpd20jSKFOkSskNRG-8	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T09:30:35.349Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 11:16:35
 tt_QJi4v87u_WwkRDWeI7hqeNx168L9k	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-08T11:52:22.893Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-08 12:08:04
 YrmaV_5ScaP_Q6ljmxpEDHsftaaXRjdr	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-09T09:44:22.511Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-09 09:44:23
-X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-02T04:14:16.351Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-02 04:14:17
 TnSxEF8M9HHiol1S2Fsl2rVLmU-fp4Mh	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T12:59:19.606Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 12:59:20
 TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T16:40:00.464Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 16:40:01
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
@@ -388,7 +388,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
-1	owner	06a229c991ae504f8bb9070243fc91c3ed2e9ea9eabccdd58712d596dcfffbce15a779b74520bfa14bc02db4caad6e4ddfad932c3ac0d6e9843cb129e596eee5.f174424a08e8206b2695565b99877ead	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
+1	owner	050a795e32b8100f922f70ed9335a51f9a6bfe57e8b4d49c5d9a478be1a2692655083afce773902b7df22f1030a6fc4eb2f66dfa9b8370eade0ccbb09a3db70e.3ac2159d4c9ec649474d71d7a8781a47	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
 \.
 
