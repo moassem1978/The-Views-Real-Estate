@@ -588,6 +588,7 @@ export default function PropertyForm({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="">Select a property type</SelectItem>
                             <SelectItem value="apartment">Apartment</SelectItem>
                             <SelectItem value="penthouse">Penthouse</SelectItem>
                             <SelectItem value="villa">Villa</SelectItem>
@@ -715,6 +716,7 @@ export default function PropertyForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="">Select a city</SelectItem>
                           <SelectItem value="Cairo">Cairo</SelectItem>
                           <SelectItem value="Zayed">Zayed</SelectItem>
                           <SelectItem value="North coast">North Coast</SelectItem>

@@ -312,7 +312,8 @@ COPY public.projects (id, created_by, created_at, updated_at, project_name, desc
 --
 
 COPY public.properties (id, title, description, address, city, state, zip_code, price, down_payment, installment_amount, installment_period, is_full_cash, listing_type, project_name, developer_name, bedrooms, bathrooms, built_up_area, plot_size, garden_size, floor, is_ground_unit, property_type, is_featured, is_new_listing, is_highlighted, year_built, views, amenities, images, latitude, longitude, created_at, agent_id, status, created_by, approved_by, updated_at, country, reference_number) FROM stdin;
-1	Villa for sale in Sodic East	Large Villa for sale	Sodic East	Cairo	Cairo	11511	62237000	3111850	0	0	f	Resale	Sodic East	Sodic	3	4	329	0	0	0	f	villa	t	t	t	\N	\N	{}	["/uploads/properties/images-1747513670087-825.png", "/uploads/properties/images-1747513675470-560.png", "/uploads/properties/images-1747513682730-875.jpeg", "/uploads/properties/images-1747513826716-643.jpeg", "/uploads/properties/images-1747513839169-32.png", "/uploads/properties/images-1747513963480-821.png"]	\N	\N	2025-05-17T20:27:49.364Z	1	published	1	\N	\N	Egypt	\N
+2	Best property 	Best ever	Mivida	Cairo	Cairo	11511	33333400	0	0	0	t	Resale	Mivida	Emaar	4	5	320	0	0	0	f	penthouse	f	t	f	\N	\N	{}	["/uploads/properties/images-1747551149741-410.jpeg", "/uploads/properties/images-1747551149108-24.jpeg", "/uploads/properties/images-1747551148263-406.jpeg"]	\N	\N	2025-05-18T06:52:27.128Z	1	published	1	\N	\N	Egypt	\N
+1	Villa for sale in Sodic East	Large Villa for sale	Sodic East	Cairo	Cairo	11511	62237000	3111850	0	0	f	Resale	Sodic East	Sodic	3	4	329	0	0	0	f	villa	t	t	t	\N	\N	{}	["/uploads/properties/images-1747551149741-410.jpeg", "/uploads/properties/images-1747551149108-24.jpeg", "/uploads/properties/images-1747551148263-406.jpeg"]	\N	\N	2025-05-17T20:27:49.364Z	1	published	1	\N	\N	Egypt	\N
 \.
 
 
@@ -368,6 +369,7 @@ K0Y7Iabhe6KCH1AesTXMBUEXlvn8Qf6Y	{"cookie":{"originalMaxAge":2592000000,"expires
 EVVJRsdA7NxXxv3jE2OdORiAAh0lEaJy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-01T20:32:54.111Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-01 20:32:55
 jmPl_FaVRnuEFBpd20jSKFOkSskNRG-8	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T09:30:35.349Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 11:16:35
 tt_QJi4v87u_WwkRDWeI7hqeNx168L9k	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-08T11:52:22.893Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-08 12:08:04
+LJVqzlsFrvsYCPbRYd3P1bZ9nZBrgpXy	{"cookie":{"originalMaxAge":3887999999,"expires":"2025-07-02T07:01:02.867Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-02 07:01:03
 YrmaV_5ScaP_Q6ljmxpEDHsftaaXRjdr	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-09T09:44:22.511Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-09 09:44:23
 TnSxEF8M9HHiol1S2Fsl2rVLmU-fp4Mh	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T12:59:19.606Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 12:59:20
 TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T16:40:00.464Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 16:40:01
@@ -411,7 +413,7 @@ SELECT pg_catalog.setval('public.projects_id_seq', 3, true);
 -- Name: properties_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.properties_id_seq', 1, true);
+SELECT pg_catalog.setval('public.properties_id_seq', 2, true);
 
 
 --
