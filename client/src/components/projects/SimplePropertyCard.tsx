@@ -44,6 +44,7 @@ const SimplePropertyCard: React.FC<SimplePropertyCardProps> = ({ property }) => 
 
   // Format price with commas
   const formatPrice = (price: number) => {
+    if (price === 0) return ""; // Return empty string for zero values
     return price.toLocaleString();
   };
 
@@ -77,7 +78,7 @@ const SimplePropertyCard: React.FC<SimplePropertyCardProps> = ({ property }) => 
         </div>
         
         <div className="mt-1 mb-2">
-          <p className="text-xl font-semibold text-primary">{formatPrice(property.price)} L.E</p>
+          <p className="text-xl font-semibold text-primary">{property.price === 0 ? "L.E" : `${formatPrice(property.price)} L.E`}</p>
           {property.downPayment && property.listingType === 'Primary' && (
             <p className="text-sm text-gray-500">
               Down Payment: {formatPrice(property.downPayment)} L.E
