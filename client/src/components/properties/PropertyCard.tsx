@@ -168,17 +168,17 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             <span className="text-[#D4AF37] font-medium">{property.price === 0 ? "L.E" : `${property.price.toLocaleString()} L.E`}</span>
 
             {/* Payment Details */}
-            {property.listingType === 'Primary' && property.installmentAmount && (
+            {property.listingType === 'Primary' && property.installmentAmount !== null && property.installmentAmount !== undefined && (
               <div className="text-xs text-gray-600 mt-1">
-                <span className="font-medium">Installments:</span> {!property.installmentAmount || property.installmentAmount === 0 ? "L.E" : `${property.installmentAmount.toLocaleString()} L.E`}/month
+                <span className="font-medium">Installments:</span> {property.installmentAmount === 0 ? "L.E" : `${property.installmentAmount.toLocaleString()} L.E`}/month
                 {property.installmentPeriod && (
                   <span className="ml-1">({Math.floor(property.installmentPeriod/12)} years)</span>
                 )}
               </div>
             )}
-            {property.downPayment && (
+            {property.downPayment !== null && property.downPayment !== undefined && (
               <div className="text-xs text-gray-600">
-                <span className="font-medium">Down Payment:</span> {!property.downPayment || property.downPayment === 0 ? "L.E" : `${property.downPayment.toLocaleString()} L.E`}
+                <span className="font-medium">Down Payment:</span> {property.downPayment === 0 ? "L.E" : `${property.downPayment.toLocaleString()} L.E`}
               </div>
             )}
             {property.isFullCash && (
