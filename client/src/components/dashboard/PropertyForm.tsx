@@ -717,7 +717,7 @@ export default function PropertyForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Select a city</SelectItem>
+                          <SelectItem value="none">Select a city</SelectItem>
                           <SelectItem value="Cairo">Cairo</SelectItem>
                           <SelectItem value="Zayed">Zayed</SelectItem>
                           <SelectItem value="North coast">North Coast</SelectItem>
@@ -762,7 +762,7 @@ export default function PropertyForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Select a country</SelectItem>
+                          <SelectItem value="none">Select a country</SelectItem>
                           <SelectItem value="Egypt">Egypt</SelectItem>
                           <SelectItem value="UAE">UAE</SelectItem>
                           <SelectItem value="UK">UK</SelectItem>
