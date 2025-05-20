@@ -3067,6 +3067,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         success: true,
         message: `Successfully uploaded ${files.length} images`,
         imageUrls: fileUrls,
+        fileUrls: fileUrls, // Added fileUrls to match what frontend expects
         propertyId: propertyId || null,
         deviceType: deviceType
       });
