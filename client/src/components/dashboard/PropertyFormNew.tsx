@@ -269,6 +269,23 @@ export default function PropertyForm({
   // Handle form submission
   const onSubmit = async (data: any) => {
     try {
+      // Replace "none" placeholder values with appropriate defaults
+      if (data.city === "none") {
+        data.city = "";
+      }
+      
+      if (data.country === "none") {
+        data.country = "Egypt"; // Default country
+      }
+      
+      if (data.propertyType === "none") {
+        data.propertyType = "apartment"; // Default property type
+      }
+      
+      if (data.listingType === "none") {
+        data.listingType = "Resale"; // Default listing type
+      }
+
       // Ensure state matches city if not already set
       if (!data.state && data.city) {
         data.state = data.city;
@@ -280,7 +297,7 @@ export default function PropertyForm({
       }
 
       // CRITICAL FIX: Improved handling of property type
-      if (data.propertyType && data.propertyType.trim()) {
+      if (data.propertyType && data.propertyType.trim() && data.propertyType !== "none") {
         // Normalize propertyType to lowercase for consistency
         data.propertyType = data.propertyType.trim().toLowerCase();
         console.log(`Using normalized property type: ${data.propertyType}`);
