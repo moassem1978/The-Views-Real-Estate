@@ -440,20 +440,85 @@ export class DatabaseStorage implements IStorage {
         dbProperty.reference_number = insertProperty.reference_number;
       }
       
-      // FIXED IMAGE HANDLING - Ensure images are always stored as an array
+      // ENHANCED IMAGE HANDLING - Ensure images are always stored as arrays in the database
       let imagesArray: string[] = [];
       if (insertProperty.images) {
+        console.log(`Creating property with images: Type=${typeof insertProperty.images}`, 
+          Array.isArray(insertProperty.images) 
+            ? `Array with ${insertProperty.images.length} items` 
+            : insertProperty.images);
+        
         if (Array.isArray(insertProperty.images)) {
+          // It's already an array, make sure all entries are strings
           imagesArray = insertProperty.images
             .filter(img => img !== null && img !== undefined && img !== '')
             .map(img => typeof img === 'string' ? img : String(img));
-        } else if (typeof insertProperty.images === 'string') {
-          if (insertProperty.images.trim()) {
+            
+          console.log(`Processed array of ${imagesArray.length} images for new property`);
+        } 
+        else if (typeof insertProperty.images === 'string') {
+          // Handle JSON strings
+          if (insertProperty.images.trim().startsWith('[')) {
+            try {
+              const parsed = JSON.parse(insertProperty.images);
+              if (Array.isArray(parsed)) {
+                imagesArray = parsed
+                  .filter(img => img !== null && img !== undefined && img !== '')
+                  .map(img => typeof img === 'string' ? img : String(img));
+                  
+                console.log(`Parsed JSON string into array of ${imagesArray.length} images for new property`);
+              } else {
+                // JSON but not an array - use as single image
+                if (insertProperty.images.trim()) {
+                  imagesArray = [insertProperty.images.trim()];
+                  console.log(`JSON string was not an array, using as single image for new property`);
+                }
+              }
+            } catch (e) {
+              // Not valid JSON - use as single image path
+              if (insertProperty.images.trim()) {
+                imagesArray = [insertProperty.images.trim()];
+                console.log(`Failed to parse as JSON, using as single image path for new property: ${insertProperty.images}`);
+              }
+            }
+          } 
+          else if (insertProperty.images.trim()) {
+            // Direct image path string
             imagesArray = [insertProperty.images.trim()];
+            console.log(`Using single image path for new property: ${insertProperty.images}`);
+          }
+        }
+        else if (insertProperty.images && typeof insertProperty.images === 'object') {
+          // Handle object types (including empty objects)
+          if (Object.keys(insertProperty.images).length === 0) {
+            console.log(`Empty object received for images, using empty array for new property`);
+          } else {
+            // Try to extract values from the object
+            try {
+              const extractedImages = Object.values(insertProperty.images)
+                .filter(val => val !== null && val !== undefined && val !== '')
+                .map(val => typeof val === 'string' ? val : String(val));
+                
+              if (extractedImages.length > 0) {
+                imagesArray = extractedImages;
+                console.log(`Extracted ${imagesArray.length} images from object for new property`);
+              }
+            } catch (e) {
+              console.error(`Failed to extract images from object for new property:`, e);
+            }
           }
         }
       }
+      
+      // Set final images array, ensuring it's never null or undefined
       dbProperty.images = imagesArray;
+      console.log(`Final images array for new property: ${imagesArray.length} items`);
+      
+      // For debugging - log the actual data that will be stored
+      console.log(`Database image field type: ${typeof dbProperty.images}, isArray: ${Array.isArray(dbProperty.images)}`);
+      if (imagesArray.length > 0) {
+        console.log(`Sample image paths: ${imagesArray.slice(0, 3).join(', ')}${imagesArray.length > 3 ? '...' : ''}`);
+      }
       
       // Add created_at field with current date
       const currentDate = new Date().toISOString();
