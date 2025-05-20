@@ -368,8 +368,8 @@ tt_QJi4v87u_WwkRDWeI7hqeNx168L9k	{"cookie":{"originalMaxAge":2592000000,"expires
 LJVqzlsFrvsYCPbRYd3P1bZ9nZBrgpXy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-02T07:29:46.344Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-02 07:29:47
 YrmaV_5ScaP_Q6ljmxpEDHsftaaXRjdr	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-09T09:44:22.511Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-09 09:44:23
 TnSxEF8M9HHiol1S2Fsl2rVLmU-fp4Mh	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T12:59:19.606Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 12:59:20
-X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-03T18:16:36.933Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-03 18:16:37
-rBXHjv7SSjUNaOFrrDrIBKQnFodBp8IP	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-03T19:34:21.235Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-03 19:34:22
+X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-03T21:12:39.377Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-03 21:12:40
+WAP7Y-fI1vKhZPKiDfUbXDYuLkb5B4zf	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-03T21:19:10.779Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-03 21:19:11
 TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T16:40:00.464Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 16:40:01
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
 \.
@@ -388,7 +388,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
-1	owner	f73171ed2c1feed1fda622fe740577a207535a8d6913e6de3f378d6ce77dc752974a618a2995b2c97595a47ed7a7c91b0b21061bf75166cb9f92456f33f6eb1e.139d86491acbb2c354a923930b402619	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
+1	owner	d691d4070ba8db1942fc9447d330a71e36f90c4707f053bd14e8c0a987cb343f655f259eadf69835c283325989541d46c1ac1997472605b4fe9acf238afeae1c.cff0c434a60b26b2c12435da7ef0a430	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
 \.
 
