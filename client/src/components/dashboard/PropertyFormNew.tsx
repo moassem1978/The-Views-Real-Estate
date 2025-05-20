@@ -383,9 +383,9 @@ export default function PropertyForm({
           console.log('New image URLs:', imageUrls);
           console.log('Final unique image list:', validImages);
 
-          // Update property with the deduplicated images
+          // Update property with the deduplicated images, formatting correctly for the JSON field
           const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-            images: validImages
+            images: JSON.stringify(validImages)
           });
 
           if (!updateResponse.ok) {

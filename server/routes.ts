@@ -3042,9 +3042,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             const updatedImages = Array.from(uniqueImages);
             console.log(`Updated property will have ${updatedImages.length} images total`);
             
-            // Update only the images field with the array format
+            // Format images correctly for database storage (as a JSON string for jsonb type)
+            const imagesJson = JSON.stringify(updatedImages);
+            console.log(`Formatted images for database: ${imagesJson}`);
+            
+            // Update only the images field with the proper format
             const updatedProperty = await dbStorage.updateProperty(propId, {
-              images: updatedImages
+              images: imagesJson
             });
             
             if (updatedProperty) {
