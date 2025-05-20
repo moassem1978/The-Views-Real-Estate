@@ -125,6 +125,17 @@ export function parseJsonArray(jsonString: string | string[] | unknown): string[
      String(jsonString))
   );
 
+  // Handle empty or null values
+  if (!jsonString) {
+    return [];
+  }
+
+  // Handle empty object case (common database default)
+  if (jsonString && typeof jsonString === 'object' && !Array.isArray(jsonString) && 
+      Object.keys(jsonString).length === 0) {
+    return [];
+  }
+
   // CRITICAL FIX: Handle direct hash values first (common in Windows uploads)
   // These are MD5-like hashes that are often used instead of proper file paths
   if (typeof jsonString === 'string' && /^[0-9a-f]{32}$/i.test(jsonString.trim())) {
@@ -147,7 +158,7 @@ export function parseJsonArray(jsonString: string | string[] | unknown): string[
       }
       // Convert non-string values to string
       return String(item);
-    });
+    }).filter(Boolean); // Remove any empty values
     console.log(`Returning processed array with ${processedArray.length} items`);
     return processedArray;
   }

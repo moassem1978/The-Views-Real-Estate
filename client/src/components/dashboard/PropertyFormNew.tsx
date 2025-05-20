@@ -369,13 +369,13 @@ export default function PropertyForm({
           }
 
           const uploadResult = await response.json();
-          const imageUrls = uploadResult.fileUrls || [];
+          const imageUrls = uploadResult.fileUrls || uploadResult.imageUrls || [];
           console.log(`Uploaded ${imageUrls.length} images successfully:`, imageUrls);
 
           // Step 3: Update the property with the uploaded image URLs and existing images
 
           // Create a set of unique image URLs to prevent duplication
-          const uniqueImageUrls = new Set([...existingImages, ...imageUrls]);
+          const uniqueImageUrls = new Set([...(existingImages || []), ...imageUrls]);
           const validImages = Array.from(uniqueImageUrls);
 
           console.log(`Updating property with ${validImages.length} total unique images`);

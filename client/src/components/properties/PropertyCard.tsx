@@ -17,43 +17,55 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     console.log(`PropertyCard: Initializing for property #${property.id}`);
     console.log(`PropertyCard: Raw images data:`, property.images);
     
-    // Use our utility function to safely parse the images array
-    const images = parseJsonArray(property.images);
-    console.log(`PropertyCard: Parsed images:`, images);
-    
-    // Set image source with fallback
-    if (images.length > 0) {
-      // Process image path to handle escaping and formatting issues
-      let imagePath = images[0];
+    try {
+      // Use our utility function to safely parse the images array
+      const images = parseJsonArray(property.images);
+      console.log(`PropertyCard: Parsed images:`, images);
       
-      // Remove any escaping and normalize slashes
-      imagePath = imagePath
-        .replace(/"/g, '')
-        .replace(/\\"/g, '')
-        .replace(/\\\\/g, '\\')
-        .replace(/\\/g, '/')
-        .replace(/\\\//g, '/')
-        .trim();
-      
-      // Add leading slash if missing
-      if (!imagePath.startsWith('/') && !imagePath.startsWith('http')) {
-        imagePath = `/${imagePath}`;
+      // Set image source with fallback
+      if (images && images.length > 0) {
+        // Process image path to handle escaping and formatting issues
+        let imagePath = images[0];
+        
+        // Skip empty path
+        if (!imagePath) {
+          console.log(`PropertyCard: Empty image path, using placeholder`);
+          setMainImage('/placeholder-property.svg');
+          return;
+        }
+        
+        // Remove any escaping and normalize slashes
+        imagePath = imagePath
+          .replace(/"/g, '')
+          .replace(/\\"/g, '')
+          .replace(/\\\\/g, '\\')
+          .replace(/\\/g, '/')
+          .replace(/\\\//g, '/')
+          .trim();
+        
+        // Add leading slash if missing
+        if (!imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+          imagePath = `/${imagePath}`;
+        }
+        
+        // Fix path format issues
+        if (imagePath.includes('uploads/properties') && !imagePath.includes('/uploads/properties')) {
+          imagePath = imagePath.replace('uploads/properties', '/uploads/properties');
+        }
+        
+        // Add timestamp to avoid caching issues
+        const timestamp = Date.now();
+        const finalPath = `${imagePath}?t=${timestamp}`;
+        
+        console.log(`PropertyCard: Setting image path to:`, finalPath);
+        setMainImage(finalPath);
+      } else {
+        // Fallback to placeholder
+        console.log(`PropertyCard: No images found, using placeholder`);
+        setMainImage('/placeholder-property.svg');
       }
-      
-      // Fix path format issues
-      if (imagePath.includes('uploads/properties') && !imagePath.includes('/uploads/properties')) {
-        imagePath = imagePath.replace('uploads/properties', '/uploads/properties');
-      }
-      
-      // Add timestamp to avoid caching issues
-      const timestamp = Date.now();
-      const finalPath = `${imagePath}?t=${timestamp}`;
-      
-      console.log(`PropertyCard: Setting image path to:`, finalPath);
-      setMainImage(finalPath);
-    } else {
-      // Fallback to placeholder
-      console.log(`PropertyCard: No images found, using placeholder`);
+    } catch (error) {
+      console.error("Error processing property images:", error);
       setMainImage('/placeholder-property.svg');
     }
     
