@@ -106,10 +106,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     <div className="property-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">
       <Link href={`/properties/${property.id}`} className="block relative overflow-hidden">
         <div className="group-hover:after:opacity-100 after:opacity-0 after:absolute after:inset-0 after:bg-black/20 after:transition-opacity after:duration-300 relative h-64 overflow-hidden rounded-t-lg">
-          <img 
-            src={imageError ? '/placeholder-property.svg' : mainImage}
+          {/* Using the enhanced PropertyImage component which handles all image processing */}
+          <PropertyImage 
+            src={property.images}
             alt={property.title}
-            onError={handleImageError}
             className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
           />
 
