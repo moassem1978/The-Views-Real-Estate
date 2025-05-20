@@ -115,7 +115,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
           {/* Price Tag */}
           <div className="absolute bottom-0 left-0 z-10 px-3 py-1.5 bg-[#B87333] text-white font-medium rounded-tr-md">
-            {property.price === 0 ? "L.E" : `${property.price.toLocaleString()} L.E`}
+            {formatPrice(property.price)}
           </div>
         </div>
 
@@ -177,12 +177,12 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </div>
 
             {/* Price Info */}
-            <span className="text-[#D4AF37] font-medium">{property.price === 0 ? "L.E" : `${property.price.toLocaleString()} L.E`}</span>
+            <span className="text-[#D4AF37] font-medium">{formatPrice(property.price)}</span>
 
             {/* Payment Details */}
             {property.listingType === 'Primary' && property.installmentAmount !== null && property.installmentAmount !== undefined && (
               <div className="text-xs text-gray-600 mt-1">
-                <span className="font-medium">Installments:</span> {property.installmentAmount === 0 ? "L.E" : `${property.installmentAmount.toLocaleString()} L.E`}/month
+                <span className="font-medium">Installments:</span> {formatPrice(property.installmentAmount)}/month
                 {property.installmentPeriod && (
                   <span className="ml-1">({Math.floor(property.installmentPeriod/12)} years)</span>
                 )}
@@ -190,7 +190,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             )}
             {property.downPayment !== null && property.downPayment !== undefined && (
               <div className="text-xs text-gray-600">
-                <span className="font-medium">Down Payment:</span> {property.downPayment === 0 ? "L.E" : `${property.downPayment.toLocaleString()} L.E`}
+                <span className="font-medium">Down Payment:</span> {formatPrice(property.downPayment)}
               </div>
             )}
             {property.isFullCash && (
