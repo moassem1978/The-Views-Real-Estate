@@ -548,6 +548,77 @@ export class DatabaseStorage implements IStorage {
         // Remove the imagesToRemove property as it's not a column in the database
         delete updates.imagesToRemove;
       }
+      
+      // CRITICAL FIX: Ensure images are always stored as an array in the database
+      if ('images' in updates) {
+        console.log(`Processing images for update. Type: ${typeof updates.images}, Value:`, updates.images);
+        
+        let imagesArray: string[] = [];
+        
+        if (Array.isArray(updates.images)) {
+          // It's already an array, make sure all entries are strings
+          imagesArray = updates.images
+            .filter(img => img !== null && img !== undefined && img !== '')
+            .map(img => typeof img === 'string' ? img : String(img));
+            
+          console.log(`Processed array of ${imagesArray.length} images`);
+        } 
+        else if (typeof updates.images === 'string') {
+          // It's a string, check if it might be JSON
+          if (updates.images.trim().startsWith('[')) {
+            try {
+              const parsed = JSON.parse(updates.images);
+              if (Array.isArray(parsed)) {
+                imagesArray = parsed
+                  .filter(img => img !== null && img !== undefined && img !== '')
+                  .map(img => typeof img === 'string' ? img : String(img));
+                  
+                console.log(`Parsed JSON string into array of ${imagesArray.length} images`);
+              } else {
+                // JSON but not an array
+                imagesArray = [updates.images];
+                console.log(`JSON was not an array, using as single image`);
+              }
+            } catch (e) {
+              // Not valid JSON
+              if (updates.images.trim()) {
+                imagesArray = [updates.images.trim()];
+                console.log(`Using string as single image: ${updates.images}`);
+              }
+            }
+          } 
+          else if (updates.images.trim()) {
+            // Plain string path
+            imagesArray = [updates.images.trim()];
+            console.log(`Using string as single image path: ${updates.images}`);
+          }
+        }
+        else if (updates.images && typeof updates.images === 'object') {
+          // Handle empty objects or other objects
+          if (Object.keys(updates.images).length === 0) {
+            // Empty object - leave as empty array
+            console.log(`Empty object for images, using empty array`);
+          } else {
+            // Try to extract values from the object
+            try {
+              const extractedImages = Object.values(updates.images)
+                .filter(val => val !== null && val !== undefined && val !== '')
+                .map(val => typeof val === 'string' ? val : String(val));
+                
+              if (extractedImages.length > 0) {
+                imagesArray = extractedImages;
+                console.log(`Extracted ${imagesArray.length} images from object`);
+              }
+            } catch (e) {
+              console.error(`Failed to extract images from object:`, e);
+            }
+          }
+        }
+        
+        // Assign the properly processed array back to updates.images
+        updates.images = imagesArray;
+        console.log(`Final images array for update: ${imagesArray.length} items`);
+      }
 
       // Convert camelCase properties to snake_case for the database
       const dbUpdates: any = {};
