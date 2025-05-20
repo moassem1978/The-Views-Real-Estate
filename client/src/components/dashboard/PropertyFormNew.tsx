@@ -383,9 +383,19 @@ export default function PropertyForm({
           console.log('New image URLs:', imageUrls);
           console.log('Final unique image list:', validImages);
 
+          // Ensure all images have the correct path format (add leading slash if missing)
+          const formattedImages = validImages.map(img => {
+            if (typeof img === 'string' && !img.startsWith('/') && !img.startsWith('http')) {
+              return `/${img}`;
+            }
+            return img;
+          });
+
+          console.log('Formatted image list with correct paths:', formattedImages);
+
           // Update property with the deduplicated images, letting the database handle the JSON conversion
           const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-            images: validImages
+            images: formattedImages
           });
 
           if (!updateResponse.ok) {

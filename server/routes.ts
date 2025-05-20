@@ -3042,13 +3042,24 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             const updatedImages = Array.from(uniqueImages);
             console.log(`Updated property will have ${updatedImages.length} images total`);
             
-            // Instead of using JSON.stringify which might cause issues with jsonb type,
-            // we'll just use the array directly and let the database handle the conversion
-            console.log(`Updating property with processed image array, length: ${updatedImages.length}`);
+            // Normalize all image paths to ensure they're stored consistently
+            const normalizedImages = updatedImages.map(img => {
+              // Ensure all paths start with a forward slash
+              if (typeof img === 'string' && !img.startsWith('/') && !img.startsWith('http')) {
+                return `/${img}`;
+              }
+              return img;
+            });
+            
+            // Log the normalized image paths
+            console.log(`Updating property with ${normalizedImages.length} normalized image paths:`, 
+              normalizedImages.length > 5 ? 
+                [...normalizedImages.slice(0, 5), `... and ${normalizedImages.length - 5} more`] : 
+                normalizedImages);
             
             // Update only the images field with the array directly
             const updatedProperty = await dbStorage.updateProperty(propId, {
-              images: updatedImages
+              images: normalizedImages
             });
             
             if (updatedProperty) {
