@@ -269,21 +269,26 @@ export default function PropertyForm({
   // Handle form submission
   const onSubmit = async (data: any) => {
     try {
+      // Handle "none" placeholder values correctly
       // Replace "none" placeholder values with appropriate defaults
       if (data.city === "none") {
         data.city = "";
       }
       
       if (data.country === "none") {
-        data.country = "Egypt"; // Default country
+        data.country = "";
       }
       
       if (data.propertyType === "none") {
-        data.propertyType = "apartment"; // Default property type
+        data.propertyType = "";
       }
       
       if (data.listingType === "none") {
-        data.listingType = "Resale"; // Default listing type
+        data.listingType = "";
+      }
+      
+      if (data.projectName === "none") {
+        data.projectName = "";
       }
 
       // Ensure state matches city if not already set
