@@ -27,7 +27,8 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
       // Case 2: JSON string of array
       else if (typeof src === 'string' && (src.startsWith('[') || src.startsWith('"['))) {
         try {
-          const parsed = JSON.parse(src.replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"'));
+          const cleaned = src.replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
+          const parsed = JSON.parse(cleaned);
           if (Array.isArray(parsed) && parsed.length > index) {
             rawSrc = parsed[index];
             console.log(`PropertyImage: Parsed JSON string to array, using image at index ${index}`);
@@ -35,17 +36,29 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
         } catch (e) {
           // Not valid JSON, treat as direct path
           rawSrc = src;
+          console.log(`PropertyImage: Failed to parse JSON, using as direct path: ${src}`);
         }
       } 
       // Case 3: Direct string path
       else if (typeof src === 'string') {
         rawSrc = src;
+        console.log(`PropertyImage: Using direct string path: ${src}`);
       }
       // Case 4: Object with path or URL property (handle potential API responses)
       else if (src && typeof src === 'object' && (src.path || src.url)) {
         rawSrc = src.path || src.url;
+        console.log(`PropertyImage: Extracted path from object: ${rawSrc}`);
       }
 
+      // Special handling for image paths without leading slash
+      if (rawSrc && typeof rawSrc === 'string') {
+        // Check if path needs to be adjusted
+        if (rawSrc.includes('uploads/properties') && !rawSrc.startsWith('/') && !rawSrc.startsWith('http')) {
+          rawSrc = `/${rawSrc}`;
+          console.log(`PropertyImage: Added leading slash to path: ${rawSrc}`);
+        }
+      }
+      
       // Process and normalize the image path
       const imageUrl = rawSrc ? normalizeImagePath(rawSrc) : '';
       

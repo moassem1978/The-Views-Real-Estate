@@ -82,6 +82,8 @@ export function getFirstImageSafely(imageSource: any): string {
 export function normalizeImagePath(path: string): string {
   if (!path) return '/placeholder-property.svg';
   
+  console.log(`Normalizing image path: "${path}"`);
+  
   // Clean up common issues
   let cleanPath = path
     .replace(/"/g, '')
@@ -96,7 +98,7 @@ export function normalizeImagePath(path: string): string {
     cleanPath = `/${cleanPath}`;
   }
   
-  // Fix path format issues
+  // Fix path format issues - handle both cases
   if (cleanPath.includes('uploads/properties') && !cleanPath.includes('/uploads/properties')) {
     cleanPath = cleanPath.replace('uploads/properties', '/uploads/properties');
   }
@@ -106,6 +108,12 @@ export function normalizeImagePath(path: string): string {
     cleanPath = cleanPath.replace(/\/\//g, '/');
   }
   
+  // Final check to ensure the path is valid
+  if (!cleanPath.startsWith('/') && !cleanPath.startsWith('http')) {
+    cleanPath = `/${cleanPath}`;
+  }
+  
+  console.log(`Normalized path: "${cleanPath}"`);
   return cleanPath;
 }
 
