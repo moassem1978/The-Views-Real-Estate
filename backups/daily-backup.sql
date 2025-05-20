@@ -312,9 +312,6 @@ COPY public.projects (id, created_by, created_at, updated_at, project_name, desc
 --
 
 COPY public.properties (id, title, description, address, city, state, zip_code, price, down_payment, installment_amount, installment_period, is_full_cash, listing_type, project_name, developer_name, bedrooms, bathrooms, built_up_area, plot_size, garden_size, floor, is_ground_unit, property_type, is_featured, is_new_listing, is_highlighted, year_built, views, amenities, images, latitude, longitude, created_at, agent_id, status, created_by, approved_by, updated_at, country, reference_number) FROM stdin;
-9	Corner Town house in Sodic East	Town house - Ground + 1st  - Shell & Core  \n\nSODIC East Compound is an elite project in New Heliopolis, developed for those not only looking for a luxurious home but also a one-of-a-kind community. It is a multi-generation destination, offering a tranquil and sustainable living experience in the heart of the city.\nSODIC East spreads across 665 acres of land in New Heliopolis, outlined by a unique master plan filled with exclusive facilities and fancy homes. SODIC made sure everything you need is near the comfort of your luxurious unit in the compound.\nThe comfortable lifestyle you will experience in SODIC East extends outwards as well, as the prime location of the compound grants you access to many popular destinations and easy commuting to anywhere you want to reach.\n	Sodic East	Cairo	Cairo	11511	31000000	1550000	0	0	f	Primary	Sodic East	Sodic	3	2	221	0	0	0	f	apartment	t	t	t	\N	\N	{}	["uploads/properties/images-1747748354969-375.png", "uploads/properties/images-1747748360547-539.jpeg", "uploads/properties/images-1747748375039-72.png"]	\N	\N	2025-05-20T13:39:13.949Z	1	published	1	\N	\N	Egypt	\N
-3	Villa for sale in Dyar	Prime location villa	Dyar	Cairo	Cairo	11511	35000000	0	0	0	f	Resale	Dyar	Arco	3	4	370	694	0	0	f	villa	t	t	t	\N	\N	{}	["uploads/properties/images-1747740041469-280.jpeg", "uploads/properties/images-1747740043300-891.jpeg", "uploads/properties/images-1747740044841-101.jpeg"]	\N	\N	2025-05-20T11:09:07.041Z	1	published	1	\N	\N	Egypt	\N
-4	Prime location Duplex in village gate	Fully Finished\nCentral AC & heating system	Village gate	Cairo	Cairo	11511	17000000	0	0	0	f	Resale	Village gate	Palm hills	3	2	195	0	50	0	f	apartment	t	t	t	\N	\N	{}	["uploads/properties/images-1747741063224-204.png", "uploads/properties/images-1747741067667-89.png", "uploads/properties/images-1747741073205-826.jpeg"]	\N	\N	2025-05-20T11:35:10.421Z	1	published	1	\N	\N	Egypt	\N
 \.
 
 
@@ -373,7 +370,7 @@ YrmaV_5ScaP_Q6ljmxpEDHsftaaXRjdr	{"cookie":{"originalMaxAge":2592000000,"expires
 qWBpXerEQY-ox3LcpshhoFaREe5H1h6y	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-04T13:41:29.348Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-04 13:41:30
 B4jPn_R8KT27PPIgmCxhHJx2cjKMBghz	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-04T11:14:52.496Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-04 11:14:53
 TnSxEF8M9HHiol1S2Fsl2rVLmU-fp4Mh	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T12:59:19.606Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 12:59:20
-X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-04T14:24:24.388Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-04 14:24:25
+X6sFmJSFEnGz7awtrFSnAU1tXCCzK3bc	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-04T15:14:25.766Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-04 15:14:26
 TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T16:40:00.464Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 16:40:01
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
 LJVqzlsFrvsYCPbRYd3P1bZ9nZBrgpXy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-04T11:53:56.881Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-04 11:53:57
@@ -393,7 +390,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
-1	owner	79f9a9328c8abaf4452d9807358a51f79ad5684de5cc98a9cfa748049d9286b88744432da6ef00d5fb637e3458ac814329f92946b907e4d858609dd75f290c48.11e5e4a7c13676e7cb0f125daca10add	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
+1	owner	9f01b71f6f76c2268b932f9e759c98384fa0edfa4dde888f10273293082111e670d2bd8f916a611f58a56527f215c99ab75f571223ef4728c3cb1b60d4de7e45.30e3cac9be3e25bd7d34694dd3a15000	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
 \.
 
@@ -416,7 +413,7 @@ SELECT pg_catalog.setval('public.projects_id_seq', 3, true);
 -- Name: properties_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.properties_id_seq', 9, true);
+SELECT pg_catalog.setval('public.properties_id_seq', 1, false);
 
 
 --
@@ -430,7 +427,7 @@ SELECT pg_catalog.setval('public.testimonials_id_seq', 1, false);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 3, true);
+SELECT pg_catalog.setval('public.users_id_seq', 4, true);
 
 
 --
