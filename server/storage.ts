@@ -520,6 +520,10 @@ export class DatabaseStorage implements IStorage {
         console.log(`Sample image paths: ${imagesArray.slice(0, 3).join(', ')}${imagesArray.length > 3 ? '...' : ''}`);
       }
       
+      // CRITICAL FIX: PostgreSQL needs proper JSON string format for arrays
+      // Convert JavaScript array to valid PostgreSQL JSON array string
+      dbProperty.images = JSON.stringify(imagesArray);
+      
       // Add created_at field with current date
       const currentDate = new Date().toISOString();
       dbProperty.created_at = currentDate;
@@ -681,8 +685,9 @@ export class DatabaseStorage implements IStorage {
         }
         
         // Assign the properly processed array back to updates.images
-        updates.images = imagesArray;
-        console.log(`Final images array for update: ${imagesArray.length} items`);
+        // CRITICAL FIX: We must convert to JSON string for PostgreSQL
+        updates.images = JSON.stringify(imagesArray);
+        console.log(`Final images array for update: ${imagesArray.length} items, JSON: ${updates.images}`);
       }
 
       // Convert camelCase properties to snake_case for the database
