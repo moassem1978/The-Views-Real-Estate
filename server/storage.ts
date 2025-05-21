@@ -103,7 +103,7 @@ export class DatabaseStorage implements IStorage {
 
       const query = 'SELECT DISTINCT project_name FROM properties WHERE project_name IS NOT NULL AND project_name != \'\' ORDER BY project_name';
       const result = await pool.query(query);
-      
+
       const projectNames = result.rows.map(row => row.project_name);
       this.cache.set(cacheKey, projectNames, 3600); // Cache for 1 hour
       return projectNames;
@@ -125,7 +125,7 @@ export class DatabaseStorage implements IStorage {
 
       const query = 'SELECT DISTINCT city FROM properties WHERE city IS NOT NULL AND city != \'\' ORDER BY city';
       const result = await pool.query(query);
-      
+
       const cities = result.rows.map(row => row.city);
       this.cache.set(cacheKey, cities, 3600); // Cache for 1 hour
       return cities;
@@ -230,24 +230,24 @@ export class DatabaseStorage implements IStorage {
   async getAllProperties(page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
     try {
       const offset = (page - 1) * pageSize;
-      
+
       // Get total count for pagination
       const countResult = await pool.query('SELECT COUNT(*) as total FROM properties');
       const totalCount = parseInt(countResult.rows[0].total, 10);
       const pageCount = Math.ceil(totalCount / pageSize);
-      
+
       // Query for paginated data
       const query = `
         SELECT * FROM properties 
         ORDER BY is_featured DESC, is_highlighted DESC, created_at DESC 
         LIMIT $1 OFFSET $2
       `;
-      
+
       const result = await pool.query(query, [pageSize, offset]);
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       const properties = result.rows.map(this.mapPropertyFromDb);
-      
+
       return {
         data: properties,
         totalCount,
@@ -264,13 +264,13 @@ export class DatabaseStorage implements IStorage {
   async getFeaturedProperties(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
     try {
       const offset = (page - 1) * pageSize;
-      
+
       // Get total count for pagination
       const countQuery = 'SELECT COUNT(*) as total FROM properties WHERE is_featured = true';
       const countResult = await pool.query(countQuery);
       const totalCount = parseInt(countResult.rows[0].total, 10);
       const pageCount = Math.ceil(totalCount / pageSize);
-      
+
       // Query for paginated data
       const query = `
         SELECT * FROM properties 
@@ -278,12 +278,12 @@ export class DatabaseStorage implements IStorage {
         ORDER BY created_at DESC 
         LIMIT $1 OFFSET $2
       `;
-      
+
       const result = await pool.query(query, [limit || pageSize, offset]);
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       const properties = result.rows.map(this.mapPropertyFromDb);
-      
+
       return {
         data: properties,
         totalCount,
@@ -301,32 +301,32 @@ export class DatabaseStorage implements IStorage {
     try {
       // Log the query parameters
       console.log(`DEBUG: Fetching highlighted properties with limit: ${limit}`);
-      
+
       const query = `
         SELECT * FROM properties 
         WHERE is_highlighted = true 
         ORDER BY created_at DESC 
         LIMIT $1
       `;
-      
+
       const result = await pool.query(query, [limit]);
       console.log(`DEBUG: Query returned ${result.rows.length} highlighted properties`);
-      
+
       // Log each highlighted property for debugging
       result.rows.forEach(property => {
         console.log(`DEBUG: Highlighted property: ID ${property.id}, Title: ${property.title}, isHighlighted: ${property.is_highlighted}`);
       });
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       const properties = result.rows.map(this.mapPropertyFromDb);
-      
+
       console.log(`DEBUG: Found ${properties.length} highlighted properties`);
-      
+
       // Log what we're returning to the frontend
       properties.forEach(property => {
         console.log(`DEBUG: Highlighted property: ID ${property.id}, Title: ${property.title}, isHighlighted: ${property.isHighlighted}`);
       });
-      
+
       return properties;
     } catch (error) {
       console.error('Error getting highlighted properties:', error);
@@ -337,13 +337,13 @@ export class DatabaseStorage implements IStorage {
   async getNewListings(limit = 3, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
     try {
       const offset = (page - 1) * pageSize;
-      
+
       // Get total count for pagination
       const countQuery = 'SELECT COUNT(*) as total FROM properties WHERE is_new_listing = true';
       const countResult = await pool.query(countQuery);
       const totalCount = parseInt(countResult.rows[0].total, 10);
       const pageCount = Math.ceil(totalCount / pageSize);
-      
+
       // Query for paginated data
       const query = `
         SELECT * FROM properties 
@@ -351,12 +351,12 @@ export class DatabaseStorage implements IStorage {
         ORDER BY created_at DESC 
         LIMIT $1 OFFSET $2
       `;
-      
+
       const result = await pool.query(query, [limit || pageSize, offset]);
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       const properties = result.rows.map(this.mapPropertyFromDb);
-      
+
       return {
         data: properties,
         totalCount,
@@ -374,11 +374,11 @@ export class DatabaseStorage implements IStorage {
     try {
       const query = 'SELECT * FROM properties WHERE id = $1';
       const result = await pool.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
         return undefined;
       }
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       return this.mapPropertyFromDb(result.rows[0]);
     } catch (error) {
@@ -394,7 +394,7 @@ export class DatabaseStorage implements IStorage {
 
       // Handle camelCase to snake_case conversion for Postgres column names
       const dbProperty: any = {};
-      
+
       // Direct field mappings
       dbProperty.title = insertProperty.title;
       dbProperty.description = insertProperty.description;
@@ -430,7 +430,7 @@ export class DatabaseStorage implements IStorage {
       dbProperty.latitude = insertProperty.latitude;
       dbProperty.longitude = insertProperty.longitude;
       dbProperty.amenities = insertProperty.amenities;
-      
+
       // Handle the reference field
       if (insertProperty.references) {
         dbProperty.reference_number = insertProperty.references;
@@ -439,7 +439,7 @@ export class DatabaseStorage implements IStorage {
       } else if (insertProperty.reference_number) {
         dbProperty.reference_number = insertProperty.reference_number;
       }
-      
+
       // ENHANCED IMAGE HANDLING - Ensure images are always stored as arrays in the database
       let imagesArray: string[] = [];
       if (insertProperty.images) {
@@ -447,13 +447,13 @@ export class DatabaseStorage implements IStorage {
           Array.isArray(insertProperty.images) 
             ? `Array with ${insertProperty.images.length} items` 
             : insertProperty.images);
-        
+
         if (Array.isArray(insertProperty.images)) {
           // It's already an array, make sure all entries are strings
           imagesArray = insertProperty.images
             .filter(img => img !== null && img !== undefined && img !== '')
             .map(img => typeof img === 'string' ? img : String(img));
-            
+
           console.log(`Processed array of ${imagesArray.length} images for new property`);
         } 
         else if (typeof insertProperty.images === 'string') {
@@ -465,7 +465,7 @@ export class DatabaseStorage implements IStorage {
                 imagesArray = parsed
                   .filter(img => img !== null && img !== undefined && img !== '')
                   .map(img => typeof img === 'string' ? img : String(img));
-                  
+
                 console.log(`Parsed JSON string into array of ${imagesArray.length} images for new property`);
               } else {
                 // JSON but not an array - use as single image
@@ -498,7 +498,7 @@ export class DatabaseStorage implements IStorage {
               const extractedImages = Object.values(insertProperty.images)
                 .filter(val => val !== null && val !== undefined && val !== '')
                 .map(val => typeof val === 'string' ? val : String(val));
-                
+
               if (extractedImages.length > 0) {
                 imagesArray = extractedImages;
                 console.log(`Extracted ${imagesArray.length} images from object for new property`);
@@ -509,25 +509,28 @@ export class DatabaseStorage implements IStorage {
           }
         }
       }
-      
+
       // Set final images array, ensuring it's never null or undefined
       dbProperty.images = imagesArray;
       console.log(`Final images array for new property: ${imagesArray.length} items`);
-      
+
       // For debugging - log the actual data that will be stored
       console.log(`Database image field type: ${typeof dbProperty.images}, isArray: ${Array.isArray(dbProperty.images)}`);
       if (imagesArray.length > 0) {
         console.log(`Sample image paths: ${imagesArray.slice(0, 3).join(', ')}${imagesArray.length > 3 ? '...' : ''}`);
       }
-      
-      // CRITICAL FIX: PostgreSQL needs proper JSON string format for arrays
-      // Convert JavaScript array to valid PostgreSQL JSON array string
-      dbProperty.images = JSON.stringify(imagesArray);
-      
+
+      // Ensure proper JSON array format for PostgreSQL
+      if (Array.isArray(imagesArray)) {
+        dbProperty.images = JSON.stringify(imagesArray.filter(img => typeof img === 'string' && img.trim() !== ''));
+      } else {
+        dbProperty.images = '[]';
+      }
+
       // Add created_at field with current date
       const currentDate = new Date().toISOString();
       dbProperty.created_at = currentDate;
-      
+
       // Insert the property into the database
       const insertQuery = `
         INSERT INTO properties (
@@ -545,7 +548,7 @@ export class DatabaseStorage implements IStorage {
           $30, $31, $32, $33, $34, $35, $36, $37
         ) RETURNING *
       `;
-      
+
       const values = [
         dbProperty.title, dbProperty.description, dbProperty.property_type, dbProperty.listing_type, 
         dbProperty.price, dbProperty.down_payment, dbProperty.installment_amount, 
@@ -558,13 +561,13 @@ export class DatabaseStorage implements IStorage {
         dbProperty.state, dbProperty.status, dbProperty.reference_number, 
         dbProperty.latitude, dbProperty.longitude, dbProperty.amenities, dbProperty.images, dbProperty.created_at
       ];
-      
+
       const result = await pool.query(insertQuery, values);
       const property = result.rows[0];
-      
+
       // Transform the property to camelCase for the frontend
       const updatedProperty = this.mapPropertyFromDb(property);
-      
+
       // Make sure the references field is available in the return value
       // Note: reference_number in DB maps to references in the application
       const propertyWithReferences = {
@@ -617,19 +620,19 @@ export class DatabaseStorage implements IStorage {
         // Remove the imagesToRemove property as it's not a column in the database
         delete updates.imagesToRemove;
       }
-      
+
       // CRITICAL FIX: Ensure images are always stored as an array in the database
       if ('images' in updates) {
         console.log(`Processing images for update. Type: ${typeof updates.images}, Value:`, updates.images);
-        
+
         let imagesArray: string[] = [];
-        
+
         if (Array.isArray(updates.images)) {
           // It's already an array, make sure all entries are strings
           imagesArray = updates.images
             .filter(img => img !== null && img !== undefined && img !== '')
             .map(img => typeof img === 'string' ? img : String(img));
-            
+
           console.log(`Processed array of ${imagesArray.length} images`);
         } 
         else if (typeof updates.images === 'string') {
@@ -641,7 +644,7 @@ export class DatabaseStorage implements IStorage {
                 imagesArray = parsed
                   .filter(img => img !== null && img !== undefined && img !== '')
                   .map(img => typeof img === 'string' ? img : String(img));
-                  
+
                 console.log(`Parsed JSON string into array of ${imagesArray.length} images`);
               } else {
                 // JSON but not an array
@@ -673,7 +676,7 @@ export class DatabaseStorage implements IStorage {
               const extractedImages = Object.values(updates.images)
                 .filter(val => val !== null && val !== undefined && val !== '')
                 .map(val => typeof val === 'string' ? val : String(val));
-                
+
               if (extractedImages.length > 0) {
                 imagesArray = extractedImages;
                 console.log(`Extracted ${imagesArray.length} images from object`);
@@ -683,7 +686,7 @@ export class DatabaseStorage implements IStorage {
             }
           }
         }
-        
+
         // Assign the properly processed array back to updates.images
         // CRITICAL FIX: We must convert to JSON string for PostgreSQL
         updates.images = JSON.stringify(imagesArray);
@@ -944,7 +947,7 @@ export class DatabaseStorage implements IStorage {
 
       if (updatedProperty.images) {
         console.log('Processing images from database');
-        
+
         // Simplified image handling - focus on the most common case (array)
         if (Array.isArray(updatedProperty.images)) {
           console.log(`Images is already an array with ${updatedProperty.images.length} items`);
@@ -952,7 +955,7 @@ export class DatabaseStorage implements IStorage {
         } else {
           console.log('Images is not an array, attempting to convert');
           console.log('Image data type:', typeof updatedProperty.images);
-          
+
           try {
             // Try to convert the images to an array using any reasonable method
             if (typeof updatedProperty.images === 'string') {
@@ -1092,71 +1095,71 @@ export class DatabaseStorage implements IStorage {
       const conditions = [];
       const queryParams = [];
       let paramIndex = 1;
-      
+
       if (filters.location) {
         conditions.push(`(city ILIKE $${paramIndex} OR address ILIKE $${paramIndex})`);
         queryParams.push(`%${filters.location}%`);
         paramIndex++;
       }
-      
+
       if (filters.propertyType) {
         conditions.push(`property_type = $${paramIndex}`);
         queryParams.push(filters.propertyType);
         paramIndex++;
       }
-      
+
       if (filters.listingType) {
         conditions.push(`listing_type = $${paramIndex}`);
         queryParams.push(filters.listingType);
         paramIndex++;
       }
-      
+
       if (filters.projectName) {
         conditions.push(`project_name ILIKE $${paramIndex}`);
         queryParams.push(`%${filters.projectName}%`);
         paramIndex++;
       }
-      
+
       if (filters.developerName) {
         conditions.push(`developer_name ILIKE $${paramIndex}`);
         queryParams.push(`%${filters.developerName}%`);
         paramIndex++;
       }
-      
+
       if (filters.minPrice !== undefined && filters.minPrice > 0) {
         conditions.push(`price >= $${paramIndex}`);
         queryParams.push(filters.minPrice);
         paramIndex++;
       }
-      
+
       if (filters.maxPrice !== undefined && filters.maxPrice > 0) {
         conditions.push(`price <= $${paramIndex}`);
         queryParams.push(filters.maxPrice);
         paramIndex++;
       }
-      
+
       if (filters.minBedrooms !== undefined && filters.minBedrooms > 0) {
         conditions.push(`bedrooms >= $${paramIndex}`);
         queryParams.push(filters.minBedrooms);
         paramIndex++;
       }
-      
+
       if (filters.minBathrooms !== undefined && filters.minBathrooms > 0) {
         conditions.push(`bathrooms >= $${paramIndex}`);
         queryParams.push(filters.minBathrooms);
         paramIndex++;
       }
-      
+
       if (filters.isFullCash !== undefined) {
         conditions.push(`is_full_cash = $${paramIndex}`);
         queryParams.push(filters.isFullCash);
         paramIndex++;
       }
-      
+
       if (filters.hasInstallments !== undefined && filters.hasInstallments) {
         conditions.push(`installment_period IS NOT NULL AND installment_period > 0`);
       }
-      
+
       if (filters.international !== undefined) {
         if (filters.international) {
           conditions.push(`(country IS NOT NULL AND country != 'Egypt' AND country != '')`);
@@ -1164,22 +1167,22 @@ export class DatabaseStorage implements IStorage {
           conditions.push(`(country IS NULL OR country = 'Egypt' OR country = '')`);
         }
       }
-      
+
       // Only include approved properties in search results
       conditions.push(`status = 'approved'`);
-      
+
       // Build the WHERE clause if there are conditions
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-      
+
       // Get total count for pagination
       const countQuery = `SELECT COUNT(*) as total FROM properties ${whereClause}`;
       const countResult = await pool.query(countQuery, queryParams);
       const totalCount = parseInt(countResult.rows[0].total, 10);
       const pageCount = Math.ceil(totalCount / pageSize);
-      
+
       // Calculate offset for pagination
       const offset = (page - 1) * pageSize;
-      
+
       // Query for paginated data
       const query = `
         SELECT * FROM properties 
@@ -1187,14 +1190,14 @@ export class DatabaseStorage implements IStorage {
         ORDER BY is_featured DESC, created_at DESC 
         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
       `;
-      
+
       queryParams.push(pageSize, offset);
-      
+
       const result = await pool.query(query, queryParams);
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       const properties = result.rows.map(this.mapPropertyFromDb);
-      
+
       return {
         data: properties,
         totalCount,
@@ -1211,15 +1214,15 @@ export class DatabaseStorage implements IStorage {
   async getAllTestimonials(page = 1, pageSize = 10): Promise<PaginatedResult<Testimonial>> {
     try {
       const offset = (page - 1) * pageSize;
-      
+
       // Get total count for pagination
       const countResult = await db.select({ count: sql`count(*)` }).from(testimonials);
       const totalCount = parseInt(countResult[0].count.toString());
       const pageCount = Math.ceil(totalCount / pageSize);
-      
+
       // Query for paginated data
       const result = await db.select().from(testimonials).limit(pageSize).offset(offset);
-      
+
       return {
         data: result,
         totalCount,
@@ -1268,25 +1271,25 @@ export class DatabaseStorage implements IStorage {
   async getAllAnnouncements(page = 1, pageSize = 10): Promise<PaginatedResult<Announcement>> {
     try {
       const offset = (page - 1) * pageSize;
-      
+
       // Get total count for pagination
       const countQuery = 'SELECT COUNT(*) as total FROM announcements';
       const countResult = await pool.query(countQuery);
       const totalCount = parseInt(countResult.rows[0].total, 10);
       const pageCount = Math.ceil(totalCount / pageSize);
-      
+
       // Query for paginated data
       const query = `
         SELECT * FROM announcements 
         ORDER BY created_at DESC 
         LIMIT $1 OFFSET $2
       `;
-      
+
       const result = await pool.query(query, [pageSize, offset]);
-      
+
       // Transform the date fields for each announcement
       const announcements = result.rows.map(this.mapAnnouncementFromDb);
-      
+
       return {
         data: announcements,
         totalCount,
@@ -1308,12 +1311,12 @@ export class DatabaseStorage implements IStorage {
         ORDER BY created_at DESC 
         LIMIT $1
       `;
-      
+
       const result = await pool.query(query, [limit]);
-      
+
       // Transform the date fields for each announcement
       const announcements = result.rows.map(this.mapAnnouncementFromDb);
-      
+
       return announcements;
     } catch (error) {
       console.error('Error getting featured announcements:', error);
@@ -1327,7 +1330,7 @@ export class DatabaseStorage implements IStorage {
         'SELECT COUNT(*) as total FROM announcements WHERE is_highlighted = true'
       );
       console.log("DEBUG: Announcements with isHighlighted=true:", parseInt(highlightedCount.rows[0].total, 10));
-      
+
       // Query for the highlighted announcements
       const query = `
         SELECT * FROM announcements 
@@ -1335,20 +1338,20 @@ export class DatabaseStorage implements IStorage {
         ORDER BY created_at DESC 
         LIMIT $1
       `;
-      
+
       const result = await pool.query(query, [limit]);
       console.log(`DEBUG: Query returned ${result.rows.length} highlighted announcements`);
-      
+
       // Transform the date fields for each announcement
       const announcements = result.rows.map(this.mapAnnouncementFromDb);
-      
+
       console.log(`DEBUG: Found ${announcements.length} highlighted announcements`);
-      
+
       // Log what we're returning to the frontend
       announcements.forEach(announcement => {
         console.log(`DEBUG: Highlighted announcement: ID ${announcement.id}, Title: ${announcement.title}, isHighlighted: ${announcement.isHighlighted}`);
       });
-      
+
       return announcements;
     } catch (error) {
       console.error('Error getting highlighted announcements:', error);
@@ -1360,11 +1363,11 @@ export class DatabaseStorage implements IStorage {
     try {
       const query = 'SELECT * FROM announcements WHERE id = $1';
       const result = await pool.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
         return undefined;
       }
-      
+
       // Transform the date fields
       return this.mapAnnouncementFromDb(result.rows[0]);
     } catch (error) {
@@ -1387,7 +1390,7 @@ export class DatabaseStorage implements IStorage {
         start_date: insertAnnouncement.startDate,
         end_date: insertAnnouncement.endDate,
       };
-      
+
       const insertQuery = `
         INSERT INTO announcements (
           title, content, image_url, is_featured, is_highlighted,
@@ -1396,7 +1399,7 @@ export class DatabaseStorage implements IStorage {
           $1, $2, $3, $4, $5, $6, $7, $8, $9
         ) RETURNING *
       `;
-      
+
       const values = [
         dbAnnouncement.title, 
         dbAnnouncement.content, 
@@ -1408,9 +1411,9 @@ export class DatabaseStorage implements IStorage {
         dbAnnouncement.start_date,
         dbAnnouncement.end_date
       ];
-      
+
       const result = await pool.query(insertQuery, values);
-      
+
       // Transform the date fields
       return this.mapAnnouncementFromDb(result.rows[0]);
     } catch (error) {
@@ -1423,7 +1426,7 @@ export class DatabaseStorage implements IStorage {
     try {
       // Convert camelCase to snake_case for database column names
       const dbUpdates: any = {};
-      
+
       if ('title' in updates) dbUpdates.title = updates.title;
       if ('content' in updates) dbUpdates.content = updates.content;
       if ('imageUrl' in updates) dbUpdates.image_url = updates.imageUrl;
@@ -1433,30 +1436,30 @@ export class DatabaseStorage implements IStorage {
       if ('startDate' in updates) dbUpdates.start_date = updates.startDate;
       if ('endDate' in updates) dbUpdates.end_date = updates.endDate;
       if ('approvedBy' in updates) dbUpdates.approved_by = updates.approvedBy;
-      
+
       // Update the updated_at timestamp
       dbUpdates.updated_at = new Date();
-      
+
       // Build the SET clause
       const setClauseParts = Object.entries(dbUpdates).map(([key, _], index) => `${key} = $${index + 1}`);
       const queryParams = Object.values(dbUpdates);
-      
+
       // Add the ID as the last parameter
       queryParams.push(id);
-      
+
       const query = `
         UPDATE announcements 
         SET ${setClauseParts.join(', ')} 
         WHERE id = $${queryParams.length} 
         RETURNING *
       `;
-      
+
       const result = await pool.query(query, queryParams);
-      
+
       if (result.rows.length === 0) {
         return undefined;
       }
-      
+
       // Transform the date fields
       return this.mapAnnouncementFromDb(result.rows[0]);
     } catch (error) {
@@ -1478,25 +1481,25 @@ export class DatabaseStorage implements IStorage {
   async getAllProjects(page = 1, pageSize = 10): Promise<PaginatedResult<Project>> {
     try {
       const offset = (page - 1) * pageSize;
-      
+
       // Get total count for pagination
       const countQuery = 'SELECT COUNT(*) as total FROM projects';
       const countResult = await pool.query(countQuery);
       const totalCount = parseInt(countResult.rows[0].total, 10);
       const pageCount = Math.ceil(totalCount / pageSize);
-      
+
       // Query for paginated data
       const query = `
         SELECT * FROM projects 
         ORDER BY created_at DESC 
         LIMIT $1 OFFSET $2
       `;
-      
+
       const result = await pool.query(query, [pageSize, offset]);
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       const projects = result.rows.map(this.mapProjectFromDb);
-      
+
       return {
         data: projects,
         totalCount,
@@ -1514,11 +1517,11 @@ export class DatabaseStorage implements IStorage {
     try {
       const query = 'SELECT * FROM projects WHERE id = $1';
       const result = await pool.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
         return undefined;
       }
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       return this.mapProjectFromDb(result.rows[0]);
     } catch (error) {
@@ -1540,7 +1543,7 @@ export class DatabaseStorage implements IStorage {
         status: insertProject.status || 'active',
         created_by: insertProject.createdBy
       };
-      
+
       const insertQuery = `
         INSERT INTO projects (
           project_name, description, location, images, unit_types,
@@ -1549,7 +1552,7 @@ export class DatabaseStorage implements IStorage {
           $1, $2, $3, $4, $5, $6, $7, $8
         ) RETURNING *
       `;
-      
+
       const values = [
         dbProject.project_name, 
         dbProject.description, 
@@ -1560,9 +1563,9 @@ export class DatabaseStorage implements IStorage {
         dbProject.status, 
         dbProject.created_by
       ];
-      
+
       const result = await pool.query(insertQuery, values);
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       return this.mapProjectFromDb(result.rows[0]);
     } catch (error) {
@@ -1575,7 +1578,7 @@ export class DatabaseStorage implements IStorage {
     try {
       // Convert camelCase to snake_case for database column names
       const dbUpdates: any = {};
-      
+
       if ('projectName' in updates) dbUpdates.project_name = updates.projectName;
       if ('description' in updates) dbUpdates.description = updates.description;
       if ('location' in updates) dbUpdates.location = updates.location;
@@ -1584,30 +1587,30 @@ export class DatabaseStorage implements IStorage {
       if ('aboutDeveloper' in updates) dbUpdates.about_developer = updates.aboutDeveloper;
       if ('status' in updates) dbUpdates.status = updates.status;
       if ('approvedBy' in updates) dbUpdates.approved_by = updates.approvedBy;
-      
+
       // Update the updated_at timestamp
       dbUpdates.updated_at = new Date();
-      
+
       // Build the SET clause
       const setClauseParts = Object.entries(dbUpdates).map(([key, _], index) => `${key} = $${index + 1}`);
       const queryParams = Object.values(dbUpdates);
-      
+
       // Add the ID as the last parameter
       queryParams.push(id);
-      
+
       const query = `
         UPDATE projects 
         SET ${setClauseParts.join(', ')} 
         WHERE id = $${queryParams.length} 
         RETURNING *
       `;
-      
+
       const result = await pool.query(query, queryParams);
-      
+
       if (result.rows.length === 0) {
         return undefined;
       }
-      
+
       // Map the snake_case database columns to camelCase for the frontend
       return this.mapProjectFromDb(result.rows[0]);
     } catch (error) {
@@ -1664,16 +1667,16 @@ export class DatabaseStorage implements IStorage {
       agentId: dbProperty.agent_id,
       zipCode: dbProperty.zip_code,
       state: dbProperty.state,
-      
+
       // Reference field that maps from reference_number
       references: dbProperty.reference_number || '',
       reference: dbProperty.reference_number || '',
       reference_number: dbProperty.reference_number || '',
-      
+
       // Image and amenities handling 
       images: Array.isArray(dbProperty.images) ? dbProperty.images : [],
       amenities: Array.isArray(dbProperty.amenities) ? dbProperty.amenities : [],
-      
+
       // Additional fields
       latitude: dbProperty.latitude,
       longitude: dbProperty.longitude,
@@ -1766,19 +1769,19 @@ export class DatabaseStorage implements IStorage {
 
   async updateSiteSettings(updates: Partial<SiteSettings>): Promise<SiteSettings> {
     const currentSettings = await this.getSiteSettings();
-    
+
     // Update settings
     const updatedSettings = {
       ...currentSettings,
       ...updates,
     };
-    
+
     // Save to file
     this.saveSettingsToFile(updatedSettings);
-    
+
     // Update in-memory cache
     this.currentSettings = updatedSettings;
-    
+
     return updatedSettings;
   }
 }
