@@ -872,12 +872,12 @@ export class DatabaseStorage implements IStorage {
           }
         });
 
-        // DO NOT use JSON.stringify - it causes issues with PostgreSQL's JSONB parsing
-        // Instead, use a direct array which pg will properly convert to JSONB
-        dbUpdates.images = normalizedImages;
-        console.log(`Final images array (${normalizedImages.length} items):`, 
+        // CRITICAL FIX: PostgreSQL requires JSON string format for image arrays
+        // Convert the array to a properly formatted JSON string
+        dbUpdates.images = JSON.stringify(normalizedImages);
+        console.log(`Final images JSON (${normalizedImages.length} items):`, 
                     normalizedImages.length > 0 ? 
-                    normalizedImages.slice(0, 3) : 
+                    `First few: ${normalizedImages.slice(0, 3).join(', ')}` : 
                     'empty array');
       }
 
@@ -921,11 +921,19 @@ export class DatabaseStorage implements IStorage {
       console.log(`With parameters:`, queryParams);
 
       // Execute the query using pool.query
-      const result = await pool.query(query, queryParams);
+      let result;
+      try {
+        result = await pool.query(query, queryParams);
 
-      if (!result || result.rowCount === 0) {
-        console.log(`DB: Failed to update property ${id}`);
-        return undefined;
+        if (!result || result.rowCount === 0) {
+          console.log(`DB: Failed to update property ${id}`);
+          return undefined;
+        }
+      } catch (error) {
+        console.error(`DB Error updating property ${id}:`, error);
+        // Important: Rethrow the error so it's caught by the route handler
+        // This will prevent the property from being created when there's a DB error
+        throw error;
       }
 
       const updatedProperty = result.rows[0];
