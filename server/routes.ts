@@ -295,6 +295,36 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  app.get("/api/properties/search", async (req: Request, res: Response) => {
+    try {
+      console.log("Search request received with query:", req.query);
+      
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
+      
+      // Build search filters from query parameters
+      const filters: any = {};
+      
+      if (req.query.location) filters.city = req.query.location;
+      if (req.query.propertyType) filters.propertyType = req.query.propertyType;
+      if (req.query.projectName) filters.projectName = req.query.projectName;
+      if (req.query.minPrice) filters.minPrice = parseInt(req.query.minPrice as string);
+      if (req.query.maxPrice) filters.maxPrice = parseInt(req.query.maxPrice as string);
+      if (req.query.minBedrooms) filters.minBedrooms = parseInt(req.query.minBedrooms as string);
+      if (req.query.type) filters.listingType = req.query.type;
+      
+      console.log("Applied search filters:", filters);
+      
+      const result = await dbStorage.searchProperties(filters, page, pageSize);
+      console.log(`Search returned ${result.data.length} properties out of ${result.totalCount} total`);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error searching properties:", error);
+      res.status(500).json({ message: "Failed to search properties" });
+    }
+  });
+
   app.get("/api/properties/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
