@@ -7,6 +7,7 @@ import fs from "fs";
 import simpleUploadRouter from "./simple-upload"; // Import our simple upload router
 import unifiedUploader from "./unified-uploader"; // Import our new unified uploader
 import { imageMatcher } from './image-matcher'; // Import our enhanced image matcher
+import { errorLogger } from './error-logger'; // Import our error logging system
 
 // Create and prepare all upload directories with proper permissions
 function prepareUploadDirectories() {
@@ -196,12 +197,51 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app, upload, uploadsDir);
 
+  // Add error logging endpoint (admin/owner only)
+  app.get("/api/error-logs", (req: Request, res: Response) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    const user = req.user as any;
+    if (!user || (user.role !== 'owner' && user.role !== 'admin')) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    
+    const count = req.query.count ? parseInt(String(req.query.count)) : 50;
+    const recentErrors = errorLogger.getRecentErrors(count);
+    res.json({ 
+      logs: recentErrors,
+      count: recentErrors.length,
+      logPath: path.join(process.cwd(), 'logs', 'error.log')
+    });
+  });
+
+  // Add endpoint to clear error logs (owner only)
+  app.post("/api/error-logs/clear", (req: Request, res: Response) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    const user = req.user as any;
+    if (!user || user.role !== 'owner') {
+      return res.status(403).json({ message: "Owner access required" });
+    }
+    
+    const success = errorLogger.clearLogs();
+    res.json({ success, message: success ? "Error logs cleared" : "Failed to clear error logs" });
+  });
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    
+    // Log the error with our error logger
+    const userId = _req.user ? (_req.user as any).id : null;
+    const context = _req.path || 'unknown';
+    errorLogger.logError(err, context, userId);
 
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after
