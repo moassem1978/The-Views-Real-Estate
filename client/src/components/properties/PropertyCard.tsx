@@ -129,9 +129,6 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           {property.isFeatured && (
             <span className="px-3 py-1 bg-[#D4AF37] text-white text-sm font-medium rounded">Featured</span>
           )}
-          {property.isNewListing && (
-            <span className="px-3 py-1 bg-[#6E2639] text-white text-sm font-medium rounded">New Listing</span>
-          )}
         </div>
 
         {/* Contact buttons */}

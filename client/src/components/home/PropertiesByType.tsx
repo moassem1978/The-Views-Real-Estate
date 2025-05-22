@@ -100,13 +100,8 @@ const PropertyCard = memo(({ property }: { property: Property }) => {
           src={firstImage}
           alt={property.title}
           className="h-full"
-          priority={getPropertyValue(property, 'isFeatured', 'is_featured')}
         />
-        {isNewListing && (
-          <Badge className="absolute top-3 left-3 bg-green-600 text-white">
-            New
-          </Badge>
-        )}
+
         <Badge className="absolute top-3 right-3 bg-[#B87333] text-white">
           {listingType}
         </Badge>

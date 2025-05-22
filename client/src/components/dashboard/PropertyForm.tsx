@@ -1029,28 +1029,7 @@ export default function PropertyForm({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="isNewListing"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          New Listing
-                        </FormLabel>
-                        <FormDescription>
-                          Show in the new properties section
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+ 
 
                 <FormField
                   control={form.control}
