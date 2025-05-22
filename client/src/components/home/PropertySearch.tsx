@@ -16,6 +16,9 @@ export default function PropertySearch() {
     queryKey: ["/api/properties/unique-cities"],
     initialData: [],
   });
+
+  // Debug logging to see what cities we're getting
+  console.log("Cities data for dropdown:", cities);
   
   // Fetch projects from the API
   const { data: projects = [] } = useQuery({
