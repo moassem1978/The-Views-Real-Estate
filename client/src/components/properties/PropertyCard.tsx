@@ -122,7 +122,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         {/* Status badges */}
         <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
           {/* Listing Type Badge - Always shown at the top */}
-          <span className={`px-3 py-1 text-white text-sm font-medium rounded ${property.listingType === 'Primary' ? 'bg-blue-600' : 'bg-amber-600'}`}>
+          <span className="px-3 py-1 bg-[#B87333] text-white text-sm font-medium rounded">
             {property.listingType}
           </span>
 
