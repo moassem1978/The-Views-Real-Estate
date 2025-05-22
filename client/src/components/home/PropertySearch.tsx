@@ -12,13 +12,14 @@ export default function PropertySearch() {
   const [, navigate] = useLocation();
   
   // Fetch actual cities from your property database
-  const { data: cities = [] } = useQuery({
+  const { data: cities = [], isLoading: citiesLoading } = useQuery<string[]>({
     queryKey: ["/api/properties/unique-cities"],
-    initialData: [],
+    enabled: true,
+    staleTime: 300000, // 5 minutes
   });
 
   // Debug logging to see what cities we're getting
-  console.log("Cities data for dropdown:", cities);
+  console.log("Cities data for dropdown:", cities, "Loading:", citiesLoading);
   
   // Fetch projects from the API
   const { data: projects = [] } = useQuery({
@@ -118,7 +119,7 @@ export default function PropertySearch() {
                   style={{WebkitAppearance: "menulist-button"}}
                 >
                   <option value="">Any Location</option>
-                  {cities.map((city) => (
+                  {Array.isArray(cities) && cities.map((city: string) => (
                     <option key={city} value={city}>
                       {city}
                     </option>
@@ -176,11 +177,10 @@ export default function PropertySearch() {
                 style={{WebkitAppearance: "menulist-button"}}
               >
                 <option value="">Any Price</option>
-                <option value="500000-1000000">500,000 - 1,000,000 L.E</option>
-                <option value="1000000-2000000">1,000,000 - 2,000,000 L.E</option>
-                <option value="2000000-5000000">2,000,000 - 5,000,000 L.E</option>
-                <option value="5000000-10000000">5,000,000 - 10,000,000 L.E</option>
-                <option value="10000000-100000000">10,000,000+ L.E</option>
+                <option value="1-20000000">1 - 20,000,000</option>
+                <option value="20000001-40000000">20,000,001 - 40,000,000</option>
+                <option value="40000001-75000000">40,000,001 - 75,000,000</option>
+                <option value="75000000-">75,000,000+</option>
               </select>
             </div>
             
