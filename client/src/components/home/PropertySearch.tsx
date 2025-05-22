@@ -11,8 +11,11 @@ export default function PropertySearch() {
   const [bedrooms, setBedrooms] = useState("");
   const [, navigate] = useLocation();
   
-  // Use predefined locations as specified
-  const locations = ["Cairo", "Zayed", "North coast", "Red Sea"];
+  // Fetch actual cities from your property database
+  const { data: cities = [] } = useQuery({
+    queryKey: ["/api/properties/unique-cities"],
+    initialData: [],
+  });
   
   // Fetch projects from the API
   const { data: projects = [] } = useQuery({
@@ -112,9 +115,9 @@ export default function PropertySearch() {
                   style={{WebkitAppearance: "menulist-button"}}
                 >
                   <option value="">Any Location</option>
-                  {locations.map((location) => (
-                    <option key={location} value={location}>
-                      {location}
+                  {cities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
                     </option>
                   ))}
                 </select>
