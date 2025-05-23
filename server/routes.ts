@@ -305,7 +305,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Build search filters from query parameters
       const filters: any = {};
       
-      if (req.query.location) filters.city = req.query.location;
+      if (req.query.location) filters.location = req.query.location;
       if (req.query.propertyType) filters.propertyType = req.query.propertyType;
       if (req.query.projectName) filters.projectName = req.query.projectName;
       if (req.query.minPrice) filters.minPrice = parseInt(req.query.minPrice as string);
