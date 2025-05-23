@@ -87,9 +87,9 @@ export default function PropertySearch() {
     if (projectName) filters.projectName = projectName;
     
     if (priceRange) {
-      const [min, max] = priceRange.split('-').map(val => parseInt(val.replace(/\D/g, '')));
-      if (min) filters.minPrice = min;
-      if (max) filters.maxPrice = max;
+      const [min, max] = priceRange.split('-');
+      if (min && min !== '') filters.minPrice = parseInt(min);
+      if (max && max !== '') filters.maxPrice = parseInt(max);
     }
     
     if (bedrooms) {

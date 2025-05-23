@@ -54,10 +54,12 @@ export default function PropertyList({ properties, filters }: PropertyListProps)
     let count = 0;
     if (filters.location) count++;
     if (filters.propertyType) count++;
-    if (filters.minPrice !== undefined) count++;
-    if (filters.maxPrice !== undefined) count++;
+    if (filters.listingType) count++;
+    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) count++; // Count price range as one filter
     if (filters.minBedrooms !== undefined) count++;
     if (filters.minBathrooms !== undefined) count++;
+    if (filters.projectName) count++;
+    if (filters.developerName) count++;
     return count;
   };
 
