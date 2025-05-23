@@ -1168,8 +1168,8 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Only include approved properties in search results
-      conditions.push(`status = 'approved'`);
+      // Include all active properties in search results
+      conditions.push(`(status IS NULL OR status = 'approved' OR status = 'active' OR status = '')`);
 
       // Build the WHERE clause if there are conditions
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
