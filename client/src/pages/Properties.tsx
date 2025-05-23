@@ -24,16 +24,9 @@ export default function Properties() {
     if (params.has('maxPrice')) newFilters.maxPrice = parseInt(params.get('maxPrice') || '0');
     if (params.has('minBedrooms')) newFilters.minBedrooms = parseInt(params.get('minBedrooms') || '0');
     if (params.has('minBathrooms')) newFilters.minBathrooms = parseInt(params.get('minBathrooms') || '0');
-    if (params.has('type')) newFilters.type = params.get('type') || undefined;
+    if (params.has('listingType')) newFilters.listingType = params.get('listingType') || undefined;
+    if (params.has('type')) newFilters.listingType = params.get('type') || undefined;
     if (params.has('international')) newFilters.international = params.get('international') === 'true';
-
-    // Special case for type param (Primary/Resale)
-    if (params.has('type')) {
-      const typeValue = params.get('type');
-      if (typeValue === 'Primary' || typeValue === 'Resale') {
-        newFilters.type = typeValue;
-      }
-    }
 
     setFilters(newFilters);
   }, [location]);
