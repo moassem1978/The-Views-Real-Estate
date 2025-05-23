@@ -302,26 +302,60 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
       
-      // Simple direct SQL search that definitely works
+      // Build WHERE conditions
       let whereConditions = [];
       let queryParams = [];
       let paramIndex = 1;
       
+      // Location filter
       if (req.query.location) {
         whereConditions.push(`city = $${paramIndex}`);
         queryParams.push(req.query.location);
         paramIndex++;
       }
       
+      // Property type filter
       if (req.query.propertyType) {
         whereConditions.push(`property_type = $${paramIndex}`);
         queryParams.push(req.query.propertyType);
         paramIndex++;
       }
       
-      if (req.query.type) {
+      // Listing type filter
+      if (req.query.listingType) {
         whereConditions.push(`listing_type = $${paramIndex}`);
-        queryParams.push(req.query.type);
+        queryParams.push(req.query.listingType);
+        paramIndex++;
+      }
+      
+      // Price range filters
+      if (req.query.minPrice) {
+        const minPrice = parseInt(req.query.minPrice as string);
+        whereConditions.push(`price >= $${paramIndex}`);
+        queryParams.push(minPrice);
+        paramIndex++;
+      }
+      
+      if (req.query.maxPrice) {
+        const maxPrice = parseInt(req.query.maxPrice as string);
+        whereConditions.push(`price <= $${paramIndex}`);
+        queryParams.push(maxPrice);
+        paramIndex++;
+      }
+      
+      // Bedrooms filter
+      if (req.query.minBedrooms) {
+        const minBedrooms = parseInt(req.query.minBedrooms as string);
+        whereConditions.push(`bedrooms >= $${paramIndex}`);
+        queryParams.push(minBedrooms);
+        paramIndex++;
+      }
+      
+      // Bathrooms filter
+      if (req.query.minBathrooms) {
+        const minBathrooms = parseFloat(req.query.minBathrooms as string);
+        whereConditions.push(`bathrooms >= $${paramIndex}`);
+        queryParams.push(minBathrooms);
         paramIndex++;
       }
       
@@ -335,12 +369,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Get paginated results
       const offset = (page - 1) * pageSize;
       const dataQuery = `SELECT * FROM properties ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-      queryParams.push(pageSize, offset);
+      const finalQueryParams = [...queryParams, pageSize, offset];
       
-      const dataResult = await pool.query(dataQuery, queryParams);
+      const dataResult = await pool.query(dataQuery, finalQueryParams);
       const properties = dataResult.rows.map(dbStorage.mapPropertyFromDb);
       
-      console.log(`Direct search returned ${properties.length} properties out of ${totalCount} total`);
+      console.log(`Search returned ${properties.length} properties out of ${totalCount} total with filters:`, req.query);
       
       res.json({
         data: properties,

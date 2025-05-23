@@ -245,13 +245,10 @@ export default function PropertyFilter({ currentFilters, onFilterChange, hideInt
               onChange={(e) => setLocation(e.target.value)}
               options={[
                 { value: "", label: "Any Location" },
-                { value: "Cairo", label: "Cairo" },
-                { value: "Zayed", label: "Zayed" },
-                { value: "North coast", label: "North coast" },
+                ...cities.map(city => ({ value: city, label: city })),
                 { value: "Red Sea", label: "Red Sea" },
                 { value: "Dubai", label: "Dubai" },
-                { value: "London", label: "London" },
-                { value: "Other", label: "Other" }
+                { value: "London", label: "London" }
               ]}
             />
           </div>
