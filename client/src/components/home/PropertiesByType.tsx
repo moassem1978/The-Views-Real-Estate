@@ -278,25 +278,15 @@ export default function PropertiesByType() {
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8">
-          <div>
-            <h2 className="text-sm uppercase tracking-wider text-[#B87333] font-semibold mb-2 text-center md:text-left">
+        <div className="mb-8">
+          <div className="text-center">
+            <h2 className="text-sm uppercase tracking-wider text-[#B87333] font-semibold mb-2">
               Our Featured Collection
             </h2>
-            <h3 className="text-3xl font-serif font-semibold text-gray-900 text-center md:text-left">
+            <h3 className="text-3xl font-serif font-semibold text-gray-900">
               Exclusive Properties
             </h3>
           </div>
-
-          <Button
-            asChild
-            variant="outline"
-            className="mt-4 md:mt-0 border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white self-center md:self-auto"
-          >
-            <Link href="/properties">
-              Browse All Properties <ChevronRight size={16} />
-            </Link>
-          </Button>
         </div>
 
         <Tabs defaultValue={defaultTab} className="w-full">
