@@ -96,7 +96,17 @@ export default function PropertySearch() {
       filters.minBedrooms = parseInt(bedrooms);
     }
     
-    handleFilterChange(filters);
+    // Build URL parameters and navigate directly
+    const queryString = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryString.append(key, value.toString());
+      }
+    });
+    
+    const url = queryString.toString() ? `/properties?${queryString.toString()}` : '/properties';
+    console.log('Navigating to:', url, 'with filters:', filters);
+    navigate(url);
   };
 
   return (
@@ -119,11 +129,12 @@ export default function PropertySearch() {
                   style={{WebkitAppearance: "menulist-button"}}
                 >
                   <option value="">Any Location</option>
-                  {Array.isArray(cities) && cities.map((city: string) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
+                  <option value="Cairo">Cairo</option>
+                  <option value="North coast">North coast</option>
+                  <option value="Zayed">Zayed</option>
+                  <option value="Red Sea">Red Sea</option>
+                  <option value="Dubai">Dubai</option>
+                  <option value="London">London</option>
                 </select>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
