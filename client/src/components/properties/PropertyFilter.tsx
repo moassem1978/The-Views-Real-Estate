@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { SearchFilters } from "@/types";
 import { Separator } from "@/components/ui/separator";
 
@@ -60,6 +61,18 @@ export default function PropertyFilter({ currentFilters, onFilterChange, hideInt
   const [isFullCash, setIsFullCash] = useState<boolean | undefined>(currentFilters.isFullCash);
   const [hasInstallments, setHasInstallments] = useState<boolean | undefined>(currentFilters.hasInstallments);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  // Fetch actual cities from your property database
+  const { data: cities = [] } = useQuery<string[]>({
+    queryKey: ["/api/properties/unique-cities"],
+    staleTime: 300000, // 5 minutes
+  });
+
+  // Fetch projects from the API
+  const { data: projects = [] } = useQuery<string[]>({
+    queryKey: ["/api/properties/project-names"],
+    staleTime: 300000, // 5 minutes
+  });
   
   // List of available projects and developers
   const [availableProjects, setAvailableProjects] = useState<string[]>([]);
@@ -193,14 +206,13 @@ export default function PropertyFilter({ currentFilters, onFilterChange, hideInt
     setShowAdvanced(!showAdvanced);
   };
   
-  // Price range options (in Egyptian Pounds, L.E.)
+  // Price range options matching your exact specifications
   const priceRanges: FormattedPriceRange[] = [
     { value: "", label: "Any Price" },
-    { value: "500000-1000000", label: "L.E. 500k - 1M", min: 500000, max: 1000000 },
-    { value: "1000000-2000000", label: "L.E. 1M - 2M", min: 1000000, max: 2000000 },
-    { value: "2000000-5000000", label: "L.E. 2M - 5M", min: 2000000, max: 5000000 },
-    { value: "5000000-10000000", label: "L.E. 5M - 10M", min: 5000000, max: 10000000 },
-    { value: "10000000-any", label: "L.E. 10M+", min: 10000000 }
+    { value: "1-20000000", label: "1 - 20,000,000", min: 1, max: 20000000 },
+    { value: "20000001-40000000", label: "20,000,001 - 40,000,000", min: 20000001, max: 40000000 },
+    { value: "40000001-75000000", label: "40,000,001 - 75,000,000", min: 40000001, max: 75000000 },
+    { value: "75000000-", label: "75,000,000+", min: 75000000 }
   ];
   
   // Property types
@@ -226,21 +238,19 @@ export default function PropertyFilter({ currentFilters, onFilterChange, hideInt
     <div>
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="relative">
+          <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Location</label>
-            <div className="relative">
-              <input 
-                type="text" 
-                placeholder="City, State, or ZIP" 
-                className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
+            <StyledSelect
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              options={[
+                { value: "", label: "Any Location" },
+                ...Array.isArray(cities) ? cities.map((city: string) => ({
+                  value: city,
+                  label: city
+                })) : []
+              ]}
+            />
           </div>
           
           <div>
