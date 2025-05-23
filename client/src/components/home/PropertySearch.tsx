@@ -27,55 +27,7 @@ export default function PropertySearch() {
     initialData: [],
   });
 
-  const handleFilterChange = (filters: SearchFilters) => {
-    // Update form state based on filters
-    setLocation(filters.location || "");
-    setPropertyType(filters.propertyType || "");
-    setProjectName(filters.projectName || "");
-    
-    if (filters.minBedrooms) {
-      setBedrooms(filters.minBedrooms.toString());
-    } else {
-      setBedrooms("");
-    }
-    
-    // Set price range based on min/max values
-    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-      const min = filters.minPrice;
-      const max = filters.maxPrice;
-      
-      // Find the matching price range option or leave empty
-      const ranges = [
-        { min: 500000, max: 1000000 },
-        { min: 1000000, max: 2000000 },
-        { min: 2000000, max: 5000000 },
-        { min: 5000000, max: 10000000 },
-        { min: 10000000, max: null }
-      ];
-      
-      let matchingRange = "";
-      for (const range of ranges) {
-        if (min === range.min && (max === range.max || (range.max === null && max === undefined))) {
-          matchingRange = `${range.min}-${range.max || 100000000}`;
-          break;
-        }
-      }
-      
-      setPriceRange(matchingRange);
-    } else {
-      setPriceRange("");
-    }
-    
-    // Directly navigate to properties page with these filters
-    const queryString = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined) {
-        queryString.append(key, value.toString());
-      }
-    });
-    
-    navigate(`/properties?${queryString.toString()}`);
-  };
+
   
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
