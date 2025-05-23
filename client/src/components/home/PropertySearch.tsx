@@ -32,21 +32,32 @@ export default function PropertySearch() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
+    console.log('Form submitted with values:', { location, propertyType, priceRange, bedrooms });
+    
     const filters: SearchFilters = {};
     
-    if (location) filters.location = location;
-    if (propertyType) filters.propertyType = propertyType;
-    if (projectName) filters.projectName = projectName;
+    if (location && location !== '') filters.location = location;
+    if (propertyType && propertyType !== '') filters.propertyType = propertyType;
+    if (projectName && projectName !== '') filters.projectName = projectName;
     
-    if (priceRange) {
+    if (priceRange && priceRange !== '') {
+      console.log('Processing price range:', priceRange);
       const [min, max] = priceRange.split('-');
-      if (min && min !== '') filters.minPrice = parseInt(min);
-      if (max && max !== '') filters.maxPrice = parseInt(max);
+      console.log('Split price range:', { min, max });
+      
+      if (min && min !== '' && !isNaN(parseInt(min))) {
+        filters.minPrice = parseInt(min);
+      }
+      if (max && max !== '' && !isNaN(parseInt(max))) {
+        filters.maxPrice = parseInt(max);
+      }
     }
     
-    if (bedrooms) {
+    if (bedrooms && bedrooms !== '') {
       filters.minBedrooms = parseInt(bedrooms);
     }
+    
+    console.log('Final filters object:', filters);
     
     // Build URL parameters and navigate directly
     const queryString = new URLSearchParams();
@@ -57,8 +68,10 @@ export default function PropertySearch() {
     });
     
     const url = queryString.toString() ? `/properties?${queryString.toString()}` : '/properties';
-    console.log('Navigating to:', url, 'with filters:', filters);
-    navigate(url);
+    console.log('Final URL:', url);
+    
+    // Force navigation
+    window.location.href = url;
   };
 
   return (
