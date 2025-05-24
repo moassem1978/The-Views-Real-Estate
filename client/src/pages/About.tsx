@@ -259,41 +259,19 @@ export default function About() {
                 </h2>
               </div>
               
-              <div className="space-y-8 text-gray-700 leading-relaxed">
-                <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-2 h-2 bg-[#B87333] rounded-full mt-3 flex-shrink-0"></div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-[#B87333] mb-4">The Beginning</h3>
-                      <p className="text-lg leading-relaxed">
-                        Following Mr. Assem's exploration of the market potential in 2015, he immediately recognized the need for professional and honest representation. A broker should be an extension to your values and ethos. Committed to working with clients and always having their best interest at heart.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-2 h-2 bg-[#D4AF37] rounded-full mt-3 flex-shrink-0"></div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-[#B87333] mb-4">The Vision</h3>
-                      <p className="text-lg leading-relaxed">
-                        The concept of a boutique real estate broker was the main motto behind 'The Views' consultancy, where each and every client's story matters. A client is not just a number on a board, a client's story is as beautiful as the houses we sell.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-2 h-2 bg-[#B87333] rounded-full mt-3 flex-shrink-0"></div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-[#B87333] mb-4">Our Approach</h3>
-                      <p className="text-lg leading-relaxed">
-                        Following that, he has established a unique approach where clients and their welfare come first. We believe in offering only what we truly appreciate and value, because we want to genuinely represent and support what resonates with our values and our vision.
-                      </p>
-                    </div>
-                  </div>
+              <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100">
+                <div className="text-gray-700 leading-relaxed space-y-6">
+                  <p className="text-lg">
+                    Following Mr Assems exploration of the market potential in 2015, he immediately recognized the need for professional and honest representations. A broker should be an extension to your values and ethos. Committed to working with clients and always having their best interest at heart. The concept of a boutique real estate broker was the main moto behind 'The Views' consultancy, where each and every clients' story matters. A client is not just a number on a board, a clients story is as beautiful as the houses we sell.
+                  </p>
+                  
+                  <p className="text-lg">
+                    Following that, he has established a unique approach where clients and their welfare come first.
+                  </p>
+                  
+                  <p className="text-lg">
+                    We believe in offering only what we truly appreciate and value, because we want to genuinely represent and support what resonates with our values and our vision.
+                  </p>
                 </div>
               </div>
 
