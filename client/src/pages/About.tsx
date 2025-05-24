@@ -3,32 +3,6 @@ import Footer from "@/components/layout/Footer";
 import ContactCTA from "@/components/home/ContactCTA";
 
 export default function About() {
-  const teamMembers = [
-    {
-      name: "Alexandra Reynolds",
-      position: "Founder & CEO",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      bio: "With over 20 years of experience in luxury real estate, Alexandra has developed a reputation for excellence and unparalleled market knowledge."
-    },
-    {
-      name: "James Wilson",
-      position: "Chief Operating Officer",
-      image: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      bio: "James oversees the operational aspects of our business, ensuring that every client receives the exceptional service that defines LuxuryRealty."
-    },
-    {
-      name: "Sophia Chen",
-      position: "Head of International Sales",
-      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      bio: "Specializing in international properties, Sophia connects our global network of buyers and sellers to create seamless cross-border transactions."
-    },
-    {
-      name: "Michael Thompson",
-      position: "Director of Marketing",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      bio: "Michael leads our innovative marketing strategies, leveraging digital platforms and traditional media to showcase our exclusive properties."
-    }
-  ];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -181,36 +155,59 @@ export default function About() {
           </div>
         </section>
         
-        {/* Team Section */}
+        {/* Founder Section */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <span className="text-[#D4AF37] font-medium">Our Team</span>
-              <h2 className="text-3xl md:text-4xl font-serif font-semibold text-gray-800 mt-2">
-                Meet Our Leadership
+            <div className="text-center max-w-4xl mx-auto">
+              <span className="text-[#D4AF37] font-medium">Leadership</span>
+              <h2 className="text-3xl md:text-4xl font-serif font-semibold text-gray-800 mt-2 mb-12">
+                Meet the Founder
               </h2>
-              <p className="mt-4 text-gray-600">
-                Our team of experienced professionals is dedicated to providing exceptional service and expertise in the luxury real estate market.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {teamMembers.map((member, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-                  <div className="aspect-w-3 aspect-h-4 relative overflow-hidden">
-                    <img 
-                      src={member.image} 
-                      alt={member.name} 
-                      className="w-full h-full object-cover"
-                    />
+              
+              <div className="max-w-3xl mx-auto bg-gray-50 rounded-2xl p-8 md:p-12">
+                <div className="text-center mb-8">
+                  <div className="w-32 h-32 mx-auto mb-6 bg-[#B87333] rounded-full flex items-center justify-center">
+                    <span className="text-4xl font-serif font-bold text-white">MA</span>
                   </div>
-                  <div className="p-6">
-                    <h3 className="font-serif text-xl font-semibold text-gray-800">{member.name}</h3>
-                    <p className="text-[#D4AF37] font-medium mb-3">{member.position}</p>
-                    <p className="text-gray-600">{member.bio}</p>
+                  <h3 className="text-2xl md:text-3xl font-serif font-bold text-gray-800 mb-2">
+                    Mohamed Assem
+                  </h3>
+                  <p className="text-[#D4AF37] font-semibold text-lg mb-6">
+                    Founder & CEO
+                  </p>
+                </div>
+                
+                <div className="text-left space-y-6 text-gray-700 leading-relaxed">
+                  <p className="text-lg">
+                    With over 15 years of experience in the luxury real estate market, Mohamed Assem founded The Views Real Estate with a vision to redefine excellence in property services. His deep understanding of both local and international markets has positioned the company as a leader in luxury property transactions.
+                  </p>
+                  
+                  <p>
+                    Mohamed's expertise spans across residential and commercial properties, with a particular focus on high-end developments and exclusive listings. His commitment to personalized service and attention to detail has earned him the trust of discerning clients seeking exceptional properties.
+                  </p>
+                  
+                  <p>
+                    Under his leadership, The Views Real Estate has established strong partnerships with leading developers and has successfully facilitated numerous landmark transactions, making luxury property ownership accessible to clients worldwide.
+                  </p>
+                  
+                  <div className="border-t border-gray-200 pt-6 mt-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                      <div>
+                        <div className="text-2xl font-bold text-[#B87333]">15+</div>
+                        <div className="text-sm text-gray-600">Years Experience</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-[#B87333]">500+</div>
+                        <div className="text-sm text-gray-600">Properties Sold</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-[#B87333]">50+</div>
+                        <div className="text-sm text-gray-600">Developer Partners</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </section>
