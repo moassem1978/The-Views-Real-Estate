@@ -21,7 +21,7 @@ export default function About() {
           
           <div className="container mx-auto px-4 relative z-10 text-center">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-semibold text-white leading-tight mb-4">
-              About LuxuryRealty
+              About The Views Real Estate
             </h1>
             <p className="text-lg text-white/90 max-w-2xl mx-auto">
               Our commitment to excellence has established us as leaders in luxury real estate for over two decades.
