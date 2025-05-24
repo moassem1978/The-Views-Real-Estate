@@ -166,7 +166,7 @@ export default function About() {
               
               <div className="max-w-3xl mx-auto bg-gray-25 rounded-2xl p-8 md:p-12" style={{backgroundColor: '#fafafa'}}>
                 <div className="text-center mb-8">
-                  <div className="w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden shadow-xl">
+                  <div className="w-64 h-80 mx-auto mb-6 rounded-xl overflow-hidden shadow-xl">
                     <img 
                       src="/uploads/founder/mohamed-assem-cropped.jpeg" 
                       alt="Mohamed Assem - Founder & CEO"
