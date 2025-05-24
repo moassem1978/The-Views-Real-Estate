@@ -162,6 +162,83 @@ export const insertProjectSchema = createInsertSchema(projects).omit({
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type Project = typeof projects.$inferSelect;
 
+// Blog articles for content marketing and SEO
+export const articles = pgTable("articles", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(), // URL-friendly version of title
+  excerpt: text("excerpt").notNull(), // Short description for SEO
+  content: text("content").notNull(),
+  authorId: integer("author_id").notNull(),
+  featuredImage: text("featured_image"),
+  category: text("category").notNull(), // e.g., "Market Insights", "Buying Guide", "Investment Tips"
+  tags: jsonb("tags").default('[]'), // Array of tags for SEO
+  metaTitle: text("meta_title"), // SEO title
+  metaDescription: text("meta_description"), // SEO description
+  metaKeywords: text("meta_keywords"), // SEO keywords
+  isPublished: boolean("is_published").default(false),
+  isFeatured: boolean("is_featured").default(false),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  viewCount: integer("view_count").default(0),
+  readingTime: integer("reading_time").default(0), // Estimated reading time in minutes
+});
+
+export const insertArticleSchema = createInsertSchema(articles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  viewCount: true,
+});
+
+export type InsertArticle = z.infer<typeof insertArticleSchema>;
+export type Article = typeof articles.$inferSelect;
+
+// Newsletter subscriptions for email marketing
+export const newsletters = pgTable("newsletters", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  interests: jsonb("interests").default('[]'), // Array of property types/locations of interest
+  isActive: boolean("is_active").default(true),
+  source: text("source").default("website"), // Where they subscribed from
+  subscribedAt: timestamp("subscribed_at").defaultNow(),
+  unsubscribedAt: timestamp("unsubscribed_at"),
+});
+
+export const insertNewsletterSchema = createInsertSchema(newsletters).omit({
+  id: true,
+  subscribedAt: true,
+});
+
+export type InsertNewsletter = z.infer<typeof insertNewsletterSchema>;
+export type Newsletter = typeof newsletters.$inferSelect;
+
+// Lead captures for marketing
+export const leads = pgTable("leads", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  phone: text("phone"),
+  propertyId: integer("property_id"), // If they inquired about a specific property
+  message: text("message"),
+  source: text("source").notNull(), // e.g., "contact_form", "property_inquiry", "newsletter"
+  status: text("status").default("new"), // new, contacted, qualified, converted
+  createdAt: timestamp("created_at").defaultNow(),
+  followedUpAt: timestamp("followed_up_at"),
+});
+
+export const insertLeadSchema = createInsertSchema(leads).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertLead = z.infer<typeof insertLeadSchema>;
+export type Lead = typeof leads.$inferSelect;
+
 // Define SiteSettings interface
 export interface SiteSettings {
   companyLogo?: string;

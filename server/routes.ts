@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { db, pool } from "./db";
 import { z } from "zod";
-import { insertPropertySchema, insertTestimonialSchema, insertAnnouncementSchema, insertProjectSchema } from "@shared/schema";
+import { insertPropertySchema, insertTestimonialSchema, insertAnnouncementSchema, insertProjectSchema, insertArticleSchema, insertNewsletterSchema, insertLeadSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import multer from "multer";

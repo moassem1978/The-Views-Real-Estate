@@ -63,6 +63,129 @@ ALTER SEQUENCE public.announcements_id_seq OWNED BY public.announcements.id;
 
 
 --
+-- Name: articles; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.articles (
+    id integer NOT NULL,
+    title text NOT NULL,
+    slug text NOT NULL,
+    excerpt text NOT NULL,
+    content text NOT NULL,
+    author_id integer NOT NULL,
+    featured_image text,
+    category text NOT NULL,
+    tags jsonb DEFAULT '[]'::jsonb,
+    meta_title text,
+    meta_description text,
+    meta_keywords text,
+    is_published boolean DEFAULT false,
+    is_featured boolean DEFAULT false,
+    published_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    view_count integer DEFAULT 0,
+    reading_time integer DEFAULT 0
+);
+
+
+--
+-- Name: articles_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.articles_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: articles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.articles_id_seq OWNED BY public.articles.id;
+
+
+--
+-- Name: leads; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.leads (
+    id integer NOT NULL,
+    email text NOT NULL,
+    first_name text,
+    last_name text,
+    phone text,
+    property_id integer,
+    message text,
+    source text NOT NULL,
+    status text DEFAULT 'new'::text,
+    created_at timestamp without time zone DEFAULT now(),
+    followed_up_at timestamp without time zone
+);
+
+
+--
+-- Name: leads_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.leads_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: leads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.leads_id_seq OWNED BY public.leads.id;
+
+
+--
+-- Name: newsletters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.newsletters (
+    id integer NOT NULL,
+    email text NOT NULL,
+    first_name text,
+    last_name text,
+    interests jsonb DEFAULT '[]'::jsonb,
+    is_active boolean DEFAULT true,
+    source text DEFAULT 'website'::text,
+    subscribed_at timestamp without time zone DEFAULT now(),
+    unsubscribed_at timestamp without time zone
+);
+
+
+--
+-- Name: newsletters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.newsletters_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: newsletters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.newsletters_id_seq OWNED BY public.newsletters.id;
+
+
+--
 -- Name: projects; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -263,6 +386,27 @@ ALTER TABLE ONLY public.announcements ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: articles id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.articles ALTER COLUMN id SET DEFAULT nextval('public.articles_id_seq'::regclass);
+
+
+--
+-- Name: leads id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.leads ALTER COLUMN id SET DEFAULT nextval('public.leads_id_seq'::regclass);
+
+
+--
+-- Name: newsletters id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.newsletters ALTER COLUMN id SET DEFAULT nextval('public.newsletters_id_seq'::regclass);
+
+
+--
 -- Name: projects id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -295,6 +439,33 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.announcements (id, title, content, image_url, start_date, end_date, is_active, is_featured, is_highlighted, created_at, status, created_by, approved_by, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: articles; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.articles (id, title, slug, excerpt, content, author_id, featured_image, category, tags, meta_title, meta_description, meta_keywords, is_published, is_featured, published_at, created_at, updated_at, view_count, reading_time) FROM stdin;
+1	Luxury Real Estate Market Trends in 2025	luxury-real-estate-market-trends-2025	Discover the latest trends shaping the luxury real estate market in 2025, from sustainable living to smart home technology.	The luxury real estate market in 2025 is experiencing unprecedented transformation. High-net-worth individuals are increasingly prioritizing sustainability, with eco-friendly features becoming non-negotiable amenities. Smart home integration has evolved beyond basic automation to include AI-powered systems that learn and adapt to residents' preferences.\n\nWaterfront properties continue to command premium prices, particularly in emerging coastal markets. The demand for private estates with extensive grounds has surged, driven by the desire for privacy and space. International buyers are showing renewed interest in stable markets, with particular focus on properties offering citizenship by investment opportunities.\n\nInvestment patterns reveal a shift toward properties that can generate multiple revenue streams - from luxury vacation rentals to exclusive event hosting. The modern luxury buyer seeks properties that combine traditional craftsmanship with cutting-edge technology, creating spaces that are both timeless and forward-thinking.	1	\N	Market Insights	["luxury real estate", "market trends", "2025", "investment"]	Luxury Real Estate Market Trends 2025 | Expert Analysis	Explore the latest luxury real estate market trends for 2025. Expert insights on investment opportunities, pricing, and emerging markets.	luxury real estate, market trends, property investment, high-end properties	t	t	2025-05-24 06:33:06.971005	2025-05-24 06:33:06.971005	2025-05-24 06:33:06.971005	0	5
+2	The Ultimate Guide to Buying Your First Luxury Property	ultimate-guide-buying-first-luxury-property	A comprehensive guide for first-time luxury property buyers, covering everything from financing to due diligence.	Purchasing your first luxury property represents a significant milestone and requires careful consideration beyond traditional real estate transactions. The luxury market operates with different standards, expectations, and processes that can surprise even experienced buyers.\n\nFinancial preparation extends beyond securing financing. Luxury properties often require substantial cash reserves for maintenance, insurance, and unexpected improvements. Private banking relationships become crucial, as traditional mortgages may not suit high-value transactions. Many luxury buyers benefit from portfolio lending options that consider total net worth rather than income ratios.\n\nDue diligence in luxury real estate involves specialized inspections that go far beyond standard property assessments. Historic properties may require heritage compliance reviews, while waterfront estates need comprehensive environmental assessments. Privacy considerations, from security systems to title confidentiality, require expert legal guidance.\n\nThe luxury market rewards patience and discretion. Many premium properties never appear on public listings, accessible only through established relationships with luxury specialists. Building these connections before you need them ensures access to exclusive opportunities that match your specific criteria.	1	\N	Buying Guide	["luxury property", "buying guide", "first time buyer", "investment"]	Ultimate Guide to Buying Luxury Property | Expert Tips	Complete guide for first-time luxury property buyers. Learn about financing, due diligence, and expert tips for successful purchases.	luxury property buying, first time luxury buyer, luxury real estate guide	t	f	2025-05-24 06:33:06.971005	2025-05-24 06:33:06.971005	2025-05-24 06:33:06.971005	0	8
+3	Sustainable Luxury: Eco-Friendly Features That Add Value	sustainable-luxury-eco-friendly-features-value	How sustainable features and eco-friendly technologies are revolutionizing luxury real estate and adding significant value.	Sustainability has evolved from a trend to a fundamental requirement in luxury real estate. Today's discerning buyers expect properties that deliver exceptional comfort while minimizing environmental impact. This shift has created new opportunities for property values to appreciate through strategic sustainable investments.\n\nSolar energy systems have advanced beyond basic panels to include integrated storage solutions and smart grid connectivity. Luxury properties now feature sophisticated energy management systems that optimize consumption while maintaining perfect climate control. Geothermal systems provide efficient heating and cooling, particularly valuable in extreme climates.\n\nWater conservation technologies have become especially important in luxury markets. Rainwater harvesting systems, greywater recycling, and drought-resistant landscaping not only reduce environmental impact but also provide long-term cost savings. Private wells and water treatment systems ensure both sustainability and independence.\n\nGreen building materials and construction methods are creating properties that age better and require less maintenance. From reclaimed hardwood floors to low-emission insulation, these materials contribute to better indoor air quality and long-term durability. Smart home systems optimize energy usage while providing unprecedented control and monitoring capabilities.	1	\N	Investment Tips	["sustainable luxury", "eco-friendly", "green building", "property value"]	Sustainable Luxury Real Estate | Eco-Friendly Property Features	Discover how eco-friendly features add value to luxury properties. Learn about sustainable technologies transforming high-end real estate.	sustainable luxury real estate, eco-friendly properties, green building, luxury sustainability	t	t	2025-05-24 06:33:06.971005	2025-05-24 06:33:06.971005	2025-05-24 06:33:06.971005	0	6
+\.
+
+
+--
+-- Data for Name: leads; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.leads (id, email, first_name, last_name, phone, property_id, message, source, status, created_at, followed_up_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: newsletters; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.newsletters (id, email, first_name, last_name, interests, is_active, source, subscribed_at, unsubscribed_at) FROM stdin;
 \.
 
 
@@ -376,6 +547,7 @@ k7e8t-Un5r6F3aTHZJWzfxO8rRMW7JNc	{"cookie":{"originalMaxAge":2592000000,"expires
 t_pFjWVr21Q2t5eamtoTabx-x9A4cI7E	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-22T17:18:48.781Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-22 18:39:08
 AhPiwXeInSvSCqWUjEF50pPf7xygismc	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-23T20:57:55.912Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 20:58:58
 wAw1hCyk6GHqN7dpRyuJ4m9gkWx95fRJ	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T11:22:50.423Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 16:12:48
+LJVqzlsFrvsYCPbRYd3P1bZ9nZBrgpXy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-08T06:31:34.281Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-08 06:31:35
 y3GzV1dFfAgJ7RAQhz5kVkZY67NhR7U6	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-30T20:02:23.221Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-31 09:35:47
 a5eiF1w-fLjhV9_f5yB7EvwH2DH6sA_U	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-09T21:22:35.459Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-09 21:22:36
 WVqjbPWsB4tEQbOKRY2Tr4HRWEfb9MEZ	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T16:07:20.757Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-08 08:08:07
@@ -395,7 +567,6 @@ TnSxEF8M9HHiol1S2Fsl2rVLmU-fp4Mh	{"cookie":{"originalMaxAge":2592000000,"expires
 bil6eoA8NCISvoNmVfOWxy4TGpbmdIC0	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-07T17:42:41.384Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-07 17:42:42
 TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T16:40:00.464Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 16:40:01
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
-LJVqzlsFrvsYCPbRYd3P1bZ9nZBrgpXy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-08T06:30:56.600Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-08 06:30:57
 \.
 
 
@@ -412,8 +583,8 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
-1	owner	762c01841bf359697d1f2b3d1bfb4bfca50340dbe85c75de3a506bb3db43d5e0f2ad52253e8f7960f6254c698363a427ca77cec251dbeb31a17349d930d064b6.11735378db38e349385e450f81a47398	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
+1	owner	3f111e0e66049440fda530f8db20df04c6c34c6ef85a012940284e0b942f19eb85750be34afe2e7a0e56d65412a098a51859b617d4b73067289fd36f97f20e00.1ed4cdd0a4c325b554fce84b32e1de17	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 \.
 
 
@@ -422,6 +593,27 @@ COPY public.users (id, username, password, email, full_name, phone, is_agent, cr
 --
 
 SELECT pg_catalog.setval('public.announcements_id_seq', 1, false);
+
+
+--
+-- Name: articles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.articles_id_seq', 3, true);
+
+
+--
+-- Name: leads_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.leads_id_seq', 1, false);
+
+
+--
+-- Name: newsletters_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.newsletters_id_seq', 1, false);
 
 
 --
@@ -458,6 +650,46 @@ SELECT pg_catalog.setval('public.users_id_seq', 4, true);
 
 ALTER TABLE ONLY public.announcements
     ADD CONSTRAINT announcements_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: articles articles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.articles
+    ADD CONSTRAINT articles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: articles articles_slug_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.articles
+    ADD CONSTRAINT articles_slug_key UNIQUE (slug);
+
+
+--
+-- Name: leads leads_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.leads
+    ADD CONSTRAINT leads_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: newsletters newsletters_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.newsletters
+    ADD CONSTRAINT newsletters_email_key UNIQUE (email);
+
+
+--
+-- Name: newsletters newsletters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.newsletters
+    ADD CONSTRAINT newsletters_pkey PRIMARY KEY (id);
 
 
 --
