@@ -41,6 +41,9 @@ const AuthTest = lazy(() => import(/* webpackChunkName: "auth-test" */ "@/pages/
 const Projects = lazy(() => import(/* webpackChunkName: "projects" */ "@/pages/Projects"));
 const ProjectDetails = lazy(() => import(/* webpackChunkName: "project-details" */ "@/pages/ProjectDetails"));
 const ProjectManagement = lazy(() => import(/* webpackChunkName: "project-management" */ "@/pages/ProjectManagement"));
+// Blog and content marketing pages
+const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogPage"));
+const ArticlePage = lazy(() => import(/* webpackChunkName: "article" */ "@/pages/ArticlePage"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -58,7 +61,9 @@ const routes = [
   { path: "/announcements", Component: Announcements },
   { path: "/announcements/:id", Component: AnnouncementDetails },
   { path: "/projects", Component: Projects },
-  { path: "/projects/:id", Component: ProjectDetails }
+  { path: "/projects/:id", Component: ProjectDetails },
+  { path: "/blog", Component: BlogPage },
+  { path: "/blog/:slug", Component: ArticlePage }
 ];
 
 function Router() {

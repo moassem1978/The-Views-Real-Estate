@@ -3933,5 +3933,216 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   // Create HTTP server
   const httpServer = createServer(app);
+  // ===== CONTENT MARKETING & SEO ROUTES =====
+  
+  // Blog Articles API
+  app.get("/api/articles", async (req: Request, res: Response) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const category = req.query.category as string;
+      const featured = req.query.featured === 'true';
+      
+      const offset = (page - 1) * limit;
+      
+      let query = `
+        SELECT a.*, u.username as author_name 
+        FROM articles a 
+        LEFT JOIN users u ON a.author_id = u.id 
+        WHERE a.is_published = true
+      `;
+      
+      const params: any[] = [];
+      let paramIndex = 1;
+      
+      if (category) {
+        query += ` AND a.category = $${paramIndex}`;
+        params.push(category);
+        paramIndex++;
+      }
+      
+      if (featured) {
+        query += ` AND a.is_featured = true`;
+      }
+      
+      query += ` ORDER BY a.published_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+      params.push(limit, offset);
+      
+      const result = await pool.query(query, params);
+      
+      // Get total count for pagination
+      let countQuery = `SELECT COUNT(*) FROM articles WHERE is_published = true`;
+      const countParams: any[] = [];
+      let countParamIndex = 1;
+      
+      if (category) {
+        countQuery += ` AND category = $${countParamIndex}`;
+        countParams.push(category);
+      }
+      
+      if (featured) {
+        countQuery += ` AND is_featured = true`;
+      }
+      
+      const countResult = await pool.query(countQuery, countParams);
+      const totalCount = parseInt(countResult.rows[0].count);
+      
+      res.json({
+        data: result.rows,
+        totalCount,
+        pageCount: Math.ceil(totalCount / limit),
+        currentPage: page
+      });
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+      res.status(500).json({ message: "Failed to fetch articles" });
+    }
+  });
+
+  app.get("/api/articles/:slug", async (req: Request, res: Response) => {
+    try {
+      const slug = req.params.slug;
+      
+      const result = await pool.query(`
+        SELECT a.*, u.username as author_name, u.full_name as author_full_name
+        FROM articles a 
+        LEFT JOIN users u ON a.author_id = u.id 
+        WHERE a.slug = $1 AND a.is_published = true
+      `, [slug]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+      
+      // Increment view count
+      await pool.query(`
+        UPDATE articles SET view_count = view_count + 1 WHERE slug = $1
+      `, [slug]);
+      
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error("Error fetching article:", error);
+      res.status(500).json({ message: "Failed to fetch article" });
+    }
+  });
+
+  // Newsletter subscription
+  app.post("/api/newsletter/subscribe", async (req: Request, res: Response) => {
+    try {
+      const validationSchema = insertNewsletterSchema.extend({
+        email: z.string().email("Please enter a valid email address"),
+      });
+      
+      const subscriptionData = validationSchema.parse(req.body);
+      
+      // Check if email already exists
+      const existingResult = await pool.query(
+        'SELECT id, is_active FROM newsletters WHERE email = $1',
+        [subscriptionData.email]
+      );
+      
+      if (existingResult.rows.length > 0) {
+        const existing = existingResult.rows[0];
+        if (existing.is_active) {
+          return res.status(400).json({ 
+            message: "This email is already subscribed to our newsletter." 
+          });
+        } else {
+          // Reactivate subscription
+          await pool.query(
+            'UPDATE newsletters SET is_active = true, unsubscribed_at = null WHERE email = $1',
+            [subscriptionData.email]
+          );
+          return res.json({ 
+            message: "Welcome back! Your newsletter subscription has been reactivated." 
+          });
+        }
+      }
+      
+      // Create new subscription
+      const result = await pool.query(`
+        INSERT INTO newsletters (email, first_name, last_name, interests, source)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+      `, [
+        subscriptionData.email,
+        subscriptionData.firstName || null,
+        subscriptionData.lastName || null,
+        JSON.stringify(subscriptionData.interests || []),
+        subscriptionData.source || 'website'
+      ]);
+      
+      res.status(201).json({ 
+        message: "Successfully subscribed to our newsletter! Thank you for joining our exclusive community.",
+        subscription: result.rows[0]
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating newsletter subscription:", error);
+        res.status(500).json({ message: "Failed to subscribe to newsletter" });
+      }
+    }
+  });
+
+  // Lead capture
+  app.post("/api/leads", async (req: Request, res: Response) => {
+    try {
+      const validationSchema = insertLeadSchema.extend({
+        email: z.string().email("Please enter a valid email address"),
+        message: z.string().min(1, "Please enter a message"),
+      });
+      
+      const leadData = validationSchema.parse(req.body);
+      
+      const result = await pool.query(`
+        INSERT INTO leads (email, first_name, last_name, phone, property_id, message, source)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *
+      `, [
+        leadData.email,
+        leadData.firstName || null,
+        leadData.lastName || null,
+        leadData.phone || null,
+        leadData.propertyId || null,
+        leadData.message,
+        leadData.source
+      ]);
+      
+      res.status(201).json({ 
+        message: "Thank you for your inquiry! Our team will contact you within 24 hours.",
+        lead: result.rows[0]
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating lead:", error);
+        res.status(500).json({ message: "Failed to submit inquiry" });
+      }
+    }
+  });
+
+  // Get article categories for navigation
+  app.get("/api/articles/categories", async (req: Request, res: Response) => {
+    try {
+      const result = await pool.query(`
+        SELECT category, COUNT(*) as count
+        FROM articles 
+        WHERE is_published = true 
+        GROUP BY category 
+        ORDER BY count DESC
+      `);
+      
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Error fetching article categories:", error);
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
   return httpServer;
 }
