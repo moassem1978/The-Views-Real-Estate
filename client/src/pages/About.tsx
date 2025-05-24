@@ -164,7 +164,7 @@ export default function About() {
                 Meet the Founder
               </h2>
               
-              <div className="max-w-3xl mx-auto bg-gray-50 rounded-2xl p-8 md:p-12">
+              <div className="max-w-3xl mx-auto bg-gray-25 rounded-2xl p-8 md:p-12" style={{backgroundColor: '#fafafa'}}>
                 <div className="text-center mb-8">
                   <div className="w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden shadow-xl">
                     <img 
