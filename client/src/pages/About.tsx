@@ -247,6 +247,67 @@ export default function About() {
             </div>
           </div>
         </section>
+
+        {/* Company Story Section */}
+        <section className="py-16 bg-gradient-to-br from-gray-50 to-white">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <span className="text-[#D4AF37] font-medium">Our Story</span>
+                <h2 className="text-3xl md:text-4xl font-serif font-semibold text-gray-800 mt-2">
+                  The Views Real Estate Journey
+                </h2>
+              </div>
+              
+              <div className="space-y-8 text-gray-700 leading-relaxed">
+                <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-2 h-2 bg-[#B87333] rounded-full mt-3 flex-shrink-0"></div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-[#B87333] mb-4">The Beginning</h3>
+                      <p className="text-lg leading-relaxed">
+                        Following Mr. Assem's exploration of the market potential in 2015, he immediately recognized the need for professional and honest representation. A broker should be an extension to your values and ethos. Committed to working with clients and always having their best interest at heart.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-2 h-2 bg-[#D4AF37] rounded-full mt-3 flex-shrink-0"></div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-[#B87333] mb-4">The Vision</h3>
+                      <p className="text-lg leading-relaxed">
+                        The concept of a boutique real estate broker was the main motto behind 'The Views' consultancy, where each and every client's story matters. A client is not just a number on a board, a client's story is as beautiful as the houses we sell.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-2 h-2 bg-[#B87333] rounded-full mt-3 flex-shrink-0"></div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-[#B87333] mb-4">Our Approach</h3>
+                      <p className="text-lg leading-relaxed">
+                        Following that, he has established a unique approach where clients and their welfare come first. We believe in offering only what we truly appreciate and value, because we want to genuinely represent and support what resonates with our values and our vision.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-12 text-center">
+                <div className="bg-gradient-to-r from-[#B87333] to-[#D4AF37] text-white rounded-2xl p-8">
+                  <h3 className="text-2xl font-serif font-bold mb-4">Every Client's Story Matters</h3>
+                  <p className="text-lg opacity-95 max-w-2xl mx-auto">
+                    At The Views Real Estate, we don't just sell properties – we honor the stories behind them and create new chapters for our clients' lives.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
         
         <ContactCTA />
       </main>
