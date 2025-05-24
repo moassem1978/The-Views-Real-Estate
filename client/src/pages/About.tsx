@@ -168,10 +168,9 @@ export default function About() {
                 <div className="text-center mb-8">
                   <div className="w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden shadow-xl">
                     <img 
-                      src="/uploads/founder/mohamed-assem.jpeg" 
+                      src="/uploads/founder/mohamed-assem-cropped.jpeg" 
                       alt="Mohamed Assem - Founder & CEO"
                       className="w-full h-full object-cover object-center"
-                      style={{ objectPosition: 'center top' }}
                     />
                   </div>
                   <h3 className="text-2xl md:text-3xl font-serif font-bold text-gray-800 mb-2">
