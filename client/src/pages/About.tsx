@@ -166,8 +166,12 @@ export default function About() {
               
               <div className="max-w-3xl mx-auto bg-gray-50 rounded-2xl p-8 md:p-12">
                 <div className="text-center mb-8">
-                  <div className="w-32 h-32 mx-auto mb-6 bg-[#B87333] rounded-full flex items-center justify-center">
-                    <span className="text-4xl font-serif font-bold text-white">MA</span>
+                  <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden shadow-lg">
+                    <img 
+                      src="/uploads/founder/mohamed-assem.jpeg" 
+                      alt="Mohamed Assem - Founder & CEO"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <h3 className="text-2xl md:text-3xl font-serif font-bold text-gray-800 mb-2">
                     Mohamed Assem
