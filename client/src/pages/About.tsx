@@ -182,31 +182,63 @@ export default function About() {
                 </div>
                 
                 <div className="text-left space-y-6 text-gray-700 leading-relaxed">
-                  <p className="text-lg">
-                    With over 15 years of experience in the luxury real estate market, Mohamed Assem founded The Views Real Estate with a vision to redefine excellence in property services. His deep understanding of both local and international markets has positioned the company as a leader in luxury property transactions.
+                  <p className="text-lg font-medium">
+                    With 30 years of professional experience across diverse sectors including tourism operations, events management, training, coaching, and sales, Mohamed Assem brings unparalleled expertise to the luxury real estate market.
                   </p>
                   
-                  <p>
-                    Mohamed's expertise spans across residential and commercial properties, with a particular focus on high-end developments and exclusive listings. His commitment to personalized service and attention to detail has earned him the trust of discerning clients seeking exceptional properties.
-                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <h4 className="font-semibold text-[#B87333] mb-3">Industry Expertise</h4>
+                      <ul className="space-y-2 text-sm">
+                        <li>• Tourism & Events Management</li>
+                        <li>• Real Estate Development & Brokerage</li>
+                        <li>• Telecoms & Cable TV</li>
+                        <li>• Training & Coaching</li>
+                        <li>• Sales & Operations</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <h4 className="font-semibold text-[#B87333] mb-3">Global Experience</h4>
+                      <ul className="space-y-2 text-sm">
+                        <li>🇪🇬 Egypt</li>
+                        <li>🇦🇪 UAE</li>
+                        <li>🇸🇦 Saudi Arabia</li>
+                        <li>🇸🇩 Sudan</li>
+                        <li>🇿🇦 South Africa</li>
+                        <li>🇬🇧 England & Scotland</li>
+                      </ul>
+                    </div>
+                  </div>
                   
                   <p>
-                    Under his leadership, The Views Real Estate has established strong partnerships with leading developers and has successfully facilitated numerous landmark transactions, making luxury property ownership accessible to clients worldwide.
+                    Mohamed has been active in the Egypt real estate market since 2015 and has been immersed in the real estate world since 2010. His extensive international experience across multiple countries and industries provides him with a unique perspective on luxury property markets and client needs.
+                  </p>
+                  
+                  <div className="bg-gradient-to-r from-[#B87333]/10 to-[#D4AF37]/10 rounded-lg p-6 my-8 border-l-4 border-[#B87333]">
+                    <h4 className="font-semibold text-[#B87333] mb-3">My Philosophy</h4>
+                    <p className="italic text-gray-700 leading-relaxed">
+                      "My ideology is to serve and represent. You hire my services so that you don't need to worry about selling - I am your eyes and your voice. With my years of in-depth experience in luxury real estate, I have created this platform solely for luxurious properties located in Egypt and international destinations."
+                    </p>
+                  </div>
+                  
+                  <p>
+                    Under Mohamed's leadership, The Views Real Estate has established strong partnerships with leading developers and has successfully facilitated numerous landmark transactions, making luxury property ownership accessible to discerning clients worldwide.
                   </p>
                   
                   <div className="border-t border-gray-200 pt-6 mt-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
                       <div>
+                        <div className="text-2xl font-bold text-[#B87333]">30+</div>
+                        <div className="text-sm text-gray-600">Years Professional Experience</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-[#B87333]">7</div>
+                        <div className="text-sm text-gray-600">Countries Experience</div>
+                      </div>
+                      <div>
                         <div className="text-2xl font-bold text-[#B87333]">15+</div>
-                        <div className="text-sm text-gray-600">Years Experience</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-[#B87333]">500+</div>
-                        <div className="text-sm text-gray-600">Properties Sold</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-[#B87333]">50+</div>
-                        <div className="text-sm text-gray-600">Developer Partners</div>
+                        <div className="text-sm text-gray-600">Years Real Estate Expertise</div>
                       </div>
                     </div>
                   </div>
