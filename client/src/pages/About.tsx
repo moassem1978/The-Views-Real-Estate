@@ -29,45 +29,7 @@ export default function About() {
           </div>
         </section>
         
-        {/* Our Story Section */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <span className="text-[#D4AF37] font-medium">Our Story</span>
-                <h2 className="text-3xl md:text-4xl font-serif font-semibold text-gray-800 mt-2 mb-6">
-                  A Legacy of Luxury and Excellence
-                </h2>
-                <div className="space-y-4 text-gray-600">
-                  <p>
-                    Founded in 2000 by Alexandra Reynolds, LuxuryRealty began with a simple vision: to create a boutique real estate firm that offers personalized service and unparalleled expertise in the luxury market.
-                  </p>
-                  <p>
-                    What started as a small team of three dedicated professionals has grown into an internationally recognized brand with offices in Beverly Hills, Miami, New York, and London. Throughout our growth, we've maintained our commitment to personalized service and exclusive focus on the luxury market.
-                  </p>
-                  <p>
-                    Our success stems from our deep understanding of the unique needs of discerning clients, our extensive network of high-net-worth individuals, and our dedication to discretion and confidentiality. We pride ourselves on our ability to match extraordinary properties with extraordinary people.
-                  </p>
-                </div>
-              </div>
-              <div className="relative">
-                <div className="rounded-lg overflow-hidden shadow-xl">
-                  <img 
-                    src="https://images.unsplash.com/photo-1464938050520-ef2270bb8ce8?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
-                    alt="LuxuryRealty office building" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="absolute -bottom-8 -left-8 bg-white rounded-lg shadow-lg p-8 max-w-xs hidden md:block">
-                  <div className="text-center">
-                    <h3 className="font-serif text-2xl font-semibold text-gray-800 mb-2">20+</h3>
-                    <p className="text-gray-600">Years of Excellence in Luxury Real Estate</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+
         
         {/* Our Values Section */}
         <section className="py-16 bg-[#F5F0E6]">
