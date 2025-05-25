@@ -4109,10 +4109,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       // Import nodemailer for Gmail SMTP
-      const nodemailer = require('nodemailer');
+      const nodemailer = await import('nodemailer');
 
       // Create Gmail SMTP transporter
-      const transporter = nodemailer.createTransporter({
+      const transporter = nodemailer.default.createTransport({
         service: 'gmail',
         auth: {
           user: process.env.GMAIL_USER,
