@@ -44,20 +44,37 @@ export default function Contact() {
     setError("");
     
     try {
-      // Simulate form submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Reset form
-      setName("");
-      setEmail("");
-      setPhone("");
-      setMessage("");
-      setIsSuccess(true);
-      
-      // Hide success message after 5 seconds
-      setTimeout(() => {
-        setIsSuccess(false);
-      }, 5000);
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          message,
+          isAgentContact
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Reset form
+        setName("");
+        setEmail("");
+        setPhone("");
+        setMessage("");
+        setIsSuccess(true);
+        
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+          setIsSuccess(false);
+        }, 5000);
+      } else {
+        setError(data.message || "Failed to submit form. Please try again later.");
+      }
     } catch (err) {
       setError("Failed to submit form. Please try again later.");
     } finally {

@@ -4087,6 +4087,88 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // Contact form submission endpoint
+  app.post("/api/contact", async (req: Request, res: Response) => {
+    try {
+      const { name, email, phone, message, isAgentContact } = req.body;
+      
+      // Validate required fields
+      if (!name || !email || !message) {
+        return res.status(400).json({ message: "Name, email, and message are required" });
+      }
+
+      // Check if SendGrid API key is available
+      if (!process.env.SENDGRID_API_KEY) {
+        console.log("Contact form submission received (no email service configured):", {
+          name, email, phone, isAgentContact
+        });
+        return res.json({ 
+          message: "Your message has been received! We'll get back to you soon.",
+          status: "received"
+        });
+      }
+
+      // Import SendGrid
+      const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+      const subject = isAgentContact 
+        ? `Agent Contact Request from ${name}`
+        : `Contact Form Submission from ${name}`;
+
+      const emailContent = `
+        <h2>${subject}</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ''}
+        <p><strong>Type:</strong> ${isAgentContact ? 'Agent Contact Request' : 'General Inquiry'}</p>
+        <hr>
+        <h3>Message:</h3>
+        <p>${message.replace(/\n/g, '<br>')}</p>
+      `;
+
+      // Send to both email addresses
+      const recipients = [
+        'Sales@theviewsconsultancy.com',
+        'Assem@theviewsconsultancy.com'
+      ];
+
+      const emailPromises = recipients.map(to => 
+        sgMail.send({
+          to,
+          from: 'no-reply@theviewsconsultancy.com', // This should be a verified sender in SendGrid
+          subject,
+          html: emailContent,
+          replyTo: email // Allow direct reply to the contact person
+        })
+      );
+
+      await Promise.all(emailPromises);
+
+      console.log(`Contact form email sent successfully to: ${recipients.join(', ')}`);
+      
+      res.json({ 
+        message: "Your message has been sent successfully! We'll get back to you soon.",
+        status: "sent"
+      });
+
+    } catch (error) {
+      console.error("Contact form submission error:", error);
+      
+      // Log the submission even if email fails
+      console.log("Contact form submission (email failed):", {
+        name: req.body.name,
+        email: req.body.email,
+        phone: req.body.phone
+      });
+
+      res.json({ 
+        message: "Your message has been received! We'll get back to you soon.",
+        status: "received"
+      });
+    }
+  });
+
   // Lead capture
   app.post("/api/leads", async (req: Request, res: Response) => {
     try {
