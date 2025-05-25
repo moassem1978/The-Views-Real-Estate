@@ -194,12 +194,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Security headers for custom domain
+// Custom domain redirect and security middleware
 app.use((req, res, next) => {
   const customDomain = process.env.CUSTOM_DOMAIN;
+  const host = req.get('Host');
 
-  if (customDomain && req.get('Host')?.includes(customDomain)) {
-    // Add security headers
+  // If custom domain is set and current host is not the custom domain, redirect
+  if (customDomain && host && !host.includes(customDomain)) {
+    const protocol = req.secure || req.get('X-Forwarded-Proto') === 'https' ? 'https' : 'https';
+    const redirectUrl = `${protocol}://${customDomain}${req.originalUrl}`;
+    console.log(`Redirecting from ${host} to ${customDomain}`);
+    return res.redirect(301, redirectUrl);
+  }
+
+  // Add security headers for custom domain
+  if (customDomain && host?.includes(customDomain)) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
