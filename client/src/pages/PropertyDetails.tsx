@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { Property } from "@/types";
 import Header from "@/components/layout/Header";
@@ -8,10 +8,78 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PropertyGallery from "@/components/properties/PropertyGallery";
 import ContactCTA from "@/components/home/ContactCTA";
 import { formatPrice, parseJsonArray, getImageUrl } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
   const [isFavorite, setIsFavorite] = useState(false);
+  const { toast } = useToast();
+  
+  // Form state for property inquiry
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "I'm interested in this property and would like more information."
+  });
+
+  // Mutation for sending property inquiry
+  const contactMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Message sent successfully!",
+        description: "We'll get back to you soon about this property.",
+      });
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        message: "I'm interested in this property and would like more information."
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to send message",
+        description: "Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email) {
+      toast({
+        title: "Please fill in required fields",
+        description: "Name and email are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    contactMutation.mutate({
+      ...formData,
+      message: `Property Inquiry for: ${property?.title} (ID: ${id})\n\n${formData.message}`,
+      propertyId: id,
+      isAgentContact: false
+    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
   
   // Scroll to top when component mounts
   useEffect(() => {
@@ -362,19 +430,27 @@ export default function PropertyDetails() {
                       </div>
                     ) : (
                       // For Primary properties - show contact form only
-                      <form className="space-y-4">
+                      <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Your Name *</label>
                         <input 
                           type="text" 
+                          name="name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          required
                           className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
                           placeholder="John Doe"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
                         <input 
                           type="email" 
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
                           className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
                           placeholder="email@example.com"
                         />
@@ -383,6 +459,9 @@ export default function PropertyDetails() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                         <input 
                           type="tel" 
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
                           className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
                           placeholder="(123) 456-7890"
                         />
@@ -390,6 +469,9 @@ export default function PropertyDetails() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
                         <textarea 
+                          name="message"
+                          value={formData.message}
+                          onChange={handleInputChange}
                           className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
                           placeholder="I'm interested in this property and would like more information."
                           rows={4}
@@ -398,9 +480,10 @@ export default function PropertyDetails() {
                       
                       <button 
                         type="submit" 
-                        className="w-full p-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow-md"
+                        disabled={contactMutation.isPending}
+                        className="w-full p-3 bg-[#D4AF37] hover:bg-[#BF9B30] disabled:bg-gray-400 text-white font-medium rounded-md transition-colors shadow-md"
                       >
-                        Request Information
+                        {contactMutation.isPending ? "Sending..." : "Request Information"}
                       </button>
                     </form>
                     )}
