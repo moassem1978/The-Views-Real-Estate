@@ -4136,7 +4136,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const emailPromises = recipients.map(to => 
         sgMail.default.send({
           to,
-          from: 'Moassem1978@gmail.com', // Verified sender in SendGrid
+          from: 'Sales@theviewsconsultancy.com', // Verified sender in SendGrid
           subject,
           html: emailContent,
           replyTo: email // Allow direct reply to the contact person
