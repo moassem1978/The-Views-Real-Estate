@@ -198,22 +198,30 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   const customDomain = process.env.CUSTOM_DOMAIN || 'www.theviewsconsultancy.com';
   const host = req.get('Host');
+  const isCustomDomain = host?.includes('theviewsconsultancy.com');
+  const isReplitDomain = host?.includes('replit.app') || host?.includes('replit.dev') || host?.includes('janeway.replit.dev');
 
-  // If current host is not the custom domain, redirect
-  if (host && !host.includes('theviewsconsultancy.com')) {
+  // Only redirect from Replit domains to custom domain
+  if (host && isReplitDomain && !isCustomDomain) {
     const protocol = 'https';
+    // Preserve the original URL path and query parameters
     const redirectUrl = `${protocol}://${customDomain}${req.originalUrl}`;
     console.log(`Redirecting from ${host} to ${customDomain}`);
     return res.redirect(301, redirectUrl);
   }
 
   // Add security headers for custom domain
-  if (host?.includes('theviewsconsultancy.com')) {
+  if (isCustomDomain) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    // Add CORS headers for better compatibility
+    res.setHeader('Access-Control-Allow-Origin', `https://${customDomain}`);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
 
   next();
