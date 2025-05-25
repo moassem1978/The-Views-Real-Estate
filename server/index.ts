@@ -20,7 +20,7 @@ function prepareUploadDirectories() {
     fs.chmodSync(uploadsDir, 0o777);
     console.log(`Updated permissions for existing directory: ${uploadsDir}`);
   }
-  
+
   // Create properties subdirectory
   const propertiesDir = path.join(uploadsDir, "properties");
   if (!fs.existsSync(propertiesDir)) {
@@ -30,7 +30,7 @@ function prepareUploadDirectories() {
     fs.chmodSync(propertiesDir, 0o777);
     console.log(`Updated permissions for existing directory: ${propertiesDir}`);
   }
-  
+
   // Public uploads directory for newer code
   const publicUploadsDir = path.join(process.cwd(), "public", "uploads");
   if (!fs.existsSync(publicUploadsDir)) {
@@ -40,7 +40,7 @@ function prepareUploadDirectories() {
     fs.chmodSync(publicUploadsDir, 0o777);
     console.log(`Updated permissions for existing directory: ${publicUploadsDir}`);
   }
-  
+
   // Public uploads subdirectories
   const publicDirs = [
     path.join(publicUploadsDir, "logos"),
@@ -48,7 +48,7 @@ function prepareUploadDirectories() {
     path.join(publicUploadsDir, "announcements"),
     path.join(publicUploadsDir, "projects")
   ];
-  
+
   publicDirs.forEach(dir => {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true, mode: 0o777 });
@@ -58,7 +58,7 @@ function prepareUploadDirectories() {
       console.log(`Updated permissions for existing directory: ${dir}`);
     }
   });
-  
+
   return uploadsDir;
 }
 
@@ -120,18 +120,18 @@ app.use('/uploads', async (req, res, next) => {
   if (fs.existsSync(publicPath)) {
     return res.sendFile(path.resolve(publicPath));
   }
-  
+
   console.log(`Enhanced file access request for: ${req.path}`);
-  
+
   try {
     // Use our robust image matcher for finding the actual file
     const actualPath = await imageMatcher.findActualImagePath(req.path);
-    
+
     if (actualPath && fs.existsSync(actualPath)) {
       console.log(`Enhanced matching found file at: ${actualPath}`);
       return res.sendFile(path.resolve(actualPath));
     }
-    
+
     // If still not found, try the legacy redirect approach as fallback
     console.log(`No match found, redirecting to: /public/uploads${req.path}`);
     return res.redirect(`/public/uploads${req.path}`);
@@ -146,12 +146,12 @@ app.use('/uploads', async (req, res, next) => {
 app.get('/api/debug/images', (req, res) => {
   const publicUploadsDir = path.join(process.cwd(), "public", "uploads");
   const propertiesDir = path.join(publicUploadsDir, 'properties');
-  
+
   const images = fs.existsSync(propertiesDir) 
     ? fs.readdirSync(propertiesDir)
       .filter(file => file.endsWith('.jpeg') || file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.webp'))
     : [];
-  
+
   res.json({
     uploadsDir,
     publicUploadsDir,
@@ -194,6 +194,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Security headers for custom domain
+app.use((req, res, next) => {
+  const customDomain = process.env.CUSTOM_DOMAIN;
+
+  if (customDomain && req.get('Host')?.includes(customDomain)) {
+    // Add security headers
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  }
+
+  next();
+});
+
 (async () => {
   const server = await registerRoutes(app, upload, uploadsDir);
 
@@ -202,12 +218,12 @@ app.use((req, res, next) => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    
+
     const user = req.user as any;
     if (!user || (user.role !== 'owner' && user.role !== 'admin')) {
       return res.status(403).json({ message: "Admin access required" });
     }
-    
+
     const count = req.query.count ? parseInt(String(req.query.count)) : 50;
     const recentErrors = errorLogger.getRecentErrors(count);
     res.json({ 
@@ -222,12 +238,12 @@ app.use((req, res, next) => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    
+
     const user = req.user as any;
     if (!user || user.role !== 'owner') {
       return res.status(403).json({ message: "Owner access required" });
     }
-    
+
     const success = errorLogger.clearLogs();
     res.json({ success, message: success ? "Error logs cleared" : "Failed to clear error logs" });
   });
@@ -235,7 +251,7 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-    
+
     // Log the error with our error logger
     const userId = _req.user ? (_req.user as any).id : null;
     const context = _req.path || 'unknown';
@@ -257,14 +273,14 @@ app.use((req, res, next) => {
   // and returns a placeholder without multiple checks
   app.use((req, res, next) => {
     const url = req.url;
-    
+
     // Only intercept hash-pattern image requests which are likely to be missing
     if (/\/properties\/[a-f0-9]{32}/i.test(url) && !url.includes('.svg')) {
       // Return placeholder immediately for all hash-pattern URLs
       // This avoids multiple filesystem checks and speeds up loading
       return res.sendFile(path.join(process.cwd(), 'public', 'placeholder-property.svg'));
     }
-    
+
     // For all other requests, continue to regular handling
     next();
   });

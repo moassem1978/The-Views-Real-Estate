@@ -1361,6 +1361,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(403).json({ message: "Only administrators and owners can update site settings" });
       }
 
+      // Auto-update site URL if custom domain is set
+      const customDomain = process.env.CUSTOM_DOMAIN;
+      if (customDomain && !req.body.siteUrl) {
+        req.body.siteUrl = `https://${customDomain}`;
+      }
+
       const updatedSettings = await dbStorage.updateSiteSettings(req.body);
       res.json(updatedSettings);
     } catch (error) {
