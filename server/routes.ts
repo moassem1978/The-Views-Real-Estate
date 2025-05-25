@@ -4097,8 +4097,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(400).json({ message: "Name, email, and message are required" });
       }
 
-      // Check if SendGrid API key is available
-      if (!process.env.SENDGRID_API_KEY) {
+      // Check if Gmail SMTP credentials are available
+      if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
         console.log("Contact form submission received (no email service configured):", {
           name, email, phone, isAgentContact
         });
@@ -4108,9 +4108,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         });
       }
 
-      // Import SendGrid
-      const sgMail = require('@sendgrid/mail');
-      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      // Import nodemailer for Gmail SMTP
+      const nodemailer = require('nodemailer');
+
+      // Create Gmail SMTP transporter
+      const transporter = nodemailer.createTransporter({
+        service: 'gmail',
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_APP_PASSWORD
+        }
+      });
 
       const subject = isAgentContact 
         ? `Agent Contact Request from ${name}`
@@ -4134,9 +4142,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       ];
 
       const emailPromises = recipients.map(to => 
-        sgMail.send({
+        transporter.sendMail({
+          from: `"The Views Real Estate" <${process.env.GMAIL_USER}>`,
           to,
-          from: 'no-reply@theviewsconsultancy.com', // This should be a verified sender in SendGrid
           subject,
           html: emailContent,
           replyTo: email // Allow direct reply to the contact person
