@@ -205,6 +205,19 @@ export default function Header() {
             </div>
             <div className="relative group">
               <button className="py-2 font-medium text-rich-black group-hover:text-copper transition-colors flex items-center">
+                Projects
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 transition-transform group-hover:rotate-180" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+              <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden transform scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 origin-top-left z-50 gold-border">
+                <Link href="/emaar-mivida-project" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
+                  EMAAR Mivida
+                </Link>
+              </div>
+            </div>
+            <div className="relative group">
+              <button className="py-2 font-medium text-rich-black group-hover:text-copper transition-colors flex items-center">
                 Services
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 transition-transform group-hover:rotate-180" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
