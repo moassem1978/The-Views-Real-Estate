@@ -1,6 +1,8 @@
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import LogoDisplay from "@/components/ui/LogoDisplay";
+import { useToast } from "@/hooks/use-toast";
 
 interface SiteSettings {
   companyName: string;
@@ -23,6 +25,66 @@ export default function Footer() {
   });
 
   const companyName = settings?.companyName || "The Views Real Estate";
+  const { toast } = useToast();
+
+  // Newsletter form state
+  const [newsletterData, setNewsletterData] = useState({
+    name: "",
+    email: "",
+    phone: ""
+  });
+
+  // Newsletter subscription mutation
+  const newsletterMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Successfully subscribed!",
+        description: "Thank you for joining our exclusive newsletter.",
+      });
+      setNewsletterData({ name: "", email: "", phone: "" });
+    },
+    onError: () => {
+      toast({
+        title: "Subscription failed",
+        description: "Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterData.email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    newsletterMutation.mutate({
+      email: newsletterData.email,
+      firstName: newsletterData.name,
+      phone: newsletterData.phone,
+      source: 'footer'
+    });
+  };
+
+  const handleNewsletterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewsletterData({
+      ...newsletterData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   return (
     <footer className="bg-rich-black-light text-white pt-20 pb-10">
@@ -251,18 +313,40 @@ export default function Footer() {
             
             <div className="mt-8">
               <h4 className="font-serif text-base mb-4 font-semibold">Subscribe to Our Newsletter</h4>
-              <div className="flex">
+              <form onSubmit={handleNewsletterSubmit} className="space-y-3">
+                <input 
+                  type="text" 
+                  name="name"
+                  value={newsletterData.name}
+                  onChange={handleNewsletterChange}
+                  placeholder="Your name" 
+                  className="w-full px-4 py-3 bg-rich-black rounded-md focus:outline-none focus:ring-1 focus:ring-copper/50 text-white placeholder-white/40 border border-copper/20"
+                />
                 <input 
                   type="email" 
-                  placeholder="Your email" 
-                  className="px-4 py-3 bg-rich-black rounded-l-md focus:outline-none focus:ring-1 focus:ring-copper/50 text-white placeholder-white/40 w-full border border-copper/20"
+                  name="email"
+                  value={newsletterData.email}
+                  onChange={handleNewsletterChange}
+                  placeholder="Your email *" 
+                  required
+                  className="w-full px-4 py-3 bg-rich-black rounded-md focus:outline-none focus:ring-1 focus:ring-copper/50 text-white placeholder-white/40 border border-copper/20"
                 />
-                <button className="px-4 py-3 bg-copper hover:bg-copper-dark transition-colors rounded-r-md">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+                <input 
+                  type="tel" 
+                  name="phone"
+                  value={newsletterData.phone}
+                  onChange={handleNewsletterChange}
+                  placeholder="Your phone number" 
+                  className="w-full px-4 py-3 bg-rich-black rounded-md focus:outline-none focus:ring-1 focus:ring-copper/50 text-white placeholder-white/40 border border-copper/20"
+                />
+                <button 
+                  type="submit"
+                  disabled={newsletterMutation.isPending}
+                  className="w-full px-4 py-3 bg-copper hover:bg-copper-dark disabled:bg-gray-500 transition-colors rounded-md text-white font-medium"
+                >
+                  {newsletterMutation.isPending ? "Subscribing..." : "Subscribe to Newsletter"}
                 </button>
-              </div>
+              </form>
             </div>
           </div>
         </div>
