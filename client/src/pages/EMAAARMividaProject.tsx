@@ -382,14 +382,13 @@ export default function EMAAARMividaProject() {
           </div>
         </section>
 
-        {/* Available Properties */}
+        {/* Available Properties - Intelligent Presentation */}
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Priority 1: Mivida Properties */}
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Available Mivida Properties</h2>
-              <p className="text-lg text-gray-600">
-                {mividaProperties.length} exclusive properties currently available in EMAAR Mivida
-              </p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Available Properties in EMAAR Mivida</h2>
+              <p className="text-lg text-gray-600">Exclusive opportunities curated by The Views Real Estate</p>
             </div>
 
             {isLoading ? (
@@ -397,35 +396,156 @@ export default function EMAAARMividaProject() {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37]"></div>
               </div>
             ) : mividaProperties.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {mividaProperties.slice(0, 6).map(property => (
-                  <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-w-16 aspect-h-9">
-                      <img 
-                        src={property.images?.[0] || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
-                        alt={property.title}
-                        className="w-full h-48 object-cover"
-                      />
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-lg font-semibold mb-2">{property.title}</h3>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{property.description}</p>
-                      <div className="flex justify-between items-center">
-                        <div className="text-[#D4AF37] font-bold">
-                          {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
+              <>
+                {/* Featured Mivida Properties */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                  {mividaProperties.map(property => (
+                    <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition-all">
+                      <div className="aspect-w-16 aspect-h-9">
+                        <img 
+                          src={property.images?.[0] || "/api/placeholder/800/400"}
+                          alt={property.title}
+                          className="w-full h-48 object-cover"
+                        />
+                      </div>
+                      <div className="p-6">
+                        <div className="bg-[#D4AF37] text-white text-xs px-3 py-1 rounded-full mb-3 inline-block">
+                          FEATURED IN MIVIDA
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {property.bedrooms} BR • {property.bathrooms} BA
+                        <h3 className="text-xl font-semibold mb-2">{property.title}</h3>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{property.description}</p>
+                        <div className="flex justify-between items-center mb-4">
+                          <div className="text-[#D4AF37] font-bold text-xl">
+                            {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {property.bedrooms} BR • {property.bathrooms} BA
+                          </div>
                         </div>
+                        <Link 
+                          href={`/properties/${property.id}`} 
+                          className="w-full bg-[#D4AF37] text-white py-3 px-4 rounded hover:bg-[#B8941F] transition-colors text-center block font-medium"
+                        >
+                          View Details
+                        </Link>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Priority 2: Other EMAAR Properties */}
+                {properties.filter(p => 
+                  (p.projectName?.toLowerCase().includes('marassi') || 
+                   p.projectName?.toLowerCase().includes('emaar') ||
+                   p.projectName?.toLowerCase().includes('uptown')) &&
+                  !p.projectName?.toLowerCase().includes('mivida')
+                ).length > 0 && (
+                  <div className="mb-16">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Other EMAAR Developments</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {properties.filter(p => 
+                        (p.projectName?.toLowerCase().includes('marassi') || 
+                         p.projectName?.toLowerCase().includes('emaar') ||
+                         p.projectName?.toLowerCase().includes('uptown')) &&
+                        !p.projectName?.toLowerCase().includes('mivida')
+                      ).slice(0, 3).map(property => (
+                        <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                          <div className="aspect-w-16 aspect-h-9">
+                            <img 
+                              src={property.images?.[0] || "/api/placeholder/800/400"}
+                              alt={property.title}
+                              className="w-full h-48 object-cover"
+                            />
+                          </div>
+                          <div className="p-6">
+                            <div className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full mb-3 inline-block">
+                              EMAAR DEVELOPMENT
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2">{property.title}</h3>
+                            <p className="text-gray-600 text-sm mb-3">{property.projectName} • {property.city}</p>
+                            <div className="flex justify-between items-center mb-4">
+                              <div className="text-[#D4AF37] font-bold text-lg">
+                                {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
+                              </div>
+                              <div className="text-sm text-gray-500 capitalize">
+                                {property.propertyType}
+                              </div>
+                            </div>
+                            <Link 
+                              href={`/properties/${property.id}`} 
+                              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-center block"
+                            >
+                              View Details
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
+                )}
+
+                {/* Priority 3: You May Also Like - Curated Diverse Selection */}
+                {properties.filter(p => 
+                  !p.projectName?.toLowerCase().includes('mivida') &&
+                  !p.projectName?.toLowerCase().includes('marassi') &&
+                  !p.projectName?.toLowerCase().includes('emaar') &&
+                  p.isHighlighted === true
+                ).length > 0 && (
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">You May Also Like</h3>
+                    <p className="text-center text-gray-600 mb-8">Handpicked luxury properties from our exclusive portfolio</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {properties.filter(p => 
+                        !p.projectName?.toLowerCase().includes('mivida') &&
+                        !p.projectName?.toLowerCase().includes('marassi') &&
+                        !p.projectName?.toLowerCase().includes('emaar') &&
+                        p.isHighlighted === true
+                      ).slice(0, 3).map(property => (
+                        <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                          <div className="aspect-w-16 aspect-h-9">
+                            <img 
+                              src={property.images?.[0] || "/api/placeholder/800/400"}
+                              alt={property.title}
+                              className="w-full h-48 object-cover"
+                            />
+                          </div>
+                          <div className="p-6">
+                            <div className="bg-green-600 text-white text-xs px-3 py-1 rounded-full mb-3 inline-block">
+                              PREMIUM SELECTION
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2">{property.title}</h3>
+                            <p className="text-gray-600 text-sm mb-3">{property.projectName} • {property.city}</p>
+                            <div className="flex justify-between items-center mb-4">
+                              <div className="text-[#D4AF37] font-bold text-lg">
+                                {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
+                              </div>
+                              <div className="text-sm text-gray-500 capitalize">
+                                {property.propertyType}
+                              </div>
+                            </div>
+                            <Link 
+                              href={`/properties/${property.id}`} 
+                              className="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors text-center block"
+                            >
+                              View Details
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-12">
                 <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No Mivida properties currently listed. Contact us for exclusive off-market opportunities.</p>
+                <p className="text-gray-600 mb-4">Contact us for exclusive Mivida opportunities and off-market properties.</p>
+                <Link 
+                  href="/contact" 
+                  className="inline-block bg-[#D4AF37] text-white py-3 px-6 rounded hover:bg-[#B8941F] transition-colors font-medium"
+                >
+                  Contact Our Team
+                </Link>
               </div>
             )}
           </div>
