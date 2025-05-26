@@ -197,6 +197,9 @@ export default function Header() {
                 <Link href="/properties?type=Resale" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
                   Resale
                 </Link>
+                <Link href="/emaar-mivida-project" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+                  EMAAR Mivida
+                </Link>
                 <Link href="/international" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
                   International
                 </Link>

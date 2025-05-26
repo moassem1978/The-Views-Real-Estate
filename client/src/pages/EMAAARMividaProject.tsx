@@ -142,8 +142,8 @@ export default function EMAAARMividaProject() {
                   <div className="text-sm">Units</div>
                 </div>
                 <div className="text-white">
-                  <div className="text-2xl font-bold text-[#D4AF37]">18-Hole</div>
-                  <div className="text-sm">Golf Course</div>
+                  <div className="text-2xl font-bold text-[#D4AF37]">5-Star</div>
+                  <div className="text-sm">Amenities</div>
                 </div>
                 <div className="text-white">
                   <div className="text-2xl font-bold text-[#D4AF37]">33-Acre</div>
@@ -324,8 +324,8 @@ export default function EMAAARMividaProject() {
                   <Car className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">18-Hole Golf Course</h3>
-                  <p className="text-gray-600">Championship golf course designed by world-renowned architects</p>
+                  <h3 className="text-lg font-semibold mb-2">Cycling & Jogging Tracks</h3>
+                  <p className="text-gray-600">Dedicated paths for cycling and jogging throughout the community</p>
                 </div>
               </div>
 

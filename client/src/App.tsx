@@ -44,6 +44,8 @@ const ProjectManagement = lazy(() => import(/* webpackChunkName: "project-manage
 // Blog and content marketing pages
 const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogPage"));
 const ArticlePage = lazy(() => import(/* webpackChunkName: "article" */ "@/pages/ArticlePage"));
+// Premium project pages
+const EMAAARMividaProject = lazy(() => import(/* webpackChunkName: "emaar-mivida" */ "@/pages/EMAAARMividaProject"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -159,7 +161,12 @@ function Router() {
         </Suspense>
       </Route>
 
-
+      {/* Premium project pages */}
+      <Route path="/emaar-mivida-project">
+        <Suspense fallback={<LoadingFallback />}>
+          <EMAAARMividaProject />
+        </Suspense>
+      </Route>
 
       {/* Authentication test page */}
       <Route path="/auth-test">
