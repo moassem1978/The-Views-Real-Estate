@@ -34,7 +34,7 @@ function HomeSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'luxury real estate Egypt, properties Cairo, North Coast villas, New Capital apartments, luxury properties Egypt, real estate consultancy, Mohamed Assem');
+    metaKeywords.setAttribute('content', 'luxury real estate Egypt, properties Cairo, North Coast villas, New Capital apartments, EMAAR Misr, Mivida, Uptown Cairo, Marassi North Coast, Marassi Marina, Marassi Beach, Lake District Mivida, AIS Uptown, Cairo Gate, Belle Vie, Mivida Gardens, Mivida Villas, Marassi Units, Safi Marassi Beach, Waterway Developments, Waterway North Coast, El Gouna, Gouna Marina, Orascom, Swan Lake Residence, Swan Lake North Coast, Sodic Katameya, Sodic Westown, Sodic Eastown, Sodic Villette, Villette Stand Alone, Sky Condos Villette, V Residence Villette, Mohamed Assem, The Views Real Estate');
 
     // Add Open Graph tags for social media sharing
     const ogTags = [

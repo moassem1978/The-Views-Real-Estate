@@ -49,8 +49,8 @@ function PropertiesSEO({ filters, totalProperties }: { filters: SearchFilters; t
     }
     metaDescription.setAttribute('content', description);
 
-    // Add dynamic keywords based on filters
-    let keywords = 'luxury properties Egypt, real estate Egypt, properties for sale';
+    // Add dynamic keywords based on filters with premium compound names
+    let keywords = 'luxury properties Egypt, real estate Egypt, properties for sale, EMAAR Misr, Mivida, Uptown Cairo, Marassi North Coast, Marassi Marina, Marassi Beach, Lake District Mivida, AIS Uptown, Cairo Gate, Belle Vie, Mivida Gardens, Mivida Villas, Marassi Units, Safi Marassi Beach, Waterway Developments, Waterway North Coast, El Gouna, Gouna Marina, Orascom, Swan Lake Residence, Swan Lake North Coast, Sodic Katameya, Sodic Westown, Sodic Eastown, Sodic Villette, Villette Stand Alone, Sky Condos Villette, V Residence Villette';
     if (filters.propertyType) keywords += `, ${filters.propertyType.toLowerCase()}s Egypt`;
     if (filters.location) keywords += `, properties ${filters.location}`;
     if (filters.listingType) keywords += `, ${filters.listingType.toLowerCase()} properties`;

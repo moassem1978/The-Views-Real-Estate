@@ -25,7 +25,7 @@ function AboutSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'Mohamed Assem, real estate expert Egypt, luxury property consultant, The Views Real Estate founder, 30 years experience');
+    metaKeywords.setAttribute('content', 'Mohamed Assem, real estate expert Egypt, luxury property consultant, The Views Real Estate founder, 30 years experience, EMAAR Misr properties, Mivida expert, Uptown Cairo consultant, Marassi North Coast specialist, Lake District Mivida advisor, Waterway Developments expert, El Gouna properties, Swan Lake consultant, Sodic Katameya specialist, Sodic Villette expert');
 
     const ogTags = [
       { property: 'og:title', content: title },
