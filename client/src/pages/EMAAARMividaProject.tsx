@@ -114,7 +114,7 @@ export default function EMAAARMividaProject() {
         <section className="bg-[#333333] py-20 relative">
           <div className="absolute inset-0 opacity-25">
             <img 
-              src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
+              src="https://www.emaar.com/uploads/cache/large/uploads/media/61e1b9b5b2d6e.jpeg" 
               alt="EMAAR Mivida luxury development New Cairo" 
               className="w-full h-full object-cover"
             />
@@ -403,7 +403,7 @@ export default function EMAAARMividaProject() {
                     <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition-all">
                       <div className="aspect-w-16 aspect-h-9">
                         <img 
-                          src={property.images?.[0] || "/api/placeholder/800/400"}
+                          src={property.images?.[0] || "https://www.emaar.com/uploads/cache/large/uploads/media/61e1b9b5e5c7a.jpeg"}
                           alt={property.title}
                           className="w-full h-48 object-cover"
                         />
