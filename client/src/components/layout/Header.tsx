@@ -416,6 +416,7 @@ export default function Header() {
               <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobilePropertiesOpen ? 'block' : 'hidden'}`}>
                 <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors">Primary</Link>
                 <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors">Resale</Link>
+                <Link href="/emaar-mivida-project" className="block py-1 text-rich-black hover:text-copper transition-colors">EMAAR Mivida</Link>
                 <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
               </div>
             </div>
