@@ -49,10 +49,10 @@ function PropertiesSEO({ filters, totalProperties }: { filters: SearchFilters; t
     }
     metaDescription.setAttribute('content', description);
 
-    // Add dynamic keywords based on filters with premium compound names
-    let keywords = 'luxury properties Egypt, real estate Egypt, properties for sale, EMAAR Misr, Mivida, Uptown Cairo, Marassi North Coast, Marassi Marina, Marassi Beach, Lake District Mivida, AIS Uptown, Cairo Gate, Belle Vie, Mivida Gardens, Mivida Villas, Marassi Units, Safi Marassi Beach, Waterway Developments, Waterway North Coast, El Gouna, Gouna Marina, Orascom, Swan Lake Residence, Swan Lake North Coast, Sodic Katameya, Sodic Westown, Sodic Eastown, Sodic Villette, Villette Stand Alone, Sky Condos Villette, V Residence Villette';
-    if (filters.propertyType) keywords += `, ${filters.propertyType.toLowerCase()}s Egypt`;
-    if (filters.location) keywords += `, properties ${filters.location}`;
+    // Add dynamic keywords based on filters with premium compound names and catchy phrases
+    let keywords = 'luxury properties Egypt, real estate Egypt, properties for sale, EMAAR Misr, Mivida, Uptown Cairo, Marassi North Coast, Marassi Marina, Marassi Beach, Lake District Mivida, AIS Uptown, Cairo Gate, Belle Vie, Mivida Gardens, Mivida Villas, Marassi Units, Safi Marassi Beach, Waterway Developments, Waterway North Coast, El Gouna, Gouna Marina, Orascom, Swan Lake Residence, Swan Lake North Coast, Sodic Katameya, Sodic Westown, Sodic Eastown, Sodic Villette, Villette Stand Alone, Sky Condos Villette, V Residence Villette, newest developments in Cairo, newest developments in North Coast, newest developments in New Capital, most expensive villa in Mivida, most expensive villa in Marassi, most expensive villa in EMAAR, most expensive villa in Sodic, most expensive villa in El Gouna, most expensive villa in Waterway, newest luxury properties North Coast, newest luxury properties Cairo';
+    if (filters.propertyType) keywords += `, ${filters.propertyType.toLowerCase()}s Egypt, newest ${filters.propertyType.toLowerCase()}s Egypt`;
+    if (filters.location) keywords += `, properties ${filters.location}, newest developments in ${filters.location}, most expensive villa in ${filters.location}`;
     if (filters.listingType) keywords += `, ${filters.listingType.toLowerCase()} properties`;
     
     let metaKeywords = document.querySelector('meta[name="keywords"]');
