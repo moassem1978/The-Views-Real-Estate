@@ -24,6 +24,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+  const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
@@ -197,9 +198,6 @@ export default function Header() {
                 <Link href="/properties?type=Resale" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
                   Resale
                 </Link>
-                <Link href="/emaar-mivida-project" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
-                  EMAAR Mivida
-                </Link>
                 <Link href="/international" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
                   International
                 </Link>
@@ -241,14 +239,22 @@ export default function Header() {
             >
               Contact
             </Link>
-            <Link 
-              href="/projects" 
-              className={`py-2 font-medium ${location === "/projects" 
-                ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
-                : "text-rich-black hover:text-copper"} transition-colors`}
-            >
-              Projects
-            </Link>
+            <div className="relative group">
+              <button className="py-2 font-medium text-rich-black group-hover:text-copper transition-colors flex items-center">
+                Projects
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 transition-transform group-hover:rotate-180" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+              <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden transform scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 origin-top-left z-50 gold-border">
+                <Link href="/projects" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+                  All Projects
+                </Link>
+                <Link href="/emaar-mivida-project" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
+                  EMAAR Mivida
+                </Link>
+              </div>
+            </div>
               {canInstall && (
                 <button
                   onClick={handleInstallApp}
@@ -416,7 +422,6 @@ export default function Header() {
               <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobilePropertiesOpen ? 'block' : 'hidden'}`}>
                 <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors">Primary</Link>
                 <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors">Resale</Link>
-                <Link href="/emaar-mivida-project" className="block py-1 text-rich-black hover:text-copper transition-colors">EMAAR Mivida</Link>
                 <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
               </div>
             </div>
@@ -448,12 +453,21 @@ export default function Header() {
             >
               Contact
             </Link>
-            <Link 
-              href="/projects" 
-              className={`py-2 font-medium ${location === "/projects" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
-            >
-              Projects
-            </Link>
+            <div className="py-2">
+              <button 
+                className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
+                onClick={() => setMobileProjectsOpen(!mobileProjectsOpen)}
+              >
+                Projects
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${mobileProjectsOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobileProjectsOpen ? 'block' : 'hidden'}`}>
+                <Link href="/projects" className="block py-1 text-rich-black hover:text-copper transition-colors">All Projects</Link>
+                <Link href="/emaar-mivida-project" className="block py-1 text-rich-black hover:text-copper transition-colors">EMAAR Mivida</Link>
+              </div>
+            </div>
             {user && (
               <>
                 <Link 
