@@ -38,6 +38,9 @@ export default function Contact() {
   // Check if agent contact was requested (via query param)
   const isAgentContact = location.includes("agent=true");
   
+  // Check if newsletter subscription was requested (via query param)
+  const isNewsletterSubscription = location.includes("newsletter=true");
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -53,8 +56,11 @@ export default function Contact() {
           name,
           email,
           phone,
-          message,
-          isAgentContact
+          message: isNewsletterSubscription 
+            ? `NEWSLETTER SUBSCRIPTION REQUEST\n\n${message || "I would like to subscribe to your newsletter and receive updates about luxury properties and market insights."}`
+            : message,
+          isAgentContact,
+          isNewsletterSubscription
         }),
       });
 

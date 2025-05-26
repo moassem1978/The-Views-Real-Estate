@@ -313,40 +313,13 @@ export default function Footer() {
             
             <div className="mt-8">
               <h4 className="font-serif text-base mb-4 font-semibold">Subscribe to Our Newsletter</h4>
-              <form onSubmit={handleNewsletterSubmit} className="space-y-3">
-                <input 
-                  type="text" 
-                  name="name"
-                  value={newsletterData.name}
-                  onChange={handleNewsletterChange}
-                  placeholder="Your name" 
-                  className="w-full px-4 py-3 bg-rich-black rounded-md focus:outline-none focus:ring-1 focus:ring-copper/50 text-white placeholder-white/40 border border-copper/20"
-                />
-                <input 
-                  type="email" 
-                  name="email"
-                  value={newsletterData.email}
-                  onChange={handleNewsletterChange}
-                  placeholder="Your email *" 
-                  required
-                  className="w-full px-4 py-3 bg-rich-black rounded-md focus:outline-none focus:ring-1 focus:ring-copper/50 text-white placeholder-white/40 border border-copper/20"
-                />
-                <input 
-                  type="tel" 
-                  name="phone"
-                  value={newsletterData.phone}
-                  onChange={handleNewsletterChange}
-                  placeholder="Your phone number" 
-                  className="w-full px-4 py-3 bg-rich-black rounded-md focus:outline-none focus:ring-1 focus:ring-copper/50 text-white placeholder-white/40 border border-copper/20"
-                />
-                <button 
-                  type="submit"
-                  disabled={newsletterMutation.isPending}
-                  className="w-full px-4 py-3 bg-copper hover:bg-copper-dark disabled:bg-gray-500 transition-colors rounded-md text-white font-medium"
-                >
-                  {newsletterMutation.isPending ? "Subscribing..." : "Subscribe to Newsletter"}
-                </button>
-              </form>
+              <p className="text-white/70 text-sm mb-4">Stay updated with the latest luxury properties and market insights.</p>
+              <Link 
+                href="/contact?newsletter=true"
+                className="inline-block w-full px-4 py-3 bg-copper hover:bg-copper-dark transition-colors rounded-md text-white font-medium text-center"
+              >
+                Subscribe to Newsletter
+              </Link>
             </div>
           </div>
         </div>

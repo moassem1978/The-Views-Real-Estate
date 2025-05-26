@@ -4118,7 +4118,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const sgMail = await import('@sendgrid/mail');
       sgMail.default.setApiKey(process.env.SENDGRID_API_KEY);
 
-      const subject = isAgentContact 
+      const isNewsletterSubscription = req.body.isNewsletterSubscription;
+      
+      const subject = isNewsletterSubscription
+        ? `Newsletter Subscription Request from ${name}`
+        : isAgentContact 
         ? `Agent Contact Request from ${name}`
         : `Contact Form Submission from ${name}`;
 
@@ -4127,7 +4131,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
         ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ''}
-        <p><strong>Type:</strong> ${isAgentContact ? 'Agent Contact Request' : 'General Inquiry'}</p>
+        <p><strong>Type:</strong> ${isNewsletterSubscription ? 'Newsletter Subscription' : isAgentContact ? 'Agent Contact Request' : 'General Inquiry'}</p>
         <hr>
         <h3>Message:</h3>
         <p>${message.replace(/\n/g, '<br>')}</p>
