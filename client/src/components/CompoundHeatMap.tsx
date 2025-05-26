@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Property } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, TrendingUp, Building, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MapPin, TrendingUp, Building, DollarSign, Filter, BarChart3, Eye, Zap } from "lucide-react";
 
 interface CompoundData {
   name: string;
@@ -21,9 +22,16 @@ interface HeatMapProps {
   onCompoundSelect?: (compound: string) => void;
 }
 
+type ViewMode = 'density' | 'price' | 'growth';
+type PriceFilter = 'all' | 'under20M' | '20M-40M' | '40M-75M' | 'over75M';
+
 export default function CompoundHeatMap({ selectedCompound, onCompoundSelect }: HeatMapProps) {
   const [hoveredCompound, setHoveredCompound] = useState<string | null>(null);
   const [filterLocation, setFilterLocation] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('density');
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
+  const [showOnlyFeatured, setShowOnlyFeatured] = useState(false);
+  const [animationEnabled, setAnimationEnabled] = useState(true);
 
   // Fetch properties data
   const { data: properties = [], isLoading } = useQuery<Property[]>({
@@ -33,12 +41,35 @@ export default function CompoundHeatMap({ selectedCompound, onCompoundSelect }: 
   // Process properties data into compound heat map data
   const compoundData: CompoundData[] = processPropertiesForHeatMap(properties);
 
-  // Filter compounds by location
-  const filteredCompounds = filterLocation === 'all' 
-    ? compoundData 
-    : compoundData.filter(compound => 
-        compound.location.toLowerCase().includes(filterLocation.toLowerCase())
+  // Enhanced filtering logic
+  const filteredCompounds = compoundData.filter(compound => {
+    // Location filter
+    if (filterLocation !== 'all' && !compound.location.toLowerCase().includes(filterLocation.toLowerCase())) {
+      return false;
+    }
+    
+    // Price filter
+    if (priceFilter !== 'all') {
+      const avgPrice = compound.averagePrice / 1000000; // Convert to millions
+      switch (priceFilter) {
+        case 'under20M': return avgPrice > 0 && avgPrice < 20;
+        case '20M-40M': return avgPrice >= 20 && avgPrice < 40;
+        case '40M-75M': return avgPrice >= 40 && avgPrice < 75;
+        case 'over75M': return avgPrice >= 75;
+        default: return true;
+      }
+    }
+    
+    // Featured filter (compounds with high density or premium locations)
+    if (showOnlyFeatured) {
+      const premiumLocations = ['North Coast', 'New Capital', 'Cairo'];
+      return compound.density === 'high' || premiumLocations.some(loc => 
+        compound.location.toLowerCase().includes(loc.toLowerCase())
       );
+    }
+    
+    return true;
+  });
 
   // Get unique locations for filter
   const locations = ['all', ...Array.from(new Set(compoundData.map(c => c.location)))];
@@ -56,25 +87,118 @@ export default function CompoundHeatMap({ selectedCompound, onCompoundSelect }: 
 
   return (
     <div className="space-y-6">
-      {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Compound Location Heat Map</h2>
-          <p className="text-gray-600">Property density and pricing across Egyptian luxury compounds</p>
+      {/* Enhanced Header and Controls */}
+      <div className="space-y-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Enhanced Compound Heat Map</h2>
+            <p className="text-gray-600">Advanced visualization of property density, pricing, and market trends</p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant={animationEnabled ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAnimationEnabled(!animationEnabled)}
+              className="bg-[#D4AF37] hover:bg-[#BF9B30]"
+            >
+              <Zap className="w-4 h-4 mr-1" />
+              {animationEnabled ? 'Live' : 'Static'}
+            </Button>
+          </div>
         </div>
-        
-        <div className="flex gap-2">
-          <select 
-            value={filterLocation}
-            onChange={(e) => setFilterLocation(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
-          >
-            {locations.map(location => (
-              <option key={location} value={location}>
-                {location === 'all' ? 'All Locations' : location}
-              </option>
-            ))}
-          </select>
+
+        {/* Advanced Filter Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+          {/* View Mode Toggle */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">View Mode</label>
+            <div className="flex rounded-md overflow-hidden border border-gray-300">
+              <button
+                onClick={() => setViewMode('density')}
+                className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                  viewMode === 'density' 
+                    ? 'bg-[#D4AF37] text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Building className="w-3 h-3 mx-auto mb-1" />
+                Density
+              </button>
+              <button
+                onClick={() => setViewMode('price')}
+                className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                  viewMode === 'price' 
+                    ? 'bg-[#D4AF37] text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <DollarSign className="w-3 h-3 mx-auto mb-1" />
+                Price
+              </button>
+              <button
+                onClick={() => setViewMode('growth')}
+                className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                  viewMode === 'growth' 
+                    ? 'bg-[#D4AF37] text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <TrendingUp className="w-3 h-3 mx-auto mb-1" />
+                Trends
+              </button>
+            </div>
+          </div>
+
+          {/* Location Filter */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Location</label>
+            <select 
+              value={filterLocation}
+              onChange={(e) => setFilterLocation(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-sm"
+            >
+              {locations.map(location => (
+                <option key={location} value={location}>
+                  {location === 'all' ? 'All Locations' : location}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Price Range Filter */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Price Range</label>
+            <select 
+              value={priceFilter}
+              onChange={(e) => setPriceFilter(e.target.value as PriceFilter)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-sm"
+            >
+              <option value="all">All Prices</option>
+              <option value="under20M">Under 20M L.E</option>
+              <option value="20M-40M">20M - 40M L.E</option>
+              <option value="40M-75M">40M - 75M L.E</option>
+              <option value="over75M">Over 75M L.E</option>
+            </select>
+          </div>
+
+          {/* Featured Toggle */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Display</label>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowOnlyFeatured(!showOnlyFeatured)}
+                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  showOnlyFeatured 
+                    ? 'bg-[#D4AF37] text-white' 
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Premium Only
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -97,29 +221,51 @@ export default function CompoundHeatMap({ selectedCompound, onCompoundSelect }: 
           {/* Compound Markers */}
           <div className="relative h-full">
             {filteredCompounds.map((compound, index) => {
-              const size = getDensitySize(compound.density);
-              const color = getDensityColor(compound.density);
+              const size = getMarkerSize(compound, viewMode);
+              const color = getMarkerColor(compound, viewMode);
               const position = getCompoundPosition(compound.location, index, filteredCompounds.length);
+              const pulse = animationEnabled && compound.density === 'high';
               
               return (
                 <div
                   key={compound.name}
-                  className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 ${
+                  className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-500 ${
                     hoveredCompound === compound.name ? 'scale-125 z-20' : 'z-10'
-                  } ${selectedCompound === compound.name ? 'ring-4 ring-[#D4AF37] ring-opacity-50' : ''}`}
+                  } ${selectedCompound === compound.name ? 'ring-4 ring-[#D4AF37] ring-opacity-50' : ''}
+                  ${pulse ? 'animate-pulse' : ''}`}
                   style={{
                     left: `${position.x}%`,
                     top: `${position.y}%`,
+                    transform: animationEnabled 
+                      ? `translate(-50%, -50%) scale(${hoveredCompound === compound.name ? 1.25 : 1})` 
+                      : 'translate(-50%, -50%)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
                   onMouseEnter={() => setHoveredCompound(compound.name)}
                   onMouseLeave={() => setHoveredCompound(null)}
                   onClick={() => onCompoundSelect?.(compound.name)}
                 >
-                  {/* Heat Point */}
+                  {/* Enhanced Heat Point with Glow Effect */}
                   <div 
-                    className={`${size} ${color} rounded-full shadow-lg border-2 border-white flex items-center justify-center`}
+                    className={`${size} ${color} rounded-full shadow-xl border-3 border-white flex items-center justify-center relative overflow-hidden group`}
+                    style={{
+                      boxShadow: animationEnabled && compound.density === 'high' 
+                        ? '0 0 20px rgba(212, 175, 55, 0.6), 0 0 40px rgba(212, 175, 55, 0.3)' 
+                        : '0 10px 25px rgba(0, 0, 0, 0.2)'
+                    }}
                   >
-                    <Building className="w-4 h-4 text-white" />
+                    {/* Gradient Overlay for Premium Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full"></div>
+                    
+                    {/* Icon based on view mode */}
+                    {viewMode === 'density' && <Building className="w-4 h-4 text-white relative z-10" />}
+                    {viewMode === 'price' && <DollarSign className="w-4 h-4 text-white relative z-10" />}
+                    {viewMode === 'growth' && <TrendingUp className="w-4 h-4 text-white relative z-10" />}
+                    
+                    {/* Ripple Effect for High Activity */}
+                    {animationEnabled && compound.propertyCount >= 8 && (
+                      <div className="absolute inset-0 rounded-full border-2 border-white/50 animate-ping"></div>
+                    )}
                   </div>
                   
                   {/* Compound Label */}
@@ -159,23 +305,76 @@ export default function CompoundHeatMap({ selectedCompound, onCompoundSelect }: 
             })}
           </div>
 
-          {/* Legend */}
-          <div className="absolute bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg">
-            <h4 className="font-semibold text-sm mb-3">Property Density</h4>
+          {/* Enhanced Dynamic Legend */}
+          <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-gray-200">
+            <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-[#D4AF37]" />
+              {viewMode === 'density' && 'Property Density'}
+              {viewMode === 'price' && 'Price Ranges'}
+              {viewMode === 'growth' && 'Growth Potential'}
+            </h4>
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                <span className="text-xs">High (10+ properties)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                <span className="text-xs">Medium (5-9 properties)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-xs">Low (1-4 properties)</span>
-              </div>
+              {viewMode === 'density' && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gradient-to-br from-red-500 to-red-700 rounded-full shadow-sm"></div>
+                    <span className="text-xs">High (10+ properties)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-gradient-to-br from-orange-500 to-orange-700 rounded-full shadow-sm"></div>
+                    <span className="text-xs">Medium (5-9 properties)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-gradient-to-br from-green-500 to-green-700 rounded-full shadow-sm"></div>
+                    <span className="text-xs">Low (1-4 properties)</span>
+                  </div>
+                </>
+              )}
+              {viewMode === 'price' && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full shadow-sm"></div>
+                    <span className="text-xs">75M+ L.E</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full shadow-sm"></div>
+                    <span className="text-xs">40M - 75M L.E</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-full shadow-sm"></div>
+                    <span className="text-xs">20M - 40M L.E</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-gradient-to-br from-teal-500 to-teal-700 rounded-full shadow-sm"></div>
+                    <span className="text-xs">Under 20M L.E</span>
+                  </div>
+                </>
+              )}
+              {viewMode === 'growth' && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-full shadow-sm"></div>
+                    <span className="text-xs">High Growth</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gradient-to-br from-amber-500 to-amber-700 rounded-full shadow-sm"></div>
+                    <span className="text-xs">Medium Growth</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-full shadow-sm"></div>
+                    <span className="text-xs">Emerging</span>
+                  </div>
+                </>
+              )}
             </div>
+            {animationEnabled && (
+              <div className="mt-3 pt-2 border-t border-gray-200">
+                <div className="flex items-center gap-1 text-xs text-gray-600">
+                  <Zap className="w-3 h-3 text-[#D4AF37]" />
+                  Live animations enabled
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -289,6 +488,62 @@ function processPropertiesForHeatMap(properties: Property[]): CompoundData[] {
       density: density as 'low' | 'medium' | 'high'
     };
   }).sort((a, b) => b.propertyCount - a.propertyCount);
+}
+
+// Enhanced marker sizing based on view mode
+function getMarkerSize(compound: CompoundData, viewMode: ViewMode): string {
+  switch (viewMode) {
+    case 'density':
+      switch (compound.density) {
+        case 'high': return 'w-10 h-10';
+        case 'medium': return 'w-7 h-7';
+        case 'low': return 'w-5 h-5';
+      }
+      break;
+    case 'price':
+      const avgPrice = compound.averagePrice / 1000000;
+      if (avgPrice >= 75) return 'w-12 h-12';
+      if (avgPrice >= 40) return 'w-9 h-9';
+      if (avgPrice >= 20) return 'w-7 h-7';
+      return 'w-5 h-5';
+    case 'growth':
+      // Growth based on property count and location premium
+      const isPremiumLocation = ['North Coast', 'New Capital', 'Cairo'].some(loc => 
+        compound.location.toLowerCase().includes(loc.toLowerCase())
+      );
+      if (compound.propertyCount >= 10 && isPremiumLocation) return 'w-11 h-11';
+      if (compound.propertyCount >= 5 || isPremiumLocation) return 'w-8 h-8';
+      return 'w-6 h-6';
+  }
+  return 'w-6 h-6';
+}
+
+// Enhanced marker coloring based on view mode
+function getMarkerColor(compound: CompoundData, viewMode: ViewMode): string {
+  switch (viewMode) {
+    case 'density':
+      switch (compound.density) {
+        case 'high': return 'bg-gradient-to-br from-red-500 to-red-700 hover:from-red-600 hover:to-red-800';
+        case 'medium': return 'bg-gradient-to-br from-orange-500 to-orange-700 hover:from-orange-600 hover:to-orange-800';
+        case 'low': return 'bg-gradient-to-br from-green-500 to-green-700 hover:from-green-600 hover:to-green-800';
+      }
+      break;
+    case 'price':
+      const avgPrice = compound.averagePrice / 1000000;
+      if (avgPrice >= 75) return 'bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900';
+      if (avgPrice >= 40) return 'bg-gradient-to-br from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900';
+      if (avgPrice >= 20) return 'bg-gradient-to-br from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800';
+      if (avgPrice > 0) return 'bg-gradient-to-br from-teal-500 to-teal-700 hover:from-teal-600 hover:to-teal-800';
+      return 'bg-gradient-to-br from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800';
+    case 'growth':
+      const isPremiumLocation = ['North Coast', 'New Capital', 'Cairo'].some(loc => 
+        compound.location.toLowerCase().includes(loc.toLowerCase())
+      );
+      if (compound.propertyCount >= 10 && isPremiumLocation) return 'bg-gradient-to-br from-yellow-500 to-yellow-700 hover:from-yellow-600 hover:to-yellow-800';
+      if (compound.propertyCount >= 5 || isPremiumLocation) return 'bg-gradient-to-br from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800';
+      return 'bg-gradient-to-br from-emerald-500 to-emerald-700 hover:from-emerald-600 hover:to-emerald-800';
+  }
+  return 'bg-gradient-to-br from-gray-500 to-gray-700';
 }
 
 function getDensitySize(density: 'low' | 'medium' | 'high'): string {
