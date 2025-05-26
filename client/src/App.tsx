@@ -160,28 +160,28 @@ function Router() {
           <ProjectDetails />
         </Suspense>
       </Route>
-      
+
       {/* Heat Map visualization */}
       <Route path="/heat-map">
         <Suspense fallback={<LoadingFallback />}>
           <HeatMap />
         </Suspense>
       </Route>
-      
+
       {/* Authentication test page */}
       <Route path="/auth-test">
         <Suspense fallback={<LoadingFallback />}>
           <AuthTest />
         </Suspense>
       </Route>
-      
+
       {/* Protected routes - simplified implementation */}
       <Route path="/dashboard">
         <Suspense fallback={<LoadingFallback />}>
           <Dashboard />
         </Suspense>
       </Route>
-      
+
       <ProtectedRoute 
         path="/user-management" 
         component={() => (
@@ -191,7 +191,7 @@ function Router() {
         )}
         requiredRole={['owner', 'admin']}
       />
-      
+
       <ProtectedRoute 
         path="/project-management" 
         component={() => (
@@ -201,7 +201,7 @@ function Router() {
         )}
         requiredRole={['owner', 'admin']}
       />
-      
+
       {/* Fallback to 404 */}
       <Route>
         <Suspense fallback={<LoadingFallback />}>
@@ -229,11 +229,13 @@ function ErrorFallback({error, resetErrorBoundary}: {error: Error; resetErrorBou
   );
 }
 
+import PWAInstallPrompt from "@/components/ui/PWAInstallPrompt";
+
 function App() {
   useEffect(() => {
     document.documentElement.classList.add('overflow-auto');
     document.body.classList.add('overflow-auto', 'min-h-screen');
-    
+
     return () => {
       document.documentElement.classList.remove('overflow-auto');
       document.body.classList.remove('overflow-auto', 'min-h-screen');
@@ -250,6 +252,7 @@ function App() {
             </Suspense>
             <Toaster />
           </div>
+          <PWAInstallPrompt />
         </AuthProvider>
       </ErrorBoundary>
     </QueryClientProvider>

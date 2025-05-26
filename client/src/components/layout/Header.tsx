@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import LogoDisplay from "@/components/ui/LogoDisplay";
 import { useAuth } from "@/hooks/use-auth";
+import { Download } from "lucide-react";
 
 // Define SiteSettings interface 
 interface SiteSettings {
@@ -21,15 +22,43 @@ interface SiteSettings {
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!installPrompt) return;
+
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+
+    if (outcome === 'accepted') {
+      setCanInstall(false);
+      setInstallPrompt(null);
+    }
+  };
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [location] = useLocation();
   const userMenuRef = useRef<HTMLDivElement>(null);
-  
+
   // Get auth information
   const { user, logoutMutation } = useAuth();
-  
+
   // Fetch site settings including logo
   const { data: settings } = useQuery<SiteSettings>({
     queryKey: ['/api/site-settings'],
@@ -38,16 +67,16 @@ export default function Header() {
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
-  
+
   const toggleUserMenu = () => {
     setUserMenuOpen(!userMenuOpen);
   };
-  
+
   const handleLogout = () => {
     logoutMutation.mutate();
     setUserMenuOpen(false);
   };
-  
+
   // Close user menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -55,7 +84,7 @@ export default function Header() {
         setUserMenuOpen(false);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -220,7 +249,17 @@ export default function Header() {
             >
               Projects
             </Link>
-          </nav>
+              {canInstall && (
+                <button
+                  onClick={handleInstallApp}
+                  className="flex items-center space-x-1 text-copper hover:text-copper-dark transition-colors font-medium"
+                  title="Install App"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Install App</span>
+                </button>
+              )}
+            </nav>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -252,7 +291,7 @@ export default function Header() {
                 </svg>
                 <span className="font-medium">Logout</span>
               </button>
-              
+
               {/* Account dropdown menu */}
               <div className="relative" ref={userMenuRef}>
                 <button 
@@ -264,14 +303,14 @@ export default function Header() {
                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
                 </button>
-                
+
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white shadow-lg rounded-md overflow-hidden z-50 gold-border">
                     <div className="px-4 py-3 border-b border-copper/10">
                       <p className="text-sm text-rich-black-light">Signed in as</p>
                       <p className="text-sm font-medium text-rich-black truncate">{user.email}</p>
                     </div>
-                    
+
                     <div className="py-1">
                       <Link 
                         href="/dashboard" 
@@ -280,7 +319,7 @@ export default function Header() {
                       >
                         Dashboard
                       </Link>
-                      
+
                       {/* Show User Management only for owner or admin roles */}
                       {(user.role === 'owner' || user.role === 'admin') && (
                         <>
@@ -300,7 +339,7 @@ export default function Header() {
                           </Link>
                         </>
                       )}
-                      
+
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-red-600 font-medium hover:bg-red-50 transition-colors border-t border-copper/10 mt-1"
@@ -318,7 +357,7 @@ export default function Header() {
               </div>
             </>
           )}
-          
+
           {/* Mobile menu button */}
           <button 
             className="md:hidden flex items-center justify-center h-10 w-10 rounded-full text-copper hover:text-copper-dark hover:bg-cream transition-all" 
@@ -336,7 +375,7 @@ export default function Header() {
           </button>
         </div>
       </div>
-      
+
       {/* Mobile menu */}
       <div className={`md:hidden bg-white border-t border-copper/10 ${mobileMenuOpen ? 'block animate-in' : 'hidden'}`}>
         <div className="container mx-auto px-4 py-3">
@@ -422,7 +461,7 @@ export default function Header() {
                 >
                   Dashboard
                 </Link>
-                
+
                 {(user.role === 'owner' || user.role === 'admin') && (
                   <>
                     <Link 
@@ -441,7 +480,7 @@ export default function Header() {
                 )}
               </>
             )}
-            
+
             {/* Sign In / Dashboard prominent link */}
             <div className="py-4 border-t border-copper/10">
               {!user ? (
@@ -460,7 +499,7 @@ export default function Header() {
                 </Link>
               )}
             </div>
-            
+
             {/* Mobile contact info */}
             <div className="pt-2 space-y-3 text-sm">
               {settings?.contactPhone && (
@@ -480,7 +519,7 @@ export default function Header() {
                 </a>
               )}
             </div>
-            
+
             <div className="flex space-x-4 py-4">
               {!user ? (
                 <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
@@ -515,7 +554,7 @@ export default function Header() {
                 </svg>
               </button>
             </div>
-            
+
             {/* Social links in mobile */}
             <div className="flex space-x-4 pt-2 border-t border-copper/10">
               {settings?.socialLinks?.facebook && (

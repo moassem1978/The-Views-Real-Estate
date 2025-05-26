@@ -24,7 +24,12 @@
   "theme_color": "#D4AF37",
   "background_color": "#F9F6F2",
   "orientation": "portrait",
-  "description": "Discover exceptional luxury properties",
+  "description": "Discover exceptional luxury properties with The Views Real Estate",
   "apple-mobile-web-app-capable": "yes",
-  "apple-mobile-web-app-status-bar-style": "black-translucent"
+  "apple-mobile-web-app-status-bar-style": "black-translucent",
+  "categories": ["business", "lifestyle", "real estate"],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }
