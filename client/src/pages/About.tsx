@@ -1,11 +1,92 @@
+import { useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ContactCTA from "@/components/home/ContactCTA";
+
+// SEO optimization for About page
+function AboutSEO() {
+  useEffect(() => {
+    const title = "About Mohamed Assem - 30+ Years Real Estate Expertise | The Views Real Estate";
+    const description = "Meet Mohamed Assem, founder of The Views Real Estate with 30+ years of luxury property expertise across 7 countries. Expert real estate consultancy in Egypt.";
+    
+    document.title = title;
+    
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', description);
+
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', 'Mohamed Assem, real estate expert Egypt, luxury property consultant, The Views Real Estate founder, 30 years experience');
+
+    const ogTags = [
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:type', content: 'profile' },
+      { property: 'og:url', content: window.location.href }
+    ];
+
+    ogTags.forEach(tag => {
+      let metaTag = document.querySelector(`meta[property="${tag.property}"]`);
+      if (!metaTag) {
+        metaTag = document.createElement('meta');
+        metaTag.setAttribute('property', tag.property);
+        document.head.appendChild(metaTag);
+      }
+      metaTag.setAttribute('content', tag.content);
+    });
+
+    // Add Person structured data for Mohamed Assem
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Mohamed Assem",
+      "jobTitle": "Founder & Senior Real Estate Consultant",
+      "worksFor": {
+        "@type": "RealEstateAgent",
+        "name": "The Views Real Estate"
+      },
+      "description": "Senior real estate consultant with 30+ years of experience across 7 countries, specializing in luxury properties in Egypt",
+      "url": "https://www.theviewsconsultancy.com/about",
+      "sameAs": [
+        "https://www.theviewsconsultancy.com"
+      ]
+    };
+
+    const existingScript = document.querySelector('script[type="application/ld+json"]');
+    if (existingScript) {
+      existingScript.remove();
+    }
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(structuredData);
+    document.head.appendChild(script);
+
+    return () => {
+      const scriptToRemove = document.querySelector('script[type="application/ld+json"]');
+      if (scriptToRemove) {
+        scriptToRemove.remove();
+      }
+    };
+  }, []);
+
+  return null;
+}
 
 export default function About() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <AboutSEO />
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}
