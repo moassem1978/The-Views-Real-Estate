@@ -124,10 +124,10 @@ export const TRACKED_COMPANIES: RealEstateCompany[] = [
     name: 'Tatweer Misr',
     type: 'developer',
     website: 'tatweermisreg.com',
-    keyProjects: ['Fouka Bay', 'Bloomfields', 'Rivers'],
+    keyProjects: ['Fouka Bay', 'Bloomfields', 'Rivers', 'IL Monte Galala', 'Katameya Coast'],
     marketPosition: 'major',
-    specialization: ['coastal resorts', 'residential'],
-    locations: ['North Coast', 'Sheikh Zayed', 'New Cairo']
+    specialization: ['coastal resorts', 'luxury residential', 'integrated communities'],
+    locations: ['North Coast', 'Sheikh Zayed', 'New Cairo', 'Galala', 'Ain Sokhna']
   },
   {
     id: 'hyde-park',
@@ -143,10 +143,21 @@ export const TRACKED_COMPANIES: RealEstateCompany[] = [
     id: 'la-vista',
     name: 'La Vista Developments',
     type: 'developer',
-    keyProjects: ['Telal North Coast', 'La Vista City', 'Bay La Sun'],
+    website: 'lavistadevelopments.com',
+    keyProjects: ['Telal North Coast', 'La Vista City', 'Bay La Sun', 'Ras El Hekma Bay', 'La Vista Ray'],
     marketPosition: 'major',
-    specialization: ['coastal resorts', 'residential'],
-    locations: ['North Coast', 'Red Sea']
+    specialization: ['coastal resorts', 'luxury residential', 'beach communities'],
+    locations: ['North Coast', 'Red Sea', 'Ain Sokhna']
+  },
+  {
+    id: 'marakez',
+    name: 'Marakez',
+    type: 'developer',
+    website: 'marakez.net',
+    keyProjects: ['District One MBR City', 'Avalon Mall', 'Mall of Arabia', 'Mall of Egypt'],
+    marketPosition: 'major',
+    specialization: ['retail developments', 'commercial centers', 'mixed-use'],
+    locations: ['6th October', 'Sheikh Zayed', 'Cairo', 'New Capital']
   },
   {
     id: 'ora-developers',
@@ -180,10 +191,11 @@ export const TRACKED_COMPANIES: RealEstateCompany[] = [
     id: 'hassan-allam',
     name: 'Hassan Allam Properties',
     type: 'developer',
-    keyProjects: ['Swan Lake', 'Rabwa Heights'],
+    website: 'hassanallamproperties.com',
+    keyProjects: ['Swan Lake', 'Rabwa Heights', 'Swan Lake Residences', 'Hassan Allam North Coast'],
     marketPosition: 'major',
-    specialization: ['residential compounds', 'commercial'],
-    locations: ['New Cairo', 'North Coast']
+    specialization: ['luxury residential compounds', 'commercial', 'integrated communities'],
+    locations: ['New Cairo', 'North Coast', 'Sheikh Zayed']
   },
   {
     id: 'mobco',
