@@ -46,6 +46,10 @@ const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogP
 const ArticlePage = lazy(() => import(/* webpackChunkName: "article" */ "@/pages/ArticlePage"));
 // Premium project pages
 const EMAAARMividaProject = lazy(() => import(/* webpackChunkName: "emaar-mivida" */ "@/pages/EMAAARMividaProject"));
+// High-traffic SEO landing pages
+const RealEstateEgypt = lazy(() => import(/* webpackChunkName: "real-estate-egypt" */ "@/pages/RealEstateEgypt"));
+const CairoProperties = lazy(() => import(/* webpackChunkName: "cairo-properties" */ "@/pages/CairoProperties"));
+const NorthCoastProperties = lazy(() => import(/* webpackChunkName: "north-coast-properties" */ "@/pages/NorthCoastProperties"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -165,6 +169,23 @@ function Router() {
       <Route path="/emaar-mivida-project">
         <Suspense fallback={<LoadingFallback />}>
           <EMAAARMividaProject />
+        </Suspense>
+      </Route>
+
+      {/* High-traffic SEO landing pages */}
+      <Route path="/real-estate-egypt">
+        <Suspense fallback={<LoadingFallback />}>
+          <RealEstateEgypt />
+        </Suspense>
+      </Route>
+      <Route path="/cairo-properties">
+        <Suspense fallback={<LoadingFallback />}>
+          <CairoProperties />
+        </Suspense>
+      </Route>
+      <Route path="/north-coast-properties">
+        <Suspense fallback={<LoadingFallback />}>
+          <NorthCoastProperties />
         </Suspense>
       </Route>
 
