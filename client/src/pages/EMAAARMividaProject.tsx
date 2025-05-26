@@ -29,66 +29,58 @@ function EMAAARMividaSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'EMAAR Mivida, Mivida New Cairo, Lake District Mivida, Mivida Gardens, Mivida villas, Mivida units, Mivida apartments, EMAAR developments Egypt, Mivida project details, Mivida floor plans, Mivida prices 2024, Mivida amenities, New Cairo luxury properties, Mohamed Assem Mivida expert, The Views Real Estate Mivida');
+    
+    const keywords = [
+      'EMAAR Mivida', 'Mivida New Cairo', 'EMAAR Egypt properties', 'Mivida villas for sale',
+      'Lake District Mivida', 'Mivida Gardens', 'New Cairo developments', 'luxury properties Egypt',
+      'EMAAR real estate Egypt', 'Mivida compound', 'Cairo luxury homes', 'gated community Egypt',
+      'premium real estate New Cairo', 'EMAAR Misr properties', 'Mivida investment opportunities',
+      'compound living Egypt', 'luxury villas New Cairo', 'Mohamed Assem real estate expert',
+      'The Views Real Estate', 'Egypt property investment', 'New Cairo real estate market',
+      'EMAAR developer Egypt', 'compound properties Cairo', 'high-end real estate Egypt',
+      'Mivida resale properties', 'EMAAR Mivida pricing', 'luxury lifestyle Egypt',
+      'New Cairo gated communities', 'premium developments Egypt', 'real estate consultation Egypt'
+    ].join(', ');
+    
+    metaKeywords.setAttribute('content', keywords);
 
-    // Rich structured data for the project
+    // Structured data for better SEO
     const structuredData = {
       "@context": "https://schema.org",
-      "@type": "RealEstateProject",
-      "name": "EMAAR Mivida",
-      "description": "Luxury residential development by EMAAR Misr in New Cairo featuring villas, apartments, and premium amenities",
-      "developer": {
-        "@type": "Organization",
-        "name": "EMAAR Misr",
-        "url": "https://www.emaar.com"
+      "@type": "RealEstate",
+      "name": "EMAAR Mivida Project",
+      "description": description,
+      "url": window.location.href,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "New Cairo",
+        "addressRegion": "Cairo Governorate",
+        "addressCountry": "Egypt"
       },
-      "location": {
-        "@type": "Place",
-        "name": "New Cairo",
-        "address": {
-          "@type": "PostalAddress",
-          "addressLocality": "New Cairo",
-          "addressRegion": "Cairo",
-          "addressCountry": "Egypt"
-        }
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "30.0444",
+        "longitude": "31.2357"
       },
-      "offers": {
-        "@type": "Offer",
-        "availability": "https://schema.org/InStock",
-        "priceRange": "Contact for pricing"
-      },
-      "amenityFeature": [
-        {"@type": "LocationFeatureSpecification", "name": "Lake District"},
-        {"@type": "LocationFeatureSpecification", "name": "Golf Course"},
-        {"@type": "LocationFeatureSpecification", "name": "Shopping District"},
-        {"@type": "LocationFeatureSpecification", "name": "International Schools"}
-      ],
-      "realEstateAgent": {
+      "provider": {
         "@type": "RealEstateAgent",
         "name": "The Views Real Estate",
-        "employee": {
-          "@type": "Person",
-          "name": "Mohamed Assem"
+        "url": "https://www.theviewsconsultancy.com",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+20-xxx-xxx-xxxx",
+          "contactType": "sales"
         }
       }
     };
 
-    const existingScript = document.querySelector('script[type="application/ld+json"]');
-    if (existingScript) {
-      existingScript.remove();
+    let structuredDataScript = document.querySelector('script[type="application/ld+json"]');
+    if (!structuredDataScript) {
+      structuredDataScript = document.createElement('script');
+      structuredDataScript.type = 'application/ld+json';
+      document.head.appendChild(structuredDataScript);
     }
-
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(structuredData);
-    document.head.appendChild(script);
-
-    return () => {
-      const scriptToRemove = document.querySelector('script[type="application/ld+json"]');
-      if (scriptToRemove) {
-        scriptToRemove.remove();
-      }
-    };
+    structuredDataScript.textContent = JSON.stringify(structuredData);
   }, []);
 
   return null;
@@ -122,529 +114,258 @@ export default function EMAAARMividaProject() {
     <div className="flex flex-col min-h-screen">
       <EMAAARMividaSEO />
       <Header />
+      
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="bg-[#333333] py-20 relative">
-          <div className="absolute inset-0 opacity-25">
-            <img 
-              src="https://www.emaar.com/uploads/cache/large/uploads/media/61e1b9b5b2d6e.jpeg" 
-              alt="EMAAR Mivida luxury development New Cairo" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-b from-[#333333]/80 to-[#333333]/95"></div>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center px-4 py-2 bg-[#D4AF37] text-white rounded-full text-sm font-medium mb-6">
-                <Award className="w-4 h-4 mr-2" />
-                Premium EMAAR Development
+        <section className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+          <div className="absolute inset-0 bg-black/40"></div>
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: "url('https://www.emaar.com/uploads/cache/large/uploads/media/61e1b9b4a2c5d.jpeg')"
+            }}
+          ></div>
+          <div className="relative container mx-auto px-4 py-24">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="bg-blue-600 text-white text-sm px-4 py-2 rounded-full mb-6 inline-block">
+                EMAAR MISR DEVELOPMENT
               </div>
-              <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
-                EMAAR Mivida
+              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                EMAAR <span className="text-[#D4AF37]">Mivida</span>
               </h1>
-              <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-4xl mx-auto">
-                New Cairo's premier luxury residential community featuring Lake District, world-class amenities, and exceptional investment opportunities
+              <p className="text-xl md:text-2xl mb-8 text-gray-200">
+                Premium Integrated Community in the Heart of New Cairo
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto text-center">
-                <div className="text-white">
-                  <div className="text-2xl font-bold text-[#D4AF37]">860</div>
-                  <div className="text-sm">Acres</div>
+              <div className="flex flex-wrap justify-center gap-6 text-sm">
+                <div className="flex items-center">
+                  <MapPin className="h-5 w-5 mr-2 text-[#D4AF37]" />
+                  New Cairo, Egypt
                 </div>
-                <div className="text-white">
-                  <div className="text-2xl font-bold text-[#D4AF37]">12,000</div>
-                  <div className="text-sm">Units</div>
+                <div className="flex items-center">
+                  <Building className="h-5 w-5 mr-2 text-[#D4AF37]" />
+                  EMAAR Misr
                 </div>
-                <div className="text-white">
-                  <div className="text-2xl font-bold text-[#D4AF37]">5-Star</div>
-                  <div className="text-sm">Amenities</div>
-                </div>
-                <div className="text-white">
-                  <div className="text-2xl font-bold text-[#D4AF37]">33-Acre</div>
-                  <div className="text-sm">Central Park</div>
+                <div className="flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2 text-[#D4AF37]" />
+                  Premium Investment
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Developer Introduction */}
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">About EMAAR Misr</h2>
-                <p className="text-lg text-gray-600 mb-6">
-                  EMAAR Misr, a joint venture between EMAAR Properties and Egypt's Government, brings world-class development expertise to the Egyptian market. With a proven track record of iconic projects globally, EMAAR delivers exceptional quality and innovative design.
-                </p>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <Building className="w-8 h-8 text-[#D4AF37] mx-auto mb-2" />
-                    <div className="font-semibold text-gray-900">Global Developer</div>
-                    <div className="text-sm text-gray-600">World-renowned expertise</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <Award className="w-8 h-8 text-[#D4AF37] mx-auto mb-2" />
-                    <div className="font-semibold text-gray-900">Proven Quality</div>
-                    <div className="text-sm text-gray-600">International standards</div>
-                  </div>
-                </div>
-              </div>
-              <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
-                  alt="EMAAR Misr development quality" 
-                  className="w-full h-96 object-cover rounded-lg shadow-lg"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Project Zones */}
+        {/* Project Overview */}
         <section className="py-16 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Mivida Development Zones</h2>
-              <p className="text-lg text-gray-600">Discover the different areas within this master-planned community</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Lake District */}
-              <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-                <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
-                  <Waves className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-2xl font-semibold mb-4">Lake District Mivida</h3>
-                <p className="text-gray-600 mb-6">
-                  Premium waterfront living with direct lake access, luxury villas, and upscale apartments overlooking pristine waters.
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Project Overview</h2>
+                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                  EMAAR Mivida represents the pinnacle of integrated community living in New Cairo, 
+                  offering a harmonious blend of residential, commercial, and recreational facilities 
+                  across a meticulously planned 860-acre development.
                 </p>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• Waterfront villas with private docks</li>
-                  <li>• Lake-view apartments and penthouses</li>
-                  <li>• Water sports and recreational facilities</li>
-                  <li>• Exclusive community amenities</li>
-                </ul>
               </div>
 
-              {/* Mivida Gardens */}
-              <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-                <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mb-6">
-                  <TreePine className="w-8 h-8 text-green-600" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                <div className="text-center p-6 bg-white rounded-lg shadow-sm">
+                  <div className="bg-blue-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <Users className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">860 Acres</h3>
+                  <p className="text-sm text-gray-600">Total Development Area</p>
                 </div>
-                <h3 className="text-2xl font-semibold mb-4">Mivida Gardens</h3>
-                <p className="text-gray-600 mb-6">
-                  Lush landscaped residential area featuring family villas, townhouses, and apartments surrounded by green spaces.
-                </p>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• Family-oriented villas and townhouses</li>
-                  <li>• Landscaped gardens and parks</li>
-                  <li>• Children's play areas and facilities</li>
-                  <li>• Community centers and retail</li>
-                </ul>
-              </div>
-
-              {/* Mivida Villas */}
-              <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-                <div className="w-16 h-16 bg-yellow-100 rounded-lg flex items-center justify-center mb-6">
-                  <Home className="w-8 h-8 text-yellow-600" />
+                
+                <div className="text-center p-6 bg-white rounded-lg shadow-sm">
+                  <div className="bg-green-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <Home className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Multiple Units</h3>
+                  <p className="text-sm text-gray-600">Villas, Townhouses & Apartments</p>
                 </div>
-                <h3 className="text-2xl font-semibold mb-4">Mivida Villas</h3>
-                <p className="text-gray-600 mb-6">
-                  Exclusive standalone villas offering ultimate privacy, luxury finishes, and spacious layouts for discerning families.
-                </p>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• Standalone luxury villas</li>
-                  <li>• Private gardens and pools</li>
-                  <li>• Premium architectural designs</li>
-                  <li>• Exclusive neighborhood access</li>
-                </ul>
+                
+                <div className="text-center p-6 bg-white rounded-lg shadow-sm">
+                  <div className="bg-purple-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <TreePine className="h-8 w-8 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">80% Green Space</h3>
+                  <p className="text-sm text-gray-600">Landscaped Areas & Parks</p>
+                </div>
+                
+                <div className="text-center p-6 bg-white rounded-lg shadow-sm">
+                  <div className="bg-orange-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <Award className="h-8 w-8 text-orange-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Premium Location</h3>
+                  <p className="text-sm text-gray-600">New Cairo's Golden Square</p>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Unit Types & Pricing */}
+        {/* Intelligent Property Presentation */}
         <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Unit Types & Investment Opportunities</h2>
-              <p className="text-lg text-gray-600">Diverse property options to suit different lifestyle preferences and investment goals</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="border border-gray-200 rounded-lg p-6 hover:border-[#D4AF37] transition-colors">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Building className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Apartments</h3>
-                  <p className="text-sm text-gray-600 mb-4">1-4 bedrooms with modern finishes</p>
-                  <div className="text-2xl font-bold text-[#D4AF37] mb-2">From 80m²</div>
-                  <div className="text-sm text-gray-500">Starting areas</div>
-                </div>
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Available Properties</h2>
+                <p className="text-lg text-gray-600">
+                  Curated selection of premium properties in EMAAR Mivida and beyond
+                </p>
               </div>
 
-              <div className="border border-gray-200 rounded-lg p-6 hover:border-[#D4AF37] transition-colors">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Home className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Townhouses</h3>
-                  <p className="text-sm text-gray-600 mb-4">3-4 bedrooms with private gardens</p>
-                  <div className="text-2xl font-bold text-[#D4AF37] mb-2">From 200m²</div>
-                  <div className="text-sm text-gray-500">Built-up areas</div>
-                </div>
-              </div>
-
-              <div className="border border-gray-200 rounded-lg p-6 hover:border-[#D4AF37] transition-colors">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Award className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Villas</h3>
-                  <p className="text-sm text-gray-600 mb-4">4-6 bedrooms standalone luxury</p>
-                  <div className="text-2xl font-bold text-[#D4AF37] mb-2">From 350m²</div>
-                  <div className="text-sm text-gray-500">Building areas</div>
-                </div>
-              </div>
-
-              <div className="border border-gray-200 rounded-lg p-6 hover:border-[#D4AF37] transition-colors">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <TrendingUp className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Penthouses</h3>
-                  <p className="text-sm text-gray-600 mb-4">Luxury units with private terraces</p>
-                  <div className="text-2xl font-bold text-[#D4AF37] mb-2">From 250m²</div>
-                  <div className="text-sm text-gray-500">Plus terraces</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Amenities */}
-        <section className="py-16 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">World-Class Amenities</h2>
-              <p className="text-lg text-gray-600">Resort-style living with comprehensive facilities for all ages</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Car className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Cycling & Jogging Tracks</h3>
-                  <p className="text-gray-600">Dedicated paths for cycling and jogging throughout the community</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Community Clubhouse</h3>
-                  <p className="text-gray-600">Social hub with dining, event spaces, and recreational facilities</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Building className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">International Schools</h3>
-                  <p className="text-gray-600">Access to top-tier educational institutions within the community</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Retail & Dining</h3>
-                  <p className="text-gray-600">Shopping center with premium brands and fine dining options</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Waves className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Sports Facilities</h3>
-                  <p className="text-gray-600">Tennis courts, swimming pools, and fitness centers</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-[#D4AF37] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <TreePine className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Central Park</h3>
-                  <p className="text-gray-600">33-acre green space with walking trails and recreation areas</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Available Properties - Intelligent Presentation */}
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Priority 1: Mivida Properties */}
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Available Properties in EMAAR Mivida</h2>
-              <p className="text-lg text-gray-600">Exclusive opportunities curated by The Views Real Estate</p>
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37]"></div>
-              </div>
-            ) : mividaProperties.length > 0 ? (
-              <>
-                {/* Featured Mivida Properties */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                  {mividaProperties.map(property => (
-                    <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition-all">
-                      <div className="aspect-w-16 aspect-h-9">
-                        <img 
-                          src={property.images?.[0] || "https://www.emaar.com/uploads/cache/large/uploads/media/61e1b9b5e5c7a.jpeg"}
-                          alt={property.title}
-                          className="w-full h-48 object-cover"
-                        />
+              {/* Priority 1: Mivida Properties */}
+              {mividaProperties.length > 0 && (
+                <div className="mb-16">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">EMAAR Mivida Properties</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {mividaProperties.slice(0, 6).map((property: Property) => (
+                      <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                        <div className="aspect-w-16 aspect-h-9">
+                          <img 
+                            src={property.images?.[0] || "https://www.emaar.com/uploads/cache/large/uploads/media/61e1b9b4a2c5d.jpeg"}
+                            alt={property.title}
+                            className="w-full h-48 object-cover"
+                          />
+                        </div>
+                        <div className="p-6">
+                          <div className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full mb-3 inline-block">
+                            MIVIDA PROPERTY
+                          </div>
+                          <h3 className="text-lg font-semibold mb-2">{property.title}</h3>
+                          <p className="text-gray-600 text-sm mb-3">{property.projectName} • {property.city}</p>
+                          <div className="flex justify-between items-center mb-4">
+                            <div className="text-[#D4AF37] font-bold text-xl">
+                              {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {property.bedrooms} BR • {property.bathrooms} BA
+                            </div>
+                          </div>
+                          <Link 
+                            href={`/properties/${property.id}`} 
+                            className="w-full bg-[#D4AF37] text-white py-3 px-4 rounded hover:bg-[#B8941F] transition-colors text-center block font-medium"
+                          >
+                            View Details
+                          </Link>
+                        </div>
                       </div>
-                      <div className="p-6">
-                        <div className="bg-[#D4AF37] text-white text-xs px-3 py-1 rounded-full mb-3 inline-block">
-                          FEATURED IN MIVIDA
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Priority 2: Other EMAAR Properties */}
+              {properties.filter((p: Property) => 
+                (p.projectName?.toLowerCase().includes('marassi') || 
+                 p.projectName?.toLowerCase().includes('emaar') ||
+                 p.projectName?.toLowerCase().includes('uptown')) &&
+                !p.projectName?.toLowerCase().includes('mivida')
+              ).length > 0 && (
+                <div className="mb-16">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Other EMAAR Developments</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {properties.filter((p: Property) => 
+                      (p.projectName?.toLowerCase().includes('marassi') || 
+                       p.projectName?.toLowerCase().includes('emaar') ||
+                       p.projectName?.toLowerCase().includes('uptown')) &&
+                      !p.projectName?.toLowerCase().includes('mivida')
+                    ).slice(0, 3).map((property: Property) => (
+                      <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                        <div className="aspect-w-16 aspect-h-9">
+                          <img 
+                            src={property.images?.[0] || "https://www.emaar.com/uploads/cache/large/uploads/media/61e1b9b4d7f2c.jpeg"}
+                            alt={property.title}
+                            className="w-full h-48 object-cover"
+                          />
                         </div>
-                        <h3 className="text-xl font-semibold mb-2">{property.title}</h3>
-                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{property.description}</p>
-                        <div className="flex justify-between items-center mb-4">
-                          <div className="text-[#D4AF37] font-bold text-xl">
-                            {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
+                        <div className="p-6">
+                          <div className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full mb-3 inline-block">
+                            EMAAR DEVELOPMENT
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {property.bedrooms} BR • {property.bathrooms} BA
+                          <h3 className="text-lg font-semibold mb-2">{property.title}</h3>
+                          <p className="text-gray-600 text-sm mb-3">{property.projectName} • {property.city}</p>
+                          <div className="flex justify-between items-center mb-4">
+                            <div className="text-[#D4AF37] font-bold text-lg">
+                              {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {property.bedrooms} BR • {property.bathrooms} BA
+                            </div>
                           </div>
+                          <Link 
+                            href={`/properties/${property.id}`} 
+                            className="w-full bg-[#D4AF37] text-white py-3 px-4 rounded hover:bg-[#B8941F] transition-colors text-center block font-medium"
+                          >
+                            View Details
+                          </Link>
                         </div>
-                        <Link 
-                          href={`/properties/${property.id}`} 
-                          className="w-full bg-[#D4AF37] text-white py-3 px-4 rounded hover:bg-[#B8941F] transition-colors text-center block font-medium"
-                        >
-                          View Details
-                        </Link>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              )}
 
-                {/* Priority 2: Other EMAAR Properties */}
-                {properties.filter(p => 
-                  (p.projectName?.toLowerCase().includes('marassi') || 
-                   p.projectName?.toLowerCase().includes('emaar') ||
-                   p.projectName?.toLowerCase().includes('uptown')) &&
-                  !p.projectName?.toLowerCase().includes('mivida')
-                ).length > 0 && (
-                  <div className="mb-16">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Other EMAAR Developments</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      {properties.filter(p => 
-                        (p.projectName?.toLowerCase().includes('marassi') || 
-                         p.projectName?.toLowerCase().includes('emaar') ||
-                         p.projectName?.toLowerCase().includes('uptown')) &&
-                        !p.projectName?.toLowerCase().includes('mivida')
-                      ).slice(0, 3).map(property => (
-                        <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                          <div className="aspect-w-16 aspect-h-9">
-                            <img 
-                              src={property.images?.[0] || "/api/placeholder/800/400"}
-                              alt={property.title}
-                              className="w-full h-48 object-cover"
-                            />
-                          </div>
-                          <div className="p-6">
-                            <div className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full mb-3 inline-block">
-                              EMAAR DEVELOPMENT
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">{property.title}</h3>
-                            <p className="text-gray-600 text-sm mb-3">{property.projectName} • {property.city}</p>
-                            <div className="flex justify-between items-center mb-4">
-                              <div className="text-[#D4AF37] font-bold text-lg">
-                                {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
-                              </div>
-                              <div className="text-sm text-gray-500 capitalize">
-                                {property.propertyType}
-                              </div>
-                            </div>
-                            <Link 
-                              href={`/properties/${property.id}`} 
-                              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-center block"
-                            >
-                              View Details
-                            </Link>
-                          </div>
+              {/* Priority 3: You May Also Like - Curated Diverse Selection */}
+              {properties.filter((p: Property) => 
+                !p.projectName?.toLowerCase().includes('mivida') &&
+                !p.projectName?.toLowerCase().includes('marassi') &&
+                !p.projectName?.toLowerCase().includes('emaar') &&
+                p.isHighlighted === true
+              ).length > 0 && (
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">You May Also Like</h3>
+                  <p className="text-center text-gray-600 mb-8">Handpicked luxury properties from our exclusive portfolio</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {properties.filter((p: Property) => 
+                      !p.projectName?.toLowerCase().includes('mivida') &&
+                      !p.projectName?.toLowerCase().includes('marassi') &&
+                      !p.projectName?.toLowerCase().includes('emaar') &&
+                      p.isHighlighted === true
+                    ).slice(0, 3).map((property: Property) => (
+                      <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                        <div className="aspect-w-16 aspect-h-9">
+                          <img 
+                            src={property.images?.[0] || "https://www.emaar.com/uploads/cache/large/uploads/media/61e1b9b4d7f2c.jpeg"}
+                            alt={property.title}
+                            className="w-full h-48 object-cover"
+                          />
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Priority 3: You May Also Like - Curated Diverse Selection */}
-                {properties.filter(p => 
-                  !p.projectName?.toLowerCase().includes('mivida') &&
-                  !p.projectName?.toLowerCase().includes('marassi') &&
-                  !p.projectName?.toLowerCase().includes('emaar') &&
-                  p.isHighlighted === true
-                ).length > 0 && (
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">You May Also Like</h3>
-                    <p className="text-center text-gray-600 mb-8">Handpicked luxury properties from our exclusive portfolio</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      {properties.filter(p => 
-                        !p.projectName?.toLowerCase().includes('mivida') &&
-                        !p.projectName?.toLowerCase().includes('marassi') &&
-                        !p.projectName?.toLowerCase().includes('emaar') &&
-                        p.isHighlighted === true
-                      ).slice(0, 3).map(property => (
-                        <div key={property.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                          <div className="aspect-w-16 aspect-h-9">
-                            <img 
-                              src={property.images?.[0] || "/api/placeholder/800/400"}
-                              alt={property.title}
-                              className="w-full h-48 object-cover"
-                            />
+                        <div className="p-6">
+                          <div className="bg-green-600 text-white text-xs px-3 py-1 rounded-full mb-3 inline-block">
+                            PREMIUM SELECTION
                           </div>
-                          <div className="p-6">
-                            <div className="bg-green-600 text-white text-xs px-3 py-1 rounded-full mb-3 inline-block">
-                              PREMIUM SELECTION
+                          <h3 className="text-lg font-semibold mb-2">{property.title}</h3>
+                          <p className="text-gray-600 text-sm mb-3">{property.projectName} • {property.city}</p>
+                          <div className="flex justify-between items-center mb-4">
+                            <div className="text-[#D4AF37] font-bold text-lg">
+                              {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
                             </div>
-                            <h3 className="text-lg font-semibold mb-2">{property.title}</h3>
-                            <p className="text-gray-600 text-sm mb-3">{property.projectName} • {property.city}</p>
-                            <div className="flex justify-between items-center mb-4">
-                              <div className="text-[#D4AF37] font-bold text-lg">
-                                {property.price > 0 ? `${(property.price / 1000000).toFixed(1)}M L.E` : 'Contact for Price'}
-                              </div>
-                              <div className="text-sm text-gray-500 capitalize">
-                                {property.propertyType}
-                              </div>
+                            <div className="text-sm text-gray-500">
+                              {property.bedrooms} BR • {property.bathrooms} BA
                             </div>
-                            <Link 
-                              href={`/properties/${property.id}`} 
-                              className="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors text-center block"
-                            >
-                              View Details
-                            </Link>
                           </div>
+                          <Link 
+                            href={`/properties/${property.id}`} 
+                            className="w-full bg-[#D4AF37] text-white py-3 px-4 rounded hover:bg-[#B8941F] transition-colors text-center block font-medium"
+                          >
+                            View Details
+                          </Link>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">Contact us for exclusive Mivida opportunities and off-market properties.</p>
-                <Link 
-                  href="/contact" 
-                  className="inline-block bg-[#D4AF37] text-white py-3 px-6 rounded hover:bg-[#B8941F] transition-colors font-medium"
-                >
-                  Contact Our Team
-                </Link>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Investment Analysis */}
-        <section className="py-16 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">Why Invest in EMAAR Mivida?</h2>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-[#D4AF37] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Prime New Cairo Location</h3>
-                      <p className="text-gray-600">Strategic location with easy access to airports, business districts, and major highways</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-[#D4AF37] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Proven Developer Track Record</h3>
-                      <p className="text-gray-600">EMAAR's global expertise ensures quality construction and timely delivery</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-[#D4AF37] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Strong Appreciation Potential</h3>
-                      <p className="text-gray-600">Established community with consistent property value growth</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-[#D4AF37] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Comprehensive Amenities</h3>
-                      <p className="text-gray-600">Self-contained community reducing the need for external services</p>
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-
-              <div className="bg-white p-8 rounded-lg shadow-md">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Expert Consultation with Mohamed Assem</h3>
-                <p className="text-gray-600 mb-6">
-                  With over 30 years of experience in luxury real estate, Mohamed Assem provides exclusive insights into EMAAR Mivida investments and market trends.
-                </p>
-                <div className="space-y-4 mb-6">
-                  <div className="flex items-center space-x-3">
-                    <Award className="w-5 h-5 text-[#D4AF37]" />
-                    <span className="text-gray-700">EMAAR Mivida specialist since launch</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <TrendingUp className="w-5 h-5 text-[#D4AF37]" />
-                    <span className="text-gray-700">Market analysis and investment guidance</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Users className="w-5 h-5 text-[#D4AF37]" />
-                    <span className="text-gray-700">Access to exclusive off-market units</span>
-                  </div>
-                </div>
-                <a 
-                  href="/contact" 
-                  className="w-full bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium py-3 px-6 rounded-md transition-colors inline-block text-center"
-                >
-                  Schedule Consultation
-                </a>
-              </div>
+              )}
             </div>
           </div>
         </section>
 
+        {/* Contact CTA */}
         <ContactCTA />
       </main>
+
       <Footer />
     </div>
   );
