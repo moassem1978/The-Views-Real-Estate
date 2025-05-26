@@ -11,6 +11,116 @@ import { formatPrice, parseJsonArray, getImageUrl } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+// SEO and Structured Data Component
+function PropertySEO({ property }: { property: Property }) {
+  useEffect(() => {
+    if (!property) return;
+
+    // Set page title and meta description
+    const title = `${property.title} - ${property.city} | The Views Real Estate`;
+    const description = `${property.propertyType} for sale in ${property.city}. ${property.bedrooms} bed, ${property.bathrooms} bath. ${formatPrice(property.price)}. Contact The Views Real Estate for luxury properties in Egypt.`;
+    
+    document.title = title;
+    
+    // Update meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', description);
+
+    // Add Open Graph tags
+    const ogTags = [
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: window.location.href },
+      { property: 'og:image', content: property.images && property.images.length > 0 ? getImageUrl(property.images[0]) : '' }
+    ];
+
+    ogTags.forEach(tag => {
+      let metaTag = document.querySelector(`meta[property="${tag.property}"]`);
+      if (!metaTag) {
+        metaTag = document.createElement('meta');
+        metaTag.setAttribute('property', tag.property);
+        document.head.appendChild(metaTag);
+      }
+      metaTag.setAttribute('content', tag.content);
+    });
+
+    // Add JSON-LD structured data for better search visibility
+    const images = parseJsonArray(property.images);
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "RealEstateListing",
+      "name": property.title,
+      "description": property.description,
+      "url": window.location.href,
+      "image": images.map(img => getImageUrl(img)),
+      "offers": {
+        "@type": "Offer",
+        "price": property.price,
+        "priceCurrency": "EGP",
+        "availability": "https://schema.org/InStock"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": property.city,
+        "addressCountry": "Egypt",
+        "streetAddress": property.address || property.city
+      },
+      "geo": property.latitude && property.longitude ? {
+        "@type": "GeoCoordinates",
+        "latitude": property.latitude,
+        "longitude": property.longitude
+      } : undefined,
+      "floorSize": {
+        "@type": "QuantitativeValue",
+        "value": property.squareFeet || property.builtUpArea,
+        "unitCode": "MTK"
+      },
+      "numberOfRooms": property.bedrooms,
+      "numberOfBathroomsTotal": property.bathrooms,
+      "amenityFeature": parseJsonArray(property.amenities).map(amenity => ({
+        "@type": "LocationFeatureSpecification",
+        "name": amenity
+      })),
+      "realEstateAgent": {
+        "@type": "RealEstateAgent",
+        "name": "The Views Real Estate",
+        "telephone": "+20 106 311 1136",
+        "email": "Sales@theviewsconsultancy.com",
+        "url": "https://www.theviewsconsultancy.com"
+      }
+    };
+
+    // Remove existing structured data
+    const existingScript = document.querySelector('script[type="application/ld+json"]');
+    if (existingScript) {
+      existingScript.remove();
+    }
+
+    // Add new structured data
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(structuredData);
+    document.head.appendChild(script);
+
+    // Cleanup function
+    return () => {
+      // Remove structured data when component unmounts
+      const scriptToRemove = document.querySelector('script[type="application/ld+json"]');
+      if (scriptToRemove) {
+        scriptToRemove.remove();
+      }
+    };
+  }, [property]);
+
+  return null; // This component doesn't render anything
+}
+
 export default function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
   const [isFavorite, setIsFavorite] = useState(false);
@@ -166,6 +276,7 @@ export default function PropertyDetails() {
   
   return (
     <div className="flex flex-col min-h-screen">
+      {property && <PropertySEO property={property} />}
       <Header />
       <main className="flex-grow">
         {/* Breadcrumbs */}

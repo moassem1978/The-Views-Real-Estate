@@ -9,6 +9,83 @@ import PropertyFilter from "@/components/properties/PropertyFilter";
 import ContactCTA from "@/components/home/ContactCTA";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// SEO optimization for properties page
+function PropertiesSEO({ filters, totalProperties }: { filters: SearchFilters; totalProperties?: number }) {
+  useEffect(() => {
+    // Generate dynamic SEO content based on search filters
+    let title = "Luxury Properties for Sale in Egypt";
+    let description = "Browse premium luxury properties in Egypt. Find villas, apartments, penthouses and chalets in Cairo, North Coast, New Capital with The Views Real Estate.";
+    
+    // Customize title and description based on filters
+    if (filters.propertyType) {
+      title = `${filters.propertyType}s for Sale in Egypt`;
+      description = `Find luxury ${filters.propertyType.toLowerCase()}s for sale in Egypt. Premium properties with The Views Real Estate.`;
+    }
+    
+    if (filters.location) {
+      title = `Properties for Sale in ${filters.location}, Egypt`;
+      description = `Discover luxury properties in ${filters.location}, Egypt. Premium real estate with expert guidance from The Views Real Estate.`;
+    }
+    
+    if (filters.propertyType && filters.location) {
+      title = `${filters.propertyType}s for Sale in ${filters.location}, Egypt`;
+      description = `Find luxury ${filters.propertyType.toLowerCase()}s in ${filters.location}, Egypt. Premium properties with The Views Real Estate consultancy.`;
+    }
+    
+    if (totalProperties) {
+      title += ` | ${totalProperties} Properties Available`;
+    }
+    
+    title += " | The Views Real Estate";
+    
+    document.title = title;
+    
+    // Update meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', description);
+
+    // Add dynamic keywords based on filters
+    let keywords = 'luxury properties Egypt, real estate Egypt, properties for sale';
+    if (filters.propertyType) keywords += `, ${filters.propertyType.toLowerCase()}s Egypt`;
+    if (filters.location) keywords += `, properties ${filters.location}`;
+    if (filters.listingType) keywords += `, ${filters.listingType.toLowerCase()} properties`;
+    
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', keywords);
+
+    // Add Open Graph tags
+    const ogTags = [
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: window.location.href }
+    ];
+
+    ogTags.forEach(tag => {
+      let metaTag = document.querySelector(`meta[property="${tag.property}"]`);
+      if (!metaTag) {
+        metaTag = document.createElement('meta');
+        metaTag.setAttribute('property', tag.property);
+        document.head.appendChild(metaTag);
+      }
+      metaTag.setAttribute('content', tag.content);
+    });
+
+  }, [filters, totalProperties]);
+
+  return null;
+}
+
 export default function Properties() {
   const [location] = useLocation();
   const [filters, setFilters] = useState<SearchFilters>({});

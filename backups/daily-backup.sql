@@ -466,6 +466,7 @@ COPY public.leads (id, email, first_name, last_name, phone, property_id, message
 --
 
 COPY public.newsletters (id, email, first_name, last_name, interests, is_active, source, subscribed_at, unsubscribed_at) FROM stdin;
+1	newsletter.test@example.com	Mohamed Newsletter Test	\N	[]	t	footer	2025-05-26 06:03:28.480983	\N
 \.
 
 
@@ -605,7 +606,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active) FROM stdin;
-1	owner	4cd8605e455ddfb89a673113c399894c3de934c33a0ae71612071b474f9f6774a64f7bc7da22160cdbe9cc32fd13887d55949a18872dbfd118140328c00aa154.de3abed69bc2714ad2775c8d464e7472	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
+1	owner	31dd7ce98952c54f11a7c57f54c43252e8f63d07cc6f39795d3ce86e67089f900f82f05035f93425602976ce776cb4f1343ae00e031355e7433f4ff4fac6fd88.61523e9e7ba25b80e5055e2676da4b24	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t
 \.
 
@@ -635,7 +636,7 @@ SELECT pg_catalog.setval('public.leads_id_seq', 1, false);
 -- Name: newsletters_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.newsletters_id_seq', 1, false);
+SELECT pg_catalog.setval('public.newsletters_id_seq', 1, true);
 
 
 --
