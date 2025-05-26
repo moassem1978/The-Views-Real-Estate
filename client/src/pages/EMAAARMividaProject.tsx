@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Property } from "../types";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -104,6 +105,18 @@ export default function EMAAARMividaProject() {
       return data.data || [];
     }
   });
+
+  // Fetch all properties for intelligent presentation
+  const { data: allPropertiesData } = useQuery({
+    queryKey: ['/api/properties'],
+    queryFn: async () => {
+      const response = await fetch('/api/properties');
+      if (!response.ok) throw new Error('Failed to fetch properties');
+      return response.json();
+    }
+  });
+
+  const properties = allPropertiesData?.data || [];
 
   return (
     <div className="flex flex-col min-h-screen">
