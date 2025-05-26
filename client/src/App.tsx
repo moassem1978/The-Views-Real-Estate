@@ -44,8 +44,6 @@ const ProjectManagement = lazy(() => import(/* webpackChunkName: "project-manage
 // Blog and content marketing pages
 const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogPage"));
 const ArticlePage = lazy(() => import(/* webpackChunkName: "article" */ "@/pages/ArticlePage"));
-// Heat Map visualization feature
-const HeatMap = lazy(() => import(/* webpackChunkName: "heat-map" */ "@/pages/HeatMap"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -161,12 +159,7 @@ function Router() {
         </Suspense>
       </Route>
 
-      {/* Heat Map visualization */}
-      <Route path="/heat-map">
-        <Suspense fallback={<LoadingFallback />}>
-          <HeatMap />
-        </Suspense>
-      </Route>
+
 
       {/* Authentication test page */}
       <Route path="/auth-test">
