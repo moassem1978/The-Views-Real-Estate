@@ -25,7 +25,7 @@ function AboutSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'Mohamed Assem, real estate expert Egypt, luxury property consultant, The Views Real Estate founder, 30 years experience, EMAAR Misr properties, Mivida expert, Uptown Cairo consultant, Marassi North Coast specialist, Lake District Mivida advisor, Waterway Developments expert, El Gouna properties, Swan Lake consultant, Sodic Katameya specialist, Sodic Villette expert');
+    metaKeywords.setAttribute('content', 'the views consultancy, The Views Real Estate, luxury real estate properties, luxury real estate Egypt, luxury houses Egypt, Mohamed Assem real estate broker, Mohamed Assem, real estate expert Egypt, luxury property consultant, The Views Real Estate founder, 30 years experience, best broker in Egypt, most honest broker in Egypt, real estate brokers, real estate brokerage, EMAAR Misr properties, EMAAR projects in Egypt, Mivida expert, Uptown Cairo consultant, Marassi North Coast specialist, Lake District Mivida advisor, Waterway Developments expert, El Gouna properties, Swan Lake consultant, Sodic Katameya specialist, Sodic Villette expert, Palm Hills development expert, Hacienda White villas specialist, Hacienda Bay Villas consultant, Palm Hills Jirian advisor, Palm Hills October expert, Ora developers specialist, Ora towers consultant, Zed West expert, New Giza specialist, Naguib Sawiris projects, Abar projects Egypt');
 
     const ogTags = [
       { property: 'og:title', content: title },
