@@ -577,6 +577,7 @@ nAN9tMAGflHeRPO90DfHPeCmWHff2lN0	{"cookie":{"originalMaxAge":2592000000,"expires
 q-HLyejXFgASNSBamZi4OZvW65cr1JCE	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-22T18:39:42.103Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 06:11:17
 k7e8t-Un5r6F3aTHZJWzfxO8rRMW7JNc	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-23T18:29:11.249Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 18:29:18
 t_pFjWVr21Q2t5eamtoTabx-x9A4cI7E	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-22T17:18:48.781Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-22 18:39:08
+EZkHlNwkcA6GuoHOSrD17xAPTP_gRbvy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-11T20:59:54.907Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-11 20:59:55
 AhPiwXeInSvSCqWUjEF50pPf7xygismc	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-23T20:57:55.912Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 20:58:58
 2GO_z3ZTu1qERWLW48mBcuWBQiEhs0DJ	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-09T17:57:59.643Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-09 17:58:00
 wAw1hCyk6GHqN7dpRyuJ4m9gkWx95fRJ	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T11:22:50.423Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 16:12:48
@@ -587,7 +588,6 @@ lpdCJWFDVE2WbwMl1VOXgpWeqTJuywQv	{"cookie":{"originalMaxAge":2592000000,"expires
 uZO6w0CIkj0SRIB37mIq3oSWh2D15mYG	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-04T11:18:39.099Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-04 11:18:40
 fGO0xmPGwEfDX5bjtbGuXEJXcmfMGret	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-31T09:36:11.606Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-08 11:51:40
 h2yvX7s2wYDnWaa0qu0-ILxIItR2xpie	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-11T20:01:32.043Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-11 20:01:33
-EZkHlNwkcA6GuoHOSrD17xAPTP_gRbvy	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-11T20:27:31.628Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-11 20:27:32
 p1nw0jNB8-gPIqiUuHVHUiVFM2RzsZ2k	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-10T13:00:43.863Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-10 13:00:44
 K0Y7Iabhe6KCH1AesTXMBUEXlvn8Qf6Y	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-18T19:48:07.513Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-24 18:23:27
 0f-aRaM3BiNmyYibIYkcaeOd8DNG6Dam	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-11T14:33:28.029Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-17 11:27:42
@@ -603,7 +603,7 @@ LJVqzlsFrvsYCPbRYd3P1bZ9nZBrgpXy	{"cookie":{"originalMaxAge":3888000000,"expires
 TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T16:40:00.464Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 16:40:01
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
 bil6eoA8NCISvoNmVfOWxy4TGpbmdIC0	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-09T17:56:18.087Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-09 17:56:19
-fmHZT_l5wc8DFSd67djiaZCXJrY-apaq	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-11T20:49:51.459Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-11 20:49:52
+fmHZT_l5wc8DFSd67djiaZCXJrY-apaq	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-11T21:02:22.662Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-11 21:02:23
 \.
 
 
@@ -620,7 +620,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active, password_hash, first_name, last_name) FROM stdin;
-1	owner	e5c70ef0e442663ae18e9fe647c7c55e7650a801553f72d5837112e9cb314b67a3e38ce774871d4073489c54c83d51e94cbc6c16cfe765d068c5b73b076daca6.02eb3fa7dbfe5d6847fe64a40c470dad	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
+1	owner	945132f7674b4e67e64388f5c7d1dedb19f71e98ae80879197b24c897645ee1f8b2dc0bf232bb0df475d09fce7a6f8673ddf67c67acb4fc635d060e03c8a2d5d.53c17fe2b5f28fefb3bf89264b4421ed	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t	\N	\N	\N
 \.
 
