@@ -236,8 +236,8 @@ export default function Header() {
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </button>
-              <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden transform scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 origin-top-left z-50 gold-border">
-                <Link href="/projects/emaar-mivida" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
+              <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden transform scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 origin-top-left z-[60] gold-border">
+                <Link href="/projects/emaar-mivida" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
                   EMAAR Mivida
                 </Link>
               </div>
