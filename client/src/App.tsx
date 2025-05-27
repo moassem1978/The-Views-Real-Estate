@@ -48,8 +48,6 @@ const EMAAARMividaBlog = lazy(() => import(/* webpackChunkName: "emaar-mivida-bl
 
 // QR Code Generator
 const QRGenerator = lazy(() => import(/* webpackChunkName: "qr-generator" */ "@/pages/QRGenerator"));
-// Heat Map visualization feature
-const HeatMap = lazy(() => import(/* webpackChunkName: "heat-map" */ "@/pages/HeatMap"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -176,13 +174,6 @@ function Router() {
       <Route path="/qr-generator">
         <Suspense fallback={<LoadingFallback />}>
           <QRGenerator />
-        </Suspense>
-      </Route>
-
-      {/* Heat Map visualization */}
-      <Route path="/heat-map">
-        <Suspense fallback={<LoadingFallback />}>
-          <HeatMap />
         </Suspense>
       </Route>
 
