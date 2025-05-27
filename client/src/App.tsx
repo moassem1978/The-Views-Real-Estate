@@ -44,6 +44,7 @@ const ProjectManagement = lazy(() => import(/* webpackChunkName: "project-manage
 // Blog and content marketing pages
 const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogPage"));
 const ArticlePage = lazy(() => import(/* webpackChunkName: "article" */ "@/pages/ArticlePage"));
+const EMAAARMividaBlog = lazy(() => import(/* webpackChunkName: "emaar-mivida-blog" */ "@/pages/EMAAARMividaBlog"));
 // Heat Map visualization feature
 const HeatMap = lazy(() => import(/* webpackChunkName: "heat-map" */ "@/pages/HeatMap"));
 // QR Code Generator
