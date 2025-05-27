@@ -461,9 +461,17 @@ export default function Header() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobileProjectsOpen ? 'block' : 'hidden'}`}>
-                <Link href="/projects/emaar-mivida" className="block py-1 text-rich-black hover:text-copper transition-colors">EMAAR Mivida</Link>
-              </div>
+              {mobileProjectsOpen && (
+                <div className="pl-4 mt-2 space-y-2 border-l-2 border-copper/20">
+                  <Link 
+                    href="/projects/emaar-mivida" 
+                    className="block py-1 text-rich-black hover:text-copper transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    EMAAR Mivida
+                  </Link>
+                </div>
+              )}
             </div>
             
             <Link 
