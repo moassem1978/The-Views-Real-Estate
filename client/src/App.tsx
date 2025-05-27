@@ -45,8 +45,7 @@ const ProjectManagement = lazy(() => import(/* webpackChunkName: "project-manage
 const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogPage"));
 const ArticlePage = lazy(() => import(/* webpackChunkName: "article" */ "@/pages/ArticlePage"));
 const EMAAARMividaBlog = lazy(() => import(/* webpackChunkName: "emaar-mivida-blog" */ "@/pages/EMAAARMividaBlog"));
-// Heat Map visualization feature
-const HeatMap = lazy(() => import(/* webpackChunkName: "heat-map" */ "@/pages/HeatMap"));
+
 // QR Code Generator
 const QRGenerator = lazy(() => import(/* webpackChunkName: "qr-generator" */ "@/pages/QRGenerator"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
@@ -169,12 +168,7 @@ function Router() {
         </Suspense>
       </Route>
 
-      {/* Heat Map visualization */}
-      <Route path="/heat-map">
-        <Suspense fallback={<LoadingFallback />}>
-          <HeatMap />
-        </Suspense>
-      </Route>
+      
 
       {/* QR Code Generator */}
       <Route path="/qr-generator">
