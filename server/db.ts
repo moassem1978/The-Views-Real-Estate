@@ -68,17 +68,40 @@ export async function restoreDatabase(timestamp: string) {
     throw new Error(`Backup file ${backupFile} not found`);
   }
 
-  const command = `PGPASSWORD=${process.env.PGPASSWORD} psql -h ${process.env.PGHOST} -U ${process.env.PGUSER} -d ${process.env.PGDATABASE} < "${backupFile}"`;
-
+  // Use spawn instead of exec to prevent command injection
+  const { spawn } = require('child_process');
+  
   return new Promise((resolve, reject) => {
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Restore failed:', error);
-        reject(error);
+    const psql = spawn('psql', [
+      '-h', process.env.PGHOST!,
+      '-U', process.env.PGUSER!,
+      '-d', process.env.PGDATABASE!,
+      '-f', backupFile
+    ], {
+      env: {
+        ...process.env,
+        PGPASSWORD: process.env.PGPASSWORD
+      }
+    });
+
+    let stderr = '';
+    psql.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    psql.on('close', (code) => {
+      if (code !== 0) {
+        console.error('Restore failed:', stderr);
+        reject(new Error(`psql exited with code ${code}: ${stderr}`));
         return;
       }
       console.log(`Restore completed from ${backupFile}`);
       resolve(true);
+    });
+
+    psql.on('error', (error) => {
+      console.error('Restore failed:', error);
+      reject(error);
     });
   });
 }
