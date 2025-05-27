@@ -19,7 +19,7 @@ localPort = 5001
 externalPort = 3000
 
 [workflows]
-runButton = "Start Server"
+runButton = "Kill and Restart Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -105,6 +105,31 @@ args = "pkill -f \"npm run dev\" || true"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "sleep 2"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Kill and Restart Server"
+author = 40723493
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"tsx server/index.ts\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"npm run dev\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"node\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sleep 3"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
