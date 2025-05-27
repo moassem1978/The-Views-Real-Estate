@@ -23,6 +23,7 @@ interface SiteSettings {
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
+  const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
