@@ -439,6 +439,23 @@ export default function Header() {
                 <Link href="/services/investment" className="block py-1 text-rich-black hover:text-copper transition-colors">Investment</Link>
               </div>
             </div>
+            
+            {/* Mobile Projects Dropdown */}
+            <div>
+              <button 
+                onClick={() => setMobileProjectsOpen(!mobileProjectsOpen)}
+                className="flex items-center justify-between w-full py-2 font-medium text-rich-black hover:text-copper transition-colors"
+              >
+                Projects
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${mobileProjectsOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobileProjectsOpen ? 'block' : 'hidden'}`}>
+                <Link href="/projects/emaar-mivida" className="block py-1 text-rich-black hover:text-copper transition-colors">EMAAR Mivida</Link>
+              </div>
+            </div>
+            
             <Link 
               href="/about" 
               className={`py-2 font-medium ${location === "/about" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
@@ -450,12 +467,6 @@ export default function Header() {
               className={`py-2 font-medium ${location === "/contact" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
             >
               Contact
-            </Link>
-            <Link 
-              href="/projects" 
-              className={`py-2 font-medium ${location === "/projects" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
-            >
-              Projects
             </Link>
             {user && (
               <>

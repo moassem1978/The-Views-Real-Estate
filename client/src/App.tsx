@@ -163,6 +163,11 @@ function Router() {
           <ProjectDetails />
         </Suspense>
       </Route>
+      <Route path="/projects/emaar-mivida">
+        <Suspense fallback={<LoadingFallback />}>
+          <EMAAARMividaBlog />
+        </Suspense>
+      </Route>
 
       {/* Heat Map visualization */}
       <Route path="/heat-map">

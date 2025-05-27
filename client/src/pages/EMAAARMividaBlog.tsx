@@ -1,19 +1,8 @@
-import { Helmet } from "react-helmet-async";
 import { MapPin, Car, TreePine, Users, Calendar, Building2, Clock, DollarSign } from "lucide-react";
 
 export default function EMAAARMividaBlog() {
   return (
     <div className="min-h-screen bg-cream-light">
-      <Helmet>
-        <title>EMAAR Mivida New Cairo: Complete Guide to Egypt's Premium Community | The Views Real Estate</title>
-        <meta name="description" content="Discover EMAAR Mivida New Cairo - Egypt's premier residential community. Expert insights on properties, amenities, investment opportunities and market analysis from The Views Real Estate consultancy." />
-        <meta name="keywords" content="EMAAR Mivida, New Cairo properties, Egypt real estate investment, luxury compounds Egypt, EMAAR Egypt projects, Mivida properties for sale, New Cairo residential communities, premium real estate Egypt" />
-        <meta property="og:title" content="EMAAR Mivida New Cairo: Complete Investment Guide" />
-        <meta property="og:description" content="Expert analysis of EMAAR Mivida - from property types and amenities to investment potential. Your comprehensive guide to Egypt's premium residential community." />
-        <meta property="og:type" content="article" />
-        <meta name="author" content="The Views Real Estate" />
-        <link rel="canonical" href="/projects/emaar-mivida" />
-      </Helmet>
 
       {/* Hero Section */}
       <section className="relative h-96 bg-gradient-to-r from-rich-black to-rich-black-light flex items-center">
