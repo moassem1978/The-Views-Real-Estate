@@ -381,7 +381,7 @@ export default function Header() {
               </svg>
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h1612h16M4 18h16" />
               </svg>
             )}
           </button>
@@ -465,14 +465,14 @@ export default function Header() {
                 <Link href="/services/investment" className="block py-1 text-rich-black hover:text-copper transition-colors">Investment</Link>
               </div>
             </div>
-            
+
             <Link 
               href="/qr-generator" 
               className={`py-2 font-medium ${location === "/qr-generator" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
             >
               QR Generator
             </Link>
-            
+
             <Link 
               href="/about" 
               className={`py-2 font-medium ${location === "/about" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
