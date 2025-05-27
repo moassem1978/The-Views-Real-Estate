@@ -410,7 +410,7 @@ export default function Header() {
                 <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Primary</Link>
                 <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Resale</Link>
                 <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>International</Link>
-                
+                <Link href="/heat-map" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Heat Map</Link>
               </div>
             </div>
 
