@@ -23,7 +23,6 @@ interface SiteSettings {
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
-  const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
@@ -334,13 +333,7 @@ export default function Header() {
                           >
                             User Management
                           </Link>
-                          <Link 
-                            href="/project-management" 
-                            className="block px-4 py-2 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors"
-                            onClick={() => setUserMenuOpen(false)}
-                          >
-                            Project Management
-                          </Link>
+
                         </>
                       )}
 
