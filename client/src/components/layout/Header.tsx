@@ -230,28 +230,14 @@ export default function Header() {
 
               </div>
             </div>
-            <div className="relative">
-              <button 
-                onClick={() => setDesktopProjectsOpen(!desktopProjectsOpen)}
-                className="py-2 font-medium text-rich-black hover:text-copper transition-colors flex items-center"
-              >
-                Projects
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-1 transition-transform ${desktopProjectsOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-              {desktopProjectsOpen && (
-                <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden z-[60] gold-border">
-                  <Link 
-                    href="/projects/emaar-mivida" 
-                    className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10"
-                    onClick={() => setDesktopProjectsOpen(false)}
-                  >
-                    EMAAR Mivida
-                  </Link>
-                </div>
-              )}
-            </div>
+            <Link 
+              href="/projects/emaar-mivida" 
+              className={`py-2 font-medium ${location === "/projects/emaar-mivida" 
+                ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
+                : "text-rich-black hover:text-copper"} transition-colors`}
+            >
+              EMAAR Mivida
+            </Link>
             <Link 
               href="/about" 
               className={`py-2 font-medium ${location === "/about" 
@@ -450,29 +436,12 @@ export default function Header() {
               </div>
             </div>
             
-            {/* Mobile Projects Dropdown */}
-            <div>
-              <button 
-                onClick={() => setMobileProjectsOpen(!mobileProjectsOpen)}
-                className="flex items-center justify-between w-full py-2 font-medium text-rich-black hover:text-copper transition-colors"
-              >
-                Projects
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${mobileProjectsOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {mobileProjectsOpen && (
-                <div className="pl-4 mt-2 space-y-2 border-l-2 border-copper/20">
-                  <Link 
-                    href="/projects/emaar-mivida" 
-                    className="block py-1 text-rich-black hover:text-copper transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    EMAAR Mivida
-                  </Link>
-                </div>
-              )}
-            </div>
+            <Link 
+              href="/projects/emaar-mivida" 
+              className={`py-2 font-medium ${location === "/projects/emaar-mivida" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+            >
+              EMAAR Mivida
+            </Link>
             
             <Link 
               href="/about" 
