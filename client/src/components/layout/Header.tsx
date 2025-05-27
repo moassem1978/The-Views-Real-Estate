@@ -399,21 +399,28 @@ export default function Header() {
             >
               Home
             </Link>
+            <Link 
+              href="/properties" 
+              className={`py-2 font-medium ${location === "/properties" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              All Properties
+            </Link>
             <div className="py-2">
               <button 
                 className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
                 onClick={() => setMobilePropertiesOpen(!mobilePropertiesOpen)}
               >
-                Properties
+                Property Types
                 <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${mobilePropertiesOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
               <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobilePropertiesOpen ? 'block' : 'hidden'}`}>
-                <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors">Primary</Link>
-                <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors">Resale</Link>
-                <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
-                <Link href="/heat-map" className="block py-1 text-rich-black hover:text-copper transition-colors">Heat Map</Link>
+                <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Primary</Link>
+                <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Resale</Link>
+                <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>International</Link>
+                <Link href="/heat-map" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Heat Map</Link>
               </div>
             </div>
 
