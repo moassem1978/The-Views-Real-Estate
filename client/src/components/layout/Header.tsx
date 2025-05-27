@@ -475,12 +475,7 @@ export default function Header() {
                     >
                       User Management
                     </Link>
-                    <Link 
-                      href="/project-management" 
-                      className={`py-2 font-medium ${location === "/project-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
-                    >
-                      Project Management
-                    </Link>
+
                   </>
                 )}
               </>
