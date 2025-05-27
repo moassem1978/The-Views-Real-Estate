@@ -1,14 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>The Views Real Estate - Luxury Properties in Egypt</title>
-    <meta name="description" content="Premium real estate consultancy specializing in luxury Egyptian properties including EMAAR Mivida, Sodic, and exclusive developments." />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Discover exceptional luxury properties curated for the discerning clientele. Browse our exclusive collection of high-end real estate.">
+  <title>LuxuryRealty | Exceptional Properties</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23D4AF37'/%3E%3Ctext x='50' y='65' font-family='serif' font-size='40' text-anchor='middle' fill='white'%3ELR%3C/text%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#D4AF37">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  
+  <!-- Preconnect to improve font loading performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Critical CSS inlined to improve render performance -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #F9F6F2;
+    }
+    
+    /* Minimal critical CSS to show something useful during load */
+    .loading-spinner {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .loading-spinner::after {
+      content: "";
+      width: 40px;
+      height: 40px;
+      border: 4px solid #D4AF37;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="loading-spinner"></div>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
 </html>

@@ -1,106 +1,140 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { useEffect } from "react";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import PropertySearch from "@/components/home/PropertySearch";
+import Services from "@/components/home/Services";
+import Testimonials from "@/components/home/Testimonials";
+import ContactCTA from "@/components/home/ContactCTA";
+import OptimizedHeroCarousel from "@/components/home/OptimizedHeroCarousel";
+import AnnouncementsSection from "@/components/home/AnnouncementsSection";
+import PropertiesByType from "@/components/home/PropertiesByType";
 
+// SEO optimization for homepage
+function HomeSEO() {
+  useEffect(() => {
+    // Set optimized page title and meta description for luxury real estate in Egypt
+    const title = "The Views Real Estate - Luxury Properties in Egypt | Cairo, North Coast, New Capital";
+    const description = "Discover premium luxury properties in Egypt with The Views Real Estate. Expert real estate consultancy for villas, penthouses, chalets in Cairo, North Coast, New Capital. 30+ years experience.";
+    
+    document.title = title;
+    
+    // Update meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', description);
+
+    // Add keywords meta tag for SEO
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', 'عقارات للبيع, عقارات القاهرة, عقارات مصر, شقق للبيع, فيلل للبيع, شاليهات للبيع, properties for sale Egypt, real estate Egypt, apartments for sale Cairo, villas for sale Egypt, chalets for sale North Coast, Nawy Egypt, Coldwell Banker Egypt, Bold Routes, The Address Investment, EMAAR Mivida for sale, Sodic Eastown, Palm Hills Hacienda, Mountain View iCity, Orascom El Gouna, Tatweer Misr Fouka Bay, La Vista Telal North Coast, Marakez Mall of Arabia, Hassan Allam Swan Lake, Hyde Park New Cairo, Ora Zed West, Misr Italia Il Bosco, Capital Group Sentra, Madinet Masr Sarai, La Vista Bay La Sun, Tatweer Misr IL Monte Galala, Hassan Allam Rabwa Heights, Marakez District One, La Vista Ras El Hekma Bay, Tatweer Misr Katameya Coast, عقارات نوي, كولدويل بانكر مصر, عقارات إعمار ميفيدا, سوديك إيستاون, بالم هيلز هاسيندا, ماونتن فيو آي سيتي, أوراسكوم الجونة, تطوير مصر فوكة باي, لافيستا تلال الساحل الشمالي, مراكز مول العرب, حسن علام سوان ليك, لافيستا باي لا صن, تطوير مصر إل مونتي جلالة, حسن علام ربوة هايتس, مراكز ديستريكت وان, لافيستا رأس الحكمة, تطوير مصر قطامية كوست, best real estate broker Egypt, luxury properties Egypt, Mohamed Assem real estate, The Views Real Estate');
+
+    // Add Open Graph tags for social media sharing
+    const ogTags = [
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: window.location.href },
+      { property: 'og:site_name', content: 'The Views Real Estate' },
+      { property: 'og:locale', content: 'en_US' }
+    ];
+
+    ogTags.forEach(tag => {
+      let metaTag = document.querySelector(`meta[property="${tag.property}"]`);
+      if (!metaTag) {
+        metaTag = document.createElement('meta');
+        metaTag.setAttribute('property', tag.property);
+        document.head.appendChild(metaTag);
+      }
+      metaTag.setAttribute('content', tag.content);
+    });
+
+    // Add structured data for real estate business
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      "name": "The Views Real Estate",
+      "description": "Premium luxury real estate consultancy in Egypt specializing in high-end properties",
+      "url": "https://www.theviewsconsultancy.com",
+      "telephone": "+20 106 311 1136",
+      "email": "Sales@theviewsconsultancy.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "New Cairo, Road 90",
+        "addressLocality": "Cairo",
+        "addressCountry": "Egypt"
+      },
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Cairo"
+        },
+        {
+          "@type": "City", 
+          "name": "North Coast"
+        },
+        {
+          "@type": "City",
+          "name": "New Administrative Capital"
+        }
+      ],
+      "founder": {
+        "@type": "Person",
+        "name": "Mohamed Assem",
+        "jobTitle": "Founder & Senior Real Estate Consultant"
+      },
+      "sameAs": [
+        "https://www.theviewsconsultancy.com"
+      ]
+    };
+
+    // Remove existing structured data
+    const existingScript = document.querySelector('script[type="application/ld+json"]');
+    if (existingScript) {
+      existingScript.remove();
+    }
+
+    // Add new structured data
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(structuredData);
+    document.head.appendChild(script);
+
+    // Cleanup function
+    return () => {
+      const scriptToRemove = document.querySelector('script[type="application/ld+json"]');
+      if (scriptToRemove) {
+        scriptToRemove.remove();
+      }
+    };
+  }, []);
+
+  return null;
+}
+
+// Home component using the optimized carousel for better performance
 export default function Home() {
-  const { data: highlightedProperties } = useQuery({
-    queryKey: ["/api/properties/highlighted"],
-    queryFn: () => fetch("/api/properties/highlighted").then(res => res.json()),
-  });
-
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary/10 to-primary/20 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Luxury Real Estate in Egypt
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Discover premium properties in Egypt's most prestigious developments. 
-            From EMAAR Mivida to exclusive compounds, find your perfect luxury home.
-          </p>
-          <Link href="/properties">
-            <button className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors">
-              Browse All Properties
-            </button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Featured Properties */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Featured Properties</h2>
-          
-          {highlightedProperties && highlightedProperties.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {highlightedProperties.map((property: any) => (
-                <div key={property.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <div className="h-48 bg-gray-200 flex items-center justify-center">
-                    {property.images?.[0] ? (
-                      <img 
-                        src={property.images[0]} 
-                        alt={property.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-gray-400">No Image</span>
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold mb-2">{property.title}</h3>
-                    <p className="text-gray-600 mb-4">{property.city}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-2xl font-bold text-primary">
-                        {property.price ? `L.E ${Number(property.price).toLocaleString()}` : "Contact for Price"}
-                      </span>
-                      <Link href={`/properties/${property.id}`}>
-                        <button className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md">
-                          View Details
-                        </button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">No featured properties available at the moment.</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section className="bg-gray-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Our Services</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-primary text-2xl">🏠</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Property Sales</h3>
-              <p className="text-gray-600">Premium properties in Egypt's most exclusive developments</p>
-            </div>
-            <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-primary text-2xl">📊</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Market Analysis</h3>
-              <p className="text-gray-600">Expert insights into Egyptian real estate market trends</p>
-            </div>
-            <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-primary text-2xl">🤝</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Consultation</h3>
-              <p className="text-gray-600">Personalized guidance for your real estate investment</p>
-            </div>
-          </div>
-        </div>
-      </section>
+    <div className="flex flex-col min-h-screen">
+      <HomeSEO />
+      <Header />
+      <main className="flex-grow">
+        <OptimizedHeroCarousel />
+        <PropertySearch />
+        <PropertiesByType />
+        <AnnouncementsSection />
+        <Services />
+        <Testimonials />
+        <ContactCTA />
+      </main>
+      <Footer />
     </div>
   );
 }
