@@ -44,12 +44,10 @@ const ProjectManagement = lazy(() => import(/* webpackChunkName: "project-manage
 // Blog and content marketing pages
 const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogPage"));
 const ArticlePage = lazy(() => import(/* webpackChunkName: "article" */ "@/pages/ArticlePage"));
-// Premium project pages
-const EMAAARMividaProject = lazy(() => import(/* webpackChunkName: "emaar-mivida" */ "@/pages/EMAAARMividaProject"));
-// High-traffic SEO landing pages
-const RealEstateEgypt = lazy(() => import(/* webpackChunkName: "real-estate-egypt" */ "@/pages/RealEstateEgypt"));
-const CairoProperties = lazy(() => import(/* webpackChunkName: "cairo-properties" */ "@/pages/CairoProperties"));
-const NorthCoastProperties = lazy(() => import(/* webpackChunkName: "north-coast-properties" */ "@/pages/NorthCoastProperties"));
+// Heat Map visualization feature
+const HeatMap = lazy(() => import(/* webpackChunkName: "heat-map" */ "@/pages/HeatMap"));
+// QR Code Generator
+const QRGenerator = lazy(() => import(/* webpackChunkName: "qr-generator" */ "@/pages/QRGenerator"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -165,27 +163,17 @@ function Router() {
         </Suspense>
       </Route>
 
-      {/* Premium project pages */}
-      <Route path="/emaar-mivida-project">
+      {/* Heat Map visualization */}
+      <Route path="/heat-map">
         <Suspense fallback={<LoadingFallback />}>
-          <EMAAARMividaProject />
+          <HeatMap />
         </Suspense>
       </Route>
 
-      {/* High-traffic SEO landing pages */}
-      <Route path="/real-estate-egypt">
+      {/* QR Code Generator */}
+      <Route path="/qr-generator">
         <Suspense fallback={<LoadingFallback />}>
-          <RealEstateEgypt />
-        </Suspense>
-      </Route>
-      <Route path="/cairo-properties">
-        <Suspense fallback={<LoadingFallback />}>
-          <CairoProperties />
-        </Suspense>
-      </Route>
-      <Route path="/north-coast-properties">
-        <Suspense fallback={<LoadingFallback />}>
-          <NorthCoastProperties />
+          <QRGenerator />
         </Suspense>
       </Route>
 
