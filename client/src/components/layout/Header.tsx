@@ -423,20 +423,7 @@ export default function Header() {
                 <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
               </div>
             </div>
-            <div className="py-2">
-              <button 
-                className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
-                onClick={() => setMobileProjectsOpen(!mobileProjectsOpen)}
-              >
-                Projects
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${mobileProjectsOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobileProjectsOpen ? 'block' : 'hidden'}`}>
-                <Link href="/emaar-mivida-project" className="block py-1 text-rich-black hover:text-copper transition-colors">EMAAR Mivida</Link>
-              </div>
-            </div>
+
             <div className="py-2">
               <button 
                 className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
