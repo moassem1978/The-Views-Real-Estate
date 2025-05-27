@@ -206,10 +206,10 @@ app.post("/api/newsletter/subscribe", async (req, res) => {
   }
 });
 
-// Serve client
-app.get("*", (req, res) => {
-  res.sendFile(join(__dirname, "../client/dist/index.html"));
-});
+// Import vite setup
+import "./vite.js";
+
+// Serve client - handled by vite
 
 const port = 5000;
 

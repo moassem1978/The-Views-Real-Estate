@@ -1,5 +1,5 @@
 import { Switch, Route } from "wouter";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "./components/ui/toaster";
 import Header from "./components/Header";
 import Home from "./pages/Home";
 import Properties from "./pages/Properties";
