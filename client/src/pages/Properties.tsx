@@ -44,21 +44,23 @@ export default function Properties() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {properties.map((property: any) => (
               <div key={property.id} className="bg-white rounded-lg shadow-md overflow-hidden border">
-                <div className="h-48 bg-gray-200 flex items-center justify-center">
+                <div className="h-48 bg-gray-200 flex items-center justify-center relative">
                   {property.images && property.images.length > 0 ? (
                     <img 
-                      src={property.images[0]} 
+                      src={Array.isArray(property.images) ? property.images[0] : 
+                           typeof property.images === 'string' && property.images.startsWith('[') ?
+                           JSON.parse(property.images)[0] : property.images}
                       alt={property.title}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling.style.display = 'flex';
+                        e.currentTarget.src = '/placeholder-property.svg';
                       }}
                     />
-                  ) : null}
-                  <div className="flex items-center justify-center w-full h-full text-gray-400">
-                    No Image Available
-                  </div>
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full text-gray-400">
+                      <img src="/placeholder-property.svg" alt="No image" className="w-full h-full object-cover" />
+                    </div>
+                  )}
                 </div>
                 
                 <div className="p-6">

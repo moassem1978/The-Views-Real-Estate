@@ -15,63 +15,48 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      // Handle different source formats
-      let rawSrc: string | null = null;
-      
-      // Case 1: Array of image paths
-      if (Array.isArray(src) && src.length > index) {
-        rawSrc = src[index];
-        console.log(`PropertyImage: Using image at index ${index} from array of ${src.length} images`);
-      } 
-      // Case 2: JSON string of array
-      else if (typeof src === 'string' && (src.startsWith('[') || src.startsWith('"['))) {
-        try {
-          const cleaned = src.replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
-          const parsed = JSON.parse(cleaned);
-          if (Array.isArray(parsed) && parsed.length > index) {
-            rawSrc = parsed[index];
-            console.log(`PropertyImage: Parsed JSON string to array, using image at index ${index}`);
-          }
-        } catch (e) {
-          // Not valid JSON, treat as direct path
-          rawSrc = src;
-          console.log(`PropertyImage: Failed to parse JSON, using as direct path: ${src}`);
-        }
-      } 
-      // Case 3: Direct string path
-      else if (typeof src === 'string') {
-        rawSrc = src;
-        console.log(`PropertyImage: Using direct string path: ${src}`);
-      }
-      // Case 4: Object with path or URL property (handle potential API responses)
-      else if (src && typeof src === 'object' && (src.path || src.url)) {
-        rawSrc = src.path || src.url;
-        console.log(`PropertyImage: Extracted path from object: ${rawSrc}`);
-      }
+    if (!src) {
+      setError(true);
+      return;
+    }
 
-      // Special handling for image paths without leading slash
-      if (rawSrc && typeof rawSrc === 'string') {
-        // Check if path needs to be adjusted
-        if (rawSrc.includes('uploads/properties') && !rawSrc.startsWith('/') && !rawSrc.startsWith('http')) {
-          rawSrc = `/${rawSrc}`;
-          console.log(`PropertyImage: Added leading slash to path: ${rawSrc}`);
+    try {
+      let imagePath = '';
+      
+      // Handle array input
+      if (Array.isArray(src)) {
+        imagePath = src[index] || src[0] || '';
+      }
+      // Handle JSON string
+      else if (typeof src === 'string' && src.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(src);
+          imagePath = Array.isArray(parsed) ? (parsed[index] || parsed[0] || '') : src;
+        } catch {
+          imagePath = src;
         }
       }
+      // Handle direct string
+      else if (typeof src === 'string') {
+        imagePath = src;
+      }
       
-      // Process and normalize the image path
-      const imageUrl = rawSrc ? normalizeImagePath(rawSrc) : '';
-      
-      // Add cache busting to prevent browser caching issues
-      const finalUrl = imageUrl ? `${imageUrl}?t=${Date.now()}` : '';
-      
-      console.log(`PropertyImage: Final processed URL: ${finalUrl}`);
-      
-      setImageSrc(finalUrl);
-      setError(false);
-      setIsLoaded(false);
+      // Clean and format path
+      if (imagePath) {
+        imagePath = imagePath.toString().trim().replace(/"/g, '');
+        
+        // Ensure proper path format
+        if (!imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+          imagePath = `/${imagePath}`;
+        }
+        
+        setImageSrc(imagePath);
+        setError(false);
+        setIsLoaded(false);
+      } else {
+        setError(true);
+      }
     } catch (error) {
-      console.error('Error processing image source:', error);
       setError(true);
     }
   }, [src, index]);
