@@ -67,7 +67,7 @@ export default function Properties() {
                     
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-2xl font-bold text-[#D4AF37]">
-                        ${property.price?.toLocaleString() || 'Price on request'}
+                        {property.price?.toLocaleString() || 'Price on request'} L.E
                       </span>
                       {property.bedrooms && (
                         <span className="text-sm text-gray-500">{property.bedrooms} bed</span>
