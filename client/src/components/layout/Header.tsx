@@ -194,6 +194,14 @@ export default function Header() {
               </div>
             </div>
             <Link 
+              href="/projects" 
+              className={`py-2 font-medium ${location === "/projects" || location.startsWith("/projects/") 
+                ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
+                : "text-rich-black hover:text-copper"} transition-colors`}
+            >
+              Projects
+            </Link>
+            <Link 
               href="/about" 
               className={`py-2 font-medium ${location === "/about" 
                 ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
@@ -393,6 +401,12 @@ export default function Header() {
                 <Link href="/services/investment" className="block py-1 text-rich-black hover:text-copper transition-colors">Investment</Link>
               </div>
             </div>
+            <Link 
+              href="/projects" 
+              className={`py-2 font-medium ${location === "/projects" || location.startsWith("/projects/") ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+            >
+              Projects
+            </Link>
             <Link 
               href="/about" 
               className={`py-2 font-medium ${location === "/about" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
