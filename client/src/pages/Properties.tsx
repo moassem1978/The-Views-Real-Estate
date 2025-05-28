@@ -60,8 +60,8 @@ export default function Properties() {
 
   // SEO for properties page
   useEffect(() => {
-    let title = "Luxury Properties Egypt, Dubai & Red Sea for Sale";
-    let description = "Browse premium luxury properties in Egypt, Dubai & Red Sea. Find villas, apartments, penthouses for Egyptian investors with The Views Real Estate. EMAAR Dubai, Red Sea Global projects available.";
+    let title = "Luxury Properties Egypt, Dubai & Red Sea for Sale | استثمار عقاري";
+    let description = "Browse premium luxury properties in Egypt, Dubai & Red Sea. Find villas, apartments, penthouses with The Views Real Estate. عقارات للبيع في مصر - EMAAR Dubai, Red Sea Global projects. Investment properties with guaranteed returns.";
     
     if (filters.propertyType) {
       title = `${filters.propertyType}s for Sale in Egypt`;

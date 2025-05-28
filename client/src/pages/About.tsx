@@ -25,7 +25,7 @@ function AboutSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'Mohamed Assem international real estate broker, The Views Real Estate Dubai specialist, Dubai properties Indian investors, Dubai properties Pakistani investors, Dubai properties British investors, Dubai properties Iranian investors, Dubai properties Chinese investors, Dubai properties Lebanese investors, Dubai properties Russian investors, Dubai properties French investors, Dubai properties German investors, Dubai properties American investors, best Dubai real estate broker international, Dubai golden visa specialist, EMAAR Dubai global expert, Dubai Marina international specialist, Downtown Dubai expert, Business Bay Dubai consultant, 30 years international experience, luxury property consultant Dubai Egypt Red Sea, Mohamed Assem Dubai expert, global real estate investment specialist');
+    metaKeywords.setAttribute('content', 'Mohamed Assem real estate broker Egypt, The Views Real Estate founder, عقارات فاخرة في مصر, وسيط عقاري موثوق في مصر, أفضل وسيط عقاري في مصر, عقارات للبيع في القاهرة الجديدة, فلل للبيع في الساحل الشمالي, عقارات التجمع الخامس, Katameya Heights expert, Sheikh Zayed real estate specialist, New Capital properties expert, Maadi luxury consultant, Zamalek properties specialist, 30 years experience Egypt, Dubai properties specialist, EMAAR Dubai expert, Red Sea projects consultant, luxury property consultant Egypt Dubai Red Sea, best real estate broker Egypt, most trusted broker Egypt, EMAAR Misr specialist, Mivida expert, Marassi specialist, Sodic expert, Palm Hills consultant');
 
     const ogTags = [
       { property: 'og:title', content: title },
