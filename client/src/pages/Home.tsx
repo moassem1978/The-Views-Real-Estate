@@ -34,7 +34,7 @@ function HomeSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'Mohamed Assem real estate broker, The Views Real Estate, Dubai Properties for Egyptians, EMAAR Dubai Egyptian investors, Dubai Marina Egyptian investment, best Dubai real estate broker for Egyptians, Dubai golden visa property Egypt, Red Sea Global Egyptian investment, AMAALA Red Sea Egyptian buyers, Red Sea Project luxury Egypt, Saudi Red Sea properties Egyptians, luxury real estate Egypt Dubai Red Sea, EMAAR Misr, Mivida, Marassi North Coast, Sodic Katameya, Palm Hills, newest developments Cairo, newest developments Dubai, newest developments Red Sea, most expensive villa Mivida, most expensive villa Dubai, Dubai property investment Egypt, Red Sea investment opportunities Egypt');
+    metaKeywords.setAttribute('content', 'Mohamed Assem Dubai real estate broker, The Views Real Estate Dubai, Dubai properties for Indian investors, Dubai properties Pakistani investors, Dubai properties British investors, Dubai properties Iranian investors, Dubai properties Chinese investors, Dubai properties Lebanese investors, Dubai properties Russian investors, EMAAR Dubai international investors, Dubai Marina global investment, Downtown Dubai international buyers, Dubai golden visa investors, Business Bay Dubai global, Dubai Hills Estate international, best Dubai real estate broker international, Dubai property investment global, AMAALA Red Sea international, Red Sea Global luxury investment, Dubai Creek Harbour international, Damac Properties global investors, luxury real estate Egypt Dubai Red Sea international');
 
     // Add Open Graph tags for social media sharing
     const ogTags = [
