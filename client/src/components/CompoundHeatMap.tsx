@@ -285,7 +285,7 @@ function processPropertiesForHeatMap(properties: Property[]): CompoundData[] {
       averagePrice,
       priceRange,
       coordinates: { lat: 0, lng: 0 }, // Could be enhanced with actual coordinates
-      propertyTypes: Array.from(new Set(data.properties.map(p => p.propertyType).filter(Boolean))),
+      propertyTypes: Array.from(new Set(data.properties.map(p => p.propertyType).filter(Boolean))) as string[],
       density: density as 'low' | 'medium' | 'high'
     };
   }).sort((a, b) => b.propertyCount - a.propertyCount);
