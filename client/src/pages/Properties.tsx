@@ -36,7 +36,9 @@ export default function Properties() {
     },
   });
 
+  // Safely extract properties data
   const properties = response?.data || [];
+  const totalCount = response?.totalCount || 0;
 
   const handleSearch = () => {
     // Trigger a new search with current filters
@@ -49,6 +51,44 @@ export default function Properties() {
     const queryString = params.toString();
     window.history.replaceState({}, '', `/properties${queryString ? '?' + queryString : ''}`);
   };
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37] mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading properties...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-red-600 mb-4">Something went wrong</h2>
+            <p className="text-gray-600 mb-4">Unable to load properties at the moment</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
