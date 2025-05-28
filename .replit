@@ -92,31 +92,23 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "sudo fuser -k 5000/tcp || true"
+args = "pkill -f \"tsx server/index.ts\" || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "sudo netstat -tlnp | grep :5000 | awk '{print $7}' | cut -d'/' -f1 | xargs -r sudo kill -9 || true"
+args = "pkill -f \"npm run dev\" || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pkill -9 -f \"tsx server/index.ts\" || true"
+args = "pkill -f \"node.*5000\" || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pkill -9 -f \"npm run dev\" || true"
+args = "pkill -f \"vite.*5000\" || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pkill -9 -f \"node.*5000\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -9 -f \"vite.*5000\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "sleep 3"
+args = "sleep 5"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
