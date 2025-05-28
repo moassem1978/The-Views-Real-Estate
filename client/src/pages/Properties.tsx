@@ -60,8 +60,8 @@ export default function Properties() {
 
   // SEO for properties page
   useEffect(() => {
-    let title = "Luxury Properties Egypt, Dubai & Red Sea for Sale | استثمار عقاري";
-    let description = "Browse premium luxury properties in Egypt, Dubai & Red Sea. Find villas, apartments, penthouses with The Views Real Estate. عقارات للبيع في مصر - EMAAR Dubai, Red Sea Global projects. Investment properties with guaranteed returns.";
+    let title = "Katameya Dunes, Lake View, Swan Lake Properties for Sale | Hassan Allam";
+    let description = "Browse Katameya Dunes Golf Resort, Lake View Compound, Swan Lake Resort properties with The Views Real Estate. Hassan Allam developments, premium golf course villas, luxury compounds Egypt. عقارات كتاميا ديونز للبيع";
     
     if (filters.propertyType) {
       title = `${filters.propertyType}s for Sale in Egypt`;

@@ -13,8 +13,8 @@ import PropertiesByType from "@/components/home/PropertiesByType";
 function HomeSEO() {
   useEffect(() => {
     // Set optimized page title and meta description for luxury real estate in Egypt
-    const title = "The Views Real Estate - Luxury Properties Egypt, Dubai & Red Sea | Mohamed Assem";
-    const description = "Discover premium luxury properties in Egypt, Dubai & Red Sea with The Views Real Estate. Expert consultancy for Egyptian investors in EMAAR Dubai, Red Sea Global projects, and Egyptian compounds. 30+ years experience.";
+    const title = "Katameya Dunes, Lake View, Swan Lake Properties | Hassan Allam Expert | Mohamed Assem";
+    const description = "Discover Katameya Dunes Golf Resort, Lake View Compound, Swan Lake Resort with The Views Real Estate. Hassan Allam Properties specialist, premium golf course villas, luxury compounds Egypt, Dubai & Red Sea. 30+ years expertise.";
     
     document.title = title;
     
@@ -34,7 +34,7 @@ function HomeSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'Mohamed Assem real estate broker Egypt, The Views Real Estate Egypt, عقارات للبيع في مصر, شقق للبيع في القاهرة الجديدة, فلل للبيع في الساحل الشمالي, عقارات للبيع في التجمع الخامس, أسعار العقارات في مصر, Katameya Heights properties, Rehab City apartments, Sheikh Zayed villas, 6th October luxury properties, Zamalek penthouses, New Capital apartments Egypt, Maadi luxury properties, Heliopolis real estate, Mohandessin apartments, Dubai properties for Indian investors, Dubai properties Pakistani investors, EMAAR Dubai international investors, Dubai Marina global investment, best Dubai real estate broker international, AMAALA Red Sea international, luxury real estate Egypt Dubai Red Sea, EMAAR Misr expert, Mivida specialist, Marassi North Coast expert, Sodic developments, Palm Hills properties');
+    metaKeywords.setAttribute('content', 'Mohamed Assem real estate broker Egypt, The Views Real Estate Egypt, عقارات للبيع في مصر, كتاميا ديونز للبيع, ليك فيو كمبوند, سوان ليك ريزورت, حسن علام العقارية, Katameya Dunes Golf Resort, Katameya Dunes villas for sale, Katameya Dunes Golf Club, Lake View Compound, Lake View Residence, Lake View Boutique, Lake View Hyde Park, Swan Lake Resort, Swan Lake Hassan Allam, Swan Lake North Coast, Hassan Allam Properties, Hassan Allam developments, Hassan Allam Construction, Hassan Allam Holding, Hassan Allam New Capital, Katameya Heights properties, Katameya Plaza, Katameya Creeks, most expensive villa Katameya Dunes, Lake View properties investment, Swan Lake chalets for sale, Hassan Allam real estate projects, golf course properties Egypt, luxury compounds New Cairo, premium developments Egypt, Dubai properties international investors, luxury real estate Egypt Dubai Red Sea');
 
     // Add Open Graph tags for social media sharing
     const ogTags = [
