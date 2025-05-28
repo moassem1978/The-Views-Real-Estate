@@ -9,9 +9,11 @@ import { Link } from "wouter";
 import type { Project } from "@shared/schema";
 
 export default function Projects() {
-  const { data: projects, isLoading, error } = useQuery<Project[]>({
+  const { data: projectsResponse, isLoading, error } = useQuery<{data: Project[], totalCount: number}>({
     queryKey: ['/api/projects'],
   });
+
+  const projects = projectsResponse?.data || [];
 
   // SEO for projects page
   useEffect(() => {
