@@ -1,11 +1,12 @@
-
-import pkg from 'pg';
+import pg from 'pg';
 import fs from 'fs';
-import path from 'path';
+import dotenv from 'dotenv';
 
-const { Pool } = pkg;
+// Load environment variables
+dotenv.config();
 
-// Database connection
+const { Pool } = pg;
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
@@ -21,9 +22,9 @@ async function fixPropertyImages() {
       WHERE id IN (47, 48)
       ORDER BY id
     `;
-    
+
     const currentResult = await pool.query(currentQuery);
-    
+
     console.log('\nCurrent state:');
     currentResult.rows.forEach(property => {
       console.log(`Property ${property.id}: ${property.title}`);
@@ -37,7 +38,7 @@ async function fixPropertyImages() {
       .sort();
 
     console.log(`\nFound ${availableImages.length} images in attached_assets`);
-    
+
     // Show recent images that might belong to these properties
     console.log('\nRecent images that might be for properties 47 & 48:');
     const recentImages = availableImages.slice(-20); // Show last 20 images
@@ -65,7 +66,7 @@ async function fixPropertyImages() {
         WHERE id = 47
         RETURNING id, title, images
       `;
-      
+
       const result47 = await pool.query(updateQuery47, [JSON.stringify(property47ImagePaths)]);
       console.log(`\nUpdated property 47 with ${property47Images.length} images:`);
       console.log(result47.rows[0]);
@@ -80,7 +81,7 @@ async function fixPropertyImages() {
         WHERE id = 48
         RETURNING id, title, images
       `;
-      
+
       const result48 = await pool.query(updateQuery48, [JSON.stringify(property48ImagePaths)]);
       console.log(`\nUpdated property 48 with ${property48Images.length} images:`);
       console.log(result48.rows[0]);
@@ -95,30 +96,5 @@ async function fixPropertyImages() {
   }
 }
 
-// Helper function to copy images from attached_assets to public/uploads
-async function copyImagesToPublic(images, propertyId) {
-  const targetDir = './public/uploads/properties';
-  
-  if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true });
-  }
-
-  const copiedImages = [];
-  
-  for (const img of images) {
-    const sourcePath = path.join('./attached_assets', img);
-    const targetPath = path.join(targetDir, img);
-    
-    if (fs.existsSync(sourcePath)) {
-      fs.copyFileSync(sourcePath, targetPath);
-      copiedImages.push(`/uploads/properties/${img}`);
-      console.log(`Copied ${img} to public uploads`);
-    } else {
-      console.log(`Warning: ${img} not found in attached_assets`);
-    }
-  }
-  
-  return copiedImages;
-}
-
+// Run the function
 fixPropertyImages();
