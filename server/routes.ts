@@ -4236,25 +4236,5 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // XML Sitemap route for SEO acceleration
-  app.get("/sitemap.xml", async (req: Request, res: Response) => {
-    const { generateSitemap } = await import('./sitemap');
-    await generateSitemap(req, res);
-  });
-
-  // Robots.txt for SEO
-  app.get("/robots.txt", (req: Request, res: Response) => {
-    const robotsTxt = `User-agent: *
-Allow: /
-Disallow: /dashboard
-Disallow: /signin
-Disallow: /api/
-
-Sitemap: https://${req.get('host')}/sitemap.xml`;
-    
-    res.set('Content-Type', 'text/plain');
-    res.send(robotsTxt);
-  });
-
   return httpServer;
 }

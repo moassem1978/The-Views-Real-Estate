@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import LogoDisplay from "@/components/ui/LogoDisplay";
 import { useAuth } from "@/hooks/use-auth";
-import { Download } from "lucide-react";
 
 // Define SiteSettings interface 
 interface SiteSettings {
@@ -22,44 +21,15 @@ interface SiteSettings {
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
-
-  const [canInstall, setCanInstall] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-      setCanInstall(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  const handleInstallApp = async () => {
-    if (!installPrompt) return;
-
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-
-    if (outcome === 'accepted') {
-      setCanInstall(false);
-      setInstallPrompt(null);
-    }
-  };
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [location] = useLocation();
   const userMenuRef = useRef<HTMLDivElement>(null);
-
+  
   // Get auth information
   const { user, logoutMutation } = useAuth();
-
+  
   // Fetch site settings including logo
   const { data: settings } = useQuery<SiteSettings>({
     queryKey: ['/api/site-settings'],
@@ -68,16 +38,16 @@ export default function Header() {
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
-
+  
   const toggleUserMenu = () => {
     setUserMenuOpen(!userMenuOpen);
   };
-
+  
   const handleLogout = () => {
     logoutMutation.mutate();
     setUserMenuOpen(false);
   };
-
+  
   // Close user menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -85,7 +55,7 @@ export default function Header() {
         setUserMenuOpen(false);
       }
     }
-
+    
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -203,7 +173,6 @@ export default function Header() {
                 </Link>
               </div>
             </div>
-
             <div className="relative group">
               <button className="py-2 font-medium text-rich-black group-hover:text-copper transition-colors flex items-center">
                 Services
@@ -224,7 +193,6 @@ export default function Header() {
 
               </div>
             </div>
-            
             <Link 
               href="/about" 
               className={`py-2 font-medium ${location === "/about" 
@@ -241,17 +209,15 @@ export default function Header() {
             >
               Contact
             </Link>
-              {canInstall && (
-                <button
-                  onClick={handleInstallApp}
-                  className="flex items-center space-x-1 text-copper hover:text-copper-dark transition-colors font-medium"
-                  title="Install App"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Install App</span>
-                </button>
-              )}
-            </nav>
+            <Link 
+              href="/projects" 
+              className={`py-2 font-medium ${location === "/projects" 
+                ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
+                : "text-rich-black hover:text-copper"} transition-colors`}
+            >
+              Projects
+            </Link>
+          </nav>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -283,7 +249,7 @@ export default function Header() {
                 </svg>
                 <span className="font-medium">Logout</span>
               </button>
-
+              
               {/* Account dropdown menu */}
               <div className="relative" ref={userMenuRef}>
                 <button 
@@ -295,14 +261,14 @@ export default function Header() {
                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
                 </button>
-
+                
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white shadow-lg rounded-md overflow-hidden z-50 gold-border">
                     <div className="px-4 py-3 border-b border-copper/10">
                       <p className="text-sm text-rich-black-light">Signed in as</p>
                       <p className="text-sm font-medium text-rich-black truncate">{user.email}</p>
                     </div>
-
+                    
                     <div className="py-1">
                       <Link 
                         href="/dashboard" 
@@ -311,7 +277,7 @@ export default function Header() {
                       >
                         Dashboard
                       </Link>
-
+                      
                       {/* Show User Management only for owner or admin roles */}
                       {(user.role === 'owner' || user.role === 'admin') && (
                         <>
@@ -322,10 +288,16 @@ export default function Header() {
                           >
                             User Management
                           </Link>
-
+                          <Link 
+                            href="/project-management" 
+                            className="block px-4 py-2 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            Project Management
+                          </Link>
                         </>
                       )}
-
+                      
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-red-600 font-medium hover:bg-red-50 transition-colors border-t border-copper/10 mt-1"
@@ -343,7 +315,7 @@ export default function Header() {
               </div>
             </>
           )}
-
+          
           {/* Mobile menu button */}
           <button 
             className="md:hidden flex items-center justify-center h-10 w-10 rounded-full text-copper hover:text-copper-dark hover:bg-cream transition-all" 
@@ -354,16 +326,14 @@ export default function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : (
-              <div className="w-6 h-6 flex flex-col justify-center">
-                <div className="w-6 h-0.5 bg-current mb-1.5"></div>
-                <div className="w-6 h-0.5 bg-current mb-1.5"></div>
-                <div className="w-6 h-0.5 bg-current"></div>
-              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
             )}
           </button>
         </div>
       </div>
-
+      
       {/* Mobile menu */}
       <div className={`md:hidden bg-white border-t border-copper/10 ${mobileMenuOpen ? 'block animate-in' : 'hidden'}`}>
         <div className="container mx-auto px-4 py-3">
@@ -391,32 +361,22 @@ export default function Header() {
             >
               Home
             </Link>
-            <Link 
-              href="/properties" 
-              className={`py-2 font-medium ${location === "/properties" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              All Properties
-            </Link>
             <div className="py-2">
               <button 
                 className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
                 onClick={() => setMobilePropertiesOpen(!mobilePropertiesOpen)}
               >
-                Property Types
+                Properties
                 <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${mobilePropertiesOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
               <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobilePropertiesOpen ? 'block' : 'hidden'}`}>
-                <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Primary</Link>
-                <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Resale</Link>
-                <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>International</Link>
+                <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors">Primary</Link>
+                <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors">Resale</Link>
+                <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
               </div>
             </div>
-
-
-
             <div className="py-2">
               <button 
                 className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
@@ -433,9 +393,6 @@ export default function Header() {
                 <Link href="/services/investment" className="block py-1 text-rich-black hover:text-copper transition-colors">Investment</Link>
               </div>
             </div>
-
-            
-
             <Link 
               href="/about" 
               className={`py-2 font-medium ${location === "/about" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
@@ -448,6 +405,12 @@ export default function Header() {
             >
               Contact
             </Link>
+            <Link 
+              href="/projects" 
+              className={`py-2 font-medium ${location === "/projects" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+            >
+              Projects
+            </Link>
             {user && (
               <>
                 <Link 
@@ -456,7 +419,7 @@ export default function Header() {
                 >
                   Dashboard
                 </Link>
-
+                
                 {(user.role === 'owner' || user.role === 'admin') && (
                   <>
                     <Link 
@@ -465,12 +428,17 @@ export default function Header() {
                     >
                       User Management
                     </Link>
-
+                    <Link 
+                      href="/project-management" 
+                      className={`py-2 font-medium ${location === "/project-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                    >
+                      Project Management
+                    </Link>
                   </>
                 )}
               </>
             )}
-
+            
             {/* Sign In / Dashboard prominent link */}
             <div className="py-4 border-t border-copper/10">
               {!user ? (
@@ -489,7 +457,7 @@ export default function Header() {
                 </Link>
               )}
             </div>
-
+            
             {/* Mobile contact info */}
             <div className="pt-2 space-y-3 text-sm">
               {settings?.contactPhone && (
@@ -509,7 +477,7 @@ export default function Header() {
                 </a>
               )}
             </div>
-
+            
             <div className="flex space-x-4 py-4">
               {!user ? (
                 <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
@@ -544,7 +512,7 @@ export default function Header() {
                 </svg>
               </button>
             </div>
-
+            
             {/* Social links in mobile */}
             <div className="flex space-x-4 pt-2 border-t border-copper/10">
               {settings?.socialLinks?.facebook && (

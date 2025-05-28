@@ -105,12 +105,12 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   return (
     <div className="property-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">
       <Link href={`/properties/${property.id}`} className="block relative overflow-hidden">
-        <div className="group-hover:after:opacity-100 after:opacity-0 after:absolute after:inset-0 after:bg-black/20 after:transition-opacity after:duration-300 relative h-64 overflow-hidden rounded-t-lg bg-gray-100 flex items-center justify-center">
+        <div className="group-hover:after:opacity-100 after:opacity-0 after:absolute after:inset-0 after:bg-black/20 after:transition-opacity after:duration-300 relative h-64 overflow-hidden rounded-t-lg">
           {/* Using the enhanced PropertyImage component which handles all image processing */}
           <PropertyImage 
-            src={property.images as string}
+            src={property.images}
             alt={property.title}
-            className="w-full h-full object-contain transform transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
           />
 
           {/* Price Tag */}

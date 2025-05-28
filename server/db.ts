@@ -2,7 +2,6 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
-import { sql } from 'drizzle-orm';
 
 neonConfig.webSocketConstructor = ws;
 
@@ -28,7 +27,7 @@ if (!fs.existsSync(BACKUP_DIR)) {
 // Backup function
 export async function backupDatabase() {
   const filename = path.join(BACKUP_DIR, 'daily-backup.sql');
-
+  
   // Use --no-owner and --no-acl for better compatibility
   // Skip backup on version mismatch to allow app to continue running
   const command = `PGPASSWORD=${process.env.PGPASSWORD} pg_dump --no-owner --no-acl -h ${process.env.PGHOST} -U ${process.env.PGUSER} -d ${process.env.PGDATABASE} -F p > "${filename}"`;
@@ -56,20 +55,7 @@ backupDatabase();
 setInterval(backupDatabase, 24 * 60 * 60 * 1000);
 
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, {
-  logger: process.env.NODE_ENV === 'development',
-});
-
-// Add connection health check
-export async function checkDatabaseConnection() {
-  try {
-    await db.execute(sql`SELECT 1`);
-    return true;
-  } catch (error) {
-    console.error('Database connection failed:', error);
-    return false;
-  }
-}
+export const db = drizzle({ client: pool, schema });
 // Restore function
 export async function restoreDatabase(timestamp: string) {
   // Validate timestamp to prevent command injection
@@ -82,40 +68,17 @@ export async function restoreDatabase(timestamp: string) {
     throw new Error(`Backup file ${backupFile} not found`);
   }
 
-  // Use spawn instead of exec to prevent command injection
-  const { spawn } = require('child_process');
+  const command = `PGPASSWORD=${process.env.PGPASSWORD} psql -h ${process.env.PGHOST} -U ${process.env.PGUSER} -d ${process.env.PGDATABASE} < "${backupFile}"`;
 
   return new Promise((resolve, reject) => {
-    const psql = spawn('psql', [
-      '-h', process.env.PGHOST!,
-      '-U', process.env.PGUSER!,
-      '-d', process.env.PGDATABASE!,
-      '-f', backupFile
-    ], {
-      env: {
-        ...process.env,
-        PGPASSWORD: process.env.PGPASSWORD
-      }
-    });
-
-    let stderr = '';
-    psql.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    psql.on('close', (code) => {
-      if (code !== 0) {
-        console.error('Restore failed:', stderr);
-        reject(new Error(`psql exited with code ${code}: ${stderr}`));
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Restore failed:', error);
+        reject(error);
         return;
       }
       console.log(`Restore completed from ${backupFile}`);
       resolve(true);
-    });
-
-    psql.on('error', (error) => {
-      console.error('Restore failed:', error);
-      reject(error);
     });
   });
 }

@@ -1,87 +1,171 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { useState, useEffect } from "react";
-import { Search, MapPin, Home, DollarSign } from "lucide-react";
+import { useLocation } from "wouter";
+import { Property, SearchFilters } from "../types";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import PropertyList from "@/components/properties/PropertyList";
+import PropertyFilter from "@/components/properties/PropertyFilter";
+import ContactCTA from "@/components/home/ContactCTA";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// SEO optimization for properties page
+function PropertiesSEO({ filters, totalProperties }: { filters: SearchFilters; totalProperties?: number }) {
+  useEffect(() => {
+    // Generate dynamic SEO content based on search filters
+    let title = "Luxury Properties for Sale in Egypt";
+    let description = "Browse premium luxury properties in Egypt. Find villas, apartments, penthouses and chalets in Cairo, North Coast, New Capital with The Views Real Estate.";
+    
+    // Customize title and description based on filters
+    if (filters.propertyType) {
+      title = `${filters.propertyType}s for Sale in Egypt`;
+      description = `Find luxury ${filters.propertyType.toLowerCase()}s for sale in Egypt. Premium properties with The Views Real Estate.`;
+    }
+    
+    if (filters.location) {
+      title = `Properties for Sale in ${filters.location}, Egypt`;
+      description = `Discover luxury properties in ${filters.location}, Egypt. Premium real estate with expert guidance from The Views Real Estate.`;
+    }
+    
+    if (filters.propertyType && filters.location) {
+      title = `${filters.propertyType}s for Sale in ${filters.location}, Egypt`;
+      description = `Find luxury ${filters.propertyType.toLowerCase()}s in ${filters.location}, Egypt. Premium properties with The Views Real Estate consultancy.`;
+    }
+    
+    if (totalProperties) {
+      title += ` | ${totalProperties} Properties Available`;
+    }
+    
+    title += " | The Views Real Estate";
+    
+    document.title = title;
+    
+    // Update meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', description);
+
+    // Add dynamic keywords based on filters with premium compound names and catchy phrases
+    let keywords = 'the views consultancy, The Views Real Estate, luxury real estate properties, luxury real estate Egypt, luxury houses Egypt, Mohamed Assem real estate broker, luxury properties Egypt, real estate Egypt, properties for sale, best broker in Egypt, most honest broker in Egypt, real estate brokers, real estate brokerages, EMAAR Misr, EMAAR projects in Egypt, Mivida, Uptown Cairo, Marassi North Coast, Marassi Marina, Marassi Beach, Lake District Mivida, AIS Uptown, Cairo Gate, Belle Vie, Mivida Gardens, Mivida Villas, Marassi Units, Safi Marassi Beach, Waterway Developments, Waterway North Coast, El Gouna, Gouna Marina, Orascom, Swan Lake Residence, Swan Lake North Coast, Sodic Katameya, Sodic Westown, Sodic Eastown, Sodic Villette, Villette Stand Alone, Sky Condos Villette, V Residence Villette, Palm Hills development, Hacienda White villas, Hacienda Bay Villas, Palm Hills Jirian, Palm Hills Nile project, Palm Hills October, Palm Hills North Coast, Ora developers, Ora towers, Ora Sheikh Zayed, Zed West, Solana, Naguib Sawiris, Abar projects in Egypt, New Giza, New Giza North Coast, Silversands, Almaza North Coast, newest developments in Cairo, newest developments in North Coast, newest developments in New Capital, most expensive villa in Mivida, most expensive villa in Marassi, most expensive villa in EMAAR, most expensive villa in Sodic, most expensive villa in El Gouna, most expensive villa in Waterway, newest luxury properties North Coast, newest luxury properties Cairo';
+    if (filters.propertyType) keywords += `, ${filters.propertyType.toLowerCase()}s Egypt, newest ${filters.propertyType.toLowerCase()}s Egypt`;
+    if (filters.location) keywords += `, properties ${filters.location}, newest developments in ${filters.location}, most expensive villa in ${filters.location}`;
+    if (filters.listingType) keywords += `, ${filters.listingType.toLowerCase()} properties`;
+    
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', keywords);
+
+    // Add Open Graph tags
+    const ogTags = [
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: window.location.href }
+    ];
+
+    ogTags.forEach(tag => {
+      let metaTag = document.querySelector(`meta[property="${tag.property}"]`);
+      if (!metaTag) {
+        metaTag = document.createElement('meta');
+        metaTag.setAttribute('property', tag.property);
+        document.head.appendChild(metaTag);
+      }
+      metaTag.setAttribute('content', tag.content);
+    });
+
+  }, [filters, totalProperties]);
+
+  return null;
+}
 
 export default function Properties() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [priceRange, setPriceRange] = useState("");
-  const [propertyType, setPropertyType] = useState("");
-  const [location, setLocation] = useState("");
+  const [location] = useLocation();
+  const [filters, setFilters] = useState<SearchFilters>({});
 
-  // Parse URL parameters on component mount
+  // Extract query parameters from URL
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setSearchTerm(params.get('search') || '');
-    setPriceRange(params.get('priceRange') || '');
-    setPropertyType(params.get('type') || '');
-    setLocation(params.get('location') || '');
-  }, []);
+    const params = new URLSearchParams(location.split('?')[1]);
 
-  const { data: response, isLoading, error } = useQuery({
-    queryKey: ["/api/properties", searchTerm, priceRange, propertyType, location],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
-      if (priceRange) params.append('priceRange', priceRange);
-      if (propertyType) params.append('type', propertyType);
-      if (location) params.append('location', location);
-      
-      const queryString = params.toString();
-      const res = await fetch(`/api/properties${queryString ? '?' + queryString : ''}`);
-      if (!res.ok) throw new Error('Failed to fetch properties');
-      return res.json();
-    },
+    const newFilters: SearchFilters = {};
+    if (params.has('location')) newFilters.location = params.get('location') || undefined;
+    if (params.has('propertyType')) newFilters.propertyType = params.get('propertyType') || undefined;
+    if (params.has('minPrice')) newFilters.minPrice = parseInt(params.get('minPrice') || '0');
+    if (params.has('maxPrice')) newFilters.maxPrice = parseInt(params.get('maxPrice') || '0');
+    if (params.has('minBedrooms')) newFilters.minBedrooms = parseInt(params.get('minBedrooms') || '0');
+    if (params.has('minBathrooms')) newFilters.minBathrooms = parseInt(params.get('minBathrooms') || '0');
+    if (params.has('listingType')) newFilters.listingType = params.get('listingType') || undefined;
+    if (params.has('type')) newFilters.listingType = params.get('type') || undefined;
+    if (params.has('international')) newFilters.international = params.get('international') === 'true';
+
+    setFilters(newFilters);
+  }, [location]);
+
+  // Prepare query parameters for API call -  modified to remove pageSize
+  const queryParams = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      queryParams.append(key, String(value));
+    }
   });
 
-  // Safely extract properties data
-  const properties = response?.data || [];
-  const totalCount = response?.totalCount || 0;
+  const queryString = queryParams.toString();
+  const apiUrl = queryString ? `/api/properties/search?${queryString}` : '/api/properties';
 
-  const handleSearch = () => {
-    // Trigger a new search with current filters
-    const params = new URLSearchParams();
-    if (searchTerm) params.append('search', searchTerm);
-    if (priceRange) params.append('priceRange', priceRange);
-    if (propertyType) params.append('type', propertyType);
-    if (location) params.append('location', location);
-    
-    const queryString = params.toString();
-    window.history.replaceState({}, '', `/properties${queryString ? '?' + queryString : ''}`);
-  };
-
-  // Handle loading state
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37] mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading properties...</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+  // Define the response type (removed pagination)
+  interface ApiResponse {
+    data: Property[];
+    totalCount: number;
   }
 
-  // Handle error state
+
+  const { data: propertiesResponse, isLoading, error } = useQuery<ApiResponse>({
+    queryKey: [apiUrl],
+  });
+
+  const handleFilterChange = (newFilters: SearchFilters) => {
+    setFilters(newFilters);
+
+    // Update URL with new filters
+    const params = new URLSearchParams();
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.append(key, String(value));
+      }
+    });
+
+    const newQueryString = params.toString();
+    const newPath = newQueryString ? `/properties?${newQueryString}` : '/properties';
+    window.history.pushState(null, '', newPath);
+  };
+
   if (error) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-red-600 mb-4">Something went wrong</h2>
-            <p className="text-gray-600 mb-4">Unable to load properties at the moment</p>
+        <main className="flex-grow">
+          <div className="container mx-auto px-4 py-12 text-center">
+            <h1 className="text-3xl font-serif font-semibold text-gray-800 mb-4">
+              Error Loading Properties
+            </h1>
+            <p className="text-gray-600 mb-8">
+              We encountered an issue while loading the properties. Please try again later.
+            </p>
             <button 
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors"
+              className="px-6 py-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow-md inline-flex items-center"
             >
-              Try again
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+              </svg>
+              Refresh Page
             </button>
           </div>
         </main>
@@ -92,160 +176,75 @@ export default function Properties() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <PropertiesSEO filters={filters} totalProperties={data?.totalCount} />
       <Header />
       <main className="flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">All Properties</h1>
-            <p className="text-gray-600">Browse our complete collection of premium properties</p>
+        {/* Hero Section */}
+        <section className="bg-[#333333] py-16 relative">
+          <div className="absolute inset-0 opacity-20">
+            <img 
+              src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
+              alt="Luxury properties background" 
+              className="w-full h-full object-cover"
+            />
           </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#333333]/70 to-[#333333]/90"></div>
 
-          {/* Search Filters */}
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              {/* Search Term */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search properties..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent"
-                />
-              </div>
-
-              {/* Location */}
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <select
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent appearance-none"
-                >
-                  <option value="">All Locations</option>
-                  <option value="Cairo">Cairo</option>
-                  <option value="New Capital">New Capital</option>
-                  <option value="North Coast">North Coast</option>
-                  <option value="6th of October">6th of October</option>
-                  <option value="Sheikh Zayed">Sheikh Zayed</option>
-                  <option value="New Zayed">New Zayed</option>
-                </select>
-              </div>
-
-              {/* Property Type */}
-              <div className="relative">
-                <Home className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <select
-                  value={propertyType}
-                  onChange={(e) => setPropertyType(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent appearance-none"
-                >
-                  <option value="">All Types</option>
-                  <option value="Apartment">Apartment</option>
-                  <option value="Villa">Villa</option>
-                  <option value="Penthouse">Penthouse</option>
-                  <option value="Townhouse">Townhouse</option>
-                  <option value="Duplex">Duplex</option>
-                  <option value="Studio">Studio</option>
-                </select>
-              </div>
-
-              {/* Price Range */}
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <select
-                  value={priceRange}
-                  onChange={(e) => setPriceRange(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent appearance-none"
-                >
-                  <option value="">Any Price</option>
-                  <option value="0-5000000">Under 5M EGP</option>
-                  <option value="5000000-10000000">5M - 10M EGP</option>
-                  <option value="10000000-20000000">10M - 20M EGP</option>
-                  <option value="20000000-50000000">20M - 50M EGP</option>
-                  <option value="50000000-999999999">50M+ EGP</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                onClick={handleSearch}
-                className="inline-flex items-center px-8 py-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-semibold rounded-md transition-colors shadow-lg"
-              >
-                <Search className="h-5 w-5 mr-2" />
-                Search Properties
-              </button>
-            </div>
+          <div className="container mx-auto px-4 relative z-10 text-center">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-semibold text-white leading-tight mb-4">
+              Discover Our Luxury Properties
+            </h1>
+            <p className="text-lg text-white/90 max-w-2xl mx-auto">
+              Browse our exclusive collection of extraordinary homes and estates, each carefully selected to meet the highest standards of luxury living.
+            </p>
           </div>
+        </section>
 
-          {isLoading ? (
-            <div className="text-center py-12">
-              <div className="text-lg text-gray-600">Loading properties...</div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <div className="text-lg text-red-600">Error loading properties. Please try again.</div>
-            </div>
-          ) : properties.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {properties.map((property: any) => (
-                <div key={property.id} className="bg-white rounded-lg shadow-md overflow-hidden border hover:shadow-lg transition-shadow">
-                  <div className="h-48 bg-gray-200 flex items-center justify-center">
-                    {property.images && property.images.length > 0 ? (
-                      <img 
-                        src={Array.isArray(property.images) 
-                          ? property.images[0] 
-                          : typeof property.images === 'string' && property.images.startsWith('[')
-                            ? JSON.parse(property.images)[0] 
-                            : property.images
-                        }
-                        alt={property.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-property.svg';
-                        }}
-                      />
-                    ) : (
-                      <img src="/placeholder-property.svg" alt="No image" className="w-full h-full object-cover opacity-50" />
-                    )}
-                  </div>
-                  
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold mb-2 text-gray-900">{property.title}</h3>
-                    <p className="text-gray-600 mb-2">{property.city}, {property.country}</p>
-                    
-                    {property.projectName && (
-                      <p className="text-sm text-blue-600 mb-2">Project: {property.projectName}</p>
-                    )}
-                    
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-2xl font-bold text-[#D4AF37]">
-                        {property.price?.toLocaleString() || 'Price on request'} L.E
-                      </span>
-                      {property.bedrooms && (
-                        <span className="text-sm text-gray-500">{property.bedrooms} bed</span>
-                      )}
-                    </div>
-                    
-                    <Link 
-                      href={`/property/${property.id}`}
-                      className="block w-full bg-[#D4AF37] hover:bg-[#BF9B30] text-white text-center py-2 px-4 rounded-md transition-colors font-medium"
-                    >
-                      View Details
-                    </Link>
-                  </div>
+        {/* Filters Section */}
+        <section className="bg-white border-b border-[#E8DACB]">
+          <div className="container mx-auto px-4 py-6">
+            <PropertyFilter 
+              currentFilters={filters} 
+              onFilterChange={handleFilterChange} 
+            />
+          </div>
+        </section>
+
+        {/* Properties Grid */}
+        <section className="py-12 bg-[#F9F6F2]">
+          <div className="container mx-auto px-4">
+            {isLoading ? (
+              <div>
+                <div className="flex justify-between items-center mb-8">
+                  <Skeleton className="h-8 w-64" />
+                  <Skeleton className="h-8 w-32" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">No properties available at the moment.</p>
-              <p className="text-gray-500 text-sm mt-2">Please check back later or contact us for assistance.</p>
-            </div>
-          )}
-        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="bg-white rounded-lg overflow-hidden shadow-md">
+                      <Skeleton className="h-60 w-full" />
+                      <div className="p-6">
+                        <Skeleton className="h-6 w-28 mb-2" />
+                        <Skeleton className="h-8 w-full mb-2" />
+                        <Skeleton className="h-5 w-40 mb-4" />
+                        <Skeleton className="h-px w-full mb-4" />
+                        <div className="flex space-x-4">
+                          <Skeleton className="h-5 w-16" />
+                          <Skeleton className="h-5 w-16" />
+                          <Skeleton className="h-5 w-24" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <PropertyList properties={propertiesResponse?.data || []} filters={filters} />
+            )}
+          </div>
+        </section>
+
+        <ContactCTA />
       </main>
       <Footer />
     </div>
