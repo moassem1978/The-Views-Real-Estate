@@ -60,8 +60,8 @@ export default function Properties() {
 
   // SEO for properties page
   useEffect(() => {
-    let title = "Luxury Properties for Sale in Egypt";
-    let description = "Browse premium luxury properties in Egypt. Find villas, apartments, penthouses and chalets in Cairo, North Coast, New Capital with The Views Real Estate.";
+    let title = "Luxury Properties Egypt, Dubai & Red Sea for Sale";
+    let description = "Browse premium luxury properties in Egypt, Dubai & Red Sea. Find villas, apartments, penthouses for Egyptian investors with The Views Real Estate. EMAAR Dubai, Red Sea Global projects available.";
     
     if (filters.propertyType) {
       title = `${filters.propertyType}s for Sale in Egypt`;

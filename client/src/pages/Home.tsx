@@ -13,8 +13,8 @@ import PropertiesByType from "@/components/home/PropertiesByType";
 function HomeSEO() {
   useEffect(() => {
     // Set optimized page title and meta description for luxury real estate in Egypt
-    const title = "The Views Real Estate - Luxury Properties in Egypt | Cairo, North Coast, New Capital";
-    const description = "Discover premium luxury properties in Egypt with The Views Real Estate. Expert real estate consultancy for villas, penthouses, chalets in Cairo, North Coast, New Capital. 30+ years experience.";
+    const title = "The Views Real Estate - Luxury Properties Egypt, Dubai & Red Sea | Mohamed Assem";
+    const description = "Discover premium luxury properties in Egypt, Dubai & Red Sea with The Views Real Estate. Expert consultancy for Egyptian investors in EMAAR Dubai, Red Sea Global projects, and Egyptian compounds. 30+ years experience.";
     
     document.title = title;
     
@@ -34,7 +34,7 @@ function HomeSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'the views consultancy, The Views Real Estate, luxury real estate properties, luxury real estate Egypt, luxury houses Egypt, Mohamed Assem real estate broker, luxury real estate Egypt, properties Cairo, North Coast villas, New Capital apartments, best broker in Egypt, most honest broker in Egypt, real estate brokers, real estate brokerages, real estate brokerage, EMAAR Misr, EMAAR projects in Egypt, Mivida, Uptown Cairo, Marassi North Coast, Marassi Marina, Marassi Beach, Lake District Mivida, AIS Uptown, Cairo Gate, Belle Vie, Mivida Gardens, Mivida Villas, Marassi Units, Safi Marassi Beach, Waterway Developments, Waterway North Coast, El Gouna, Gouna Marina, Orascom, Swan Lake Residence, Swan Lake North Coast, Sodic Katameya, Sodic Westown, Sodic Eastown, Sodic Villette, Villette Stand Alone, Sky Condos Villette, V Residence Villette, Palm Hills development, Hacienda White villas, Hacienda Bay Villas, Palm Hills Jirian, Palm Hills Nile project, Palm Hills October, Palm Hills North Coast, Ora developers, Ora towers, Ora Sheikh Zayed, Zed West, Solana, Naguib Sawiris, Abar projects in Egypt, New Giza, New Giza North Coast, Silversands, Almaza North Coast, newest developments in Cairo, newest developments in North Coast, newest developments in New Capital, most expensive villa in Mivida, most expensive villa in Marassi, most expensive villa in EMAAR, most expensive villa in Sodic, most expensive villa in El Gouna, most expensive villa in Waterway, newest luxury properties North Coast, newest luxury properties Cairo, Mohamed Assem, The Views Real Estate');
+    metaKeywords.setAttribute('content', 'Mohamed Assem real estate broker, The Views Real Estate, Dubai Properties for Egyptians, EMAAR Dubai Egyptian investors, Dubai Marina Egyptian investment, best Dubai real estate broker for Egyptians, Dubai golden visa property Egypt, Red Sea Global Egyptian investment, AMAALA Red Sea Egyptian buyers, Red Sea Project luxury Egypt, Saudi Red Sea properties Egyptians, luxury real estate Egypt Dubai Red Sea, EMAAR Misr, Mivida, Marassi North Coast, Sodic Katameya, Palm Hills, newest developments Cairo, newest developments Dubai, newest developments Red Sea, most expensive villa Mivida, most expensive villa Dubai, Dubai property investment Egypt, Red Sea investment opportunities Egypt');
 
     // Add Open Graph tags for social media sharing
     const ogTags = [
