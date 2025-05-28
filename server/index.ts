@@ -97,6 +97,18 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Add request timeout middleware
+app.use((req, res, next) => {
+  // Set a 30-second timeout for all requests
+  req.setTimeout(30000, () => {
+    console.warn(`Request timeout for ${req.method} ${req.path}`);
+    if (!res.headersSent) {
+      res.status(408).json({ message: "Request timeout" });
+    }
+  });
+  next();
+});
+
 // Register our simple upload router - this comes before other route registrations
 app.use('/api', simpleUploadRouter);
 
@@ -267,7 +279,16 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    let message = err.message || "Internal Server Error";
+
+    // Handle specific database errors
+    if (err.message?.includes('Control plane request failed')) {
+      message = "Database temporarily unavailable. Please try again.";
+    } else if (err.message?.includes('terminating connection')) {
+      message = "Database connection reset. Please refresh and try again.";
+    } else if (err.code === 'EADDRINUSE') {
+      message = "Server port conflict. Restarting...";
+    }
 
     // Log the error with our error logger
     const userId = _req.user ? (_req.user as any).id : null;
