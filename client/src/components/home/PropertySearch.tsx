@@ -11,7 +11,7 @@ export default function PropertySearch() {
             
             <Link 
               href="/properties"
-              className="inline-flex items-center px-8 py-4 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-semibold text-lg rounded-md transition-colors shadow-lg"
+              className="inline-flex items-center px-8 py-4 bg-[#C5975C] hover:bg-[#B8864F] text-white font-semibold text-lg rounded-md transition-colors shadow-lg"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
