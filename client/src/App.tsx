@@ -45,6 +45,7 @@ const ProjectManagement = lazy(() => import(/* webpackChunkName: "project-manage
 const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogPage"));
 const ArticlePage = lazy(() => import(/* webpackChunkName: "article" */ "@/pages/ArticlePage"));
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
+const TestPage = lazy(() => import(/* webpackChunkName: "test" */ "@/pages/TestPage"));
 
 // Simplified routes configuration with optimized route matching
 const routes = [
@@ -62,6 +63,7 @@ const routes = [
   { path: "/announcements/:id", Component: AnnouncementDetails },
   { path: "/projects", Component: Projects },
   { path: "/projects/:id", Component: ProjectDetails },
+  { path: "/test", Component: TestPage },
   { path: "/blog", Component: BlogPage },
   { path: "/blog/:slug", Component: ArticlePage }
 ];
