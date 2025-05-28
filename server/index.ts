@@ -327,6 +327,29 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
+  
+  // Handle graceful shutdown
+  const gracefulShutdown = () => {
+    console.log('Received shutdown signal, closing server...');
+    server.close(() => {
+      console.log('Server closed successfully');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
+  process.on('SIGUSR2', gracefulShutdown); // For nodemon restarts
+
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use. Attempting to kill existing processes...`);
+      process.exit(1);
+    } else {
+      console.error('Server error:', err);
+    }
+  });
+
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
