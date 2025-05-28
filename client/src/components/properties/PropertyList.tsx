@@ -12,21 +12,31 @@ export default function PropertyList({ properties, filters }: PropertyListProps)
   const [sortedProperties, setSortedProperties] = useState<Property[]>([]);
 
   useEffect(() => {
-    let sorted = [...(properties || [])];
+    // Ensure properties is an array before spreading
+    if (!properties || !Array.isArray(properties)) {
+      setSortedProperties([]);
+      return;
+    }
+
+    let sorted = properties.slice(); // Use slice() instead of spread for safety
 
     // Apply sorting
     switch (sortOption) {
       case "price-asc":
-        sorted.sort((a, b) => a.price - b.price);
+        sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
         break;
       case "price-desc":
-        sorted.sort((a, b) => b.price - a.price);
+        sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
         break;
       case "newest":
-        sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        sorted.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
         break;
       case "bedrooms":
-        sorted.sort((a, b) => b.bedrooms - a.bedrooms);
+        sorted.sort((a, b) => (b.bedrooms || 0) - (a.bedrooms || 0));
         break;
       case "sqft":
         sorted.sort((a, b) => b.builtUpArea - a.builtUpArea);
