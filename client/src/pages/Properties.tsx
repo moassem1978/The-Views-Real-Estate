@@ -176,7 +176,7 @@ export default function Properties() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <PropertiesSEO filters={filters} totalProperties={data?.totalCount} />
+      <PropertiesSEO filters={filters} totalProperties={propertiesResponse?.totalCount} />
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}
