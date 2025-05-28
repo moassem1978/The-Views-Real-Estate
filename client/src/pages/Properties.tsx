@@ -60,8 +60,8 @@ export default function Properties() {
 
   // SEO for properties page
   useEffect(() => {
-    let title = "Luxury Real Estate Egypt Dubai | Premium Properties Cairo | Off-Plan Dubai";
-    let description = "Luxury real estate Egypt, premium properties Cairo, Dubai real estate investment, off-plan properties Dubai. Katameya Dunes, Lake View, Swan Lake, Hassan Allam, Dubai Marina, Downtown Dubai with The Views Real Estate. عقارات فاخرة في مصر";
+    let title = "Binghatti Properties Dubai | Luxury Real Estate Egypt | Premium Cairo";
+    let description = "Binghatti properties Dubai, Binghatti apartments, luxury real estate Egypt, premium properties Cairo. Binghatti Stars, Binghatti Skyrise, Katameya Dunes, Lake View, Swan Lake with The Views Real Estate. عقارات فاخرة في مصر";
     
     if (filters.propertyType) {
       title = `${filters.propertyType}s for Sale in Egypt`;
