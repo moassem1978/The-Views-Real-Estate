@@ -140,11 +140,24 @@ export type Announcement = typeof announcements.$inferSelect;
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   projectName: text("project_name").notNull(),
+  slug: text("slug").notNull().unique(), // URL-friendly version for SEO
   description: text("description").notNull(),
+  introduction: text("introduction").notNull(), // Project introduction section
   location: text("location").notNull(),
+  masterPlan: text("master_plan"), // Master plan details
+  locationDetails: text("location_details"), // Detailed location information
+  specs: jsonb("specs").notNull(), // Project specifications
   unitTypes: jsonb("unit_types").notNull(), // JSON array containing unit types and areas
+  developerName: text("developer_name").notNull(),
   aboutDeveloper: text("about_developer").notNull(),
-  images: jsonb("images").notNull(), // Gallery photos
+  images: jsonb("images").notNull(), // Gallery photos (live or brochure)
+  brochureImages: jsonb("brochure_images").default('[]'), // Separate brochure photos
+  liveImages: jsonb("live_images").default('[]'), // Separate live photos
+  metaTitle: text("meta_title"), // SEO title
+  metaDescription: text("meta_description"), // SEO description
+  metaKeywords: text("meta_keywords"), // SEO keywords for this project
+  isFeatured: boolean("is_featured").default(false).notNull(),
+  isHighlighted: boolean("is_highlighted").default(false).notNull(),
   status: text("status").notNull().default(publicationStatus.DRAFT),
   createdBy: integer("created_by").default(1),
   approvedBy: integer("approved_by"),

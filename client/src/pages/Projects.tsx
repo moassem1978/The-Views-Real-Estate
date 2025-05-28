@@ -1,129 +1,168 @@
-import React, { useState } from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Plus, Home } from "lucide-react";
-import { useLocation, Link } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import ProjectsList from "@/components/projects/ProjectsList";
-import Paginator from "@/components/ui/paginator";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapPin, Building, Star, Calendar } from "lucide-react";
+import { Link } from "wouter";
+import type { Project } from "@shared/schema";
 
-// Type definitions for projects
-interface Project {
-  id: number;
-  projectName: string;
-  description: string;
-  location: string;
-  unitTypes: string[];
-  aboutDeveloper: string;
-  images: string[];
-  status: string;
-  createdAt: string;
-  updatedAt: string | null;
-}
-
-interface PaginatedProjects {
-  data: Project[];
-  totalCount: number;
-  pageCount: number;
-  page: number;
-  pageSize: number;
-}
-
-const Projects: React.FC = () => {
-  const [page, setPage] = useState(1);
-  const pageSize = 12;
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
-  
-  // Check if user has permission to manage projects
-  const canManageProjects = user && (user.role === "owner" || user.role === "admin");
-
-  const { data, isLoading, error } = useQuery<PaginatedProjects, Error>({
-    queryKey: ["/api/projects", page, pageSize],
-    queryFn: async () => {
-      const response = await fetch(`/api/projects?page=${page}&pageSize=${pageSize}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch projects");
-      }
-      return response.json();
-    }
+export default function Projects() {
+  const { data: projects, isLoading, error } = useQuery<Project[]>({
+    queryKey: ['/api/projects'],
   });
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
+  // SEO for projects page
+  useEffect(() => {
+    const title = "Premium Real Estate Projects Egypt Dubai | EMAAR Marassi Hassan Allam";
+    const description = "Discover premium real estate projects in Egypt and Dubai. Marassi by EMAAR, Hassan Allam developments, Katameya Dunes, Lake View, Swan Lake with The Views Real Estate.";
+    
+    document.title = title;
+    
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', description);
 
-  if (error) {
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', 'premium real estate projects Egypt, EMAAR Marassi North Coast, Hassan Allam developments, Katameya Dunes Golf Resort, Lake View Compound, Swan Lake Resort, luxury developments Egypt, Mohamed Assem projects, The Views Real Estate projects, EMAAR Misr projects, premium compounds Egypt');
+  }, []);
+
+  if (isLoading) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="bg-red-50 p-4 rounded-md text-red-700">
-          <p>Error loading projects: {error.message}</p>
-        </div>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37] mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading premium projects...</p>
+          </div>
+        </main>
+        <Footer />
       </div>
     );
   }
 
-  const projects = data?.data || [];
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Unable to Load Projects</h2>
+            <p className="text-gray-600 mb-6">Please try refreshing the page.</p>
+            <Button onClick={() => window.location.reload()}>Refresh</Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <div className="container mx-auto p-4 mt-4">
-        {/* Navigation breadcrumbs */}
-        <div className="flex items-center text-sm text-gray-500 mb-6">
-          <Link href="/" className="hover:text-copper flex items-center">
-            <Home className="h-4 w-4 mr-1" />
-            Home
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-copper">Projects</span>
-        </div>
-        
-        <div className="flex flex-col space-y-6">
-          <div className="flex flex-col items-center mb-8">
-            <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">Our Development Projects</h1>
-            <p className="text-gray-600 max-w-3xl mx-auto mb-4">
-              Explore our exclusive selection of premier real estate development projects, each offering unique 
-              living experiences with exceptional amenities, locations, and design.
+      
+      <main className="flex-grow">
+        {/* Hero Section */}
+        <section className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-20">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">Premium Real Estate Projects</h1>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Discover luxury developments from Egypt's most prestigious developers including EMAAR, Hassan Allam, and more
             </p>
-            
-            {canManageProjects && (
-              <Button 
-                onClick={() => setLocation("/project-management")}
-                className="mt-4 bg-[#964B00] hover:bg-[#B87333] text-white"
-              >
-                <Plus className="mr-2 h-4 w-4" /> 
-                Manage Projects
-              </Button>
+          </div>
+        </section>
+
+        {/* Projects Grid */}
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            {projects && projects.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {projects.map((project) => {
+                  const images = project.images as string[] || [];
+                  const liveImages = project.liveImages as string[] || [];
+                  const brochureImages = project.brochureImages as string[] || [];
+                  const displayImage = liveImages[0] || brochureImages[0] || images[0];
+
+                  return (
+                    <Card key={project.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                      {displayImage && (
+                        <div className="aspect-video bg-gray-200 overflow-hidden">
+                          <img
+                            src={displayImage}
+                            alt={project.projectName}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      )}
+                      
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-xl font-bold text-gray-900 mb-2">
+                              {project.projectName}
+                            </CardTitle>
+                            <div className="flex items-center text-gray-600 mb-2">
+                              <Building className="w-4 h-4 mr-1" />
+                              <span className="text-sm">by {project.developerName}</span>
+                            </div>
+                            <div className="flex items-center text-gray-600">
+                              <MapPin className="w-4 h-4 mr-1" />
+                              <span className="text-sm">{project.location}</span>
+                            </div>
+                          </div>
+                          {project.isFeatured && (
+                            <div className="flex items-center text-[#D4AF37]">
+                              <Star className="w-4 h-4 fill-current" />
+                            </div>
+                          )}
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent>
+                        <p className="text-gray-700 text-sm mb-4 line-clamp-3">
+                          {project.description}
+                        </p>
+                        
+                        <Link href={`/projects/${project.slug}`}>
+                          <Button className="w-full bg-[#D4AF37] hover:bg-[#BF9B30] text-white">
+                            View Project Details
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">No Projects Available</h2>
+                <p className="text-gray-600 mb-6">
+                  We're currently updating our project portfolio. Please check back soon.
+                </p>
+                <Link href="/properties">
+                  <Button className="bg-[#D4AF37] hover:bg-[#BF9B30] text-white">
+                    Browse All Properties
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
+        </section>
+      </main>
 
-          {projects.length === 0 ? (
-            <div className="text-center p-12 border rounded-md">
-              <p className="text-gray-500">No projects available at the moment.</p>
-            </div>
-          ) : (
-            <>
-              <ProjectsList projects={projects} isLoading={isLoading} />
-
-              {data && data.pageCount > 1 && (
-                <div className="mt-8 flex justify-center">
-                  <Paginator
-                    currentPage={page}
-                    totalPages={data.pageCount}
-                    onPageChange={handlePageChange}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
       <Footer />
-    </>
+    </div>
   );
-};
-
-export default Projects;
+}
