@@ -110,7 +110,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           <PropertyImage 
             src={property.images}
             alt={property.title}
-            className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
+            className="w-full h-full object-contain transform transition-transform duration-700 group-hover:scale-110"
           />
 
           {/* Price Tag */}
