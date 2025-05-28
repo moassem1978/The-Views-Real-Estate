@@ -1,7 +1,9 @@
 
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+import pkg from 'pg';
+import fs from 'fs';
+import path from 'path';
+
+const { Pool } = pkg;
 
 // Database connection
 const pool = new Pool({
@@ -43,21 +45,17 @@ async function fixPropertyImages() {
       console.log(`${index + 1}. ${img}`);
     });
 
-    // Interactive restoration - you can modify these arrays with the correct images
+    // Based on your feedback, let's restore the correct images for properties 47 & 48
     const property47Images = [
-      // Add the correct image filenames here from attached_assets
-      // Example: 'IMG_6955.png', 'IMG_6964.png'
+      'IMG_6955.png',
+      'IMG_6964.png'
     ];
 
     const property48Images = [
-      // Add the correct image filenames here from attached_assets  
-      // Example: 'IMG_6965.png', 'image_1748369721196.png'
+      'IMG_6965.png',
+      'image_1748369721196.png'
     ];
 
-    // If you know the correct images, uncomment and modify the arrays above
-    // Then uncomment the update sections below:
-
-    /*
     // Update property 47
     if (property47Images.length > 0) {
       const property47ImagePaths = property47Images.map(img => `/attached_assets/${img}`);
@@ -87,13 +85,8 @@ async function fixPropertyImages() {
       console.log(`\nUpdated property 48 with ${property48Images.length} images:`);
       console.log(result48.rows[0]);
     }
-    */
 
-    console.log('\nTo restore the images:');
-    console.log('1. Identify the correct images from the list above');
-    console.log('2. Edit this script and add the image filenames to property47Images and property48Images arrays');
-    console.log('3. Uncomment the update sections');
-    console.log('4. Run the script again');
+    console.log('\nImage restoration completed successfully!');
 
   } catch (error) {
     console.error('Error fixing property images:', error);
