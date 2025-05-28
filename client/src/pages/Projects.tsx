@@ -9,7 +9,7 @@ import { Link } from "wouter";
 import type { Project } from "@shared/schema";
 
 export default function Projects() {
-  const { data: projectsResponse, isLoading, error } = useQuery<{data: Project[], totalCount: number}>({
+  const { data: projectsResponse, isLoading, error } = useQuery({
     queryKey: ['/api/projects'],
   });
 
