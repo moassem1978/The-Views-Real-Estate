@@ -1,25 +1,6 @@
-
 import { Link } from "wouter";
-import { useState } from "react";
-import { Search, MapPin, Home, DollarSign } from "lucide-react";
 
 export default function PropertySearch() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [priceRange, setPriceRange] = useState("");
-  const [propertyType, setPropertyType] = useState("");
-  const [location, setLocation] = useState("");
-
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (searchTerm) params.append('search', searchTerm);
-    if (priceRange) params.append('priceRange', priceRange);
-    if (propertyType) params.append('type', propertyType);
-    if (location) params.append('location', location);
-    
-    const queryString = params.toString();
-    window.location.href = `/properties${queryString ? '?' + queryString : ''}`;
-  };
-
   return (
     <section className="bg-white py-8">
       <div className="container mx-auto px-4">
