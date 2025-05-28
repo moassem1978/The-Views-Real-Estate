@@ -46,8 +46,7 @@ const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogP
 const ArticlePage = lazy(() => import(/* webpackChunkName: "article" */ "@/pages/ArticlePage"));
 const EMAAARMividaBlog = lazy(() => import(/* webpackChunkName: "emaar-mivida-blog" */ "@/pages/EMAAARMividaBlog"));
 
-// QR Code Generator
-const QRGenerator = lazy(() => import(/* webpackChunkName: "qr-generator" */ "@/pages/QRGenerator"));
+
 const NotFound = lazy(() => import(/* webpackChunkName: "not-found" */ "@/pages/not-found"));
 
 // Simplified routes configuration with optimized route matching
@@ -170,12 +169,7 @@ function Router() {
 
       
 
-      {/* QR Code Generator */}
-      <Route path="/qr-generator">
-        <Suspense fallback={<LoadingFallback />}>
-          <QRGenerator />
-        </Suspense>
-      </Route>
+      
 
       {/* Authentication test page */}
       <Route path="/auth-test">

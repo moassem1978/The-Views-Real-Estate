@@ -434,12 +434,7 @@ export default function Header() {
               </div>
             </div>
 
-            <Link 
-              href="/qr-generator" 
-              className={`py-2 font-medium ${location === "/qr-generator" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
-            >
-              QR Generator
-            </Link>
+            
 
             <Link 
               href="/about" 
