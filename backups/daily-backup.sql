@@ -201,7 +201,20 @@ CREATE TABLE public.projects (
     status text DEFAULT 'draft'::text NOT NULL,
     approved_by integer,
     unit_types jsonb DEFAULT '[]'::jsonb NOT NULL,
-    images jsonb DEFAULT '[]'::jsonb NOT NULL
+    images jsonb DEFAULT '[]'::jsonb NOT NULL,
+    slug text,
+    introduction text,
+    master_plan text,
+    location_details text,
+    specs jsonb DEFAULT '{}'::jsonb,
+    developer_name text,
+    brochure_images jsonb DEFAULT '[]'::jsonb,
+    live_images jsonb DEFAULT '[]'::jsonb,
+    meta_title text,
+    meta_description text,
+    meta_keywords text,
+    is_featured boolean DEFAULT false,
+    is_highlighted boolean DEFAULT false
 );
 
 
@@ -477,8 +490,9 @@ COPY public.newsletters (id, email, first_name, last_name, interests, is_active,
 -- Data for Name: projects; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.projects (id, created_by, created_at, updated_at, project_name, description, location, about_developer, status, approved_by, unit_types, images) FROM stdin;
-4	\N	2025-05-28 20:09:35.97059	\N	Marassi North Coast	Marassi North Coast by EMAAR Misr is Egypt's premier luxury Mediterranean resort destination spanning 1,544 acres along the pristine North Coast. This flagship development features 6.5 kilometers of private beaches, an 18-hole championship golf course, luxury marina, and diverse residential options from beachfront villas to marina apartments. The master-planned community combines stunning natural beauty with world-class amenities, premium retail districts, and sophisticated dining venues, setting the gold standard for luxury coastal living in Egypt.	North Coast, Egypt - 125km west of Alexandria	EMAAR Misr is the Egyptian subsidiary of EMAAR Properties, the world-renowned developer behind iconic projects such as Burj Khalifa and The Dubai Mall. With over 25 years of global experience, EMAAR brings world-class expertise to the Egyptian market. EMAAR Misr is committed to developing landmark destinations that redefine luxury living standards in Egypt, combining international expertise with local market understanding to create exceptional communities that enhance Egypt's real estate landscape.	published	\N	[{"area": "300-800 sqm built-up area", "type": "Beachfront Villas", "bedrooms": "3-6 bedrooms", "features": ["Direct beach access", "Private swimming pool", "Landscaped garden", "Unobstructed sea views", "Premium finishing packages", "Smart home systems"], "bathrooms": "3-7 bathrooms"}, {"area": "250-600 sqm built-up area", "type": "Golf Course Villas", "bedrooms": "3-5 bedrooms", "features": ["Golf course frontage", "Private garden terraces", "Golf club membership included", "Landscaped surroundings", "Modern architectural design", "Premium amenities access"], "bathrooms": "3-6 bathrooms"}, {"area": "120-300 sqm built-up area", "type": "Marina Apartments", "bedrooms": "1-4 bedrooms", "features": ["Marina and yacht views", "Spacious balconies", "Contemporary design", "Resort-style amenities", "24/7 concierge services", "Beach club access"], "bathrooms": "1-4 bathrooms"}, {"area": "400-1000 sqm built-up area", "type": "Hilltop Estates", "bedrooms": "4-7 bedrooms", "features": ["Panoramic Mediterranean views", "Private elevator access", "Infinity swimming pools", "Expansive landscaped grounds", "Ultimate privacy and exclusivity", "Helicopter landing pad access"], "bathrooms": "4-8 bathrooms"}]	["https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/aerial-view.jpg", "https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/beach-club.jpg", "https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/golf-course.jpg", "https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/marina.jpg", "https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/villas.jpg"]
+COPY public.projects (id, created_by, created_at, updated_at, project_name, description, location, about_developer, status, approved_by, unit_types, images, slug, introduction, master_plan, location_details, specs, developer_name, brochure_images, live_images, meta_title, meta_description, meta_keywords, is_featured, is_highlighted) FROM stdin;
+4	\N	2025-05-28 20:09:35.97059	\N	Marassi North Coast	Marassi North Coast by EMAAR Misr is Egypt's premier luxury Mediterranean resort destination spanning 1,544 acres along the pristine North Coast. This flagship development features 6.5 kilometers of private beaches, an 18-hole championship golf course, luxury marina, and diverse residential options from beachfront villas to marina apartments. The master-planned community combines stunning natural beauty with world-class amenities, premium retail districts, and sophisticated dining venues, setting the gold standard for luxury coastal living in Egypt.	North Coast, Egypt - 125km west of Alexandria	EMAAR Misr is the Egyptian subsidiary of EMAAR Properties, the world-renowned developer behind iconic projects such as Burj Khalifa and The Dubai Mall. With over 25 years of global experience, EMAAR brings world-class expertise to the Egyptian market. EMAAR Misr is committed to developing landmark destinations that redefine luxury living standards in Egypt, combining international expertise with local market understanding to create exceptional communities that enhance Egypt's real estate landscape.	published	\N	[{"area": "300-800 sqm built-up area", "type": "Beachfront Villas", "bedrooms": "3-6 bedrooms", "features": ["Direct beach access", "Private swimming pool", "Landscaped garden", "Unobstructed sea views", "Premium finishing packages", "Smart home systems"], "bathrooms": "3-7 bathrooms"}, {"area": "250-600 sqm built-up area", "type": "Golf Course Villas", "bedrooms": "3-5 bedrooms", "features": ["Golf course frontage", "Private garden terraces", "Golf club membership included", "Landscaped surroundings", "Modern architectural design", "Premium amenities access"], "bathrooms": "3-6 bathrooms"}, {"area": "120-300 sqm built-up area", "type": "Marina Apartments", "bedrooms": "1-4 bedrooms", "features": ["Marina and yacht views", "Spacious balconies", "Contemporary design", "Resort-style amenities", "24/7 concierge services", "Beach club access"], "bathrooms": "1-4 bathrooms"}, {"area": "400-1000 sqm built-up area", "type": "Hilltop Estates", "bedrooms": "4-7 bedrooms", "features": ["Panoramic Mediterranean views", "Private elevator access", "Infinity swimming pools", "Expansive landscaped grounds", "Ultimate privacy and exclusivity", "Helicopter landing pad access"], "bathrooms": "4-8 bathrooms"}]	["https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/aerial-view.jpg", "https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/beach-club.jpg", "https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/golf-course.jpg", "https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/marina.jpg", "https://www.emaarmisr.com/content/dam/emaar-misr/marassi/gallery/villas.jpg"]	marassi-north-coast	Marassi North Coast represents the pinnacle of luxury coastal living in Egypt. This prestigious development by EMAAR Misr offers an unparalleled lifestyle experience with pristine beaches, world-class amenities, and architectural excellence.	\N	\N	{"phases": "Multiple phases", "totalArea": "1544 acres", "downPayment": "10% down payment", "deliveryDate": "2025-2027", "paymentPlans": "Up to 8 years", "beachfrontLength": "6.5km"}	EMAAR Misr	[]	[]	Marassi North Coast by EMAAR Misr | Luxury Beachfront Properties	Discover Marassi North Coast by EMAAR Misr - exclusive luxury villas, chalets and apartments on Egypt's pristine Mediterranean coastline.	Marassi North Coast, EMAAR Misr, luxury beachfront properties, North Coast Egypt, Mediterranean villas, premium chalets	t	t
+5	1	2025-05-28 20:34:27.752157	\N	Marassi North Coast	An exclusive beachfront resort community by EMAAR Misr, featuring luxury villas, chalets, and apartments with direct Mediterranean access on Egypt's pristine North Coast.	North Coast, Egypt - 125km from Cairo	EMAAR Misr is the Egyptian arm of EMAAR Properties, the world-renowned developer behind iconic projects like Burj Khalifa and Dubai Mall. With decades of experience in luxury development, EMAAR brings international standards and exceptional quality to the Egyptian market.	published	\N	["Luxury Villas", "Beach Chalets", "Premium Apartments", "Penthouses", "Townhouses"]	["https://images.unsplash.com/photo-1582719471384-894fbb16e74f?w=800", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800", "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800"]	marassi-north-coast	Marassi North Coast represents the pinnacle of luxury coastal living in Egypt. This prestigious development by EMAAR Misr offers an unparalleled lifestyle experience with pristine beaches, world-class amenities, and architectural excellence.	\N	\N	{"phases": "Multiple phases", "totalArea": "1544 acres", "downPayment": "10% down payment", "deliveryDate": "2025-2027", "paymentPlans": "Up to 8 years", "beachfrontLength": "6.5km"}	EMAAR Misr	[]	[]	Marassi North Coast by EMAAR Misr | Luxury Beachfront Properties	Discover Marassi North Coast by EMAAR Misr - exclusive luxury villas, chalets and apartments on Egypt's pristine Mediterranean coastline.	Marassi North Coast, EMAAR Misr, luxury beachfront properties, North Coast Egypt, Mediterranean villas, premium chalets	t	t
 \.
 
 
@@ -581,7 +595,6 @@ poiiC3ECnT8X1eNGaTTTriZWGirQlbiM	{"cookie":{"originalMaxAge":2592000000,"expires
 nAN9tMAGflHeRPO90DfHPeCmWHff2lN0	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-25T20:54:46.290Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-26 12:59:47
 0IQB_1qNkKlYHHjI_IFrS0gTJAsiv7fR	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-26T13:31:47.024Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-26 16:24:38
 q-HLyejXFgASNSBamZi4OZvW65cr1JCE	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-22T18:39:42.103Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 06:11:17
-fmHZT_l5wc8DFSd67djiaZCXJrY-apaq	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-12T20:25:24.105Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-12 20:25:25
 k7e8t-Un5r6F3aTHZJWzfxO8rRMW7JNc	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-23T18:29:11.249Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 18:29:18
 t_pFjWVr21Q2t5eamtoTabx-x9A4cI7E	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-22T17:18:48.781Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-22 18:39:08
 AhPiwXeInSvSCqWUjEF50pPf7xygismc	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-23T20:57:55.912Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 20:58:58
@@ -611,6 +624,7 @@ LJVqzlsFrvsYCPbRYd3P1bZ9nZBrgpXy	{"cookie":{"originalMaxAge":3888000000,"expires
 TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T16:40:00.464Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 16:40:01
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
 bil6eoA8NCISvoNmVfOWxy4TGpbmdIC0	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-09T17:56:18.087Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-09 17:56:19
+fmHZT_l5wc8DFSd67djiaZCXJrY-apaq	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-12T20:38:50.006Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-12 20:38:51
 \.
 
 
@@ -627,7 +641,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active, password_hash, first_name, last_name) FROM stdin;
-1	owner	ca03b4619af52e5c929520a74cc0cd488201e7f9cf3edc1d06b455018e25706735a91c2b1a8e0995317390626b55821ad828ddebdef52525e6d87bfb6ad77e75.4ad5ef5cb9e6a636f64772d4434578cb	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
+1	owner	74190192aca675bad939a946a0dff0016e494f232674ff797f95e48967cf25004a54e9f2349351ddabf89017ed07b709c305207c1e5e8f5300f4c62015cd7690.1a6df0043b12985020a486b3afaedb75	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t	\N	\N	\N
 \.
 
@@ -664,7 +678,7 @@ SELECT pg_catalog.setval('public.newsletters_id_seq', 1, true);
 -- Name: projects_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.projects_id_seq', 4, true);
+SELECT pg_catalog.setval('public.projects_id_seq', 5, true);
 
 
 --
