@@ -60,8 +60,8 @@ export default function Properties() {
 
   // SEO for properties page
   useEffect(() => {
-    let title = "Katameya Dunes, Lake View, Swan Lake Properties for Sale | Hassan Allam";
-    let description = "Browse Katameya Dunes Golf Resort, Lake View Compound, Swan Lake Resort properties with The Views Real Estate. Hassan Allam developments, premium golf course villas, luxury compounds Egypt. عقارات كتاميا ديونز للبيع";
+    let title = "Luxury Real Estate Egypt Dubai | Premium Properties Cairo | Off-Plan Dubai";
+    let description = "Luxury real estate Egypt, premium properties Cairo, Dubai real estate investment, off-plan properties Dubai. Katameya Dunes, Lake View, Swan Lake, Hassan Allam, Dubai Marina, Downtown Dubai with The Views Real Estate. عقارات فاخرة في مصر";
     
     if (filters.propertyType) {
       title = `${filters.propertyType}s for Sale in Egypt`;
