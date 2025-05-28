@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { PropertyCard } from "@/components/properties/PropertyCard";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import PropertyCard from "@/components/properties/PropertyCard";
 import { Button } from "@/components/ui/button";
 import { MapPin, Building, Home, Calendar, Star } from "lucide-react";
 import type { Project, Property } from "@shared/schema";

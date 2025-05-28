@@ -3271,6 +3271,44 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // Get project by slug for SEO-friendly URLs
+  app.get("/api/projects/slug/:slug", async (req: Request, res: Response) => {
+    try {
+      const slug = req.params.slug;
+      if (!slug) {
+        return res.status(400).json({ message: "Invalid project slug" });
+      }
+
+      console.log(`Fetching project by slug: ${slug}`);
+
+      // Search for project by converting slug back to project name
+      const projectName = slug
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+      console.log(`Looking for project with name: ${projectName}`);
+
+      // Get all projects and find by name match
+      const allProjects = await dbStorage.getAllProjects(1, 100); // Get first 100 projects
+      const project = allProjects.data.find(p => 
+        p.projectName.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase() ||
+        p.projectName.toLowerCase() === projectName.toLowerCase()
+      );
+
+      if (!project) {
+        console.log(`No project found for slug: ${slug}`);
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      console.log(`Found project: ${project.projectName} (ID: ${project.id})`);
+      res.json(project);
+    } catch (error) {
+      console.error("Error fetching project by slug:", error);
+      res.status(500).json({ message: "Failed to fetch project" });
+    }
+  });
+
   // Get properties associated with a specific project
   app.get("/api/projects/:id/properties", async (req: Request, res: Response) => {
     try {
