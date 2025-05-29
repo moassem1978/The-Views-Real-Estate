@@ -1,137 +1,108 @@
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Building, Star } from "lucide-react";
 import { Link } from "wouter";
 
 export default function ProjectsSimple() {
-  const { data: projectsResponse, isLoading, error } = useQuery({
+  const { data: response, isLoading, error } = useQuery({
     queryKey: ['/api/projects'],
   });
 
-  const projects = Array.isArray(projectsResponse?.data) ? projectsResponse.data : [];
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-[#D4AF37] mb-8">Loading Projects...</h1>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-red-600 mb-8">Error Loading Projects</h1>
-            <p>{String(error)}</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  const projects = (response as any)?.data || [];
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-[#F5F5DC] to-[#E6E6FA] py-16">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-5xl font-bold text-[#2C3E50] mb-6">
-              Premium Real Estate Projects
-            </h1>
-            <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
-              Discover luxury developments by Egypt's most prestigious developers including EMAAR, Sodic, and Hassan Allam
-            </p>
+      
+      <main className="flex-1">
+        <section className="bg-gradient-to-b from-cream to-white py-16">
+          <div className="container mx-auto px-4">
+            <div className="text-center max-w-4xl mx-auto">
+              <h1 className="text-4xl md:text-5xl font-bold text-rich-black mb-6">
+                Premium Real Estate Projects
+              </h1>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                Discover exclusive developments by Egypt's most prestigious developers. 
+                From luxury compounds to beachfront resorts, explore investment opportunities 
+                in prime locations across Egypt and the region.
+              </p>
+            </div>
           </div>
         </section>
 
-        {/* Projects Grid */}
-        <section className="py-16 bg-white">
+        <section className="py-16">
           <div className="container mx-auto px-4">
-            {projects.length === 0 ? (
+            {isLoading && (
               <div className="text-center py-12">
-                <h2 className="text-2xl font-bold text-gray-600 mb-4">No Projects Available</h2>
-                <p className="text-gray-500">Check back soon for exciting new developments!</p>
+                <p className="text-gray-600">Loading projects...</p>
               </div>
-            ) : (
+            )}
+            
+            {error && (
+              <div className="text-center py-12">
+                <p className="text-red-600 mb-4">Failed to load projects</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="bg-copper text-white px-6 py-2 rounded hover:bg-copper/90"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+            
+            {projects && projects.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {projects.map((project: any) => (
-                  <Card key={project.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                    <div className="relative">
-                      {project.images && Array.isArray(project.images) && project.images.length > 0 && (
+                  <div key={project.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                    {project.images && project.images[0] && (
+                      <div className="aspect-video overflow-hidden">
                         <img
                           src={project.images[0]}
-                          alt={project.projectName || 'Project'}
-                          className="w-full h-64 object-cover"
+                          alt={project.projectName}
+                          className="w-full h-full object-cover"
                         />
-                      )}
-                      <div className="absolute top-4 left-4">
-                        <span className="bg-[#D4AF37] text-white px-3 py-1 rounded-full text-sm font-semibold">
-                          Premium
-                        </span>
                       </div>
-                    </div>
-                    
-                    <CardHeader>
-                      <CardTitle className="text-xl font-bold text-[#2C3E50]">
+                    )}
+                    <div className="p-6">
+                      <h3 className="text-xl font-semibold text-rich-black mb-2">
                         {project.projectName}
-                      </CardTitle>
-                      <div className="flex items-center text-gray-600 text-sm">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        {project.location}
+                      </h3>
+                      <div className="text-sm text-copper mb-2">
+                        <span className="font-medium">Developer:</span> EMAAR Misr
                       </div>
-                    </CardHeader>
-
-                    <CardContent className="space-y-4">
-                      <p className="text-gray-700 text-sm line-clamp-3">
-                        {project.description}
+                      <div className="text-sm text-gray-600 mb-3">
+                        <span className="font-medium">Location:</span> {project.location}
+                      </div>
+                      <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                        {project.description && project.description.length > 150 
+                          ? `${project.description.substring(0, 150)}...` 
+                          : project.description}
                       </p>
-
-                      {project.unitTypes && Array.isArray(project.unitTypes) && project.unitTypes.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {project.unitTypes.slice(0, 3).map((type: string, index: number) => (
-                            <span
-                              key={index}
-                              className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
-                            >
-                              {type}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-4">
-                        <div className="flex items-center text-[#D4AF37]">
-                          <Building className="w-4 h-4 mr-1" />
-                          <span className="text-sm font-semibold">EMAAR</span>
-                        </div>
-                        <Link href={`/projects/marassi-north-coast`}>
-                          <Button className="bg-[#D4AF37] hover:bg-[#B8941F] text-white">
-                            View Details
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      <Link href={`/projects/${project.id}`}>
+                        <button className="w-full bg-copper text-white px-4 py-2 rounded hover:bg-copper/90 transition-colors">
+                          View Project Details
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
                 ))}
+              </div>
+            )}
+            
+            {projects && projects.length === 0 && !isLoading && (
+              <div className="text-center py-12">
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                  No Projects Available
+                </h3>
+                <p className="text-gray-500">
+                  Check back soon for new development opportunities.
+                </p>
               </div>
             )}
           </div>
         </section>
       </main>
+      
       <Footer />
     </div>
   );
