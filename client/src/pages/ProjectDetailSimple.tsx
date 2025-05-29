@@ -12,7 +12,7 @@ export default function ProjectDetailSimple() {
 
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['/api/projects', projectId],
-    queryFn: () => fetch(`/api/projects/${projectId}`).then(res => res.json()),
+    enabled: !!projectId,
   });
 
   if (isLoading) {
