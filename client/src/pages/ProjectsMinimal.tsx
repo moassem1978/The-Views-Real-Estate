@@ -1,128 +1,112 @@
-import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { Button } from "@/components/ui/button";
-import { MapPin, Building } from "lucide-react";
-import { Link } from "wouter";
 
 export default function ProjectsMinimal() {
-  const { data: response, isLoading, error } = useQuery({
-    queryKey: ['/api/projects'],
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-16">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-[#D4AF37] mb-8">Loading Premium Projects...</h1>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-16">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-red-600 mb-8">Error Loading Projects</h1>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col min-h-screen">
+    <div>
       <Header />
-      <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-[#F5F5DC] to-[#E6E6FA] py-16">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-5xl font-bold text-[#2C3E50] mb-6">
-              Premium Real Estate Projects
-            </h1>
-            <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
-              Discover luxury developments by Egypt's most prestigious developers including EMAAR, Sodic, and Hassan Allam
-            </p>
-          </div>
-        </section>
+      <div style={{ padding: "2rem", minHeight: "60vh" }}>
+        <h1 style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#2C3E50", marginBottom: "2rem", textAlign: "center" }}>
+          Premium Real Estate Projects
+        </h1>
+        
+        <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center", marginBottom: "3rem" }}>
+          <p style={{ fontSize: "1.2rem", color: "#666", lineHeight: "1.6" }}>
+            Discover luxury developments by Egypt's most prestigious developers including EMAAR, Sodic, and Hassan Allam
+          </p>
+        </div>
 
-        {/* Projects Section */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Marassi North Coast Card */}
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <div className="relative">
-                  <img
-                    src="https://images.unsplash.com/photo-1582719471384-894fbb16e74f?w=800"
-                    alt="Marassi North Coast"
-                    className="w-full h-64 object-cover"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-[#D4AF37] text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      Premium
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-[#2C3E50] mb-2">
-                    Marassi North Coast
-                  </h3>
-                  <div className="flex items-center text-gray-600 text-sm mb-4">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    North Coast, Egypt - 125km from Cairo
-                  </div>
-
-                  <p className="text-gray-700 text-sm mb-4 line-clamp-3">
-                    An exclusive beachfront resort community by EMAAR Misr, featuring luxury villas, chalets, and apartments with direct Mediterranean access on Egypt's pristine North Coast.
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                      Luxury Villas
-                    </span>
-                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                      Beach Chalets
-                    </span>
-                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                      Premium Apartments
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4">
-                    <div className="flex items-center text-[#D4AF37]">
-                      <Building className="w-4 h-4 mr-1" />
-                      <span className="text-sm font-semibold">EMAAR</span>
-                    </div>
-                    <Link href="/projects/marassi-north-coast">
-                      <Button className="bg-[#D4AF37] hover:bg-[#B8941F] text-white">
-                        View Details
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional project cards can be added here */}
-              <div className="bg-gray-50 rounded-lg p-8 flex items-center justify-center border-2 border-dashed border-gray-300">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">More Projects Coming Soon</h3>
-                  <p className="text-gray-500 text-sm">Exciting new developments will be added regularly</p>
-                </div>
-              </div>
+        <div style={{ 
+          backgroundColor: "white", 
+          padding: "2rem", 
+          borderRadius: "12px", 
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)", 
+          maxWidth: "600px", 
+          margin: "0 auto" 
+        }}>
+          <div style={{ 
+            backgroundColor: "#f5f5dc", 
+            height: "200px", 
+            borderRadius: "8px", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            marginBottom: "1.5rem" 
+          }}>
+            <div style={{ textAlign: "center" }}>
+              <h3 style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#d4af37", marginBottom: "0.5rem" }}>
+                Marassi North Coast
+              </h3>
+              <p style={{ color: "#666" }}>Premium Beachfront Resort</p>
             </div>
           </div>
-        </section>
-      </main>
+          
+          <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#2C3E50", marginBottom: "0.5rem" }}>
+            Marassi North Coast
+          </h3>
+          
+          <p style={{ color: "#666", fontSize: "0.9rem", marginBottom: "1rem" }}>
+            📍 North Coast, Egypt - 125km from Cairo
+          </p>
+          
+          <p style={{ color: "#555", fontSize: "0.9rem", marginBottom: "1rem", lineHeight: "1.5" }}>
+            An exclusive beachfront resort community by EMAAR Misr, featuring luxury villas, chalets, 
+            and apartments with direct Mediterranean access on Egypt's pristine North Coast.
+          </p>
+          
+          <div style={{ marginBottom: "1rem" }}>
+            <span style={{ 
+              backgroundColor: "#f0f0f0", 
+              color: "#555", 
+              padding: "0.25rem 0.5rem", 
+              borderRadius: "4px", 
+              fontSize: "0.8rem", 
+              marginRight: "0.5rem" 
+            }}>
+              Luxury Villas
+            </span>
+            <span style={{ 
+              backgroundColor: "#f0f0f0", 
+              color: "#555", 
+              padding: "0.25rem 0.5rem", 
+              borderRadius: "4px", 
+              fontSize: "0.8rem", 
+              marginRight: "0.5rem" 
+            }}>
+              Beach Chalets
+            </span>
+            <span style={{ 
+              backgroundColor: "#f0f0f0", 
+              color: "#555", 
+              padding: "0.25rem 0.5rem", 
+              borderRadius: "4px", 
+              fontSize: "0.8rem" 
+            }}>
+              Premium Apartments
+            </span>
+          </div>
+          
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "1rem" }}>
+            <span style={{ color: "#d4af37", fontWeight: "600", fontSize: "0.9rem" }}>
+              🏢 EMAAR Misr
+            </span>
+            <a 
+              href="/projects/marassi-north-coast" 
+              style={{ 
+                backgroundColor: "#d4af37", 
+                color: "white", 
+                padding: "0.5rem 1rem", 
+                borderRadius: "6px", 
+                textDecoration: "none", 
+                fontSize: "0.9rem", 
+                fontWeight: "500" 
+              }}
+            >
+              View Details
+            </a>
+          </div>
+        </div>
+      </div>
       <Footer />
     </div>
   );
