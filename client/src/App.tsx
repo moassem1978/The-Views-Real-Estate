@@ -39,7 +39,7 @@ const UserManagement = lazy(() => import(/* webpackChunkName: "user-management" 
 const AuthTest = lazy(() => import(/* webpackChunkName: "auth-test" */ "@/pages/AuthTest"));
 // Projects section
 const Projects = lazy(() => import(/* webpackChunkName: "projects" */ "@/pages/ProjectsSimple"));
-const ProjectDetails = lazy(() => import(/* webpackChunkName: "project-details" */ "@/pages/ProjectDetailSimple"));
+const ProjectDetails = lazy(() => import(/* webpackChunkName: "project-details" */ "@/pages/ProjectDetailFixed"));
 const ProjectManagement = lazy(() => import(/* webpackChunkName: "project-management" */ "@/pages/ProjectManagement"));
 // Blog and content marketing pages
 const BlogPage = lazy(() => import(/* webpackChunkName: "blog" */ "@/pages/BlogPage"));
