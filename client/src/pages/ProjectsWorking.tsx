@@ -7,43 +7,40 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface Project {
   id: number;
-  name: string;
-  slug: string;
+  projectName: string;
+  description: string;
   location: string;
-  developer: string;
-  introduction: string;
-  image_urls: string[];
+  aboutDeveloper: string;
+  images: string[];
+  unitTypes: any[];
 }
 
 function ProjectCard({ project }: { project: Project }) {
-  const imageUrl = project.image_urls && project.image_urls.length > 0 
-    ? project.image_urls[0] 
-    : '/placeholder-project.jpg';
+  const imageUrl = project.images && project.images.length > 0 
+    ? project.images[0] 
+    : '';
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="aspect-video overflow-hidden">
         <img
           src={imageUrl}
-          alt={project.name}
+          alt={project.projectName}
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            e.currentTarget.src = '/placeholder-project.jpg';
-          }}
         />
       </div>
       <CardContent className="p-6">
         <h3 className="text-xl font-semibold text-rich-black mb-2">
-          {project.name}
+          {project.projectName}
         </h3>
         <div className="text-sm text-copper mb-2">
-          <span className="font-medium">Developer:</span> {project.developer}
+          <span className="font-medium">Developer:</span> EMAAR Misr
         </div>
         <div className="text-sm text-gray-600 mb-3">
           <span className="font-medium">Location:</span> {project.location}
         </div>
         <p className="text-gray-700 text-sm leading-relaxed mb-4 line-clamp-3">
-          {project.introduction}
+          {project.description}
         </p>
         <Link href={`/projects/${project.id}`}>
           <button className="w-full bg-copper text-white px-4 py-2 rounded hover:bg-copper/90 transition-colors">
@@ -75,9 +72,11 @@ function LoadingSkeleton() {
 }
 
 export default function ProjectsWorking() {
-  const { data: projects, isLoading, error } = useQuery<Project[]>({
+  const { data: response, isLoading, error } = useQuery<{data: Project[]}>({
     queryKey: ['/api/projects'],
   });
+
+  const projects = response?.data || [];
 
   return (
     <div className="min-h-screen flex flex-col">
