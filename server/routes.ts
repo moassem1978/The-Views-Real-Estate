@@ -174,9 +174,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   setupAuth(app);
 
   // Serve static projects page to bypass React crashes
-  app.get("/projects", (req: Request, res: Response) => {
-    res.sendFile(path.join(process.cwd(), 'public', 'projects.html'));
-  });
+
 
   // Use either the provided upload and uploads directory or the defaults
   const finalUpload = customUpload || upload;
