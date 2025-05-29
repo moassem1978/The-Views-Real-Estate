@@ -412,12 +412,7 @@ export default function Header() {
             >
               Contact
             </Link>
-            <Link 
-              href="/projects" 
-              className={`py-2 font-medium ${location === "/projects" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
-            >
-              Projects
-            </Link>
+
             {user && (
               <>
                 <Link 
