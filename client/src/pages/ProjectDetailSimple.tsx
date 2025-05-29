@@ -29,13 +29,34 @@ export default function ProjectDetailSimple() {
     );
   }
 
-  if (error || !project) {
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Failed to load project</h1>
+            <p className="text-gray-600 mb-4">Error: {error.message}</p>
+            <Link href="/projects">
+              <Button className="bg-copper hover:bg-copper/90 text-white">
+                Back to Projects
+              </Button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!project && !isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">Project Not Found</h1>
+            <p className="text-gray-600 mb-4">Project ID: {projectId}</p>
             <Link href="/projects">
               <Button className="bg-copper hover:bg-copper/90 text-white">
                 Back to Projects
