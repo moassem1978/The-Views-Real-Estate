@@ -11,7 +11,7 @@ export default function ProjectDetailSimple() {
   const projectId = params?.id;
 
   const { data: project, isLoading, error } = useQuery({
-    queryKey: ['/api/projects', projectId],
+    queryKey: [`/api/projects/${projectId}`],
     enabled: !!projectId,
   });
 
