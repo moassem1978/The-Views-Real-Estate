@@ -29,9 +29,12 @@ export default function ProjectsWorking() {
               <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 <div className="relative">
                   <img
-                    src="https://images.unsplash.com/photo-1582719471384-894fbb16e74f?w=800"
+                    src="/api/placeholder/600/400"
                     alt="Marassi North Coast by EMAAR"
                     className="w-full h-64 object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'%3E%3Crect width='600' height='400' fill='%23f5f5dc'/%3E%3Ctext x='300' y='200' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='24' fill='%23d4af37'%3EMarassi North Coast%3C/text%3E%3C/svg%3E";
+                    }}
                   />
                   <div className="absolute top-4 left-4">
                     <span className="bg-[#D4AF37] text-white px-3 py-1 rounded-full text-sm font-semibold">
