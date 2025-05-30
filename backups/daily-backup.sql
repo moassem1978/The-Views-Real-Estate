@@ -633,7 +633,7 @@ TJVg3vG0-5JQR3FIUiSwxYovbmW0IUpe	{"cookie":{"originalMaxAge":3888000000,"expires
 gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-11T12:48:18.272Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-11 13:51:28
 bil6eoA8NCISvoNmVfOWxy4TGpbmdIC0	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-09T17:56:18.087Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-09 17:56:19
 6vay-gXvnaVdfa3pzNf7aaTTy4SS_KFJ	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-13T20:57:45.346Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-13 20:57:46
-fmHZT_l5wc8DFSd67djiaZCXJrY-apaq	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-14T09:31:44.389Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-14 09:31:45
+fmHZT_l5wc8DFSd67djiaZCXJrY-apaq	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-14T14:08:15.996Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-14 14:08:16
 \.
 
 
@@ -650,7 +650,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active, password_hash, first_name, last_name) FROM stdin;
-1	owner	90dca24c4e33a6824f082e1ba5f0d9b143c4b0ab6a7d26ab645c2ed71269241284effc5d6f35f156116ec0745df8be5e9c8270e1e8bb363ee74527596d725b6e.0acb6752f28d68b58f2f27634beada4f	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
+1	owner	8c7186c7a51979e8698af5711ea59f89ee9785331a18cf89514255b8b549208eb815e29bf0455c581f564e886acf4d7e8fd616f2f9e4e4ce70b1535b13c1c785.f03a1e9a4c7a97abf4d067d18cf6db68	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t	\N	\N	\N
 \.
 
