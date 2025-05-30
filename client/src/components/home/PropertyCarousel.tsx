@@ -109,7 +109,18 @@ export default function PropertyCarousel() {
                     {/* Property Image with ONLY type tag and title/location */}
                     <div className="relative aspect-[16/9] overflow-hidden rounded-lg shadow-lg">
                       <img 
-                        src={property.images[0]} 
+                        src={(() => {
+                          try {
+                            const images = typeof property.images === 'string' 
+                              ? JSON.parse(property.images) 
+                              : property.images;
+                            return Array.isArray(images) && images.length > 0 
+                              ? images[0] 
+                              : '/placeholder-property.svg';
+                          } catch {
+                            return '/placeholder-property.svg';
+                          }
+                        })()} 
                         alt={property.title}
                         className="w-full h-full object-cover"
                       />
