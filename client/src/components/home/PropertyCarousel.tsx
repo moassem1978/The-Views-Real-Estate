@@ -14,7 +14,7 @@ import { formatPrice } from "@/lib/utils";
 
 export default function PropertyCarousel() {
   const { data: properties, isLoading, error } = useQuery<Property[]>({
-    queryKey: ['/api/properties/featured'],
+    queryKey: ['/api/properties/highlighted'],
   });
   
   const [activeIndex, setActiveIndex] = useState(0);
