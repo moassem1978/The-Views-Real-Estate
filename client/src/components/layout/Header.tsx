@@ -199,7 +199,7 @@ export default function Header() {
                 ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
                 : "text-rich-black hover:text-copper"} transition-colors`}
             >
-              Projects
+              Projects Blog
             </Link>
             <Link 
               href="/about" 
