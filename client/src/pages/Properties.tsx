@@ -60,8 +60,8 @@ export default function Properties() {
 
   // SEO for properties page with high-traffic keywords
   useEffect(() => {
-    let title = "Properties For Sale Egypt Dubai | Luxury Apartments Dubai Marina | Villas New Cairo";
-    let description = "Browse properties for sale Egypt Dubai, luxury apartments Dubai Marina, villas for sale New Cairo, compounds New Cairo, Downtown Dubai properties, Business Bay apartments. Expert real estate investment Egypt Dubai with Mohamed Assem.";
+    let title = "Premium Real Estate Consultant Egypt | Dubai Marina Property Specialist | Ultra-Luxury Properties | Mohamed Assem";
+    let description = "Premium real estate consultant Egypt Dubai, Dubai Marina property specialist, ultra-luxury property consultant, New Cairo compound expert, Palm Jumeirah specialist, investment property advisor, high-net-worth property consultant with 30+ years expertise.";
     
     if (filters.propertyType) {
       title = `${filters.propertyType}s for Sale in Egypt`;
@@ -95,8 +95,8 @@ export default function Properties() {
     }
     metaDescription.setAttribute('content', description);
 
-    // Add comprehensive keywords from market research
-    let keywords = 'properties for sale Egypt, apartments for sale Cairo, villas for sale New Cairo, compounds New Cairo, New Administrative Capital, North Coast properties, luxury properties Egypt for sale, off-plan properties Dubai, Dubai Marina apartments, Downtown Dubai properties, Business Bay apartments, Dubai Creek Harbour, Dubai Hills Estate villas, Palm Jumeirah villas, real estate investment Egypt, Dubai property investment, freehold properties Dubai, ready properties Dubai, Emaar properties Dubai, Damac developments, Binghatti properties, Sobha Hartland, Sodic properties, Palm Hills developments, Hassan Allam Properties, Katameya Heights, Maadi properties, Sheikh Zayed properties, Arabian Ranches properties, luxury apartments Dubai Marina, penthouses Dubai Marina, townhouses New Cairo, chalets North Coast, best real estate agent Egypt Dubai, luxury property consultant Middle East, Mohamed Assem real estate broker, The Views Real Estate Egypt, عقارات للبيع في مصر, شقق للبيع في القاهرة, فيلات للبيع في القاهرة الجديدة, كمبوندات القاهرة الجديدة';
+    // Add comprehensive keywords from all top brokers research
+    let keywords = 'premium real estate consultant Egypt, Dubai Marina property specialist, ultra-luxury property consultant, New Cairo compound expert, Palm Jumeirah specialist, investment property advisor, high-net-worth property consultant, luxury residential specialist Cairo, boutique real estate consultant Egypt, international real estate standards Egypt, premium property investment Dubai, exclusive property consultant Egypt, VIP property services, personalized property consultation, dedicated property advisor, exclusive property access, Coldwell Banker Egypt luxury properties, RE/MAX Egypt property specialist, Century 21 Egypt real estate services, Engel Völkers Dubai luxury properties, Knight Frank Dubai luxury residential, Savills Dubai property services, Better Homes UAE largest independent agency, Allsopp Allsopp Dubai luxury residential, Haus Haus premium property consultancy, Metropolitan Premium Properties Dubai, George Azar ultra-high-net-worth property specialist, fäm Properties luxury specialist, real estate consultation services, property investment advisory, market analysis and valuation, international property investment, luxury property portfolio management, property investment ROI analysis, real estate investment strategy, portfolio diversification properties, Golden visa property specialist, freehold property expert, property legal advisory, virtual property tours specialist, digital property marketing, AI-powered property matching, شقق للبيع في القاهرة الجديدة, فيلات كمبوند للبيع, عقارات بالتقسيط في مصر, أفضل وسيط عقاري في القاهرة, وسيط عقاري موثوق في مصر, مستشار استثمار عقاري مصر';
     
     // Add filter-specific keywords
     if (filters.propertyType) keywords += `, ${filters.propertyType.toLowerCase()}s Egypt, luxury ${filters.propertyType.toLowerCase()}s for sale, premium ${filters.propertyType.toLowerCase()}s`;

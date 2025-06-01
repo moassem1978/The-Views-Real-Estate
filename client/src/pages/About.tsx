@@ -6,8 +6,8 @@ import ContactCTA from "@/components/home/ContactCTA";
 // SEO optimization for About page
 function AboutSEO() {
   useEffect(() => {
-    const title = "Best Real Estate Agent Egypt Dubai | Mohamed Assem 30+ Years | Luxury Property Consultant";
-    const description = "Meet Mohamed Assem, best real estate agent Egypt Dubai with 30+ years expertise. Luxury property consultant specializing in properties for sale Egypt, Dubai Marina apartments, New Cairo compounds, off-plan properties Dubai.";
+    const title = "Premium Real Estate Consultant Egypt Dubai | Ultra-Luxury Property Specialist | Mohamed Assem 30+ Years";
+    const description = "Meet Mohamed Assem, premium real estate consultant Egypt Dubai with 30+ years expertise. Ultra-luxury property specialist, Dubai Marina property expert, New Cairo compound consultant, investment property advisor, high-net-worth property specialist.";
     
     document.title = title;
     
@@ -25,7 +25,7 @@ function AboutSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'best real estate agent Egypt Dubai, Mohamed Assem real estate broker, luxury property consultant Middle East, properties for sale Egypt, apartments for sale Cairo, villas for sale New Cairo, off-plan properties Dubai, Dubai Marina apartments, Downtown Dubai properties, Business Bay apartments, real estate investment Egypt, Dubai property investment, compounds New Cairo, New Administrative Capital, North Coast properties, Emaar properties Dubai, Damac developments, Binghatti properties specialist, Sobha Hartland, Hassan Allam Properties, Palm Hills developments, Sodic properties, Katameya Heights, Maadi properties, Sheikh Zayed properties, luxury apartments Dubai Marina, penthouses Dubai Marina, ready properties Dubai, freehold properties Dubai, Arabian Ranches properties, Dubai Hills Estate villas, 30 years experience real estate, The Views Real Estate founder, most trusted broker Egypt Dubai, international real estate consultant, عقارات للبيع في مصر, شقق للبيع في القاهرة, أفضل وسيط عقاري في مصر');
+    metaKeywords.setAttribute('content', 'premium real estate consultant Egypt Dubai, ultra-luxury property specialist, Dubai Marina property expert, New Cairo compound consultant, investment property advisor, high-net-worth property specialist, luxury residential specialist Cairo, boutique real estate consultant Egypt, international real estate standards Egypt, exclusive property consultant Egypt, VIP property services, personalized property consultation, dedicated property advisor, Mohamed Assem real estate broker 30+ years, Coldwell Banker Egypt luxury properties consultant, RE/MAX Egypt property specialist standards, Century 21 Egypt real estate services excellence, Engel Völkers Dubai luxury properties expertise, Knight Frank Dubai luxury residential standards, Savills Dubai property services excellence, Better Homes UAE independent agency standards, ultra-high-net-worth property specialist expertise, luxury property portfolio management, real estate consultation services, property investment advisory, market analysis and valuation, Golden visa property specialist, freehold property expert, virtual property tours specialist, digital property marketing, أفضل وسيط عقاري في القاهرة, وسيط عقاري موثوق في مصر, مستشار استثمار عقاري مصر, خبير عقارات القاهرة الجديدة, مستشار عقاري فاخر مصر');
 
     const ogTags = [
       { property: 'og:title', content: title },
