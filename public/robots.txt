@@ -1,0 +1,23 @@
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://www.theviewsconsultancy.com/sitemap.xml
+
+# Block admin areas
+Disallow: /dashboard
+Disallow: /signin
+Disallow: /user-management
+Disallow: /project-management
+
+# Allow important pages
+Allow: /properties
+Allow: /projects
+Allow: /about
+Allow: /contact
+Allow: /services
+Allow: /blog
+
+# Crawl delay (optional)
+Crawl-delay: 1

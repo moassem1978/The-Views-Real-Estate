@@ -10,6 +10,7 @@ import ContactCTA from "@/components/home/ContactCTA";
 import { formatPrice, parseJsonArray, getImageUrl } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import Breadcrumbs from "@/components/common/Breadcrumbs";
 
 // SEO and Structured Data Component
 function PropertySEO({ property }: { property: Property }) {
@@ -19,9 +20,9 @@ function PropertySEO({ property }: { property: Property }) {
     // Set page title and meta description
     const title = `${property.title} - ${property.city} | The Views Real Estate`;
     const description = `${property.propertyType} for sale in ${property.city}. ${property.bedrooms} bed, ${property.bathrooms} bath. ${formatPrice(property.price)}. Contact The Views Real Estate for luxury properties in Egypt.`;
-    
+
     document.title = title;
-    
+
     // Update meta description
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
@@ -54,16 +55,27 @@ function PropertySEO({ property }: { property: Property }) {
     const images = parseJsonArray(property.images);
     const structuredData = {
       "@context": "https://schema.org",
-      "@type": "RealEstateListing",
+      "@type": ["Product", "Accommodation"],
       "name": property.title,
-      "description": property.description,
+      "description": property.description || `Luxury property in ${property.city}`,
+      "image": images?.map(img => `${window.location.origin}${img}`) || [],
       "url": window.location.href,
-      "image": images.map(img => getImageUrl(img)),
       "offers": {
         "@type": "Offer",
         "price": property.price,
         "priceCurrency": "EGP",
-        "availability": "https://schema.org/InStock"
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "RealEstateAgent",
+          "name": "The Views Real Estate",
+          "telephone": "+20 106 311 1136",
+          "email": "Sales@theviewsconsultancy.com",
+           "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Cairo",
+              "addressCountry": "Egypt"
+            }
+        }
       },
       "address": {
         "@type": "PostalAddress",
@@ -93,7 +105,12 @@ function PropertySEO({ property }: { property: Property }) {
         "telephone": "+20 106 311 1136",
         "email": "Sales@theviewsconsultancy.com",
         "url": "https://www.theviewsconsultancy.com"
-      }
+      },
+       "additionalProperty": {
+            "@type": "PropertyValue",
+            "name": "Property Type",
+            "value": property.propertyType
+        }
     };
 
     // Remove existing structured data
@@ -125,7 +142,7 @@ export default function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
   const [isFavorite, setIsFavorite] = useState(false);
   const { toast } = useToast();
-  
+
   // Form state for property inquiry
   const [formData, setFormData] = useState({
     name: "",
@@ -190,20 +207,20 @@ export default function PropertyDetails() {
       [e.target.name]: e.target.value
     });
   };
-  
+
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
-  
+
   const { data: property, isLoading, error } = useQuery<Property>({
     queryKey: [`/api/properties/${id}`],
   });
-  
+
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
   };
-  
+
   if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -221,14 +238,14 @@ export default function PropertyDetails() {
                 <Skeleton className="h-6 w-full mb-3" />
                 <Skeleton className="h-6 w-full mb-3" />
                 <Skeleton className="h-6 w-2/3 mb-6" />
-                
+
                 <Skeleton className="h-8 w-40 mb-4" />
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <Skeleton key={i} className="h-20 w-full rounded-md" />
                   ))}
                 </div>
-                
+
                 <Skeleton className="h-8 w-40 mb-4" />
                 <Skeleton className="h-48 w-full rounded-md" />
               </div>
@@ -244,7 +261,7 @@ export default function PropertyDetails() {
       </div>
     );
   }
-  
+
   if (error || !property) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -269,11 +286,11 @@ export default function PropertyDetails() {
       </div>
     );
   }
-  
+
   // Parse JSON strings if necessary
   const amenities = parseJsonArray(property.amenities);
   const images = parseJsonArray(property.images);
-  
+
   return (
     <div className="flex flex-col min-h-screen">
       {property && <PropertySEO property={property} />}
@@ -291,10 +308,10 @@ export default function PropertyDetails() {
             </div>
           </div>
         </div>
-        
+
         {/* Property Gallery */}
         <PropertyGallery images={images} title={property.title} />
-        
+
         {/* Property Details */}
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
@@ -306,14 +323,14 @@ export default function PropertyDetails() {
                     <h1 className="text-3xl md:text-4xl font-serif font-semibold text-gray-800">
                       {property.title}
                     </h1>
-                    
+
                     {/* Reference Number - consistent display */}
                     {(property.references || property.reference_number || property.reference) && (
                       <div className="mt-2 text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded inline-block">
                         Reference: {property.references || property.reference_number || property.reference}
                       </div>
                     )}
-                    
+
                     <p className="mt-2 text-gray-600 flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -337,7 +354,7 @@ export default function PropertyDetails() {
                     )}
                   </button>
                 </div>
-                
+
                 <div className="flex items-center justify-between mb-8 border-y border-[#E8DACB] py-4">
                   <div className="text-3xl font-serif font-semibold text-[#D4AF37]">
                     {property.price.toLocaleString()} L.E
@@ -367,9 +384,9 @@ export default function PropertyDetails() {
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Reference Number Display - removed as per client request */}
-                
+
                 <div className="mb-10">
                   <h2 className="text-2xl font-serif font-semibold text-gray-800 mb-4">Property Description</h2>
                   <div className="text-gray-600 leading-relaxed space-y-4">
@@ -378,7 +395,7 @@ export default function PropertyDetails() {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="mb-10">
                   <h2 className="text-2xl font-serif font-semibold text-gray-800 mb-4">Features & Amenities</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -393,7 +410,7 @@ export default function PropertyDetails() {
                         <span className="text-gray-700">Garden Size: {property.gardenSize.toLocaleString()} m²</span>
                       </div>
                     )}
-                    
+
                     {/* Add Floor Number as a feature for vertical units */}
                     {property.propertyType && ['Apartment', 'Studio', 'Penthouse', 'Chalet'].includes(property.propertyType as string) && 
                      property.floor !== undefined && property.floor > 0 && (
@@ -406,7 +423,7 @@ export default function PropertyDetails() {
                         <span className="text-gray-700">Floor: {property.floor}</span>
                       </div>
                     )}
-                    
+
                     {/* Show all regular amenities */}
                     {amenities.map((amenity, index) => (
                       <div key={index} className="flex items-center bg-[#F5F0E6] p-3 rounded-md">
@@ -420,7 +437,7 @@ export default function PropertyDetails() {
                     ))}
                   </div>
                 </div>
-                
+
                 {property.yearBuilt && (
                   <div className="mb-10">
                     <h2 className="text-2xl font-serif font-semibold text-gray-800 mb-4">Property Details</h2>
@@ -462,7 +479,7 @@ export default function PropertyDetails() {
                           <span className="font-medium text-gray-800">{property.gardenSize.toLocaleString()} m²</span>
                         </div>
                       )}
-                      
+
                       {/* Show Plot Size for non-ground units */}
                       {!property.isGroundUnit && property.plotSize && (
                         <div className="flex items-center justify-between p-4 border-b border-[#E8DACB]">
@@ -483,7 +500,7 @@ export default function PropertyDetails() {
                     </div>
                   </div>
                 )}
-                
+
                 {property.latitude && property.longitude && (
                   <div className="mb-10">
                     <h2 className="text-2xl font-serif font-semibold text-gray-800 mb-4">Location</h2>
@@ -501,7 +518,7 @@ export default function PropertyDetails() {
                   </div>
                 )}
               </div>
-              
+
               {/* Sidebar */}
               <div>
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden sticky top-24">
@@ -512,7 +529,7 @@ export default function PropertyDetails() {
                     ) : (
                       <p className="text-gray-600 mb-4">Fill out the form below to contact us about this property.</p>
                     )}
-                    
+
                     {/* Contact Options */}
                     {property.listingType === "Resale" ? (
                       // For Resale properties - show direct contact methods only
@@ -522,11 +539,11 @@ export default function PropertyDetails() {
                           className="flex items-center justify-center w-full p-3 bg-[#B87333] hover:bg-[#A66323] text-white font-medium rounded-md transition-colors shadow-md"
                         >
                           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+                            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
                           </svg>
                           Call Agent
                         </a>
-                        
+
                         <a 
                           href={`https://wa.me/201234567890?text=I'm%20interested%20in%20the%20property:%20${encodeURIComponent(property.title)}`}
                           target="_blank" 
@@ -534,7 +551,7 @@ export default function PropertyDetails() {
                           className="flex items-center justify-center w-full p-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-medium rounded-md transition-colors shadow-md"
                         >
                           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.271-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                           </svg>
                           Chat on WhatsApp
                         </a>
@@ -588,7 +605,7 @@ export default function PropertyDetails() {
                           rows={4}
                         ></textarea>
                       </div>
-                      
+
                       <button 
                         type="submit" 
                         disabled={contactMutation.isPending}
@@ -599,7 +616,7 @@ export default function PropertyDetails() {
                     </form>
                     )}
                   </div>
-                  
+
                   {/* Schedule Viewing Section - Only For Resale Properties */}
                   {property.listingType === "Resale" && (
                     <div className="p-6">
@@ -623,9 +640,9 @@ export default function PropertyDetails() {
             </div>
           </div>
         </section>
-        
+
         {/* Similar Properties Section would go here */}
-        
+
         <ContactCTA />
       </main>
       <Footer />

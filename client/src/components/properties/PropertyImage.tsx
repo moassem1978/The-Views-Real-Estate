@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { normalizeImagePath } from "@/lib/utils";
 
@@ -18,7 +17,7 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
     try {
       // Handle different source formats
       let rawSrc: string | null = null;
-      
+
       // Case 1: Array of image paths
       if (Array.isArray(src) && src.length > index) {
         rawSrc = src[index];
@@ -58,15 +57,15 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
           console.log(`PropertyImage: Added leading slash to path: ${rawSrc}`);
         }
       }
-      
+
       // Process and normalize the image path
       const imageUrl = rawSrc ? normalizeImagePath(rawSrc) : '';
-      
+
       // Add cache busting to prevent browser caching issues
       const finalUrl = imageUrl ? `${imageUrl}?t=${Date.now()}` : '';
-      
+
       console.log(`PropertyImage: Final processed URL: ${finalUrl}`);
-      
+
       setImageSrc(finalUrl);
       setError(false);
       setIsLoaded(false);
