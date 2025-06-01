@@ -8,6 +8,8 @@ import { clearImageCache } from "./lib/utils";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import { ErrorBoundary } from "react-error-boundary";
+import { initGA } from "./lib/analytics";
+import { useAnalytics } from "./hooks/use-analytics";
 
 // Streamlined loading fallback
 const LoadingFallback = () => (
@@ -69,6 +71,9 @@ const routes = [
 ];
 
 function Router() {
+  // Track page views when routes change
+  useAnalytics();
+  
   // Preload critical routes to improve perceived performance
   const preloadCriticalRoutes = () => {
     // Use specific imports instead of dynamic route variables to avoid Vite warnings
@@ -223,7 +228,15 @@ function ErrorFallback({error, resetErrorBoundary}: {error: Error; resetErrorBou
 }
 
 function App() {
+  // Initialize Google Analytics when app loads
   useEffect(() => {
+    // Verify required environment variable is present
+    if (!import.meta.env.VITE_GA_MEASUREMENT_ID) {
+      console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
+    } else {
+      initGA();
+    }
+    
     document.documentElement.classList.add('overflow-auto');
     document.body.classList.add('overflow-auto', 'min-h-screen');
     

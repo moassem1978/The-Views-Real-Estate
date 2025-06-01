@@ -187,32 +187,6 @@ export class DatabaseStorage implements IStorage {
   updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings>;
 }
 
-export class DatabaseStorage implements IStorage {
-  // Cache for frequently accessed data
-  private cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
-
-  /**
-   * Get a list of unique project names from the properties table
-   * Used for populating dropdown search
-   */
-  async getUniqueProjectNames(): Promise<string[]> {
-    try {
-      const cacheKey = 'unique_project_names';
-      const cached = this.cache.get<string[]>(cacheKey);
-      if (cached) return cached;
-
-      const query = 'SELECT DISTINCT project_name FROM properties WHERE project_name IS NOT NULL AND project_name != \'\' ORDER BY project_name';
-      const result = await pool.query(query);
-
-      const projectNames = result.rows.map(row => row.project_name);
-      this.cache.set(cacheKey, projectNames, 3600); // Cache for 1 hour
-      return projectNames;
-    } catch (error) {
-      console.error('Error fetching unique project names:', error);
-      return [];
-    }
-  }
-
   /**
    * Get a list of unique cities from the properties table
    * Used for populating location dropdown search
