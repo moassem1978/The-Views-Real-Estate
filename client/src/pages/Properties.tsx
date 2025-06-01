@@ -17,10 +17,10 @@ export default function Properties() {
   useEffect(() => {
     const searchParams = location.split('?')[1];
     if (!searchParams) return;
-    
+
     const params = new URLSearchParams(searchParams);
     const newFilters: SearchFilters = {};
-    
+
     if (params.has('location')) newFilters.location = params.get('location') || undefined;
     if (params.has('propertyType')) newFilters.propertyType = params.get('propertyType') || undefined;
     if (params.has('minPrice')) newFilters.minPrice = parseInt(params.get('minPrice') || '0');
@@ -44,7 +44,7 @@ export default function Properties() {
 
   const handleFilterChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
-    
+
     // Update URL with new filters
     const params = new URLSearchParams();
     Object.entries(newFilters).forEach(([key, value]) => {
@@ -52,7 +52,7 @@ export default function Properties() {
         params.append(key, String(value));
       }
     });
-    
+
     const queryStr = params.toString();
     const newPath = queryStr ? `/properties?${queryStr}` : '/properties';
     window.history.pushState({}, '', newPath);
@@ -62,30 +62,30 @@ export default function Properties() {
   useEffect(() => {
     let title = "Premium Real Estate Consultant Egypt | Dubai Marina Property Specialist | Ultra-Luxury Properties | Mohamed Assem";
     let description = "Premium real estate consultant Egypt Dubai, Dubai Marina property specialist, ultra-luxury property consultant, New Cairo compound expert, Palm Jumeirah specialist, investment property advisor, high-net-worth property consultant with 30+ years expertise.";
-    
+
     if (filters.propertyType) {
       title = `${filters.propertyType}s for Sale in Egypt`;
       description = `Find luxury ${filters.propertyType.toLowerCase()}s for sale in Egypt. Premium properties with The Views Real Estate.`;
     }
-    
+
     if (filters.location) {
       title = `Properties for Sale in ${filters.location}, Egypt`;
       description = `Discover luxury properties in ${filters.location}, Egypt. Premium real estate with expert guidance from The Views Real Estate.`;
     }
-    
+
     if (filters.propertyType && filters.location) {
       title = `${filters.propertyType}s for Sale in ${filters.location}, Egypt`;
       description = `Find luxury ${filters.propertyType.toLowerCase()}s in ${filters.location}, Egypt. Premium properties with The Views Real Estate consultancy.`;
     }
-    
+
     if (totalCount > 0) {
       title += ` | ${totalCount} Properties Available`;
     }
-    
+
     title += " | The Views Real Estate";
-    
+
     document.title = title;
-    
+
     // Update meta description
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
@@ -97,12 +97,12 @@ export default function Properties() {
 
     // Add comprehensive keywords from all top brokers research
     let keywords = 'premium real estate consultant Egypt, Dubai Marina property specialist, ultra-luxury property consultant, New Cairo compound expert, Palm Jumeirah specialist, investment property advisor, high-net-worth property consultant, luxury residential specialist Cairo, boutique real estate consultant Egypt, international real estate standards Egypt, premium property investment Dubai, exclusive property consultant Egypt, VIP property services, personalized property consultation, dedicated property advisor, exclusive property access, Coldwell Banker Egypt luxury properties, RE/MAX Egypt property specialist, Century 21 Egypt real estate services, Engel Völkers Dubai luxury properties, Knight Frank Dubai luxury residential, Savills Dubai property services, Better Homes UAE largest independent agency, Allsopp Allsopp Dubai luxury residential, Haus Haus premium property consultancy, Metropolitan Premium Properties Dubai, George Azar ultra-high-net-worth property specialist, fäm Properties luxury specialist, real estate consultation services, property investment advisory, market analysis and valuation, international property investment, luxury property portfolio management, property investment ROI analysis, real estate investment strategy, portfolio diversification properties, Golden visa property specialist, freehold property expert, property legal advisory, virtual property tours specialist, digital property marketing, AI-powered property matching, شقق للبيع في القاهرة الجديدة, فيلات كمبوند للبيع, عقارات بالتقسيط في مصر, أفضل وسيط عقاري في القاهرة, وسيط عقاري موثوق في مصر, مستشار استثمار عقاري مصر';
-    
+
     // Add filter-specific keywords
     if (filters.propertyType) keywords += `, ${filters.propertyType.toLowerCase()}s Egypt, luxury ${filters.propertyType.toLowerCase()}s for sale, premium ${filters.propertyType.toLowerCase()}s`;
     if (filters.location) keywords += `, properties ${filters.location}, real estate ${filters.location}, luxury developments ${filters.location}`;
     if (filters.listingType) keywords += `, ${filters.listingType.toLowerCase()} properties, ${filters.listingType.toLowerCase()} real estate`;
-    
+
     let metaKeywords = document.querySelector('meta[name="keywords"]');
     if (!metaKeywords) {
       metaKeywords = document.createElement('meta');

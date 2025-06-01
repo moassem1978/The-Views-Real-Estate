@@ -6,11 +6,49 @@ import ContactCTA from "@/components/home/ContactCTA";
 // SEO optimization for About page
 function AboutSEO() {
   useEffect(() => {
-    const title = "Premium Real Estate Consultant Egypt Dubai | Ultra-Luxury Property Specialist | Mohamed Assem 30+ Years";
-    const description = "Meet Mohamed Assem, premium real estate consultant Egypt Dubai with 30+ years expertise. Ultra-luxury property specialist, Dubai Marina property expert, New Cairo compound consultant, investment property advisor, high-net-worth property specialist.";
-    
+    // SEO optimization for About page
+    const title = "About Mohamed Assem - Premium Real Estate Consultant Egypt Dubai | The Views Real Estate";
+    const description = "Meet Mohamed Assem, 30+ years luxury real estate expert. Premium property consultant for Egypt & Dubai markets. Coldwell Banker, RE/MAX standards excellence.";
+
     document.title = title;
-    
+
+    // Add Organization Schema
+    const orgSchema = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "The Views Real Estate Consultancy",
+      "url": "https://www.theviewsconsultancy.com",
+      "logo": "https://www.theviewsconsultancy.com/views-logo-new.png",
+      "description": "Premium real estate consultant specializing in luxury properties in Egypt and Dubai",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "EG"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+20-xxx-xxx-xxxx",
+        "contactType": "customer service"
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "Mohamed Assem",
+        "jobTitle": "Real Estate Consultant",
+        "worksFor": {
+          "@type": "Organization",
+          "name": "The Views Real Estate Consultancy"
+        }
+      }
+    };
+
+    let orgSchemaScript = document.querySelector('#organization-schema');
+    if (!orgSchemaScript) {
+      orgSchemaScript = document.createElement('script');
+      orgSchemaScript.id = 'organization-schema';
+      orgSchemaScript.type = 'application/ld+json';
+      document.head.appendChild(orgSchemaScript);
+    }
+    orgSchemaScript.textContent = JSON.stringify(orgSchema);
+
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
@@ -76,6 +114,11 @@ function AboutSEO() {
       if (scriptToRemove) {
         scriptToRemove.remove();
       }
+
+      const orgSchemaScriptToRemove = document.querySelector('#organization-schema');
+      if (orgSchemaScriptToRemove) {
+        orgSchemaScriptToRemove.remove();
+      }
     };
   }, []);
 
@@ -99,7 +142,7 @@ export default function About() {
             />
           </div>
           <div className="absolute inset-0 bg-gradient-to-b from-[#333333]/70 to-[#333333]/90"></div>
-          
+
           <div className="container mx-auto px-4 relative z-10 text-center">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-semibold text-white leading-tight mb-4">
               About The Views Real Estate
@@ -109,9 +152,9 @@ export default function About() {
             </p>
           </div>
         </section>
-        
 
-        
+
+
         {/* Our Values Section */}
         <section className="py-16 bg-[#F5F0E6]">
           <div className="container mx-auto px-4">
@@ -121,7 +164,7 @@ export default function About() {
                 What Sets Us Apart
               </h2>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-shadow">
                 <div className="h-14 w-14 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center mb-6">
@@ -134,7 +177,7 @@ export default function About() {
                   We value honesty and transparency in all our dealings. Our commitment to ethical practices has earned us the trust of our clients worldwide.
                 </p>
               </div>
-              
+
               <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-shadow">
                 <div className="h-14 w-14 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -146,7 +189,7 @@ export default function About() {
                   We continuously strive for excellence in every aspect of our service, embracing innovative approaches to meet the evolving needs of the luxury market.
                 </p>
               </div>
-              
+
               <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-shadow">
                 <div className="h-14 w-14 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -158,7 +201,7 @@ export default function About() {
                   We place our clients at the center of everything we do, tailoring our services to meet their unique needs and exceed their expectations.
                 </p>
               </div>
-              
+
               <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-shadow">
                 <div className="h-14 w-14 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -170,7 +213,7 @@ export default function About() {
                   Our international network and cultural understanding allow us to connect buyers and sellers across the globe, facilitating seamless transactions.
                 </p>
               </div>
-              
+
               <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-shadow">
                 <div className="h-14 w-14 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -182,7 +225,7 @@ export default function About() {
                   We understand the importance of privacy in high-profile transactions and are committed to maintaining the utmost discretion.
                 </p>
               </div>
-              
+
               <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-shadow">
                 <div className="h-14 w-14 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -197,7 +240,7 @@ export default function About() {
             </div>
           </div>
         </section>
-        
+
         {/* Founder Section */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
@@ -206,7 +249,7 @@ export default function About() {
               <h2 className="text-3xl md:text-4xl font-serif font-semibold text-gray-800 mt-2 mb-12">
                 Meet the Founder
               </h2>
-              
+
               <div className="max-w-3xl mx-auto bg-gray-25 rounded-2xl p-8 md:p-12" style={{backgroundColor: '#fafafa'}}>
                 <div className="text-center mb-8">
                   <div className="w-64 h-80 mx-auto mb-6 rounded-xl overflow-hidden shadow-xl">
@@ -223,12 +266,12 @@ export default function About() {
                     Founder & CEO
                   </p>
                 </div>
-                
+
                 <div className="text-left space-y-6 text-gray-700 leading-relaxed">
                   <p className="text-lg font-medium">
                     With 30 years of professional experience across diverse sectors including tourism operations, events management, training, coaching, and sales, Mohamed Assem brings unparalleled expertise to the luxury real estate market.
                   </p>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
                     <div className="bg-white rounded-lg p-4 border border-gray-200">
                       <h4 className="font-semibold text-[#B87333] mb-3">Industry Expertise</h4>
@@ -240,7 +283,7 @@ export default function About() {
                         <li>• Sales & Operations</li>
                       </ul>
                     </div>
-                    
+
                     <div className="bg-white rounded-lg p-4 border border-gray-200">
                       <h4 className="font-semibold text-[#B87333] mb-3">Global Experience</h4>
                       <ul className="space-y-2 text-sm">
@@ -253,22 +296,22 @@ export default function About() {
                       </ul>
                     </div>
                   </div>
-                  
+
                   <p>
                     Mohamed has been active in the Egypt real estate market since 2015 and has been immersed in the real estate world since 2010. His extensive international experience across multiple countries and industries provides him with a unique perspective on luxury property markets and client needs.
                   </p>
-                  
+
                   <div className="bg-gradient-to-r from-[#B87333]/10 to-[#D4AF37]/10 rounded-lg p-6 my-8 border-l-4 border-[#B87333]">
                     <h4 className="font-semibold text-[#B87333] mb-3">My Philosophy</h4>
                     <p className="italic text-gray-700 leading-relaxed">
                       "My ideology is to serve and represent. You hire my services so that you don't need to worry about selling - I am your eyes and your voice. With my years of in-depth experience in luxury real estate, I have created this platform solely for luxurious properties located in Egypt and international destinations."
                     </p>
                   </div>
-                  
+
                   <p>
                     Under Mohamed's leadership, The Views Real Estate has established strong partnerships with leading developers and has successfully facilitated numerous landmark transactions, making luxury property ownership accessible to discerning clients worldwide.
                   </p>
-                  
+
                   <div className="border-t border-gray-200 pt-6 mt-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
                       <div>
@@ -301,17 +344,17 @@ export default function About() {
                   The Views Real Estate Journey
                 </h2>
               </div>
-              
+
               <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100">
                 <div className="text-gray-700 leading-relaxed space-y-6">
                   <p className="text-lg">
                     Following Mr Assems exploration of the market potential in 2015, he immediately recognized the need for professional and honest representations. A broker should be an extension to your values and ethos. Committed to working with clients and always having their best interest at heart. The concept of a boutique real estate broker was the main moto behind 'The Views' consultancy, where each and every clients' story matters. A client is not just a number on a board, a clients story is as beautiful as the houses we sell.
                   </p>
-                  
+
                   <p className="text-lg">
                     Following that, he has established a unique approach where clients and their welfare come first.
                   </p>
-                  
+
                   <p className="text-lg">
                     We believe in offering only what we truly appreciate and value, because we want to genuinely represent and support what resonates with our values and our vision.
                   </p>
@@ -329,7 +372,7 @@ export default function About() {
             </div>
           </div>
         </section>
-        
+
         <ContactCTA />
       </main>
       <Footer />

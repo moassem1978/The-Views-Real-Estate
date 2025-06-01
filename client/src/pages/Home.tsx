@@ -15,9 +15,9 @@ function HomeSEO() {
     // Set optimized page title and meta description for luxury real estate in Egypt
     const title = "شقق للبيع في القاهرة الجديدة | Dubai Marina Luxury Apartments | Hassan Allam Properties | Mohamed Assem";
     const description = "شقق للبيع في القاهرة الجديدة, فيلات كمبوند للبيع, Dubai Marina luxury apartments for sale, Hassan Allam Swan Lake Resort properties, Binghatti Stars Business Bay. Expert real estate consultant Egypt Dubai with 30+ years experience.";
-    
+
     document.title = title;
-    
+
     // Update meta description
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
@@ -125,13 +125,27 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       <HomeSEO />
       <Header />
+
+      {/* Main content with proper heading structure */}
       <main className="flex-grow">
+        {/* H1 for homepage - hidden but SEO important */}
+        <h1 className="sr-only">Premium Real Estate Consultant Egypt Dubai - The Views Consultancy</h1>
+
         <OptimizedHeroCarousel />
-        <PropertySearch />
+
+        <section aria-labelledby="property-search-heading">
+          <h2 id="property-search-heading" className="sr-only">Find Your Dream Property</h2>
+          <PropertySearch />
+        </section>
+
         <PropertiesByType />
+
         <AnnouncementsSection />
+
         <Services />
+
         <Testimonials />
+
         <ContactCTA />
       </main>
       <Footer />
