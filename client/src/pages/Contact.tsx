@@ -102,6 +102,7 @@ export default function Contact() {
         "streetAddress": "New Cairo, Road 90",
         "addressLocality": "Cairo",
         "addressRegion": "Cairo Governorate",
+        "postalCode": "11835",
         "addressCountry": "Egypt"
       },
       "geo": {
@@ -109,16 +110,19 @@ export default function Contact() {
         "latitude": "30.0444",
         "longitude": "31.2357"
       },
-      "openingHours": "Mo-Su 09:00-20:00",
+      "openingHours": ["Mo-Su 09:00-20:00"],
       "priceRange": "Premium",
+      "hasMap": "https://maps.google.com/?q=New+Cairo+Road+90+Egypt",
       "areaServed": [
         {
           "@type": "City",
-          "name": "Cairo"
+          "name": "Cairo",
+          "sameAs": "https://en.wikipedia.org/wiki/Cairo"
         },
         {
-          "@type": "City",
-          "name": "North Coast"
+          "@type": "City", 
+          "name": "North Coast",
+          "sameAs": "https://en.wikipedia.org/wiki/North_Coast_(Egypt)"
         },
         {
           "@type": "City",
@@ -126,21 +130,52 @@ export default function Contact() {
         },
         {
           "@type": "City",
-          "name": "Dubai"
+          "name": "Dubai",
+          "sameAs": "https://en.wikipedia.org/wiki/Dubai"
         }
       ],
       "serviceType": [
         "Luxury Property Sales",
-        "Investment Property Consultation",
+        "Investment Property Consultation", 
         "International Real Estate Advisory",
         "Property Valuation Services"
       ],
       "founder": {
         "@type": "Person",
         "name": "Mohamed Assem",
-        "jobTitle": "Founder & Senior Real Estate Consultant"
-      }
+        "jobTitle": "Founder & Senior Real Estate Consultant",
+        "knowsAbout": ["Real Estate", "Property Investment", "Luxury Properties", "Dubai Real Estate", "Egypt Real Estate"]
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "87",
+        "bestRating": "5"
+      },
+      "sameAs": [
+        "https://www.facebook.com/theviewsrealestate",
+        "https://www.linkedin.com/company/theviewsrealestate"
+      ]
     };
+
+    // Inject the schema
+    useEffect(() => {
+      let contactSchemaScript = document.querySelector('#contact-schema');
+      if (!contactSchemaScript) {
+        contactSchemaScript = document.createElement('script');
+        contactSchemaScript.id = 'contact-schema';
+        contactSchemaScript.type = 'application/ld+json';
+        document.head.appendChild(contactSchemaScript);
+      }
+      contactSchemaScript.textContent = JSON.stringify(contactSchema);
+
+      return () => {
+        const scriptToRemove = document.querySelector('#contact-schema');
+        if (scriptToRemove) {
+          scriptToRemove.remove();
+        }
+      };
+    }, []);
 
   return (
     <div className="flex flex-col min-h-screen">

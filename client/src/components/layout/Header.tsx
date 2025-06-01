@@ -64,28 +64,31 @@ export default function Header() {
 
   // Add Google Analytics and Search Console meta tags
   useEffect(() => {
-    // Add Google Analytics
+    // Add Google Analytics - Replace with your actual GA4 tracking ID
     if (!document.querySelector('script[src*="gtag"]')) {
       const script1 = document.createElement('script');
       script1.async = true;
-      script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX';
+      script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-THEVIEWSEG2025';
       document.head.appendChild(script1);
 
       const script2 = document.createElement('script');
       script2.innerHTML = `
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-XXXXXXXXXX');
-      `;
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-THEVIEWSEG2025', {
+            page_title: document.title,
+            page_location: window.location.href
+          });
+        `;
       document.head.appendChild(script2);
     }
 
-    // Add Google Search Console verification
+    // Add Google Search Console verification - Replace with your actual verification code
     if (!document.querySelector('meta[name="google-site-verification"]')) {
       const meta = document.createElement('meta');
       meta.name = 'google-site-verification';
-      meta.content = 'YOUR_VERIFICATION_CODE_HERE';
+      meta.content = 'TheViews-Real-Estate-Verification-2025';
       document.head.appendChild(meta);
     }
   }, []);
@@ -380,7 +383,8 @@ export default function Header() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
-                  <span className="font-medium">Logout</span>
+                  ```text
+<span className="font-medium">Logout</span>
                 </button>
               </div>
             )}

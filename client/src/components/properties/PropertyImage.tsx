@@ -104,6 +104,8 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
       <img
         src={imageSrc}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         className={`w-full h-full object-cover transition-opacity duration-300 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}

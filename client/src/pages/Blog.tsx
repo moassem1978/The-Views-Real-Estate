@@ -35,6 +35,7 @@ export default function Blog() {
       "name": "The Views Real Estate Blog",
       "description": "Expert insights on Egypt and Dubai real estate markets, luxury property investment guides, and market analysis by Mohamed Assem",
       "url": "https://www.theviewsconsultancy.com/blog",
+      "inLanguage": ["en", "ar"],
       "author": {
         "@type": "Person",
         "name": "Mohamed Assem",
@@ -42,14 +43,17 @@ export default function Blog() {
         "worksFor": {
           "@type": "RealEstateAgent",
           "name": "The Views Real Estate"
-        }
+        },
+        "knowsAbout": ["Real Estate Investment", "Dubai Properties", "Egypt Real Estate", "Luxury Properties"]
       },
       "publisher": {
         "@type": "Organization",
         "name": "The Views Real Estate",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://www.theviewsconsultancy.com/views-logo-new.png"
+          "url": "https://www.theviewsconsultancy.com/views-logo-new.png",
+          "width": 200,
+          "height": 60
         }
       },
       "mainEntity": {
@@ -63,6 +67,7 @@ export default function Blog() {
             "description": post.excerpt,
             "url": `https://www.theviewsconsultancy.com/blog/${post.slug}`,
             "datePublished": post.date,
+            "dateModified": post.date,
             "author": {
               "@type": "Person",
               "name": "Mohamed Assem"
@@ -70,7 +75,15 @@ export default function Blog() {
             "publisher": {
               "@type": "Organization",
               "name": "The Views Real Estate"
-            }
+            },
+            "articleSection": post.category,
+            "wordCount": parseInt(post.readTime) * 200, // Estimate based on read time
+            "keywords": [
+              "real estate Egypt",
+              "Dubai properties", 
+              "luxury investment",
+              "property market analysis"
+            ]
           }
         }))
       }
