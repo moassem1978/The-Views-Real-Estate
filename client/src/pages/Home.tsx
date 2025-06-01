@@ -13,8 +13,8 @@ import PropertiesByType from "@/components/home/PropertiesByType";
 function HomeSEO() {
   useEffect(() => {
     // Set optimized page title and meta description for luxury real estate in Egypt
-    const title = "Properties For Sale Egypt Dubai | Off-Plan Dubai Marina | New Cairo Compounds | Mohamed Assem";
-    const description = "Luxury properties Egypt for sale, off-plan properties Dubai Marina, premium compounds New Cairo, Dubai Hills Estate villas. Expert real estate investment Egypt Dubai, Binghatti properties specialist, Hassan Allam Properties consultant. 30+ years expertise.";
+    const title = "شقق للبيع في القاهرة الجديدة | Dubai Marina Luxury Apartments | Hassan Allam Properties | Mohamed Assem";
+    const description = "شقق للبيع في القاهرة الجديدة, فيلات كمبوند للبيع, Dubai Marina luxury apartments for sale, Hassan Allam Swan Lake Resort properties, Binghatti Stars Business Bay. Expert real estate consultant Egypt Dubai with 30+ years experience.";
     
     document.title = title;
     
@@ -34,7 +34,7 @@ function HomeSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'properties for sale Egypt, apartments for sale Cairo, villas for sale New Cairo, compounds New Cairo, New Administrative Capital, North Coast properties, luxury properties Egypt for sale, off-plan properties Dubai, Dubai Marina apartments, Downtown Dubai properties, Business Bay apartments, Dubai Creek Harbour, Dubai Hills Estate villas, Palm Jumeirah villas, real estate investment Egypt, Dubai property investment, freehold properties Dubai, Emaar properties Dubai, Damac developments, Binghatti properties, Sobha Hartland, Sodic properties, Palm Hills developments, Hassan Allam Properties, luxury apartments Dubai Marina, penthouses Dubai Marina, off-plan properties Cairo, ready properties Dubai, Katameya Heights, Maadi properties, Sheikh Zayed properties, Arabian Ranches properties, best real estate agent Egypt Dubai, luxury property consultant Middle East, Mohamed Assem real estate broker, The Views Real Estate Egypt, عقارات للبيع في مصر, شقق للبيع في القاهرة, فيلات للبيع في القاهرة الجديدة, كمبوندات القاهرة الجديدة');
+    metaKeywords.setAttribute('content', 'شقق للبيع في القاهرة الجديدة, فيلات كمبوند للبيع, عقارات بالتقسيط في مصر, أسعار العقارات في التجمع الخامس, كمبوندات القاهرة الجديدة, فيلات للبيع في الساحل الشمالي, عقارات العاصمة الإدارية الجديدة, Dubai Marina luxury apartments for sale, Business Bay investment properties, Dubai Hills Estate ready villas, Downtown Dubai penthouses, off-plan properties with payment plans, best areas to buy property in Dubai, freehold properties for foreigners Dubai, Hassan Allam Swan Lake Resort properties, Lake View Compound villas for sale, Hassan Allam Properties latest projects, Binghatti Stars Business Bay apartments, Binghatti Skyrise Dubai Marina, Emaar Dubai Creek Harbour apartments, Dubai golden visa property requirements, best Dubai areas for rental yield, Dubai property market trends 2025, Mohamed Assem real estate broker Egypt Dubai, The Views Real Estate luxury consultant');
 
     // Add Open Graph tags for social media sharing
     const ogTags = [
