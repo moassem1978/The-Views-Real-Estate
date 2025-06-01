@@ -132,23 +132,8 @@ export class ImageMatcher {
       }
     }
     
-    // Last resort: find the most recently uploaded file
-    for (const dir of this.uploadDirs) {
-      if (!fs.existsSync(dir)) continue;
-      
-      try {
-        const files = await readdir(dir);
-        if (files.length > 0) {
-          const mostRecent = await this.findMostRecentFile(dir, files);
-          if (mostRecent) {
-            console.log(`Using most recent file as fallback: ${mostRecent}`);
-            return path.join(dir, mostRecent);
-          }
-        }
-      } catch (error) {
-        // Silent fail for fallback
-      }
-    }
+    // Do NOT use fallback to most recent file - this causes photos to mix between properties
+    console.log(`No exact match found for ${filename}, not using fallback to prevent photo mixing`);
     
     return null;
   }
