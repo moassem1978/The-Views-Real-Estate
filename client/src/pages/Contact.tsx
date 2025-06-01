@@ -29,23 +29,23 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Fetch site settings for contact information
   const { data: settings } = useQuery<SiteSettings>({
     queryKey: ['/api/site-settings'],
   });
-  
+
   // Check if agent contact was requested (via query param)
   const isAgentContact = location.includes("agent=true");
-  
+
   // Check if newsletter subscription was requested (via query param)
   const isNewsletterSubscription = location.includes("newsletter=true");
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
-    
+
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -73,7 +73,7 @@ export default function Contact() {
         setPhone("");
         setMessage("");
         setIsSuccess(true);
-        
+
         // Hide success message after 5 seconds
         setTimeout(() => {
           setIsSuccess(false);
@@ -87,7 +87,61 @@ export default function Contact() {
       setIsSubmitting(false);
     }
   };
-  
+
+  // Add comprehensive local business and contact schema
+    const contactSchema = {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      "name": "The Views Real Estate Consultancy",
+      "description": "Premium real estate consultant specializing in luxury properties in Egypt and Dubai",
+      "url": "https://www.theviewsconsultancy.com",
+      "telephone": "+20 106 311 1136",
+      "email": "Sales@theviewsconsultancy.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "New Cairo, Road 90",
+        "addressLocality": "Cairo",
+        "addressRegion": "Cairo Governorate",
+        "addressCountry": "Egypt"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "30.0444",
+        "longitude": "31.2357"
+      },
+      "openingHours": "Mo-Su 09:00-20:00",
+      "priceRange": "Premium",
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Cairo"
+        },
+        {
+          "@type": "City",
+          "name": "North Coast"
+        },
+        {
+          "@type": "City",
+          "name": "New Administrative Capital"
+        },
+        {
+          "@type": "City",
+          "name": "Dubai"
+        }
+      ],
+      "serviceType": [
+        "Luxury Property Sales",
+        "Investment Property Consultation",
+        "International Real Estate Advisory",
+        "Property Valuation Services"
+      ],
+      "founder": {
+        "@type": "Person",
+        "name": "Mohamed Assem",
+        "jobTitle": "Founder & Senior Real Estate Consultant"
+      }
+    };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -102,7 +156,7 @@ export default function Contact() {
             />
           </div>
           <div className="absolute inset-0 bg-gradient-to-b from-[#333333]/70 to-[#333333]/90"></div>
-          
+
           <div className="container mx-auto px-4 relative z-10 text-center">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-semibold text-white leading-tight mb-4">
               {isAgentContact ? "Contact an Agent" : "Contact Us"}
@@ -114,7 +168,7 @@ export default function Contact() {
             </p>
           </div>
         </section>
-        
+
         {/* Contact Form Section */}
         <section className="py-16 bg-[#F9F6F2]">
           <div className="container mx-auto px-4">
@@ -124,7 +178,7 @@ export default function Contact() {
                 <p className="text-gray-600 mb-8">
                   Whether you're looking to buy, sell, or invest in luxury properties, our team of experienced professionals is ready to assist you every step of the way.
                 </p>
-                
+
                 <div className="space-y-6">
                   {settings?.contactAddress && (
                     <div className="flex items-start">
@@ -140,7 +194,7 @@ export default function Contact() {
                       </div>
                     </div>
                   )}
-                  
+
                   {settings?.contactPhone && (
                     <div className="flex items-start">
                       <div className="h-12 w-12 rounded-full bg-[#D4AF37]/20 flex items-center justify-center shrink-0 mt-1">
@@ -154,7 +208,7 @@ export default function Contact() {
                       </div>
                     </div>
                   )}
-                  
+
                   {settings?.contactEmail && (
                     <div className="flex items-start">
                       <div className="h-12 w-12 rounded-full bg-[#D4AF37]/20 flex items-center justify-center shrink-0 mt-1">
@@ -168,7 +222,7 @@ export default function Contact() {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex items-start">
                     <div className="h-12 w-12 rounded-full bg-[#D4AF37]/20 flex items-center justify-center shrink-0 mt-1">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -189,7 +243,7 @@ export default function Contact() {
                     </div>
                   </div>
                 </div>
-                
+
                 {(settings?.socialLinks?.facebook || settings?.socialLinks?.instagram || settings?.socialLinks?.linkedin || settings?.socialLinks?.twitter) && (
                   <div className="mt-8">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Connect With Us</h3>
@@ -246,13 +300,13 @@ export default function Contact() {
                   </div>
                 )}
               </div>
-              
+
               <div>
                 <div className="bg-white rounded-lg shadow-lg p-8">
                   <h2 className="text-2xl font-serif font-semibold text-gray-800 mb-6">
                     {isAgentContact ? "Request Agent Contact" : "Send Us a Message"}
                   </h2>
-                  
+
                   {isSuccess && (
                     <div className="bg-[#4A6741]/10 text-[#4A6741] p-4 rounded-md mb-6">
                       <div className="flex items-center">
@@ -263,7 +317,7 @@ export default function Contact() {
                       </div>
                     </div>
                   )}
-                  
+
                   {error && (
                     <div className="bg-[#983B45]/10 text-[#983B45] p-4 rounded-md mb-6">
                       <div className="flex items-center">
@@ -274,7 +328,7 @@ export default function Contact() {
                       </div>
                     </div>
                   )}
-                  
+
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Your Name*</label>
@@ -287,7 +341,7 @@ export default function Contact() {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Email Address*</label>
                       <input 
@@ -299,7 +353,7 @@ export default function Contact() {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                       <input 
@@ -310,7 +364,7 @@ export default function Contact() {
                         onChange={(e) => setPhone(e.target.value)}
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Message*</label>
                       <textarea 
@@ -325,7 +379,7 @@ export default function Contact() {
                         required
                       ></textarea>
                     </div>
-                    
+
                     <button 
                       type="submit" 
                       className="w-full p-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed"

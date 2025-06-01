@@ -373,6 +373,52 @@ export default function About() {
           </div>
         </section>
 
+        {/* FAQ Section */}
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <span className="text-[#D4AF37] font-medium">FAQ</span>
+              <h2 className="text-3xl md:text-4xl font-serif font-semibold text-gray-800 mt-2">
+                Frequently Asked Questions
+              </h2>
+            </div>
+
+            <div className="max-w-4xl mx-auto space-y-6">
+              {[
+                {
+                  question: "What makes The Views Real Estate different from other real estate consultants?",
+                  answer: "We offer boutique real estate consultancy with 30+ years of international experience. Unlike larger agencies, we treat each client as unique, focusing on personalized service and building long-term relationships rather than just transactions."
+                },
+                {
+                  question: "Do you assist international clients looking to invest in Egypt?",
+                  answer: "Yes, we specialize in helping international clients navigate Egypt's real estate market. We provide comprehensive support including legal guidance, market analysis, and investment advisory services for foreign investors."
+                },
+                {
+                  question: "What areas of Egypt do you cover?",
+                  answer: "We cover premium locations across Egypt including New Cairo compounds, North Coast developments, New Administrative Capital, and other luxury destinations. We also assist with Dubai property investments."
+                },
+                {
+                  question: "How do you determine property valuations?",
+                  answer: "Our valuations are based on comprehensive market analysis, comparable sales data, location factors, and current market trends. With 30+ years of experience, we provide accurate assessments for investment decisions."
+                },
+                {
+                  question: "Do you offer after-sales support and property management?",
+                  answer: "Yes, we provide ongoing support including property management recommendations, rental assistance, and continued market updates to ensure your investment performs optimally."
+                }
+              ].map((faq, index) => (
+                <div key={index} className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    {faq.question}
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <ContactCTA />
       </main>
       <Footer />

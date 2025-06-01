@@ -3661,6 +3661,74 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // XML Sitemap endpoint for search engines
+  app.get('/sitemap.xml', async (req: Request, res: Response) => {
+    try {
+      // Get all properties and projects
+      const propertiesResult = await dbStorage.getAllProperties(1, 1000);
+      const projectsResult = await dbStorage.getAllProjects(1, 100);
+      
+      const baseUrl = process.env.CUSTOM_DOMAIN ? 
+        `https://${process.env.CUSTOM_DOMAIN}` : 
+        'https://www.theviewsconsultancy.com';
+      
+      const staticPages = [
+        { url: '/', priority: '1.0', changefreq: 'daily' },
+        { url: '/properties', priority: '0.9', changefreq: 'daily' },
+        { url: '/projects', priority: '0.8', changefreq: 'weekly' },
+        { url: '/about', priority: '0.7', changefreq: 'monthly' },
+        { url: '/blog', priority: '0.8', changefreq: 'weekly' },
+        { url: '/contact', priority: '0.6', changefreq: 'monthly' }
+      ];
+
+      let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+
+      // Add static pages
+      staticPages.forEach(page => {
+        sitemap += `
+  <url>
+    <loc>${baseUrl}${page.url}</loc>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+  </url>`;
+      });
+
+      // Add property pages
+      propertiesResult.data.forEach(property => {
+        sitemap += `
+  <url>
+    <loc>${baseUrl}/properties/${property.id}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>${new Date(property.createdAt).toISOString().split('T')[0]}</lastmod>
+  </url>`;
+      });
+
+      // Add project pages
+      projectsResult.data.forEach(project => {
+        const slug = project.projectName.toLowerCase().replace(/\s+/g, '-');
+        sitemap += `
+  <url>
+    <loc>${baseUrl}/projects/${slug}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>${new Date(project.createdAt).toISOString().split('T')[0]}</lastmod>
+  </url>`;
+      });
+
+      sitemap += `
+</urlset>`;
+
+      res.set('Content-Type', 'application/xml');
+      res.send(sitemap);
+    } catch (error) {
+      console.error('Error generating sitemap:', error);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+
   // Enhanced file access route with advanced file matching
   app.get('/uploads/*', (req, res) => {
     console.log(`Enhanced file access request for: ${req.path}`);

@@ -28,16 +28,51 @@ export default function Blog() {
     }
     metaKeywords.setAttribute('content', keywords);
 
-    // Add Blog schema
+    // Add comprehensive Blog and Article schema
     const blogSchema = {
       "@context": "https://schema.org",
       "@type": "Blog",
       "name": "The Views Real Estate Blog",
-      "description": "Expert insights on Egypt and Dubai real estate markets",
+      "description": "Expert insights on Egypt and Dubai real estate markets, luxury property investment guides, and market analysis by Mohamed Assem",
       "url": "https://www.theviewsconsultancy.com/blog",
       "author": {
         "@type": "Person",
-        "name": "Mohamed Assem"
+        "name": "Mohamed Assem",
+        "jobTitle": "Senior Real Estate Consultant",
+        "worksFor": {
+          "@type": "RealEstateAgent",
+          "name": "The Views Real Estate"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "The Views Real Estate",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.theviewsconsultancy.com/views-logo-new.png"
+        }
+      },
+      "mainEntity": {
+        "@type": "ItemList",
+        "itemListElement": blogPosts.map((post, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "item": {
+            "@type": "Article",
+            "headline": post.title,
+            "description": post.excerpt,
+            "url": `https://www.theviewsconsultancy.com/blog/${post.slug}`,
+            "datePublished": post.date,
+            "author": {
+              "@type": "Person",
+              "name": "Mohamed Assem"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "The Views Real Estate"
+            }
+          }
+        }))
       }
     };
 
@@ -56,19 +91,49 @@ export default function Blog() {
       title: "Dubai Marina vs Business Bay: Investment Comparison 2025",
       excerpt: "Comprehensive analysis of Dubai's top investment locations comparing rental yields, capital appreciation, and lifestyle amenities.",
       date: "2025-01-15",
-      slug: "dubai-marina-vs-business-bay-investment"
+      slug: "dubai-marina-vs-business-bay-investment",
+      category: "Investment Analysis",
+      readTime: "8 min read"
     },
     {
       title: "New Cairo Compound Guide: Hassan Allam vs Competitors",
       excerpt: "Detailed comparison of New Cairo's premium compounds including Swan Lake Resort, amenities, pricing, and investment potential.",
       date: "2025-01-10",
-      slug: "new-cairo-compound-guide-hassan-allam"
+      slug: "new-cairo-compound-guide-hassan-allam",
+      category: "Property Guides",
+      readTime: "12 min read"
     },
     {
       title: "Golden Visa Properties Dubai: Complete Investment Guide",
       excerpt: "Everything you need to know about Dubai's golden visa program, eligible properties, and investment requirements.",
       date: "2025-01-05",
-      slug: "golden-visa-properties-dubai-guide"
+      slug: "golden-visa-properties-dubai-guide",
+      category: "Investment Analysis",
+      readTime: "10 min read"
+    },
+    {
+      title: "Luxury Property Market Trends Egypt 2025",
+      excerpt: "Annual market report covering North Coast developments, New Capital expansion, and luxury compound pricing trends.",
+      date: "2025-01-20",
+      slug: "luxury-property-market-trends-egypt-2025",
+      category: "Market Analysis",
+      readTime: "15 min read"
+    },
+    {
+      title: "Top 10 Luxury Compounds in New Cairo 2025",
+      excerpt: "Expert review of premium gated communities including Swan Lake Resort, Mountain View, and Madinaty developments.",
+      date: "2025-01-18",
+      slug: "top-luxury-compounds-new-cairo-2025",
+      category: "Property Guides",
+      readTime: "14 min read"
+    },
+    {
+      title: "Complete Guide to Buying Property in Egypt as a Foreigner",
+      excerpt: "Step-by-step guide covering legal requirements, financing options, and investment opportunities for international buyers.",
+      date: "2025-01-16",
+      slug: "buying-property-egypt-foreigners-guide",
+      category: "Legal Guides",
+      readTime: "11 min read"
     }
   ];
 
