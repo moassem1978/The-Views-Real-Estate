@@ -1060,7 +1060,45 @@ export default function PropertyForm({
           {/* Images Upload */}
           <Card className="md:col-span-2">
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Property Images</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Property Images</h3>
+                {isEditing && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if (confirm("Restore images from backup? This will replace current images.")) {
+                        try {
+                          const response = await fetch(`/api/properties/${propertyId}/restore-images`, {
+                            method: 'POST',
+                            credentials: 'include'
+                          });
+                          if (response.ok) {
+                            toast({ title: "Images restored successfully" });
+                            window.location.reload(); // Refresh to show restored images
+                          } else {
+                            toast({ title: "Failed to restore images", variant: "destructive" });
+                          }
+                        } catch (error) {
+                          toast({ title: "Error restoring images", variant: "destructive" });
+                        }
+                      }
+                    }}
+                  >
+                    Restore Images
+                  </Button>
+                )}
+              </div>
+              
+              {isEditing && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-sm text-yellow-800">
+                    ⚠️ <strong>Image Protection:</strong> All image changes are backed up automatically. 
+                    Images can only be modified with explicit authorization.
+                  </p>
+                </div>
+              )}
               
               {/* Existing images display */}
               {existingImages.length > 0 && (

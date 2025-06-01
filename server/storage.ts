@@ -47,6 +47,80 @@ export interface IStorage {
   deactivateUser(id: number): Promise<boolean>;
 
   // Property operations
+
+  // Image backup and recovery system
+  private async createImageBackup(propertyId: number, images: string[]): Promise<void> {
+    try {
+      const backupEntry = {
+        property_id: propertyId,
+        images_backup: JSON.stringify(images),
+        backup_timestamp: new Date().toISOString(),
+        created_by: 'system'
+      };
+
+      // Store in backup log file for now (could be moved to database table later)
+      const backupLog = `./logs/image-backups.log`;
+      const fs = require('fs');
+      const logEntry = `${new Date().toISOString()} - Property ${propertyId} - Images: ${JSON.stringify(images)}\n`;
+      
+      if (!fs.existsSync('./logs')) {
+        fs.mkdirSync('./logs', { recursive: true });
+      }
+      
+      fs.appendFileSync(backupLog, logEntry);
+      console.log(`Image backup created for property ${propertyId}`);
+    } catch (error) {
+      console.error(`Failed to create image backup for property ${propertyId}:`, error);
+    }
+  }
+
+  async restorePropertyImages(propertyId: number, backupTimestamp?: string): Promise<boolean> {
+    try {
+      const fs = require('fs');
+      const backupLog = `./logs/image-backups.log`;
+      
+      if (!fs.existsSync(backupLog)) {
+        console.error('No image backup log found');
+        return false;
+      }
+
+      const logContent = fs.readFileSync(backupLog, 'utf8');
+      const lines = logContent.split('\n').filter(Boolean);
+      
+      // Find the most recent backup for this property (or specific timestamp)
+      const propertyBackups = lines
+        .filter(line => line.includes(`Property ${propertyId}`))
+        .reverse(); // Most recent first
+
+      if (propertyBackups.length === 0) {
+        console.error(`No backups found for property ${propertyId}`);
+        return false;
+      }
+
+      const backupLine = propertyBackups[0]; // Use most recent
+      const imagesMatch = backupLine.match(/Images: (\[.*\])/);
+      
+      if (!imagesMatch) {
+        console.error('Could not parse images from backup');
+        return false;
+      }
+
+      const restoredImages = JSON.parse(imagesMatch[1]);
+      
+      // Restore the images
+      await this.updateProperty(propertyId, { 
+        images: restoredImages,
+        explicitImageUpdate: true // Bypass security check for restoration
+      });
+      
+      console.log(`Successfully restored ${restoredImages.length} images for property ${propertyId}`);
+      return true;
+    } catch (error) {
+      console.error(`Failed to restore images for property ${propertyId}:`, error);
+      return false;
+    }
+  }
+
   getAllProperties(page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
   getFeaturedProperties(limit?: number, page?: number, pageSize?: number): Promise<PaginatedResult<Property>>;
   getHighlightedProperties(limit?: number): Promise<Property[]>;
@@ -590,14 +664,19 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateProperty(id: number, updates: Partial<Property> & { imagesToRemove?: string[] }): Promise<Property | undefined> {
+  async updateProperty(id: number, updates: Partial<Property> & { imagesToRemove?: string[], explicitImageUpdate?: boolean }): Promise<Property | undefined> {
     try {
       console.log(`DB: Updating property with ID ${id}`);
       console.log(`Received update data:`, updates);
 
-      // Handle image removal before database update if imagesToRemove array is present
+      // SECURITY: Only allow image modifications with explicit approval
       if (updates.imagesToRemove && Array.isArray(updates.imagesToRemove) && updates.imagesToRemove.length > 0) {
-        console.log(`Processing request to remove ${updates.imagesToRemove.length} images from property ${id}`);
+        if (!updates.explicitImageUpdate) {
+          console.error(`SECURITY VIOLATION: Attempted to remove images without explicit approval for property ${id}`);
+          throw new Error("Image removal requires explicit authorization");
+        }
+        
+        console.log(`AUTHORIZED: Processing request to remove ${updates.imagesToRemove.length} images from property ${id}`);
         console.log(`Images to remove:`, updates.imagesToRemove);
 
         // First get the existing property to get its current images
@@ -619,10 +698,18 @@ export class DatabaseStorage implements IStorage {
 
         // Remove the imagesToRemove property as it's not a column in the database
         delete updates.imagesToRemove;
+        delete updates.explicitImageUpdate;
       }
 
-      // CRITICAL FIX: Ensure images are always stored as an array in the database
+      // BACKUP: Create image backup before any modifications
       if ('images' in updates) {
+        const existingProperty = await this.getPropertyById(id);
+        if (existingProperty && existingProperty.images) {
+          // Create backup entry in a separate backup table or log
+          console.log(`BACKUP: Creating image backup for property ${id}`);
+          await this.createImageBackup(id, existingProperty.images);
+        }
+        
         console.log(`Processing images for update. Type: ${typeof updates.images}, Value:`, updates.images);
 
         let imagesArray: string[] = [];
