@@ -3000,8 +3000,95 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // New simplified property image upload endpoint - NO AUTHENTICATION REQUIRED
-  app.post('/api/upload/property-images-direct', async (req: Request, res: Response) => {
+  // SIMPLIFIED: Direct property image upload endpoint
+  app.post('/api/upload/property-images-direct', finalUpload.array('images', 10), async (req: Request, res: Response) => {
+    try {
+      console.log("==== DIRECT PROPERTY IMAGE UPLOAD ====");
+      
+      // Get property ID from form data
+      let propertyId: number;
+      if (req.body && req.body.propertyId) {
+        propertyId = parseInt(req.body.propertyId);
+      } else {
+        console.error("No property ID in form data");
+        return res.status(400).json({ 
+          success: false, 
+          message: "Property ID is required" 
+        });
+      }
+      
+      if (isNaN(propertyId) || propertyId <= 0) {
+        console.error(`Invalid property ID: ${propertyId}`);
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid property ID" 
+        });
+      }
+      
+      console.log(`Processing images for property ID: ${propertyId}`);
+      
+      // Check for uploaded files
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "No files uploaded" 
+        });
+      }
+      
+      console.log(`Found ${files.length} files to process`);
+      
+      // Create image URLs
+      const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
+      
+      // Get current property
+      const property = await dbStorage.getPropertyById(propertyId);
+      if (!property) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Property not found" 
+        });
+      }
+      
+      // Get existing images safely
+      let currentImages: string[] = [];
+      try {
+        if (Array.isArray(property.images)) {
+          currentImages = property.images;
+        } else if (typeof property.images === 'string') {
+          currentImages = JSON.parse(property.images);
+        }
+      } catch (e) {
+        currentImages = [];
+      }
+      
+      // Add new images to existing ones
+      const updatedImages = [...currentImages, ...imageUrls];
+      
+      // Update property in database
+      await dbStorage.updateProperty(propertyId, { images: updatedImages });
+      
+      console.log(`Successfully added ${files.length} images to property ${propertyId}`);
+      
+      return res.json({
+        success: true,
+        message: "Images uploaded successfully",
+        imageUrls: imageUrls,
+        totalImages: updatedImages.length
+      });
+      
+    } catch (error) {
+      console.error('Direct upload error:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Upload failed", 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Legacy endpoint - keeping for compatibility
+  app.post('/api/upload/property-images-direct-old', async (req: Request, res: Response) => {
     try {
       console.log("==== UNIVERSAL PROPERTY IMAGE UPLOAD CALLED ====");
       console.log("Cross-platform upload endpoint - authenticated or public");
