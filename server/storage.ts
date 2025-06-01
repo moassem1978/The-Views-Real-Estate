@@ -96,8 +96,10 @@ export interface IStorage {
   updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings>;
 }
 
-class DatabaseStorage implements IStorage {
-  
+export class DatabaseStorage implements IStorage {
+  // Cache for frequently accessed data
+  private cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
+
   async restorePropertyImages(propertyId: number, backupTimestamp?: string): Promise<boolean> {
     try {
       const fs = require('fs');
