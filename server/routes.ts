@@ -2631,6 +2631,73 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // FIXED: Simple property image upload endpoint
+  app.post("/api/properties/:id/upload-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+    try {
+      console.log(`=== FIXED UPLOAD for Property ID ${req.params.id} ===`);
+      
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const propertyId = parseInt(req.params.id);
+      if (isNaN(propertyId)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      console.log(`Processing ${files.length} files for property ${propertyId}`);
+
+      // Create image URLs
+      const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
+      
+      // Get current property
+      const property = await dbStorage.getPropertyById(propertyId);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Get current images safely
+      let currentImages: string[] = [];
+      try {
+        if (Array.isArray(property.images)) {
+          currentImages = property.images;
+        } else if (typeof property.images === 'string') {
+          currentImages = JSON.parse(property.images);
+        }
+      } catch (e) {
+        currentImages = [];
+      }
+
+      // Add new images
+      const updatedImages = [...currentImages, ...imageUrls];
+      
+      // Update property
+      await dbStorage.updateProperty(propertyId, { images: updatedImages });
+
+      console.log(`Successfully updated property ${propertyId} with ${files.length} new images`);
+
+      return res.json({
+        success: true,
+        message: "Images uploaded successfully",
+        imageUrls: imageUrls,
+        totalImages: updatedImages.length
+      });
+
+    } catch (error) {
+      console.error('Fixed upload error:', error);
+      return res.status(500).json({ 
+        message: "Upload failed", 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Primary uploads serving - from public/uploads directory
   app.use('/uploads', (req, res, next) => {
     // Logging to track static file requests for debugging
