@@ -47,33 +47,57 @@ export interface IStorage {
   deactivateUser(id: number): Promise<boolean>;
 
   // Property operations
+  getProperties(
+    page?: number, 
+    pageSize?: number, 
+    filters?: PropertyFilters
+  ): Promise<{ properties: Property[]; totalCount: number; pageCount: number }>;
+  getProperty(id: number): Promise<Property | undefined>;
+  getHighlightedProperties(limit?: number): Promise<Property[]>;
+  createProperty(property: InsertProperty): Promise<Property>;
+  updateProperty(id: number, updates: Partial<Property>): Promise<Property>;
+  deleteProperty(id: number): Promise<boolean>;
 
-  // Image backup and recovery system
-  private async createImageBackup(propertyId: number, images: string[]): Promise<void> {
-    try {
-      const backupEntry = {
-        property_id: propertyId,
-        images_backup: JSON.stringify(images),
-        backup_timestamp: new Date().toISOString(),
-        created_by: 'system'
-      };
+  // Other operations
+  getTestimonials(page?: number, pageSize?: number): Promise<{ testimonials: Testimonial[]; totalCount: number; pageCount: number }>;
+  createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
+  updateTestimonial(id: number, updates: Partial<Testimonial>): Promise<Testimonial>;
+  deleteTestimonial(id: number): Promise<boolean>;
 
-      // Store in backup log file for now (could be moved to database table later)
-      const backupLog = `./logs/image-backups.log`;
-      const fs = require('fs');
-      const logEntry = `${new Date().toISOString()} - Property ${propertyId} - Images: ${JSON.stringify(images)}\n`;
-      
-      if (!fs.existsSync('./logs')) {
-        fs.mkdirSync('./logs', { recursive: true });
-      }
-      
-      fs.appendFileSync(backupLog, logEntry);
-      console.log(`Image backup created for property ${propertyId}`);
-    } catch (error) {
-      console.error(`Failed to create image backup for property ${propertyId}:`, error);
-    }
-  }
+  getLeads(page?: number, pageSize?: number): Promise<{ leads: Lead[]; totalCount: number; pageCount: number }>;
+  createLead(lead: InsertLead): Promise<Lead>;
+  updateLead(id: number, updates: Partial<Lead>): Promise<Lead>;
+  deleteLead(id: number): Promise<boolean>;
 
+  getProjects(page?: number, pageSize?: number): Promise<{ projects: Project[]; totalCount: number; pageCount: number }>;
+  getProject(id: number): Promise<Project | undefined>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: number, updates: Partial<Project>): Promise<Project>;
+  deleteProject(id: number): Promise<boolean>;
+
+  getAnnouncements(page?: number, pageSize?: number): Promise<{ announcements: Announcement[]; totalCount: number; pageCount: number }>;
+  getHighlightedAnnouncements(limit?: number): Promise<Announcement[]>;
+  createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
+  updateAnnouncement(id: number, updates: Partial<Announcement>): Promise<Announcement>;
+  deleteAnnouncement(id: number): Promise<boolean>;
+
+  getNewsletterSubscriptions(page?: number, pageSize?: number): Promise<{ subscriptions: Newsletter[]; totalCount: number; pageCount: number }>;
+  createNewsletterSubscription(subscription: InsertNewsletter): Promise<Newsletter>;
+  deleteNewsletterSubscription(id: number): Promise<boolean>;
+
+  getArticles(page?: number, pageSize?: number): Promise<{ articles: Article[]; totalCount: number; pageCount: number }>;
+  getArticle(id: number): Promise<Article | undefined>;
+  getArticleBySlug(slug: string): Promise<Article | undefined>;
+  createArticle(article: InsertArticle): Promise<Article>;
+  updateArticle(id: number, updates: Partial<Article>): Promise<Article>;
+  deleteArticle(id: number): Promise<boolean>;
+
+  getSiteSettings(): Promise<SiteSettings>;
+  updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings>;
+}
+
+class DatabaseStorage implements IStorage {
+  
   async restorePropertyImages(propertyId: number, backupTimestamp?: string): Promise<boolean> {
     try {
       const fs = require('fs');
