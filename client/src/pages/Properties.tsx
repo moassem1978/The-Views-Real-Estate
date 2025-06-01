@@ -58,10 +58,10 @@ export default function Properties() {
     window.history.pushState({}, '', newPath);
   };
 
-  // SEO for properties page
+  // SEO for properties page with high-traffic keywords
   useEffect(() => {
-    let title = "Binghatti Properties Dubai | Luxury Real Estate Egypt | Premium Cairo";
-    let description = "Binghatti properties Dubai, Binghatti apartments, luxury real estate Egypt, premium properties Cairo. Binghatti Stars, Binghatti Skyrise, Katameya Dunes, Lake View, Swan Lake with The Views Real Estate. عقارات فاخرة في مصر";
+    let title = "Properties For Sale Egypt Dubai | Luxury Apartments Dubai Marina | Villas New Cairo";
+    let description = "Browse properties for sale Egypt Dubai, luxury apartments Dubai Marina, villas for sale New Cairo, compounds New Cairo, Downtown Dubai properties, Business Bay apartments. Expert real estate investment Egypt Dubai with Mohamed Assem.";
     
     if (filters.propertyType) {
       title = `${filters.propertyType}s for Sale in Egypt`;
@@ -94,6 +94,22 @@ export default function Properties() {
       document.head.appendChild(metaDescription);
     }
     metaDescription.setAttribute('content', description);
+
+    // Add comprehensive keywords from market research
+    let keywords = 'properties for sale Egypt, apartments for sale Cairo, villas for sale New Cairo, compounds New Cairo, New Administrative Capital, North Coast properties, luxury properties Egypt for sale, off-plan properties Dubai, Dubai Marina apartments, Downtown Dubai properties, Business Bay apartments, Dubai Creek Harbour, Dubai Hills Estate villas, Palm Jumeirah villas, real estate investment Egypt, Dubai property investment, freehold properties Dubai, ready properties Dubai, Emaar properties Dubai, Damac developments, Binghatti properties, Sobha Hartland, Sodic properties, Palm Hills developments, Hassan Allam Properties, Katameya Heights, Maadi properties, Sheikh Zayed properties, Arabian Ranches properties, luxury apartments Dubai Marina, penthouses Dubai Marina, townhouses New Cairo, chalets North Coast, best real estate agent Egypt Dubai, luxury property consultant Middle East, Mohamed Assem real estate broker, The Views Real Estate Egypt, عقارات للبيع في مصر, شقق للبيع في القاهرة, فيلات للبيع في القاهرة الجديدة, كمبوندات القاهرة الجديدة';
+    
+    // Add filter-specific keywords
+    if (filters.propertyType) keywords += `, ${filters.propertyType.toLowerCase()}s Egypt, luxury ${filters.propertyType.toLowerCase()}s for sale, premium ${filters.propertyType.toLowerCase()}s`;
+    if (filters.location) keywords += `, properties ${filters.location}, real estate ${filters.location}, luxury developments ${filters.location}`;
+    if (filters.listingType) keywords += `, ${filters.listingType.toLowerCase()} properties, ${filters.listingType.toLowerCase()} real estate`;
+    
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', keywords);
   }, [filters, totalCount]);
 
   if (error) {

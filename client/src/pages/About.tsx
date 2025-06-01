@@ -6,8 +6,8 @@ import ContactCTA from "@/components/home/ContactCTA";
 // SEO optimization for About page
 function AboutSEO() {
   useEffect(() => {
-    const title = "About Mohamed Assem - 30+ Years Real Estate Expertise | The Views Real Estate";
-    const description = "Meet Mohamed Assem, founder of The Views Real Estate with 30+ years of luxury property expertise across 7 countries. Expert real estate consultancy in Egypt.";
+    const title = "Best Real Estate Agent Egypt Dubai | Mohamed Assem 30+ Years | Luxury Property Consultant";
+    const description = "Meet Mohamed Assem, best real estate agent Egypt Dubai with 30+ years expertise. Luxury property consultant specializing in properties for sale Egypt, Dubai Marina apartments, New Cairo compounds, off-plan properties Dubai.";
     
     document.title = title;
     
@@ -25,7 +25,7 @@ function AboutSEO() {
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', 'Mohamed Assem real estate broker Egypt, The Views Real Estate founder, luxury real estate Egypt, premium properties Cairo, Dubai real estate investment, luxury properties Dubai, off-plan properties Dubai, Binghatti Developers Dubai expert, Binghatti properties Dubai specialist, Binghatti apartments Dubai consultant, Binghatti Stars Dubai advisor, Binghatti Skyrise Dubai expert, Binghatti investment Dubai specialist, Binghatti luxury apartments consultant, Dubai Marina properties, Downtown Dubai apartments, Dubai Creek Harbour expert, Dubai Hills Estate specialist, Business Bay Dubai consultant, Sobha Hartland Dubai advisor, Katameya Dunes Golf Resort expert, Lake View Compound specialist, Swan Lake Resort expert, Hassan Allam Properties specialist, 30 years experience Egypt Dubai, best real estate broker Egypt, most trusted broker Egypt, عقارات فاخرة في مصر, وسيط عقاري موثوق في مصر');
+    metaKeywords.setAttribute('content', 'best real estate agent Egypt Dubai, Mohamed Assem real estate broker, luxury property consultant Middle East, properties for sale Egypt, apartments for sale Cairo, villas for sale New Cairo, off-plan properties Dubai, Dubai Marina apartments, Downtown Dubai properties, Business Bay apartments, real estate investment Egypt, Dubai property investment, compounds New Cairo, New Administrative Capital, North Coast properties, Emaar properties Dubai, Damac developments, Binghatti properties specialist, Sobha Hartland, Hassan Allam Properties, Palm Hills developments, Sodic properties, Katameya Heights, Maadi properties, Sheikh Zayed properties, luxury apartments Dubai Marina, penthouses Dubai Marina, ready properties Dubai, freehold properties Dubai, Arabian Ranches properties, Dubai Hills Estate villas, 30 years experience real estate, The Views Real Estate founder, most trusted broker Egypt Dubai, international real estate consultant, عقارات للبيع في مصر, شقق للبيع في القاهرة, أفضل وسيط عقاري في مصر');
 
     const ogTags = [
       { property: 'og:title', content: title },
