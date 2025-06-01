@@ -3619,7 +3619,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
     // If we couldn't find the exact file, try to find it by filename only (without subdir)
     const filename = path.basename(relativePath);
-    const subdirs = ['properties', 'announcements', 'projects', 'logos', ''];
+    const subdirs = ['properties', 'announcements', 'projects'];', 'logos', ''];
 
     // Check each possible subdirectory
     for (const baseDir of baseDirectories) {

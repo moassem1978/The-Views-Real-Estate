@@ -229,7 +229,7 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    
+
     // Add CORS headers for better compatibility
     res.setHeader('Access-Control-Allow-Origin', `https://${customDomain}`);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -244,7 +244,7 @@ app.use((req, res, next) => {
 
   // Add error logging endpoint (admin/owner only)
   app.get("/api/error-logs", (req: Request, res: Response) => {
-    if (!req.isAuthenticated || !req.isAuthenticated()) {
+    if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Authentication required" });
     }
 
@@ -264,7 +264,7 @@ app.use((req, res, next) => {
 
   // Add endpoint to clear error logs (owner only)
   app.post("/api/error-logs/clear", (req: Request, res: Response) => {
-    if (!req.isAuthenticated || !req.isAuthenticated()) {
+    if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Authentication required" });
     }
 
@@ -327,7 +327,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  
+
   // Handle graceful shutdown
   const gracefulShutdown = () => {
     console.log('Received shutdown signal, closing server...');
