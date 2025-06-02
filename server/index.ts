@@ -314,54 +314,84 @@ app.use((req, res, next) => {
 
   // Add simplified health check endpoints
   app.get('/health', (req, res) => {
+    const actualPort = server.address()?.port || port;
     res.status(200).json({ 
       status: 'ok',
-      port: port,
-      timestamp: new Date().toISOString()
+      port: actualPort,
+      timestamp: new Date().toISOString(),
+      host: req.get('host')
     });
   });
 
   app.get('/mobile-health', (req, res) => {
+    const actualPort = server.address()?.port || port;
     res.status(200).json({ 
       status: 'mobile-ready',
       timestamp: new Date().toISOString(),
+      port: actualPort,
       message: 'Backend is responding for mobile clients'
     });
   });
 
-  // Find available port
+  // Find available port with better error handling
   const findAvailablePort = (startPort: number): Promise<number> => {
-    return new Promise((resolve) => {
-      const testServer = express(); // Use a new express instance for testing the port
-      const testListener = testServer.listen(startPort, "0.0.0.0", () => {
-        const port = (testListener.address() as any)?.port || startPort;
-        testListener.close(() => resolve(port));
+    return new Promise((resolve, reject) => {
+      const net = require('net');
+      const server = net.createServer();
+      
+      server.listen(startPort, "0.0.0.0", () => {
+        const port = server.address()?.port || startPort;
+        server.close(() => {
+          console.log(`✅ Port ${port} is available`);
+          resolve(port);
+        });
       });
 
-      testListener.on('error', (err: any) => {
+      server.on('error', (err: any) => {
         if (err.code === 'EADDRINUSE') {
-          resolve(findAvailablePort(startPort + 1));
+          console.log(`⚠️ Port ${startPort} is busy, trying ${startPort + 1}`);
+          findAvailablePort(startPort + 1).then(resolve).catch(reject);
         } else {
-          console.error('Error during port finding:', err); // Log other errors for debugging
-          resolve(startPort); // Resolve with the original port to prevent infinite recursion
+          console.error('Port detection error:', err);
+          reject(err);
         }
       });
     });
   };
 
-  // Start server on available port
-  const port = await findAvailablePort(5000);
+  // Start with port 5000 but allow fallback to other ports
+  const preferredPorts = [5000, 3000, 8000, 8080, 4000];
+  let port = 5000;
+  
+  try {
+    // Try preferred ports first, then find any available port
+    for (const preferredPort of preferredPorts) {
+      try {
+        port = await findAvailablePort(preferredPort);
+        break;
+      } catch (err) {
+        console.log(`Port ${preferredPort} failed, trying next...`);
+        continue;
+      }
+    }
+  } catch (err) {
+    console.error('Could not find available port, using default 5000');
+    port = 5000;
+  }
 
   server.listen(port, "0.0.0.0", () => {
-    console.log(`✅ Server running on port ${port}`);
-    console.log(`🌐 Access at: http://localhost:${port}`);
-    console.log(`📱 Mobile health: http://localhost:${port}/mobile-health`);
+    const actualPort = server.address()?.port || port;
+    console.log(`✅ Server running on port ${actualPort}`);
+    console.log(`🌐 Access at: http://localhost:${actualPort}`);
+    console.log(`📱 Mobile health: http://localhost:${actualPort}/mobile-health`);
+    console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
   });
 
   server.on('error', (err: any) => {
     console.error('Server error:', err);
     if (err.code === 'EADDRINUSE') {
-      console.log('Port in use, trying to restart...');
+      console.log(`❌ Port ${port} still in use after detection. This may indicate a zombie process.`);
+      console.log('💡 Try running the "Robust Server Start" workflow to kill existing processes.');
       process.exit(1);
     }
   });
