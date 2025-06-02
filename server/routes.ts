@@ -2631,6 +2631,64 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // EMERGENCY: Property 60 specific upload endpoint
+  app.post("/api/property-60-upload", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+    try {
+      console.log("=== EMERGENCY UPLOAD FOR PROPERTY 60 ===");
+      
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ success: false, message: "No files uploaded" });
+      }
+
+      console.log(`Processing ${files.length} files for property 60`);
+
+      // Create image URLs
+      const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
+      
+      // Get property 60
+      const property = await dbStorage.getPropertyById(60);
+      if (!property) {
+        return res.status(404).json({ success: false, message: "Property 60 not found" });
+      }
+
+      // Get current images safely
+      let currentImages: string[] = [];
+      try {
+        if (Array.isArray(property.images)) {
+          currentImages = property.images;
+        } else if (typeof property.images === 'string') {
+          currentImages = JSON.parse(property.images);
+        }
+      } catch (e) {
+        currentImages = [];
+      }
+
+      // Add new images
+      const updatedImages = [...currentImages, ...imageUrls];
+      
+      // Update property 60
+      await dbStorage.updateProperty(60, { images: updatedImages });
+
+      console.log(`Successfully updated property 60 with ${files.length} new images`);
+
+      return res.json({
+        success: true,
+        message: "Images uploaded successfully to property 60",
+        imageUrls: imageUrls,
+        totalImages: updatedImages.length
+      });
+
+    } catch (error) {
+      console.error('Property 60 upload error:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: "Upload failed", 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // FIXED: Simple property image upload endpoint
   app.post("/api/properties/:id/upload-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
