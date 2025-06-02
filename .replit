@@ -15,7 +15,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Start Server"
+runButton = "Robust Server Start"
 
 [[workflows.workflow]]
 name = "Project"
@@ -150,3 +150,20 @@ args = "});"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "\""
+
+[[workflows.workflow]]
+name = "Robust Server Start"
+author = 40723493
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"node.*server\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sleep 2"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"

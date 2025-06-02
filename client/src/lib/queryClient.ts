@@ -25,7 +25,7 @@ async function throwIfResNotOk(res: Response) {
       // If all else fails, use status text
       errorMessage = res.statusText;
     }
-    
+
     throw new Error(`${res.status}: ${errorMessage}`);
   }
 }
@@ -38,119 +38,87 @@ async function throwIfResNotOk(res: Response) {
  * @returns Response object
  */
 export async function apiRequest(
-  method: string,
   url: string,
-  data?: unknown | undefined,
+  options: RequestInit = {},
 ): Promise<Response> {
-  console.log(`FORM SUBMISSION: Making ${method} request to ${url}`);
-  if (data) {
-    console.log("FORM SUBMISSION DATA:", JSON.stringify(data, null, 2));
-  }
-  
-  // For GET requests, use request cache to prevent duplicate requests
-  const isGet = method.toUpperCase() === 'GET';
-  const cacheKey = isGet ? `${method}:${url}` : '';
-  
-  if (isGet && apiRequestCache.has(cacheKey)) {
-    return apiRequestCache.get(cacheKey)!;
+  // Create a unique key for this request for caching
+  const requestKey = `${options.method || 'GET'}-${url}-${JSON.stringify(options.body || {})}`;
+
+  // Check if we already have a pending request for this exact same request
+  if (apiRequestCache.has(requestKey)) {
+    console.log(`Reusing pending request for: ${requestKey}`);
+    const cachedRequest = apiRequestCache.get(requestKey)!;
+    const res = await cachedRequest;
+    return res.clone(); // Clone the response so it can be consumed multiple times
   }
 
-  // First, check if the user is authenticated for write operations
-  if (method.toUpperCase() !== 'GET') {
-    try {
-      const userCheckResponse = await fetch('/api/user', {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
+  // Mobile-optimized fetch with retry logic
+  const fetchWithRetry = async (retries = 3): Promise<Response> => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        // Add mobile-specific headers
+        const mobileHeaders = {
+          'User-Agent': navigator.userAgent || 'ReplicationApp',
+          'Accept': 'application/json, text/plain, */*',
           'Cache-Control': 'no-cache',
-        },
-      });
-      
-      if (userCheckResponse.status === 401) {
-        console.log('User not authenticated, checking for session expiration');
-        
-        // Try to refresh the session by calling the auth check endpoint
-        const refreshResponse = await fetch('/api/auth/refresh', {
-          method: 'POST',
-          credentials: 'include'
-        });
-        
-        if (refreshResponse.ok) {
-          console.log("Authentication refreshed successfully");
-        }
-        
-        if (refreshResponse.status === 401) {
-          console.error('Session expired and refresh failed');
-          const error = new Error('401: Authentication required to update properties');
+          ...options.headers
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+        const fetchOptions = {
+          ...options,
+          headers: mobileHeaders,
+          credentials: 'include' as RequestCredentials,
+          signal: controller.signal
+        };
+
+        const response = await fetch(url, fetchOptions);
+        clearTimeout(timeoutId);
+
+        return response;
+      } catch (error) {
+        console.warn(`Fetch attempt ${i + 1} failed:`, error);
+
+        // Don't retry on the last attempt
+        if (i === retries - 1) {
           throw error;
         }
-      }
-    } catch (error) {
-      console.error('Error checking authentication:', error);
-      // Continue with the request, the server will handle authentication errors
-    }
-  }
-  
-  // Proceed with the main request
-  const fetchPromise = fetch(url, {
-    method,
-    headers: {
-      ...(data ? { "Content-Type": "application/json" } : {}),
-      // Add cache control headers for GET requests
-      ...(isGet ? { 'Cache-Control': 'no-cache' } : {}),
-    },
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  }).then(async (res) => {
-    // Clear cache entry once request completes
-    if (isGet) {
-      apiRequestCache.delete(cacheKey);
-    }
-    
-    console.log(`Response status: ${res.status} ${res.statusText}`);
-    
-    if (res.status === 401) {
-      // For 401 responses, redirect to login
-      console.error('Authentication required');
-      // Throw a specific error for 401 that can be handled by the UI
-      throw new Error('401: Authentication required');
-    }
-    
-    if (!res.ok) {
-      try {
-        // Try to get the error details as JSON
-        const errorData = await res.json();
-        console.error("API error response:", errorData);
-        throw new Error(errorData.message || `Error ${res.status}: ${res.statusText}`);
-      } catch (jsonError) {
-        // If parsing as JSON fails, try to get plain text
-        try {
-          const errorText = await res.text();
-          console.error("API error text:", errorText);
-          throw new Error(errorText || `Error ${res.status}: ${res.statusText}`);
-        } catch (textError) {
-          // If all else fails, throw a generic error
-          throw new Error(`Request failed with status: ${res.status}`);
-        }
+
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
       }
     }
-    
+    throw new Error('All retry attempts failed');
+  };
+
+  // Create the fetch promise with retry logic
+  const fetchPromise = fetchWithRetry();
+
+  // Cache the promise
+  apiRequestCache.set(requestKey, fetchPromise);
+
+  try {
+    const res = await fetchPromise;
+
+    // Remove from cache once completed
+    apiRequestCache.delete(requestKey);
+
+    // Handle 401 responses based on behavior setting
+    // if (res.status === 401 && authBehavior === AuthBehavior.RedirectTo401) {
+    //   console.log('Received 401, redirecting to sign in page');
+    //   window.location.href = '/signin';
+    //   return res; // Return the response, but the redirect will happen
+    // }
+
+    await throwIfResNotOk(res);
     return res;
-  }).catch(error => {
-    // Clear cache on error too
-    if (isGet) {
-      apiRequestCache.delete(cacheKey);
-    }
-    console.error("Network error during form submission:", error);
+  } catch (error) {
+    // Remove from cache on error
+    apiRequestCache.delete(requestKey);
     throw error;
-  });
-  
-  // Store promise in cache for GET requests
-  if (isGet) {
-    apiRequestCache.set(cacheKey, fetchPromise);
   }
-  
-  return fetchPromise;
 }
 
 /**
@@ -173,7 +141,7 @@ export const getQueryFn: <T>(options: {
       : Array.isArray(queryKey[0]) 
         ? queryKey[0].join('/') 
         : String(queryKey[0]);
-    
+
     try {
       const res = await fetch(endpoint, {
         credentials: "include",
@@ -192,13 +160,13 @@ export const getQueryFn: <T>(options: {
       }
 
       await throwIfResNotOk(res);
-      
+
       // Check for empty response
       const contentLength = res.headers.get('Content-Length');
       if (contentLength === '0') {
         return null;
       }
-      
+
       // Parse JSON response
       return await res.json();
     } catch (error) {
