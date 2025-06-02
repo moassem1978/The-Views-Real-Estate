@@ -99,38 +99,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Enhanced request timeout and mobile compatibility middleware
+// Basic request middleware
 app.use((req, res, next) => {
-  // Set appropriate timeout based on request type
-  const timeout = req.path.includes('/upload') ? 60000 : 30000; // 60s for uploads, 30s for others
+  // Set basic headers for all requests
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   
-  req.setTimeout(timeout, () => {
-    console.warn(`Request timeout (${timeout}ms) for ${req.method} ${req.path}`);
-    if (!res.headersSent) {
-      res.status(408).json({ 
-        message: "Request timeout",
-        code: "TIMEOUT",
-        path: req.path
-      });
-    }
-  });
-
-  // Set response timeout
-  res.setTimeout(timeout, () => {
-    console.warn(`Response timeout for ${req.method} ${req.path}`);
-    if (!res.headersSent) {
-      res.status(408).json({ 
-        message: "Response timeout",
-        code: "RESPONSE_TIMEOUT"
-      });
-    }
-  });
-
-  // Add mobile-friendly headers
-  if (req.headers['user-agent']?.includes('Mobile') || req.headers['user-agent']?.includes('iPhone')) {
+  // Add mobile-friendly headers only for mobile requests
+  const userAgent = req.headers['user-agent'] || '';
+  if (userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android')) {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
   }
 
   next();
@@ -339,20 +317,15 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = 5000;
 
-  // Initialize health monitor
-  const healthMonitor = HealthMonitor.getInstance();
-  healthMonitor.startMonitoring();
-
-  // Add health check endpoint before starting server
+  // Add simplified health check endpoint
   app.get('/health', (req, res) => {
-    const healthStatus = healthMonitor.getHealthStatus();
-    const isHealthy = healthMonitor.isHealthy();
-    
-    res.status(isHealthy ? 200 : 503).json({ 
-      status: isHealthy ? 'ok' : 'unhealthy',
-      ...healthStatus,
+    res.status(200).json({ 
+      status: 'ok',
       port: port,
-      environment: process.env.NODE_ENV || 'development'
+      uptime: Math.round(process.uptime()),
+      memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      environment: process.env.NODE_ENV || 'development',
+      timestamp: new Date().toISOString()
     });
   });
 
@@ -365,80 +338,23 @@ app.use((req, res, next) => {
     });
   });
 
-  // Handle graceful shutdown with timeout
-  const gracefulShutdown = (signal: string) => {
-    console.log(`Received ${signal}, initiating graceful shutdown...`);
+  // Simplified server startup
+  server.listen(port, "0.0.0.0", () => {
+    log(`🚀 Server successfully started on port ${port}`);
+    log(`📱 Mobile access: Use the Replit mobile app preview`);
+    log(`🌐 Web access: Click the webview button in Replit`);
     
-    const forceExit = setTimeout(() => {
-      console.log('Force exit after 10 seconds');
-      process.exit(1);
-    }, 10000);
-
-    server.close((err) => {
-      clearTimeout(forceExit);
-      if (err) {
-        console.error('Error during server shutdown:', err);
-        process.exit(1);
-      }
-      console.log('Server closed successfully');
-      process.exit(0);
-    });
-  };
-
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-  process.on('SIGUSR2', () => gracefulShutdown('SIGUSR2')); // For nodemon restarts
-
-  // Enhanced error handling
-  server.on('error', (err: any) => {
-    console.error('Server error occurred:', err);
-    
+    // Initialize SEO optimization scheduler
+    try {
+      seoScheduler.startScheduledTasks();
+      log(`✅ SEO scheduler initialized`);
+    } catch (seoError) {
+      console.error('SEO scheduler initialization failed:', seoError);
+    }
+  }).on('error', (err: any) => {
+    console.error('Server startup error:', err);
     if (err.code === 'EADDRINUSE') {
-      console.error(`Port ${port} is already in use. Server will retry in 3 seconds...`);
-      setTimeout(() => {
-        server.close();
-        server.listen(port, "0.0.0.0");
-      }, 3000);
-    } else if (err.code === 'ENOTFOUND') {
-      console.error('Network error - check connection');
-    } else {
-      console.error('Unexpected server error:', err.message);
+      console.error(`Port ${port} is already in use. Please stop other processes using this port.`);
     }
   });
-
-  // Add connection handling
-  server.on('connection', (socket) => {
-    socket.setTimeout(30000); // 30 second timeout
-    socket.on('timeout', () => {
-      console.log('Socket timeout, destroying connection');
-      socket.destroy();
-    });
-  });
-
-  // Start server with retry logic
-  const startServer = (retries = 3) => {
-    server.listen(port, "0.0.0.0", () => {
-      log(`🚀 Server successfully started on port ${port}`);
-      log(`📱 Mobile access: Use the Replit mobile app preview`);
-      log(`🌐 Web access: Click the webview button in Replit`);
-      
-      // Initialize SEO optimization scheduler
-      try {
-        seoScheduler.startScheduledTasks();
-        log(`✅ SEO scheduler initialized`);
-      } catch (seoError) {
-        console.error('SEO scheduler initialization failed:', seoError);
-      }
-    }).on('error', (err: any) => {
-      if (retries > 0 && err.code === 'EADDRINUSE') {
-        console.log(`Retrying server start in 2 seconds... (${retries} retries left)`);
-        setTimeout(() => startServer(retries - 1), 2000);
-      } else {
-        console.error('Failed to start server after retries:', err);
-        process.exit(1);
-      }
-    });
-  };
-
-  startServer();
 })();
