@@ -1,25 +1,54 @@
 
 interface SEOHeadProps {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   keywords?: string;
   canonicalUrl?: string;
   ogImage?: string;
   ogType?: string;
   structuredData?: object;
   noIndex?: boolean;
+  pageName?: string;
+}
+
+interface SEOPageData {
+  title: string;
+  description: string;
+  keywords: string;
+  structured_data: any;
 }
 
 export default function SEOHead({
-  title,
-  description,
-  keywords,
+  title: propTitle,
+  description: propDescription,
+  keywords: propKeywords,
   canonicalUrl,
   ogImage,
   ogType = 'website',
-  structuredData,
-  noIndex = false
+  structuredData: propStructuredData,
+  noIndex = false,
+  pageName
 }: SEOHeadProps) {
+  const [seoData, setSeoData] = useState<SEOPageData | null>(null);
+
+  // Fetch dynamic SEO data if pageName is provided
+  useEffect(() => {
+    if (pageName) {
+      fetch(`/api/seo/page/${pageName}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) setSeoData(data);
+        })
+        .catch(console.error);
+    }
+  }, [pageName]);
+
+  // Use dynamic SEO data if available, otherwise use props
+  const title = seoData?.title || propTitle || 'The Views Real Estate Consultancy';
+  const description = seoData?.description || propDescription || 'Premium real estate consultant Egypt Dubai';
+  const keywords = seoData?.keywords || propKeywords;
+  const structuredData = seoData?.structured_data || propStructuredData;
+
   useEffect(() => {
     // Set page title
     document.title = title;

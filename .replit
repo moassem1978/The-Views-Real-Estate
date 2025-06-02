@@ -100,3 +100,52 @@ args = "sleep 2"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "SEO Bi-Daily Optimizer"
+author = 40723493
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "const { SEOOptimizer } = require('./server/seo-optimizer.ts');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "const optimizer = new SEOOptimizer();"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "optimizer.runFullSEOOptimization().then(() => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  console.log('SEO optimization completed');"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  process.exit(0);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "}).catch(err => {"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  console.error('SEO optimization failed:', err);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "  process.exit(1);"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "});"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "\""

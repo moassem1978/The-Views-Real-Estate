@@ -8,6 +8,7 @@ import simpleUploadRouter from "./simple-upload"; // Import our simple upload ro
 import unifiedUploader from "./unified-uploader"; // Import our new unified uploader
 import { imageMatcher } from './image-matcher'; // Import our enhanced image matcher
 import { errorLogger } from './error-logger'; // Import our error logging system
+import seoScheduler from "./seo-scheduler";
 
 // Create and prepare all upload directories with proper permissions
 function prepareUploadDirectories() {
@@ -132,7 +133,7 @@ app.use('/uploads', (req, res, next) => {
   if (fs.existsSync(publicPath)) {
     return res.sendFile(path.resolve(publicPath));
   }
-  
+
   // If file doesn't exist, return 404 - do not serve other files
   console.log(`Image not found: ${req.path}`);
   return res.status(404).json({ error: 'Image not found' });
@@ -336,5 +337,8 @@ app.use((req, res, next) => {
 
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
-  });
+
+  // Initialize SEO optimization scheduler
+  seoScheduler.startScheduledTasks();
+});
 })();

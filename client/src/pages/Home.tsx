@@ -8,6 +8,7 @@ import ContactCTA from "@/components/home/ContactCTA";
 import OptimizedHeroCarousel from "@/components/home/OptimizedHeroCarousel";
 import AnnouncementsSection from "@/components/home/AnnouncementsSection";
 import PropertiesByType from "@/components/home/PropertiesByType";
+import SEOHead from "@/components/common/SEOHead";
 
 // SEO optimization for homepage
 function HomeSEO() {
@@ -123,7 +124,7 @@ function HomeSEO() {
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
-      <HomeSEO />
+      <SEOHead pageName="home" />
       <Header />
 
       {/* Main content with proper heading structure */}
