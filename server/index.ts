@@ -313,23 +313,17 @@ app.use((req, res, next) => {
   });
 
   // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = 5000;
 
-  // Add simplified health check endpoint
+  // Add simplified health check endpoints
   app.get('/health', (req, res) => {
     res.status(200).json({ 
       status: 'ok',
       port: port,
-      uptime: Math.round(process.uptime()),
-      memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-      environment: process.env.NODE_ENV || 'development',
       timestamp: new Date().toISOString()
     });
   });
 
-  // Add mobile-specific health endpoint
   app.get('/mobile-health', (req, res) => {
     res.status(200).json({ 
       status: 'mobile-ready',
@@ -338,23 +332,15 @@ app.use((req, res, next) => {
     });
   });
 
-  // Simplified server startup
-  server.listen(port, "0.0.0.0", () => {
-    log(`🚀 Server successfully started on port ${port}`);
-    log(`📱 Mobile access: Use the Replit mobile app preview`);
-    log(`🌐 Web access: Click the webview button in Replit`);
-    
-    // Initialize SEO optimization scheduler
-    try {
-      seoScheduler.startScheduledTasks();
-      log(`✅ SEO scheduler initialized`);
-    } catch (seoError) {
-      console.error('SEO scheduler initialization failed:', seoError);
-    }
-  }).on('error', (err: any) => {
-    console.error('Server startup error:', err);
-    if (err.code === 'EADDRINUSE') {
-      console.error(`Port ${port} is already in use. Please stop other processes using this port.`);
-    }
-  });
+  // Ultra-simplified server startup
+  try {
+    server.listen(port, "0.0.0.0", () => {
+      console.log(`✅ Server running on port ${port}`);
+      console.log(`🌐 Access at: http://localhost:${port}`);
+      console.log(`📱 Mobile health: http://localhost:${port}/mobile-health`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 })();
