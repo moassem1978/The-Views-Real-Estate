@@ -3791,9 +3791,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const imageUrls = req.files.map(file => {
         // Create both public and internal URLs
         const publicUrl = `/uploads/projects/${file.filename}`;
+        
+        // Verify file exists
+        const filePath = path.join(process.cwd(), 'public', publicUrl);
+        if (!fs.existsSync(filePath)) {
+          console.error(`Uploaded file not found at: ${filePath}`);
+        }
 
         console.log(`Successfully processed project image: ${file.originalname} -> ${publicUrl}`);
-        return publicUrl;
+        return publicUrl;icUrl;
       });
 
       res.json({ 

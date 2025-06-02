@@ -30,6 +30,14 @@ class ErrorLogger {
       const errorMessage = error instanceof Error ? error.message : error;
       const errorStack = error instanceof Error ? error.stack : '';
       
+      // Skip logging certain non-critical errors
+      if (typeof errorMessage === 'string') {
+        if (errorMessage.includes('Image not found:') || 
+            errorMessage.includes('ENOENT') && errorMessage.includes('test-upload.html')) {
+          return; // Don't log these minor issues
+        }
+      }
+      
       const logEntry = `[${timestamp}][${context}][User:${userId || 'anonymous'}] ${errorMessage}\n${errorStack ? `Stack: ${errorStack}\n` : ''}\n`;
       
       fs.appendFileSync(this.errorLogFile, logEntry);
