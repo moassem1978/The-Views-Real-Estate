@@ -312,9 +312,6 @@ app.use((req, res, next) => {
     next();
   });
 
-  // ALWAYS serve the app on port 5000
-  const port = 5000;
-
   // Add simplified health check endpoints
   app.get('/health', (req, res) => {
     res.status(200).json({ 
@@ -332,15 +329,40 @@ app.use((req, res, next) => {
     });
   });
 
-  // Ultra-simplified server startup
-  try {
-    server.listen(port, "0.0.0.0", () => {
-      console.log(`✅ Server running on port ${port}`);
-      console.log(`🌐 Access at: http://localhost:${port}`);
-      console.log(`📱 Mobile health: http://localhost:${port}/mobile-health`);
+  // Find available port
+  const findAvailablePort = (startPort: number): Promise<number> => {
+    return new Promise((resolve) => {
+      const testServer = express(); // Use a new express instance for testing the port
+      const testListener = testServer.listen(startPort, "0.0.0.0", () => {
+        const port = (testListener.address() as any)?.port || startPort;
+        testListener.close(() => resolve(port));
+      });
+
+      testListener.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          resolve(findAvailablePort(startPort + 1));
+        } else {
+          console.error('Error during port finding:', err); // Log other errors for debugging
+          resolve(startPort); // Resolve with the original port to prevent infinite recursion
+        }
+      });
     });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+  };
+
+  // Start server on available port
+  const port = await findAvailablePort(5000);
+
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`✅ Server running on port ${port}`);
+    console.log(`🌐 Access at: http://localhost:${port}`);
+    console.log(`📱 Mobile health: http://localhost:${port}/mobile-health`);
+  });
+
+  server.on('error', (err: any) => {
+    console.error('Server error:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.log('Port in use, trying to restart...');
+      process.exit(1);
+    }
+  });
 })();
