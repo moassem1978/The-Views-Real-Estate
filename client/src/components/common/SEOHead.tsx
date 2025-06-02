@@ -1,4 +1,6 @@
 
+import { useState, useEffect } from 'react';
+
 interface SEOHeadProps {
   title?: string;
   description?: string;
