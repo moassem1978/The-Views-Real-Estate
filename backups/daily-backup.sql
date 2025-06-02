@@ -186,6 +186,42 @@ ALTER SEQUENCE public.newsletters_id_seq OWNED BY public.newsletters.id;
 
 
 --
+-- Name: page_seo; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.page_seo (
+    id integer NOT NULL,
+    page_name character varying(100) NOT NULL,
+    title text NOT NULL,
+    description text NOT NULL,
+    keywords text,
+    structured_data jsonb,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: page_seo_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.page_seo_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: page_seo_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.page_seo_id_seq OWNED BY public.page_seo.id;
+
+
+--
 -- Name: projects; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -307,6 +343,41 @@ ALTER SEQUENCE public.properties_id_seq OWNED BY public.properties.id;
 
 
 --
+-- Name: seo_optimization_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.seo_optimization_log (
+    id integer NOT NULL,
+    optimization_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    status character varying(20) NOT NULL,
+    keywords_updated jsonb,
+    pages_optimized integer,
+    error_message text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: seo_optimization_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.seo_optimization_log_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: seo_optimization_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.seo_optimization_log_id_seq OWNED BY public.seo_optimization_log.id;
+
+
+--
 -- Name: session; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -423,6 +494,13 @@ ALTER TABLE ONLY public.newsletters ALTER COLUMN id SET DEFAULT nextval('public.
 
 
 --
+-- Name: page_seo id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.page_seo ALTER COLUMN id SET DEFAULT nextval('public.page_seo_id_seq'::regclass);
+
+
+--
 -- Name: projects id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -434,6 +512,13 @@ ALTER TABLE ONLY public.projects ALTER COLUMN id SET DEFAULT nextval('public.pro
 --
 
 ALTER TABLE ONLY public.properties ALTER COLUMN id SET DEFAULT nextval('public.properties_id_seq'::regclass);
+
+
+--
+-- Name: seo_optimization_log id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seo_optimization_log ALTER COLUMN id SET DEFAULT nextval('public.seo_optimization_log_id_seq'::regclass);
 
 
 --
@@ -483,6 +568,15 @@ COPY public.leads (id, email, first_name, last_name, phone, property_id, message
 
 COPY public.newsletters (id, email, first_name, last_name, interests, is_active, source, subscribed_at, unsubscribed_at) FROM stdin;
 1	newsletter.test@example.com	Mohamed Newsletter Test	\N	[]	t	footer	2025-05-26 06:03:28.480983	\N
+\.
+
+
+--
+-- Data for Name: page_seo; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.page_seo (id, page_name, title, description, keywords, structured_data, created_at, updated_at) FROM stdin;
+1	home	شقق للبيع في القاهرة الجديدة | Dubai Marina Luxury Apartments | Hassan Allam Properties | Mohamed Assem	شقق للبيع في القاهرة الجديدة, فيلات كمبوند للبيع, Dubai Marina luxury apartments for sale, Hassan Allam Swan Lake Resort properties, Binghatti Stars Business Bay. Expert real estate consultant Egypt Dubai with 30+ years experience.	شقق للبيع في القاهرة الجديدة,فيلات كمبوند للبيع,Dubai Marina luxury apartments,Hassan Allam Properties,Binghatti Stars Business Bay	\N	2025-06-02 04:07:37.031987	2025-06-02 04:07:37.031987
 \.
 
 
@@ -574,6 +668,14 @@ COPY public.properties (id, title, description, address, city, state, zip_code, 
 
 
 --
+-- Data for Name: seo_optimization_log; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.seo_optimization_log (id, optimization_date, status, keywords_updated, pages_optimized, error_message, created_at) FROM stdin;
+\.
+
+
+--
 -- Data for Name: session; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -657,7 +759,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active, password_hash, first_name, last_name) FROM stdin;
-1	owner	3aba10046639ba8fdb91dc608040a869664e1d6f8f90a6ee9c4666a3c21fb620734342bcef43cbb9b135bd59badada72e3d1c63da5b5331d1e773c15fbbf1330.6805553876c76d863e899a9b77bc49dc	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
+1	owner	49002a79204b748165421542062b2b6f91853ebe781e5b97e974c0a48044cd870b115cd76d5acdf731cf7ba6d9f878adc139c53014e3f36ee0683efe56d21961.3e6a0d495ed0b95cc71c9d7caab8db19	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t	\N	\N	\N
 \.
 
@@ -691,6 +793,13 @@ SELECT pg_catalog.setval('public.newsletters_id_seq', 1, true);
 
 
 --
+-- Name: page_seo_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.page_seo_id_seq', 1, true);
+
+
+--
 -- Name: projects_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
@@ -702,6 +811,13 @@ SELECT pg_catalog.setval('public.projects_id_seq', 5, true);
 --
 
 SELECT pg_catalog.setval('public.properties_id_seq', 75, true);
+
+
+--
+-- Name: seo_optimization_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.seo_optimization_log_id_seq', 1, false);
 
 
 --
@@ -767,6 +883,22 @@ ALTER TABLE ONLY public.newsletters
 
 
 --
+-- Name: page_seo page_seo_page_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.page_seo
+    ADD CONSTRAINT page_seo_page_name_key UNIQUE (page_name);
+
+
+--
+-- Name: page_seo page_seo_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.page_seo
+    ADD CONSTRAINT page_seo_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: projects projects_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -780,6 +912,14 @@ ALTER TABLE ONLY public.projects
 
 ALTER TABLE ONLY public.properties
     ADD CONSTRAINT properties_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: seo_optimization_log seo_optimization_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seo_optimization_log
+    ADD CONSTRAINT seo_optimization_log_pkey PRIMARY KEY (id);
 
 
 --
@@ -827,6 +967,20 @@ ALTER TABLE ONLY public.users
 --
 
 CREATE INDEX "IDX_session_expire" ON public.session USING btree (expire);
+
+
+--
+-- Name: idx_page_seo_page_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_page_seo_page_name ON public.page_seo USING btree (page_name);
+
+
+--
+-- Name: idx_seo_log_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_seo_log_date ON public.seo_optimization_log USING btree (optimization_date);
 
 
 --
