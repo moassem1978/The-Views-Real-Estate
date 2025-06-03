@@ -325,12 +325,21 @@ export default function PropertyForm({
         }
       }
 
-      // Step 3: Update property with final image list
+      // Step 3: Update property with final image list - ensure clean paths
       if (finalImageUrls.length > 0) {
-        await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-          images: finalImageUrls
+        const cleanImageUrls = finalImageUrls.map(url => {
+          // Remove any double slashes and ensure single leading slash for display
+          let cleanUrl = url.replace(/\/+/g, '/');
+          if (!cleanUrl.startsWith('/') && !cleanUrl.startsWith('http')) {
+            cleanUrl = `/${cleanUrl}`;
+          }
+          return cleanUrl;
         });
-        console.log(`Updated property with ${finalImageUrls.length} images`);
+        
+        await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
+          images: cleanImageUrls
+        });
+        console.log(`Updated property with ${cleanImageUrls.length} cleaned image paths`);
       }
 
       // Success
