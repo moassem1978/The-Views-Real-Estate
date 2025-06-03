@@ -11,22 +11,22 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  
+
   <!-- Preconnect to improve font loading performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  
+
   <!-- Critical CSS inlined to improve render performance -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
-    
+
     html, body {
       margin: 0;
       padding: 0;
       font-family: 'Montserrat', sans-serif;
       background-color: #F9F6F2;
     }
-    
+
     /* Minimal critical CSS to show something useful during load */
     .loading-spinner {
       display: flex;
@@ -35,7 +35,7 @@
       align-items: center;
       justify-content: center;
     }
-    
+
     .loading-spinner::after {
       content: "";
       width: 40px;
@@ -45,7 +45,7 @@
       border-top-color: transparent;
       animation: spin 1s linear infinite;
     }
-    
+
     @keyframes spin {
       to { transform: rotate(360deg); }
     }

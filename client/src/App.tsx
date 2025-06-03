@@ -1,15 +1,18 @@
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import { Suspense, useEffect, useState, lazy } from "react";
+import { Route, Switch } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
-import React, { lazy, Suspense, useEffect } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { clearImageCache } from "./lib/utils";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import { ErrorBoundary } from "react-error-boundary";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
+
+// Import necessary components from ui library
+import { Button } from "@/components/ui/button";
+import { X, Download, RefreshCw } from "lucide-react";
 
 // Streamlined loading fallback
 const LoadingFallback = () => (
@@ -73,7 +76,7 @@ const routes = [
 function Router() {
   // Track page views when routes change
   useAnalytics();
-  
+
   // Preload critical routes to improve perceived performance
   const preloadCriticalRoutes = () => {
     // Use specific imports instead of dynamic route variables to avoid Vite warnings
@@ -165,21 +168,21 @@ function Router() {
           <ProjectDetails />
         </Suspense>
       </Route>
-      
+
       {/* Authentication test page */}
       <Route path="/auth-test">
         <Suspense fallback={<LoadingFallback />}>
           <AuthTest />
         </Suspense>
       </Route>
-      
+
       {/* Protected routes - simplified implementation */}
       <Route path="/dashboard">
         <Suspense fallback={<LoadingFallback />}>
           <Dashboard />
         </Suspense>
       </Route>
-      
+
       <ProtectedRoute 
         path="/user-management" 
         component={() => (
@@ -189,7 +192,7 @@ function Router() {
         )}
         requiredRole={['owner', 'admin']}
       />
-      
+
       <ProtectedRoute 
         path="/project-management" 
         component={() => (
@@ -199,7 +202,7 @@ function Router() {
         )}
         requiredRole={['owner', 'admin']}
       />
-      
+
       {/* Fallback to 404 */}
       <Route>
         <Suspense fallback={<LoadingFallback />}>
@@ -228,29 +231,141 @@ function ErrorFallback({error, resetErrorBoundary}: {error: Error; resetErrorBou
 }
 
 function App() {
-  // Initialize Google Analytics when app loads
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
+  const [updateRegistration, setUpdateRegistration] = useState<ServiceWorkerRegistration | null>(null);
+
   useEffect(() => {
-    // Verify required environment variable is present
-    if (!import.meta.env.VITE_GA_MEASUREMENT_ID) {
-      console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
-    } else {
-      initGA();
-    }
-    
-    document.documentElement.classList.add('overflow-auto');
-    document.body.classList.add('overflow-auto', 'min-h-screen');
-    
+    // Initialize analytics
+    initGA();
+
+    // Initialize performance monitoring
+    //initPerformanceMonitoring();
+
+    // Track initial page view
+    //trackPageView(window.location.pathname);
+
+    // PWA Installation prompt
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    // PWA Update detection
+    const handleServiceWorkerUpdate = () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
+        });
+
+        navigator.serviceWorker.register('/sw.js').then((registration) => {
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  setUpdateRegistration(registration);
+                  setShowUpdatePrompt(true);
+                }
+              });
+            }
+          });
+        });
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    handleServiceWorkerUpdate();
+
     return () => {
-      document.documentElement.classList.remove('overflow-auto');
-      document.body.classList.remove('overflow-auto', 'min-h-screen');
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setShowInstallPrompt(false);
+      }
+      setDeferredPrompt(null);
+    }
+  };
+
+  const handleUpdateClick = () => {
+    if (updateRegistration && updateRegistration.waiting) {
+      updateRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      setShowUpdatePrompt(false);
+    }
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <AuthProvider>
           <div className="min-h-screen flex flex-col">
+            {showInstallPrompt && (
+              <div className="fixed top-4 right-4 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 max-w-sm">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Download className="h-6 w-6 text-gold-accent" />
+                    <div>
+                      <h3 className="font-semibold text-sm">Install The Views</h3>
+                      <p className="text-xs text-gray-600 mt-1">Get quick access to properties and faster loading</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowInstallPrompt(false)}
+                    className="h-auto p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex space-x-2 mt-3">
+                  <Button onClick={handleInstallClick} size="sm" className="text-xs">
+                    Install
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowInstallPrompt(false)} className="text-xs">
+                    Not now
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {showUpdatePrompt && (
+              <div className="fixed top-4 right-4 z-50 bg-blue-50 border border-blue-300 rounded-lg shadow-lg p-4 max-w-sm">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <RefreshCw className="h-6 w-6 text-blue-600" />
+                    <div>
+                      <h3 className="font-semibold text-sm">Update Available</h3>
+                      <p className="text-xs text-gray-600 mt-1">A new version is ready with improvements</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowUpdatePrompt(false)}
+                    className="h-auto p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex space-x-2 mt-3">
+                  <Button onClick={handleUpdateClick} size="sm" className="text-xs">
+                    Update
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowUpdatePrompt(false)} className="text-xs">
+                    Later
+                  </Button>
+                </div>
+              </div>
+            )}
             <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading...</div>}>
               <Router />
             </Suspense>
