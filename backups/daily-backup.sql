@@ -748,7 +748,7 @@ bil6eoA8NCISvoNmVfOWxy4TGpbmdIC0	{"cookie":{"originalMaxAge":3888000000,"expires
 6vay-gXvnaVdfa3pzNf7aaTTy4SS_KFJ	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-17T11:44:48.650Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-17 11:44:49
 L5pOHipGM3Y_sCGIFOxqtyHePQZMidnv	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-18T10:36:00.640Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 10:36:01
 YyKVRy8YSo0DcwDD3UpXDVwCGi-Y8nf4	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-18T13:39:47.100Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 13:39:48
-Ks_JW1QDGjHdzkK1GCQK_OWDJ8KzVEtP	{"cookie":{"originalMaxAge":3887999999,"expires":"2025-07-18T14:45:42.830Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 14:45:43
+Ks_JW1QDGjHdzkK1GCQK_OWDJ8KzVEtP	{"cookie":{"originalMaxAge":3887999999,"expires":"2025-07-18T14:53:31.917Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 14:53:32
 vGrTnO30oJ3NAPHxFT9Zykt9Zw8DzzRi	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-18T10:15:36.773Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 10:15:37
 6HL_IrGqsIoHtSw90VUCM-zyU2FAL8dP	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-15T07:54:52.535Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-15 07:54:53
 \.
@@ -767,8 +767,8 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active, password_hash, first_name, last_name) FROM stdin;
+1	owner	65d160771fef1514bd8ca12e9769ba73737f1d874c3ab7f45e6a3e96e806d411eaecce14249c9e89d4a99cd1579b0e1ed95ab6b1754cd8e91dfa68467aa80db3.d73b1489ca2615d7ed37bcf387033597	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t	\N	\N	\N
-1	owner	7c3cdcc8e262a0c3d258e50a6ff66b1744b9f77a7c92a4d2f9cfc497b34f814fad9e933f503eb6c348f95e382c806193070b9739b717e5bb3b8efbf5f3463d01.e86a30d9bb43bb460ef52d13ab7eaca5	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 \.
 
 
