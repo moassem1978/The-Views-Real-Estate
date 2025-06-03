@@ -38,6 +38,27 @@ async function throwIfResNotOk(res: Response) {
  * @returns Response object
  */
 export async function apiRequest(
+  method: string,
+  url: string,
+  data?: any,
+): Promise<Response> {
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    credentials: 'include',
+  };
+
+  if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+    options.body = JSON.stringify(data);
+  }
+
+  return apiRequestInternal(url, options);
+}
+
+async function apiRequestInternal(
   url: string,
   options: RequestInit = {},
 ): Promise<Response> {
