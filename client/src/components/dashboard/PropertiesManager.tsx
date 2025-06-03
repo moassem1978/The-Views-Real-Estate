@@ -70,28 +70,42 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
   const { data, isLoading, error } = useQuery({
     queryKey: ["/api/properties", page, searchQuery, listingTypeFilter, propertyTypeFilter, cityFilter],
     queryFn: async () => {
-      const queryParams = new URLSearchParams();
-      queryParams.append('page', page.toString());
-      queryParams.append('pageSize', pageSize.toString());
+      try {
+        const queryParams = new URLSearchParams();
+        queryParams.append('page', page.toString());
+        queryParams.append('pageSize', pageSize.toString());
 
-      if (searchQuery) {
-        queryParams.append('search', searchQuery);
+        if (searchQuery) {
+          queryParams.append('search', searchQuery);
+        }
+
+        if (listingTypeFilter && listingTypeFilter !== 'all') {
+          queryParams.append('listingType', listingTypeFilter);
+        }
+
+        if (propertyTypeFilter && propertyTypeFilter !== 'all') {
+          queryParams.append('propertyType', propertyTypeFilter);
+        }
+
+        if (cityFilter) {
+          queryParams.append('city', cityFilter);
+        }
+
+        console.log('Requesting properties with params:', queryParams.toString());
+        const response = await apiRequest("GET", `/api/properties?${queryParams.toString()}`);
+        
+        if (!response.ok) {
+          console.error('Properties API response not ok:', response.status, response.statusText);
+          throw new Error(`Failed to fetch properties: ${response.status} ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('Properties API response:', result);
+        return result;
+      } catch (error) {
+        console.error('Error in properties query:', error);
+        throw error;
       }
-
-      if (listingTypeFilter && listingTypeFilter !== 'all') {
-        queryParams.append('listingType', listingTypeFilter);
-      }
-
-      if (propertyTypeFilter && propertyTypeFilter !== 'all') {
-        queryParams.append('propertyType', propertyTypeFilter);
-      }
-
-      if (cityFilter) {
-        queryParams.append('city', cityFilter);
-      }
-
-      const response = await apiRequest("GET", `/api/properties?${queryParams.toString()}`);
-      return response.json();
     },
   });
 
