@@ -66,6 +66,26 @@ export default function ProtectionMonitor() {
     if (!confirm(`Are you sure you want to restore from ${backupFile}? This will overwrite current data.`)) {
       return;
     }
+  };
+
+  const autoRestore = async () => {
+    if (!confirm('This will automatically restore from the latest backup. Continue?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/auto-restore', { method: 'POST' });
+      const result = await response.json();
+      if (result.success) {
+        alert('System restored successfully!');
+        fetchData(); // Refresh data
+      } else {
+        alert('Auto-restoration failed: ' + result.message);
+      }
+    } catch (error) {
+      alert('Auto-restoration error: ' + error.message);
+    }
+  };
 
     try {
       const response = await fetch('/api/backups/restore', {
@@ -194,6 +214,21 @@ export default function ProtectionMonitor() {
               <div className="text-sm">Change Tracking</div>
               <div className="text-xs text-gray-500">All changes logged</div>
             </div>
+          </div>
+          
+          <div className="mt-6 flex gap-4">
+            <button 
+              onClick={createBackup}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Create Manual Backup
+            </button>
+            <button 
+              onClick={autoRestore}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Auto-Restore from Latest
+            </button>
           </div>
         </CardContent>
       </Card>

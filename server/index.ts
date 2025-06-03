@@ -358,6 +358,11 @@ app.use((req, res, next) => {
   const healthMonitor = HealthMonitor.getInstance();
   healthMonitor.startMonitoring();
 
+  // Auto-restore service
+  const { AutoRestoreService } = await import('./auto-restore-service');
+  const autoRestoreService = AutoRestoreService.getInstance();
+  await autoRestoreService.scheduleAutoBackups();
+
   // Request timeout middleware (30 seconds)
   app.use((req: Request, res: Response, next: NextFunction) => {
     res.setTimeout(30000, () => {
