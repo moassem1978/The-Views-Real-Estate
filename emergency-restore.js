@@ -1,6 +1,5 @@
-
-const { ManualRestoreService } = require('./server/manual-restore-service.ts');
-const { pool } = require('./server/db.ts');
+import { ManualRestoreService } from './server/manual-restore-service.ts';
+import { pool } from './server/db.ts';
 
 async function emergencyRestore() {
   console.log('🚨 Starting emergency restoration...');
