@@ -747,8 +747,8 @@ gAGSydMfZILLLRgjUnwOUEd-ey3EvkzU	{"cookie":{"originalMaxAge":2592000000,"expires
 bil6eoA8NCISvoNmVfOWxy4TGpbmdIC0	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-09T17:56:18.087Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-09 17:56:19
 6vay-gXvnaVdfa3pzNf7aaTTy4SS_KFJ	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-17T11:44:48.650Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-17 11:44:49
 L5pOHipGM3Y_sCGIFOxqtyHePQZMidnv	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-18T10:36:00.640Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 10:36:01
-Ks_JW1QDGjHdzkK1GCQK_OWDJ8KzVEtP	{"cookie":{"originalMaxAge":3887999999,"expires":"2025-07-18T14:21:57.551Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 14:21:58
 YyKVRy8YSo0DcwDD3UpXDVwCGi-Y8nf4	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-18T13:39:47.100Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 13:39:48
+Ks_JW1QDGjHdzkK1GCQK_OWDJ8KzVEtP	{"cookie":{"originalMaxAge":3887999999,"expires":"2025-07-18T14:27:25.759Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 14:27:26
 vGrTnO30oJ3NAPHxFT9Zykt9Zw8DzzRi	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-18T10:15:36.773Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 10:15:37
 6HL_IrGqsIoHtSw90VUCM-zyU2FAL8dP	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-15T07:54:52.535Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-15 07:54:53
 \.
@@ -767,7 +767,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active, password_hash, first_name, last_name) FROM stdin;
-1	owner	b4daf79e4445c4195a10cb77a276f6b50e3d9f81783dbcb0ed717628a6558d6e96fc7c9575e530f9a89ec064fff55260985bba3ff6b563b14ba51ec1cd767efd.2c8dfc85029db3c32644fe44b4265d2d	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
+1	owner	34bf7e6b6ea64c3a99a6fcecfc6b78e15a99fa339407ba1aad5b19448c486f0e90cd829624d8e9f16df802ce959105ea9a920f0b8a6629189b0eea91e7c40f2b.9c6e49d61da36a3c91c473d911cfe85f	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t	\N	\N	\N
 \.
 
