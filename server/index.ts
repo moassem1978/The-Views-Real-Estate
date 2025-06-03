@@ -133,6 +133,23 @@ const staticOptions = {
   lastModified: true
 };
 
+// Optimized image serving with aggressive caching
+app.use('/images', express.static('public/uploads', {
+  maxAge: '1y', // 1 year cache for images
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    // Set proper MIME types for WebP
+    if (filePath.endsWith('.webp')) {
+      res.setHeader('Content-Type', 'image/webp');
+    }
+    // Add immutable cache for optimized images
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    // Enable compression
+    res.setHeader('Vary', 'Accept-Encoding');
+  }
+}));
+
 // Serve all static files from public directory
 app.use(express.static('public', staticOptions));
 

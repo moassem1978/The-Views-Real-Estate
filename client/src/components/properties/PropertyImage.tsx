@@ -99,18 +99,22 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
   return (
     <div className={`relative ${className}`}>
       {!isLoaded && (
-        <div className="absolute inset-0 bg-gray-100 animate-pulse" />
+        <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+        </div>
       )}
       <img
         src={imageSrc}
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
-          isLoaded ? 'opacity-100' : 'opacity-0'
+        fetchpriority={index === 0 ? "high" : "auto"}
+        className={`w-full h-full object-cover transition-all duration-300 ${
+          isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}
         onLoad={handleLoad}
         onError={handleError}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       />
     </div>
   );

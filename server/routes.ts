@@ -11,6 +11,7 @@ import path from "path";
 import fs from "fs";
 import util from "util";
 import { setupAuth } from "./auth";
+import { optimizeImage, generateThumbnail, generateMultipleSizes } from "./utils/imageOptimizer";
 
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
@@ -1542,15 +1543,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     console.log("Is authenticated:", req.isAuthenticated());
     
     try {
-      // Check if user is authenticated - TEMPORARILY BYPASSING FOR DEBUGGING
-      // if (!req.isAuthenticated()) {
-      //   console.error("Property images upload failed: User not authenticated");
-      //   return res.status(401).json({ message: "Authentication required to upload property images" });
-      // }
-      
-      // Temporarily bypass auth check for debugging
+      // Check if user is authenticated
       if (!req.isAuthenticated()) {
-        console.warn("⚠️ Standard image upload: Auth check bypassed for debugging - THIS IS TEMPORARY");
+        console.error("Property images upload failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to upload property images" });
       }
 
       // Get the authenticated user from request
@@ -1569,6 +1565,49 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Process the uploaded files
       const files = req.files as Express.Multer.File[];
       console.log(`Received ${files.length} files`);
+
+      // Optimize images before storing
+      const optimizedImagePaths: string[] = [];
+      
+      for (const file of files) {
+        try {
+          console.log(`Optimizing image: ${file.originalname}`);
+          
+          // Read the uploaded file
+          const inputBuffer = fs.readFileSync(file.path);
+          
+          // Optimize the image
+          const optimizedBuffer = await optimizeImage(inputBuffer);
+          
+          // Generate filename with .webp extension
+          const timestamp = Date.now();
+          const randomId = Math.round(Math.random() * 1E9);
+          const optimizedFilename = `optimized-${timestamp}-${randomId}.webp`;
+          const optimizedPath = path.join(process.cwd(), 'public', 'uploads', 'properties', optimizedFilename);
+          
+          // Save optimized image
+          fs.writeFileSync(optimizedPath, optimizedBuffer);
+          
+          // Generate thumbnail
+          const thumbnailBuffer = await generateThumbnail(inputBuffer, 400);
+          const thumbnailFilename = `thumb-${timestamp}-${randomId}.webp`;
+          const thumbnailPath = path.join(process.cwd(), 'public', 'uploads', 'properties', thumbnailFilename);
+          fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+          
+          // Clean up original file
+          fs.unlinkSync(file.path);
+          
+          // Add to paths array
+          optimizedImagePaths.push(`/uploads/properties/${optimizedFilename}`);
+          
+          console.log(`Successfully optimized: ${file.originalname} -> ${optimizedFilename}`);
+        } catch (optimizationError) {
+          console.error(`Failed to optimize image ${file.originalname}:`, optimizationError);
+          // Fallback to original file
+          const fallbackPath = `/uploads/properties/${file.filename}`;
+          optimizedImagePaths.push(fallbackPath);
+        }
+      }
 
       // Additional fields sent by Windows/Chrome browsers
       const additionalFiles: Express.Multer.File[] = [];

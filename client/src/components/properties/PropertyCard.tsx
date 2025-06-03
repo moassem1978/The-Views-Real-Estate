@@ -53,12 +53,16 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           imagePath = imagePath.replace('uploads/properties', '/uploads/properties');
         }
         
-        // Add timestamp to avoid caching issues
-        const timestamp = Date.now();
-        const finalPath = `${imagePath}?t=${timestamp}`;
+        // Prefer optimized WebP images if available
+        if (imagePath.includes('uploads/properties') && !imagePath.includes('optimized-') && !imagePath.endsWith('.webp')) {
+          const filename = path.basename(imagePath, path.extname(imagePath));
+          const webpPath = imagePath.replace(filename, `optimized-${filename}`).replace(/\.(jpg|jpeg|png)$/i, '.webp');
+          imagePath = webpPath;
+        }
         
-        console.log(`PropertyCard: Setting image path to:`, finalPath);
-        setMainImage(finalPath);
+        // No timestamp needed for cached images
+        console.log(`PropertyCard: Setting image path to:`, imagePath);
+        setMainImage(imagePath);
       } else {
         // Fallback to placeholder
         console.log(`PropertyCard: No images found, using placeholder`);

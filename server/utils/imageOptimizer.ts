@@ -4,8 +4,9 @@ import fs from 'fs';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB max file size
 const MAX_DIMENSION = 1920; // Max width/height
+const THUMBNAIL_SIZE = 400; // Thumbnail size for listings
 
-export async function optimizeImage(inputBuffer: Buffer, options = {}) {
+export async function optimizeImage(inputBuffer: Buffer, options: { generateThumbnail?: boolean, quality?: number } = {}) {
   try {
     // Get image metadata
     const metadata = await sharp(inputBuffer).metadata();
@@ -19,42 +20,101 @@ export async function optimizeImage(inputBuffer: Buffer, options = {}) {
       height = Math.round(height * ratio);
     }
 
-    // Progressive optimization with quality reduction until size limit is met
-    let quality = 85;
-    let outputBuffer: Buffer;
-    let fileSize = Infinity;
+    // Convert to WebP for better compression and performance
+    const quality = options.quality || 85;
+    const outputBuffer = await sharp(inputBuffer)
+      .resize(width, height, {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .webp({ 
+        quality,
+        effort: 6, // High compression effort
+        nearLossless: false
+      })
+      .toBuffer();
 
-    while (quality >= 60 && fileSize > MAX_FILE_SIZE) {
-      outputBuffer = await sharp(inputBuffer)
+    // If file is still too large, reduce quality
+    if (outputBuffer.length > MAX_FILE_SIZE && quality > 60) {
+      return optimizeImage(inputBuffer, { ...options, quality: quality - 10 });
+    }
+
+    return outputBuffer;
+  } catch (err) {
+    console.error('Image optimization failed:', err);
+    // Fallback to JPEG if WebP fails
+    try {
+      const fallbackBuffer = await sharp(inputBuffer)
         .resize(width, height, {
           fit: 'inside',
           withoutEnlargement: true
         })
-        .jpeg({ quality, progressive: true })
+        .jpeg({ quality: 80, progressive: true })
         .toBuffer();
-
-      fileSize = outputBuffer.length;
-      quality -= 5;
+      
+      return fallbackBuffer;
+    } catch (fallbackErr) {
+      throw new Error('Image optimization failed - please ensure image is valid and under 2MB');
     }
-
-    return outputBuffer || inputBuffer;
-  } catch (err) {
-    console.error('Image optimization failed:', err);
-    throw new Error('Image optimization failed - please ensure image is valid and under 2MB');
   }
 }
 
-export async function generateThumbnail(inputBuffer: Buffer) {
+export async function generateThumbnail(inputBuffer: Buffer, size: number = THUMBNAIL_SIZE) {
   try {
-    return await sharp(inputBuffer)
-      .resize(300, 300, {
-        fit: 'cover'
+    // Generate WebP thumbnail for better performance
+    const webpBuffer = await sharp(inputBuffer)
+      .resize(size, size, {
+        fit: 'cover',
+        position: 'center'
       })
-      .jpeg({ quality: 70 })
+      .webp({ 
+        quality: 75,
+        effort: 4
+      })
       .toBuffer();
+
+    return webpBuffer;
   } catch (err) {
     console.error('Thumbnail generation failed:', err);
-    throw new Error('Thumbnail generation failed');
+    // Fallback to JPEG
+    try {
+      return await sharp(inputBuffer)
+        .resize(size, size, {
+          fit: 'cover',
+          position: 'center'
+        })
+        .jpeg({ quality: 70 })
+        .toBuffer();
+    } catch (fallbackErr) {
+      throw new Error('Thumbnail generation failed');
+    }
+  }
+}
+
+export async function generateMultipleSizes(inputBuffer: Buffer) {
+  try {
+    const sizes = [
+      { name: 'thumbnail', width: 400, height: 300 },
+      { name: 'medium', width: 800, height: 600 },
+      { name: 'large', width: 1200, height: 900 }
+    ];
+
+    const results: { [key: string]: Buffer } = {};
+
+    for (const size of sizes) {
+      results[size.name] = await sharp(inputBuffer)
+        .resize(size.width, size.height, {
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .webp({ quality: 85, effort: 6 })
+        .toBuffer();
+    }
+
+    return results;
+  } catch (err) {
+    console.error('Multiple sizes generation failed:', err);
+    throw new Error('Multiple sizes generation failed');
   }
 }
 
