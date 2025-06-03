@@ -250,222 +250,97 @@ export default function PropertyForm({
   // Create/Update property mutation
   const mutation = useMutation({
     mutationFn: async (data: Partial<Property>) => {
+      console.log(`Submitting ${isEditing ? 'update' : 'create'} for property:`, data);
       if (isEditing) {
-        return await apiRequest("PUT", `/api/properties/${propertyId}`, data);
+        return await apiRequest("PATCH", `/api/properties/${propertyId}`, data);
       } else {
         return await apiRequest("POST", "/api/properties", data);
       }
     },
     onSuccess: () => {
-      // Invalidate properties queries
+      console.log(`Property ${isEditing ? 'updated' : 'created'} successfully`);
       queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
-
       if (isEditing) {
         queryClient.invalidateQueries({ queryKey: [`/api/properties/${propertyId}`] });
       }
     },
+    onError: (error) => {
+      console.error("Property mutation error:", error);
+    }
   });
 
   // Handle form submission
   const onSubmit = async (data: any) => {
+    
     try {
-      // Handle "none" placeholder values correctly
-      // Replace "none" placeholder values with appropriate defaults
-      if (data.city === "none") {
-        data.city = "";
-      }
+      console.log("Form submission started for property:", propertyId || "new");
       
-      if (data.country === "none") {
-        data.country = "";
-      }
-      
-      if (data.propertyType === "none") {
-        data.propertyType = "";
-      }
-      
-      if (data.listingType === "none") {
-        data.listingType = "";
-      }
-      
-      if (data.projectName === "none") {
-        data.projectName = "";
-      }
+      // Clean data and set defaults
+      const cleanData = {
+        ...data,
+        city: data.city === "none" ? "" : data.city,
+        country: data.country === "none" ? "Egypt" : data.country,
+        propertyType: data.propertyType === "none" ? "apartment" : data.propertyType?.toLowerCase(),
+        listingType: data.listingType === "none" ? "Primary" : data.listingType,
+        projectName: data.projectName === "none" ? "" : data.projectName,
+        state: data.state || data.city,
+        address: data.address || data.projectName
+      };
 
-      // Ensure state matches city if not already set
-      if (!data.state && data.city) {
-        data.state = data.city;
-      }
+      console.log("Submitting cleaned property data:", cleanData);
 
-      // Backend requires an address - use project name as address if not provided
-      if (!data.address && data.projectName) {
-        data.address = data.projectName;
-      }
+      // Step 1: Save/update property
+      const response = await mutation.mutateAsync(cleanData);
+      const propertyResult = await response.json();
+      const savedPropertyId = isEditing ? propertyId : propertyResult.id;
 
-      // CRITICAL FIX: Improved handling of property type
-      if (data.propertyType && data.propertyType.trim() && data.propertyType !== "none") {
-        // Normalize propertyType to lowercase for consistency
-        data.propertyType = data.propertyType.trim().toLowerCase();
-        console.log(`Using normalized property type: ${data.propertyType}`);
-      } else {
-        // Default to apartment if no property type is provided
-        console.log("WARNING: Property type not set! Setting default to apartment");
-        data.propertyType = "apartment"; 
-      }
+      console.log(`Property ${isEditing ? 'updated' : 'created'} with ID:`, savedPropertyId);
 
-      // Ensure we have a valid property type from our standard list
-      const validPropertyTypes = ["apartment", "penthouse", "chalet", "twinhouse", "villa", "office", "townhouse"];
-      if (!validPropertyTypes.includes(data.propertyType)) {
-        console.log(`WARNING: Invalid property type "${data.propertyType}", defaulting to apartment`);
-        data.propertyType = "apartment";
-      }
+      // Step 2: Handle images if any
+      let finalImageUrls = [...(existingImages || [])];
 
-      console.log(`Final property type being sent: ${data.propertyType}`);
-
-      // Ensure listingType is included 
-      if (!data.listingType) {
-        data.listingType = "Primary";
-      }
-
-      // Reference field completely removed - no reference, references, or reference_number
-
-      console.log("Sending property data:", {
-        city: data.city,
-        propertyType: data.propertyType,
-        listingType: data.listingType,
-        developerName: data.developerName
-      });
-
-      // Step 1: Save property data first
-      const response = await mutation.mutateAsync(data);
-      const property = await response.json();
-
-      // Get the property ID (either from the saved property or existing ID)
-      const savedPropertyId = isEditing ? propertyId : property.id;
-
-      // Step 2: Handle image uploads and existing images
       if (images.length > 0) {
+        setUploading(true);
         try {
-          setUploading(true);
-          console.log(`Uploading ${images.length} images for property ${savedPropertyId}`);
-
-          // Create FormData
           const formData = new FormData();
-
-          // Add property ID to help the server associate images with the right property
           formData.append('propertyId', savedPropertyId.toString());
+          images.forEach(image => formData.append('images', image));
 
-          // Log what we're doing
-          console.log(`Uploading ${images.length} images for property ID: ${savedPropertyId}`);
-
-          // Add each image to the form data
-          images.forEach((image, idx) => {
-            console.log(`Adding image ${idx + 1}/${images.length}: ${image.name} (${Math.round(image.size/1024)}KB)`);
-            formData.append('images', image);
-          });
-
-          // Use direct upload endpoint which doesn't require authentication
-          const response = await fetch(`/api/upload/property-images-direct`, {
+          const uploadResponse = await fetch('/api/upload/property-images-direct', {
             method: 'POST',
             body: formData,
           });
 
-          if (!response.ok) {
-            throw new Error(`Image upload failed with status: ${response.status}`);
+          if (!uploadResponse.ok) {
+            throw new Error(`Upload failed: ${uploadResponse.status}`);
           }
 
-          const uploadResult = await response.json();
-          const imageUrls = uploadResult.fileUrls || uploadResult.imageUrls || [];
-          console.log(`Uploaded ${imageUrls.length} images successfully:`, imageUrls);
-
-          // Step 3: Update the property with the uploaded image URLs and existing images
-
-          // Create a set of unique image URLs to prevent duplication
-          const uniqueImageUrls = new Set([...(existingImages || []), ...imageUrls]);
-          const validImages = Array.from(uniqueImageUrls);
-
-          console.log(`Updating property with ${validImages.length} total unique images`);
-          console.log('Existing images:', existingImages);
-          console.log('New image URLs:', imageUrls);
-          console.log('Final unique image list:', validImages);
-
-          // Ensure all images have the correct path format (add leading slash if missing)
-          const formattedImages = validImages.map(img => {
-            if (typeof img === 'string' && !img.startsWith('/') && !img.startsWith('http')) {
-              return `/${img}`;
-            }
-            return img;
-          });
-
-          console.log('Formatted image list with correct paths:', formattedImages);
-
-          // Update property with the deduplicated images, letting the database handle the JSON conversion
-          const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-            images: formattedImages
-          });
-
-          if (!updateResponse.ok) {
-            throw new Error(`Property image update failed with status: ${updateResponse.status}`);
-          }
-
-          console.log(`Successfully updated property ${savedPropertyId} with ${validImages.length} images`);
-        } catch (error) {
-          console.error("Error updating property images:", error);
-          toast({
-            variant: "destructive",
-            title: "Error updating property images",
-            description: error instanceof Error ? error.message : "Failed to update property images"
-          });
-          return; // Don't close the form on error
+          const uploadResult = await uploadResponse.json();
+          const newImageUrls = uploadResult.fileUrls || uploadResult.imageUrls || [];
+          finalImageUrls = [...finalImageUrls, ...newImageUrls];
+          
+          console.log(`Uploaded ${newImageUrls.length} new images`);
         } finally {
           setUploading(false);
         }
-      } else if (existingImages.length > 0 && isEditing) {
-        // CRITICAL FIX: Enhanced handling of existing images in update requests
-        try {
-          console.log(`Updating property ${savedPropertyId} with ${existingImages.length} existing images`);
-          console.log("Existing images to preserve:", existingImages);
-
-          // First, ensure all images are properly formatted strings
-          const validatedImages = existingImages.map(img => 
-            typeof img === 'string' ? img.trim() : String(img)
-          ).filter(Boolean);
-
-          console.log(`Prepared ${validatedImages.length} validated image strings`);
-
-          // Send the update request with proper images array format
-          const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-            images: validatedImages
-          });
-
-          if (!updateResponse.ok) {
-            throw new Error(`Property image update failed with status: ${updateResponse.status}`);
-          }
-
-          console.log(`Successfully updated property ${savedPropertyId} with ${validatedImages.length} images`);
-        } catch (error) {
-          console.error("Error updating property images:", error);
-          toast({
-            variant: "destructive",
-            title: "Error updating property images",
-            description: error instanceof Error ? error.message : "Failed to update property images"
-          });
-          return; // Don't close the form on error
-        }
       }
 
-      // Success notification
+      // Step 3: Update property with final image list
+      if (finalImageUrls.length > 0) {
+        await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
+          images: finalImageUrls
+        });
+        console.log(`Updated property with ${finalImageUrls.length} images`);
+      }
+
+      // Success
       toast({
         title: isEditing ? "Property updated" : "Property created",
-        description: "Your property has been saved successfully.",
-        variant: "default"
+        description: "Property saved successfully"
       });
 
-      // Only close the form after all operations have completed successfully
       if (onSuccess) {
-        // Small delay to ensure toast is visible
-        setTimeout(() => {
-          onSuccess();
-        }, 500);
+        setTimeout(onSuccess, 500);
       }
 
     } catch (error) {
@@ -500,10 +375,17 @@ export default function PropertyForm({
     );
   }
 
+  // Custom form submit handler to prevent page reloads
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    form.handleSubmit(onSubmit)();
+  };
+
   // Render form
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 overflow-y-auto max-h-[80vh]">
+      <form onSubmit={handleFormSubmit} className="space-y-8 overflow-y-auto max-h-[80vh]">
         {/* Form header with buttons */}
         <div className="flex justify-between items-center sticky top-0 bg-white z-10 pb-4 border-b">
           <h2 className="text-xl font-semibold">{isEditing ? "Edit Property" : "Add New Property"}</h2>
