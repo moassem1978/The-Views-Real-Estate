@@ -431,47 +431,6 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Auto-login endpoint for dashboard access
-  app.get("/api/auth/auto-login", async (req, res) => {
-    try {
-      console.log("Auto-login endpoint called");
-      
-      if (req.isAuthenticated()) {
-        console.log("User already authenticated");
-        const user = req.user as SelectUser;
-        const { password, ...userWithoutPassword } = user;
-        return res.json({
-          user: userWithoutPassword
-        });
-      }
-
-      // Auto-login as owner account
-      const ownerUser = await storage.getUserByUsername("owner");
-      if (ownerUser) {
-        console.log("Serializing user: owner (ID: " + ownerUser.id + ")");
-        
-        req.login(ownerUser, (err) => {
-          if (err) {
-            console.error("Auto-login failed:", err);
-            return res.status(500).json({ message: "Auto-login failed" });
-          }
-          
-          console.log("Auto-login successful for owner");
-          const { password, ...userWithoutPassword } = ownerUser;
-          return res.json({
-            user: userWithoutPassword
-          });
-        });
-      } else {
-        console.error("Owner user not found");
-        return res.status(404).json({ message: "Owner user not found" });
-      }
-    } catch (error) {
-      console.error("Auto-login error:", error);
-      return res.status(500).json({ message: "Auto-login failed" });
-    }
-  });
-
   app.get("/api/user", (req, res) => {
     try {
       // Check authentication status

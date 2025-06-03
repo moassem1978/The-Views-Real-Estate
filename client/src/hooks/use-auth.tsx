@@ -44,36 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetch: refetchUser,
   } = useQuery<User | null>({
     queryKey: ["/api/user"],
-    queryFn: async () => {
-      try {
-        // Try normal authentication first
-        const response = await fetch("/api/user", {
-          credentials: "include",
-        });
-        
-        if (response.ok) {
-          return await response.json();
-        }
-        
-        // If 401, try auto-login
-        if (response.status === 401) {
-          console.log("Authentication failed, attempting auto-login");
-          const autoLoginResponse = await fetch("/api/auth/auto-login", {
-            credentials: "include",
-          });
-          
-          if (autoLoginResponse.ok) {
-            const autoLoginData = await autoLoginResponse.json();
-            return autoLoginData.user;
-          }
-        }
-        
-        return null;
-      } catch (error) {
-        console.error("Auth query error:", error);
-        return null;
-      }
-    },
+    queryFn: getQueryFn({ on401: "returnNull" }),
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
