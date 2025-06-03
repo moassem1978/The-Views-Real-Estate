@@ -927,20 +927,32 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       console.log("Simplified update data:", updateData);
       
-      // Update the property
+      // Update the property with detailed logging
+      console.log(`Attempting to update property ${id} with:`, JSON.stringify(updateData, null, 2));
       const updatedProperty = await dbStorage.updateProperty(id, updateData);
       
       if (!updatedProperty) {
-        return res.status(500).json({ message: "Failed to update property" });
+        console.error(`Update failed - no property returned for ID ${id}`);
+        return res.status(500).json({ message: "Failed to update property - no data returned" });
       }
       
-      console.log("Property update successful:", updatedProperty.id);
+      console.log("Property update successful:", {
+        id: updatedProperty.id,
+        title: updatedProperty.title,
+        updatedFields: Object.keys(updateData)
+      });
       return res.json(updatedProperty);
     } catch (error) {
-      console.error("Error in property update:", error);
+      console.error("DETAILED ERROR in property update:", {
+        propertyId: id,
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        updateData: updateData
+      });
       return res.status(500).json({ 
         message: "Failed to update property", 
-        error: error instanceof Error ? error.message : "Unknown error" 
+        error: error instanceof Error ? error.message : "Unknown error",
+        details: error instanceof Error ? error.stack : undefined
       });
     }
   });
