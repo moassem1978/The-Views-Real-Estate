@@ -103,7 +103,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   // Set basic headers for all requests
   res.setHeader('X-Content-Type-Options', 'nosniff');
-
+  
   // Add mobile-friendly headers only for mobile requests
   const userAgent = req.headers['user-agent'] || '';
   if (userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android')) {
@@ -311,20 +311,6 @@ app.use((req, res, next) => {
     next();
   });
 
-  // Health monitoring
-  const healthMonitor = HealthMonitor.getInstance();
-  healthMonitor.startMonitoring();
-
-  // Request timeout middleware (30 seconds)
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    res.setTimeout(30000, () => {
-      const err = new Error('Request timeout');
-      (err as any).status = 408;
-      next(err);
-    });
-    next();
-  });
-
   // Add simplified health check endpoints
   app.get('/health', (req, res) => {
     const actualPort = server.address()?.port || port;
@@ -351,7 +337,7 @@ app.use((req, res, next) => {
     return new Promise((resolve, reject) => {
       const net = require('net');
       const server = net.createServer();
-
+      
       server.listen(startPort, "0.0.0.0", () => {
         const port = server.address()?.port || startPort;
         server.close(() => {
@@ -375,7 +361,7 @@ app.use((req, res, next) => {
   // Start with port 5000 but allow fallback to other ports
   const preferredPorts = [5000, 3000, 8000, 8080, 4000];
   let port = 5000;
-
+  
   try {
     // Try preferred ports first, then find any available port
     for (const preferredPort of preferredPorts) {
