@@ -2181,8 +2181,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             // Set liberal permissions
             fs.chmodSync(filePath, 0o666);
             
-            // Add to successful files - ensure clean path format
-            const fileUrl = `uploads/properties/${file.filename}`;
+            // Add to successful files - store path relative to public folder for correct serving
+            const fileUrl = `/uploads/properties/${file.filename}`;
             fileUrls.push(fileUrl);
           } catch (fileError) {
             console.error(`Error processing file ${file.originalname}:`, fileError);
@@ -2485,8 +2485,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
               // Fix permissions to ensure readability
               fs.chmodSync(destPath, 0o666);
               
-              // Add URL to results - ensure clean path format
-              const fileUrl = `uploads/properties/${file.filename}`;
+              // Add URL to results - store path relative to public folder for correct serving
+              const fileUrl = `/uploads/properties/${file.filename}`;
               fileUrls.push(fileUrl);
             } else {
               console.error(`File saved but has zero size: ${destPath}`);
