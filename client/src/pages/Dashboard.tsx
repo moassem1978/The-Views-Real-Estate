@@ -72,11 +72,31 @@ function DashboardStatCard({ title, value, description, icon, linkTo }: Dashboar
 // Dashboard component with full management functionality
 function Dashboard() {
   console.log("Dashboard component rendering");
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, refetchUser } = useAuth();
   console.log("Auth context loaded:", !!user);
   
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Auto-login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      console.log("No user found, attempting auto-login");
+      fetch('/api/auth/auto-login', {
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.user) {
+          console.log("Auto-login successful");
+          refetchUser();
+        }
+      })
+      .catch(error => {
+        console.error("Auto-login failed:", error);
+      });
+    }
+  }, [authLoading, user, refetchUser]);
   
   // Property management state
   const [showPropertyModal, setShowPropertyModal] = useState(false);

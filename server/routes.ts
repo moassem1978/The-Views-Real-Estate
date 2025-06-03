@@ -173,6 +173,30 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // Set up authentication routes and middleware
   setupAuth(app);
 
+  // Auto-login route for dashboard access
+  app.get("/api/auth/auto-login", async (req: Request, res: Response) => {
+    try {
+      // Get the owner account
+      const owner = await dbStorage.getUserByUsername('owner');
+      if (owner && owner.isActive) {
+        // Log in the user
+        req.login(owner, (err) => {
+          if (err) {
+            console.error('Auto-login error:', err);
+            return res.status(500).json({ message: "Login failed" });
+          }
+          console.log('Auto-login successful for owner');
+          res.json({ user: owner, message: "Auto-login successful" });
+        });
+      } else {
+        res.status(404).json({ message: "Owner account not found or inactive" });
+      }
+    } catch (error) {
+      console.error('Auto-login error:', error);
+      res.status(500).json({ message: "Auto-login failed" });
+    }
+  });
+
   // Serve static projects page to bypass React crashes
 
 
