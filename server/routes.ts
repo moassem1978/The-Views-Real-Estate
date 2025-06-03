@@ -2599,6 +2599,31 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // EMERGENCY IMAGE RESTORATION ENDPOINT
+  app.post("/api/emergency-restore-images", async (req: Request, res: Response) => {
+    try {
+      console.log("🚨 EMERGENCY IMAGE RESTORATION TRIGGERED");
+      
+      // Import the emergency restore function
+      const { emergencyImageRestore } = await import('./emergency-restore');
+      
+      const result = await emergencyImageRestore();
+      
+      res.json({
+        success: true,
+        message: `Emergency restoration completed! ${result.restoredCount}/${result.totalProperties} properties now have images.`,
+        data: result
+      });
+    } catch (error) {
+      console.error('Emergency restoration failed:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Emergency restoration failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // EMERGENCY: Property 60 specific upload endpoint
   app.post("/api/property-60-upload", finalUpload.array('images', 10), async (req: Request, res: Response) => {
     try {
