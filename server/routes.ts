@@ -4264,6 +4264,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     });
   });
 
+  // Add restoration endpoints
+  const { addRestoreEndpoints } = await import('./restore-endpoint');
+  await addRestoreEndpoints(app);
+
   // Create HTTP server
   const httpServer = createServer(app);
   // ===== CONTENT MARKETING & SEO ROUTES =====
