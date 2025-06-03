@@ -6,7 +6,9 @@ export class HealthMonitor {
     database: 'connected',
     memory: 0,
     uptime: 0,
-    lastCheck: new Date()
+    lastCheck: new Date(),
+    dbErrors: 0,
+    lastDbError: null as Date | null
   };
 
   static getInstance(): HealthMonitor {
@@ -46,6 +48,19 @@ export class HealthMonitor {
 
   isHealthy(): boolean {
     return this.healthStatus.server === 'running' && 
-           this.healthStatus.memory < 800; // Less than 800MB
+           this.healthStatus.memory < 800 && // Less than 800MB
+           this.healthStatus.dbErrors < 5; // Less than 5 recent DB errors
+  }
+
+  recordDatabaseError(): void {
+    this.healthStatus.dbErrors++;
+    this.healthStatus.lastDbError = new Date();
+    this.healthStatus.database = 'error';
+  }
+
+  resetDatabaseStatus(): void {
+    this.healthStatus.dbErrors = 0;
+    this.healthStatus.lastDbError = null;
+    this.healthStatus.database = 'connected';
   }
 }
