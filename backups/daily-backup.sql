@@ -716,6 +716,7 @@ poiiC3ECnT8X1eNGaTTTriZWGirQlbiM	{"cookie":{"originalMaxAge":2592000000,"expires
 nAN9tMAGflHeRPO90DfHPeCmWHff2lN0	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-25T20:54:46.290Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-26 12:59:47
 0IQB_1qNkKlYHHjI_IFrS0gTJAsiv7fR	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-26T13:31:47.024Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-26 16:24:38
 q-HLyejXFgASNSBamZi4OZvW65cr1JCE	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-22T18:39:42.103Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 06:11:17
+L5pOHipGM3Y_sCGIFOxqtyHePQZMidnv	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-18T10:35:36.380Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 10:35:37
 k7e8t-Un5r6F3aTHZJWzfxO8rRMW7JNc	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-23T18:29:11.249Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-23 18:29:18
 t_pFjWVr21Q2t5eamtoTabx-x9A4cI7E	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-05-22T17:18:48.781Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-05-22 18:39:08
 h2yvX7s2wYDnWaa0qu0-ILxIItR2xpie	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-13T13:44:43.034Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-13 13:44:44
@@ -766,7 +767,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active, password_hash, first_name, last_name) FROM stdin;
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t	\N	\N	\N
-1	owner	72c41e6c62551fca90bbe99afa03c3d23090fcbc1c38cb671979ffdf75cbec6bd354aff741bd7ff7cb841de20413b0ab30f375cb42ac3984ea054921ce41e954.eb7d48ce5e29704751feb1b1a9505c3a	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
+1	owner	84c9c11d71ef9a23487de9b4281f1476b05f97e3d2b42056f7b193f229105dd0918c952085259738ce9ac6e5642ef46e3f49ca8089aac6bd0c9695187d479830.741ec9a01b6d739be9173cb278696875	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 \.
 
 
