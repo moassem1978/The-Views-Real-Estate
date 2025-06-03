@@ -11,6 +11,7 @@ import path from "path";
 import fs from "fs";
 import util from "util";
 import { setupAuth } from "./auth";
+import AuditLogger from "./audit-logger";
 
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
@@ -214,7 +215,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Don't filter by user for admin and owner roles
       if (req.isAuthenticated()) {
         const user = req.user as Express.User;
-        console.log(`Authenticated user ${user.username} with role ${user.role} accessing property list`);
+        console.log(`PROPERTY ACCESS: User ${user.username} (${user.role}) accessing property list at ${new Date().toISOString()}`);
 
         // Admin and owner can see all properties
         // Regular users only see their own or published properties
@@ -729,12 +730,20 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Get the authenticated user from request
       const user = req.user as Express.User;
-      console.log(`User attempting to update property ${id}: ${user.username} (Role: ${user.role})`);
+      console.log(`🚨 PROPERTY UPDATE ATTEMPT: User ${user.username} (${user.role}) attempting to update property ${id} at ${new Date().toISOString()}`);
 
       // Get the property to check ownership
       const existingProperty = await dbStorage.getPropertyById(id);
       if (!existingProperty) {
         return res.status(404).json({ message: "Property not found" });
+      }
+
+      // STRICT AGENT RESTRICTIONS - Agents cannot modify existing properties unless they created them
+      if (user.role === 'user' && user.isAgent && existingProperty.createdBy !== user.id) {
+        console.error(`🚨 AGENT ACCESS VIOLATION: Agent ${user.username} attempted to modify property ${id} created by user ${existingProperty.createdBy}`);
+        return res.status(403).json({ 
+          message: "Agents can only modify properties they created. Contact administrator for changes to existing properties." 
+        });
       }
 
       // Check if user has permission to update this property
@@ -972,12 +981,20 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Get the authenticated user from request
       const user = req.user as Express.User;
-      console.log(`User attempting to delete property ${id}: ${user.username} (Role: ${user.role})`);
+      console.log(`🚨 PROPERTY DELETION ATTEMPT: User ${user.username} (${user.role}) attempting to delete property ${id} at ${new Date().toISOString()}`);
 
       // Get the property to check ownership
       const existingProperty = await dbStorage.getPropertyById(id);
       if (!existingProperty) {
         return res.status(404).json({ message: "Property not found" });
+      }
+
+      // STRICT RESTRICTION: Only owner can delete properties
+      if (user.role !== 'owner') {
+        console.error(`🚨 UNAUTHORIZED DELETION ATTEMPT: User ${user.username} (${user.role}) attempted to delete property ${id}`);
+        return res.status(403).json({ 
+          message: "Only the system owner can delete properties. Contact administrator to request property removal." 
+        });
       }
 
       // Check if user has permission to delete this property
@@ -3870,6 +3887,34 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     } catch (error) {
       console.error('Error generating sitemap:', error);
       res.status(500).send('Error generating sitemap');
+    }
+  });
+
+  // Audit trail endpoint - Owner only
+  app.get("/api/audit-trail", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.user as Express.User;
+      if (user.role !== 'owner') {
+        return res.status(403).json({ message: "Only system owner can access audit trails" });
+      }
+
+      const filters = {
+        userId: req.query.userId ? parseInt(req.query.userId as string) : undefined,
+        action: req.query.action as string,
+        resource: req.query.resource as string,
+        startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
+        endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
+      };
+
+      const auditTrail = await AuditLogger.getAuditTrail(filters);
+      res.json(auditTrail);
+    } catch (error) {
+      console.error("Error fetching audit trail:", error);
+      res.status(500).json({ message: "Failed to fetch audit trail" });
     }
   });
 
