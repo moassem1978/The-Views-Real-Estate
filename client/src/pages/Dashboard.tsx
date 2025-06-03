@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, AlertCircle, Loader2, Home, Building2, FileText, Users, Settings,
-  PlusCircle, ClipboardEdit, List, Star, X, Plus, Shield
+  PlusCircle, ClipboardEdit, List, Star, X, Plus
 } from "lucide-react";
 import {
   Card,
@@ -29,7 +29,6 @@ import PropertyForm from "@/components/dashboard/PropertyFormNew";
 import AnnouncementsManager from "@/components/dashboard/AnnouncementsManager";
 import AnnouncementForm from "@/components/dashboard/AnnouncementForm";
 import SiteSettingsForm from "@/components/dashboard/SiteSettingsForm";
-import AuditTrail from '../components/dashboard/AuditTrail';
 
 // Stat card component for dashboard
 interface DashboardStatCardProps {
@@ -62,11 +61,11 @@ function DashboardStatCard({ title, value, description, icon, linkTo }: Dashboar
       )}
     </Card>
   );
-
+  
   if (linkTo) {
     return <Link to={linkTo}>{content}</Link>;
   }
-
+  
   return content;
 }
 
@@ -75,10 +74,10 @@ function Dashboard() {
   console.log("Dashboard component rendering");
   const { user, isLoading: authLoading, refetchUser } = useAuth();
   console.log("Auth context loaded:", !!user);
-
+  
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
-
+  
   // Auto-login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
@@ -98,15 +97,15 @@ function Dashboard() {
       });
     }
   }, [authLoading, user, refetchUser]);
-
+  
   // Property management state
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | undefined>(undefined);
-
+  
   // Announcement management state
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<number | undefined>(undefined);
-
+  
   // Fetch stats for the dashboard
   const { data: propertyStats } = useQuery({
     queryKey: ['/api/properties'],
@@ -115,7 +114,7 @@ function Dashboard() {
     }),
     enabled: !!user,
   });
-
+  
   const { data: announcementStats } = useQuery({
     queryKey: ['/api/announcements'],
     select: (data: any) => ({
@@ -123,7 +122,7 @@ function Dashboard() {
     }),
     enabled: !!user,
   });
-
+  
   const { data: projectStats } = useQuery({
     queryKey: ['/api/projects'],
     select: (data: any) => ({
@@ -131,7 +130,7 @@ function Dashboard() {
     }),
     enabled: !!user,
   });
-
+  
   // Dashboard state
   const [state, setState] = useState({
     userExists: !!user,
@@ -139,29 +138,29 @@ function Dashboard() {
     hasError: false
   });
   console.log("Dashboard state:", state);
-
+  
   // Property form handlers
   const handlePropertyEdit = (propertyId: number) => {
     setSelectedPropertyId(propertyId);
     setShowPropertyModal(true);
   };
-
+  
   const handlePropertyFormClose = () => {
     setShowPropertyModal(false);
     setSelectedPropertyId(undefined);
   };
-
+  
   // Announcement form handlers
   const handleAnnouncementEdit = (announcementId: number) => {
     setSelectedAnnouncementId(announcementId);
     setShowAnnouncementModal(true);
   };
-
+  
   const handleAnnouncementFormClose = () => {
     setShowAnnouncementModal(false);
     setSelectedAnnouncementId(undefined);
   };
-
+  
   // Define sections based on role permissions
   const getSections = (role: string) => {
     const sections = [
@@ -170,21 +169,20 @@ function Dashboard() {
       { id: "announcements", label: "Announcements", icon: <FileText className="h-4 w-4 mr-2" /> },
       { id: "projects", label: "Projects", icon: <ClipboardEdit className="h-4 w-4 mr-2" /> },
     ];
-
+    
     // Only owner and admin can manage users
     if (role === 'owner' || role === 'admin') {
       sections.push({ id: "users", label: "User Management", icon: <Users className="h-4 w-4 mr-2" /> });
     }
-
+    
     // Only owner can access settings
     if (role === 'owner') {
       sections.push({ id: "settings", label: "Site Settings", icon: <Settings className="h-4 w-4 mr-2" /> });
-      sections.push({ id: "audit", label: "Audit Trail", icon: <Shield className="h-4 w-4 mr-2" /> });
     }
-
+    
     return sections;
   };
-
+  
   // Set up sections once user is loaded
   useEffect(() => {
     if (user) {
@@ -195,10 +193,10 @@ function Dashboard() {
       }
     }
   }, [user]);
-
+  
   // Authentication context
   const { isLoading, error } = useAuth();
-
+    
   // Display loading state
   if (isLoading) {
     return (
@@ -208,7 +206,7 @@ function Dashboard() {
       </div>
     );
   }
-
+  
   // Display error state
   if (error) {
     return (
@@ -219,7 +217,7 @@ function Dashboard() {
       </div>
     );
   }
-
+  
   // Authentication check
   if (!user) {
     return (
@@ -232,16 +230,16 @@ function Dashboard() {
       </div>
     );
   }
-
+  
   // Get sections based on user role
   const sections = getSections(user.role);
-
+  
   // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     window.history.replaceState(null, '', `?tab=${value}`);
   };
-
+  
   // Main dashboard content with tabs for different management sections
   return (
     <div className="dashboard-container">
@@ -264,7 +262,7 @@ function Dashboard() {
             </span>
           </div>
         </div>
-
+        
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             {sections.map((section) => (
@@ -278,7 +276,7 @@ function Dashboard() {
               </TabsTrigger>
             ))}
           </TabsList>
-
+          
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
             <Card>
@@ -314,7 +312,7 @@ function Dashboard() {
                 </div>
               </CardContent>
             </Card>
-
+            
             {/* Dashboard Overview */}
             <Card>
               <CardHeader>
@@ -331,7 +329,7 @@ function Dashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          
           {/* Properties Tab - SIMPLIFIED with ONE interface */}
           <TabsContent value="properties" className="space-y-4">
             <Card>
@@ -358,7 +356,7 @@ function Dashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          
           {/* Announcements Tab */}
           <TabsContent value="announcements" className="space-y-4">
             <Card>
@@ -388,7 +386,7 @@ function Dashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          
           {/* Projects Tab */}
           <TabsContent value="projects" className="space-y-4">
             <Card>
@@ -405,7 +403,7 @@ function Dashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">
             <Card>
@@ -422,7 +420,7 @@ function Dashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
             <Card>
@@ -440,26 +438,8 @@ function Dashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-
-          {/* Audit Trail Tab */}
-           <TabsContent value="audit" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="mr-2 h-5 w-5 text-[#B87333]" />
-                  <span>Audit Trail</span>
-                </CardTitle>
-                <CardDescription>
-                  Monitor user activities and changes.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                 <AuditTrail />
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
-
+        
         {/* Property Form Modal */}
         <Dialog 
           open={showPropertyModal} 
@@ -494,7 +474,7 @@ function Dashboard() {
             </div>
           </DialogContent>
         </Dialog>
-
+        
         {/* Announcement Form Modal */}
         <Dialog 
           open={showAnnouncementModal} 

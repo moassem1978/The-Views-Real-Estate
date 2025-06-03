@@ -11,7 +11,6 @@ import path from "path";
 import fs from "fs";
 import util from "util";
 import { setupAuth } from "./auth";
-import AuditLogger from "./audit-logger";
 
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
@@ -215,7 +214,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Don't filter by user for admin and owner roles
       if (req.isAuthenticated()) {
         const user = req.user as Express.User;
-        console.log(`PROPERTY ACCESS: User ${user.username} (${user.role}) accessing property list at ${new Date().toISOString()}`);
+        console.log(`Authenticated user ${user.username} with role ${user.role} accessing property list`);
 
         // Admin and owner can see all properties
         // Regular users only see their own or published properties
@@ -730,20 +729,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Get the authenticated user from request
       const user = req.user as Express.User;
-      console.log(`🚨 PROPERTY UPDATE ATTEMPT: User ${user.username} (${user.role}) attempting to update property ${id} at ${new Date().toISOString()}`);
+      console.log(`User attempting to update property ${id}: ${user.username} (Role: ${user.role})`);
 
       // Get the property to check ownership
       const existingProperty = await dbStorage.getPropertyById(id);
       if (!existingProperty) {
         return res.status(404).json({ message: "Property not found" });
-      }
-
-      // STRICT AGENT RESTRICTIONS - Agents cannot modify existing properties unless they created them
-      if (user.role === 'user' && user.isAgent && existingProperty.createdBy !== user.id) {
-        console.error(`🚨 AGENT ACCESS VIOLATION: Agent ${user.username} attempted to modify property ${id} created by user ${existingProperty.createdBy}`);
-        return res.status(403).json({ 
-          message: "Agents can only modify properties they created. Contact administrator for changes to existing properties." 
-        });
       }
 
       // Check if user has permission to update this property
@@ -981,20 +972,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Get the authenticated user from request
       const user = req.user as Express.User;
-      console.log(`🚨 PROPERTY DELETION ATTEMPT: User ${user.username} (${user.role}) attempting to delete property ${id} at ${new Date().toISOString()}`);
+      console.log(`User attempting to delete property ${id}: ${user.username} (Role: ${user.role})`);
 
       // Get the property to check ownership
       const existingProperty = await dbStorage.getPropertyById(id);
       if (!existingProperty) {
         return res.status(404).json({ message: "Property not found" });
-      }
-
-      // STRICT RESTRICTION: Only owner can delete properties
-      if (user.role !== 'owner') {
-        console.error(`🚨 UNAUTHORIZED DELETION ATTEMPT: User ${user.username} (${user.role}) attempted to delete property ${id}`);
-        return res.status(403).json({ 
-          message: "Only the system owner can delete properties. Contact administrator to request property removal." 
-        });
       }
 
       // Check if user has permission to delete this property
@@ -2198,8 +2181,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             // Set liberal permissions
             fs.chmodSync(filePath, 0o666);
             
-            // Add to successful files - store path relative to public folder for correct serving
-            const fileUrl = `/uploads/properties/${file.filename}`;
+            // Add to successful files - ensure clean path format
+            const fileUrl = `uploads/properties/${file.filename}`;
             fileUrls.push(fileUrl);
           } catch (fileError) {
             console.error(`Error processing file ${file.originalname}:`, fileError);
@@ -2502,8 +2485,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
               // Fix permissions to ensure readability
               fs.chmodSync(destPath, 0o666);
               
-              // Add URL to results - store path relative to public folder for correct serving
-              const fileUrl = `/uploads/properties/${file.filename}`;
+              // Add URL to results - ensure clean path format
+              const fileUrl = `uploads/properties/${file.filename}`;
               fileUrls.push(fileUrl);
             } else {
               console.error(`File saved but has zero size: ${destPath}`);
@@ -2613,31 +2596,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.error('Error in cross-platform upload endpoint:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(500).json({ message: `Failed to upload property images: ${errorMessage}` });
-    }
-  });
-
-  // EMERGENCY IMAGE RESTORATION ENDPOINT
-  app.post("/api/emergency-restore-images", async (req: Request, res: Response) => {
-    try {
-      console.log("🚨 EMERGENCY IMAGE RESTORATION TRIGGERED");
-      
-      // Import the emergency restore function
-      const { emergencyImageRestore } = await import('./emergency-restore');
-      
-      const result = await emergencyImageRestore();
-      
-      res.json({
-        success: true,
-        message: `Emergency restoration completed! ${result.restoredCount}/${result.totalProperties} properties now have images.`,
-        data: result
-      });
-    } catch (error) {
-      console.error('Emergency restoration failed:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Emergency restoration failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
     }
   });
 
@@ -3887,34 +3845,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     } catch (error) {
       console.error('Error generating sitemap:', error);
       res.status(500).send('Error generating sitemap');
-    }
-  });
-
-  // Audit trail endpoint - Owner only
-  app.get("/api/audit-trail", async (req: Request, res: Response) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const user = req.user as Express.User;
-      if (user.role !== 'owner') {
-        return res.status(403).json({ message: "Only system owner can access audit trails" });
-      }
-
-      const filters = {
-        userId: req.query.userId ? parseInt(req.query.userId as string) : undefined,
-        action: req.query.action as string,
-        resource: req.query.resource as string,
-        startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
-        endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
-      };
-
-      const auditTrail = await AuditLogger.getAuditTrail(filters);
-      res.json(auditTrail);
-    } catch (error) {
-      console.error("Error fetching audit trail:", error);
-      res.status(500).json({ message: "Failed to fetch audit trail" });
     }
   });
 
