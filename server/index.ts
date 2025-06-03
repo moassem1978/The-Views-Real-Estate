@@ -10,6 +10,9 @@ import { imageMatcher } from './image-matcher'; // Import our enhanced image mat
 import { errorLogger } from './error-logger'; // Import our error logging system
 import seoScheduler from "./seo-scheduler";
 import { HealthMonitor } from "./health-monitor";
+import { protectionMiddleware, ownerOnlyMiddleware } from './protection-middleware';
+import { BackupService } from './backup-service';
+import { ChangeTracker } from './change-tracker';
 
 // Create and prepare all upload directories with proper permissions
 function prepareUploadDirectories() {
@@ -99,11 +102,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Add protection middleware BEFORE other routes
+app.use(protectionMiddleware);
+
 // Basic request middleware
 app.use((req, res, next) => {
   // Set basic headers for all requests
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  
+
   // Add mobile-friendly headers only for mobile requests
   const userAgent = req.headers['user-agent'] || '';
   if (userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android')) {
@@ -252,18 +258,55 @@ app.use((req, res, next) => {
   });
 
   // Add endpoint to clear error logs (owner only)
-  app.post("/api/error-logs/clear", (req: Request, res: Response) => {
+  app.post("/api/error-logs/clear", ownerOnlyMiddleware, (req: Request, res: Response) => {
+    const success = errorLogger.clearLogs();
+    res.json({ success, message: success ? "Error logs cleared" : "Failed to clear error logs" });
+  });
+
+  // Backup management endpoints (owner only)
+  app.get("/api/backups", ownerOnlyMiddleware, (req: Request, res: Response) => {
+    const backupService = BackupService.getInstance();
+    const backups = backupService.getAvailableBackups();
+    res.json({ backups, count: backups.length });
+  });
+
+  app.post("/api/backups/create", ownerOnlyMiddleware, async (req: Request, res: Response) => {
+    try {
+      const backupService = BackupService.getInstance();
+      const user = req.user as any;
+      const backupFile = await backupService.createBackup('manual', user.id);
+      res.json({ success: true, backupFile, message: "Backup created successfully" });
+    } catch (error) {
+      res.status(500).json({ success: false, error: "Backup creation failed" });
+    }
+  });
+
+  app.post("/api/backups/restore", ownerOnlyMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { backupFile } = req.body;
+      const backupService = BackupService.getInstance();
+      await backupService.restoreFromBackup(path.join(process.cwd(), 'backups', backupFile));
+      res.json({ success: true, message: "Backup restored successfully" });
+    } catch (error) {
+      res.status(500).json({ success: false, error: "Backup restoration failed" });
+    }
+  });
+
+  // Change tracking endpoint (admin/owner only)
+  app.get("/api/changes", (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Authentication required" });
     }
 
     const user = req.user as any;
-    if (!user || user.role !== 'owner') {
-      return res.status(403).json({ message: "Owner access required" });
+    if (!user || (user.role !== 'owner' && user.role !== 'admin')) {
+      return res.status(403).json({ message: "Admin access required" });
     }
 
-    const success = errorLogger.clearLogs();
-    res.json({ success, message: success ? "Error logs cleared" : "Failed to clear error logs" });
+    const changeTracker = ChangeTracker.getInstance();
+    const count = req.query.count ? parseInt(String(req.query.count)) : 50;
+    const changes = changeTracker.getRecentChanges(count);
+    res.json({ changes, count: changes.length });
   });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -311,6 +354,20 @@ app.use((req, res, next) => {
     next();
   });
 
+  // Health monitoring
+  const healthMonitor = HealthMonitor.getInstance();
+  healthMonitor.startMonitoring();
+
+  // Request timeout middleware (30 seconds)
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    res.setTimeout(30000, () => {
+      const err = new Error('Request timeout');
+      (err as any).status = 408;
+      next(err);
+    });
+    next();
+  });
+
   // Add simplified health check endpoints
   app.get('/health', (req, res) => {
     const actualPort = server.address()?.port || port;
@@ -337,7 +394,7 @@ app.use((req, res, next) => {
     return new Promise((resolve, reject) => {
       const net = require('net');
       const server = net.createServer();
-      
+
       server.listen(startPort, "0.0.0.0", () => {
         const port = server.address()?.port || startPort;
         server.close(() => {
@@ -361,7 +418,7 @@ app.use((req, res, next) => {
   // Start with port 5000 but allow fallback to other ports
   const preferredPorts = [5000, 3000, 8000, 8080, 4000];
   let port = 5000;
-  
+
   try {
     // Try preferred ports first, then find any available port
     for (const preferredPort of preferredPorts) {
