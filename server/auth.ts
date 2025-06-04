@@ -1,3 +1,4 @@
+
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express, Request, Response, NextFunction } from "express";
@@ -277,7 +278,7 @@ export function setupAuth(app: Express) {
         const testAccount = await nodemailer.createTestAccount();
         
         // Create reusable transporter
-        const transporter = nodemailer.createTransport({
+        const transporter = nodemailer.createTransporter({
           host: process.env.EMAIL_HOST || "smtp.ethereal.email",
           port: parseInt(process.env.EMAIL_PORT || "587"),
           secure: process.env.EMAIL_SECURE === "true", 
@@ -422,8 +423,8 @@ export function setupAuth(app: Express) {
             return res.status(500).json({ message: "Error during logout" });
           }
           console.log(`Logout successful for ${username}`);
-          // Make sure to clear the cookie with the updated name
-          res.clearCookie("theviews.sid.20250511", { path: '/' });
+          // Clear the cookie with the updated name
+          res.clearCookie("theviews.sid.secure", { path: '/' });
           return res.status(200).json({ message: "Logged out successfully" });
         });
       });
