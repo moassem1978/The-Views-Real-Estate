@@ -1,8 +1,6 @@
-
+import { Pool } from 'pg';
 import { scrypt, randomBytes } from 'crypto';
 import { promisify } from 'util';
-import pkg from 'pg';
-const { Pool } = pkg;
 
 const scryptAsync = promisify(scrypt);
 
@@ -12,39 +10,56 @@ async function hashPassword(password) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function resetOwnerPassword() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  
+async function resetOwnerCredentials() {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL
+  });
+
   try {
     console.log('Resetting owner password with enhanced security...');
-    
-    // Hash the password 'owner123'
-    const hashedPassword = await hashPassword('owner123');
+
+    const password = 'owner123';
+    const hashedPassword = await hashPassword(password);
     console.log('Password hashed successfully');
-    
-    // Update the password and ensure account is active - using correct column name
-    const result = await pool.query(`
-      UPDATE users 
-      SET password = $1, is_active = true 
-      WHERE username = $2 
-      RETURNING id, username, role, is_active
-    `, [hashedPassword, 'owner']);
-    
-    if (result.rows.length > 0) {
-      console.log('✅ Owner credentials updated successfully:');
-      console.log('Username:', result.rows[0].username);
-      console.log('Role:', result.rows[0].role);
-      console.log('Active:', result.rows[0].is_active);
+
+    // First check if owner exists
+    const checkQuery = 'SELECT id, username FROM users WHERE username = $1';
+    const checkResult = await pool.query(checkQuery, ['owner']);
+
+    if (checkResult.rows.length === 0) {
+      // Create owner if doesn't exist
+      const createQuery = `
+        INSERT INTO users (username, password, email, full_name, role, is_agent, is_active, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        RETURNING id, username, role
+      `;
+      const createResult = await pool.query(createQuery, [
+        'owner', hashedPassword, 'owner@theviews.com', 'System Owner', 'owner', true, true
+      ]);
+      console.log('✅ Owner account created successfully');
+      console.log('Username: owner');
       console.log('Password: owner123');
     } else {
-      console.log('❌ Owner user not found');
+      // Update existing owner
+      const updateQuery = `
+        UPDATE users 
+        SET password = $1, is_active = true, updated_at = NOW()
+        WHERE username = 'owner'
+        RETURNING id, username, role
+      `;
+      const result = await pool.query(updateQuery, [hashedPassword]);
+      console.log('✅ Owner credentials updated successfully');
+      console.log('Username: owner');
+      console.log('Password: owner123');
     }
-    
+
   } catch (error) {
-    console.error('Error resetting password:', error);
+    console.error('❌ Error resetting owner credentials:', error.message);
+    console.error('Stack:', error.stack);
+    process.exit(1);
   } finally {
     await pool.end();
   }
 }
 
-resetOwnerPassword();
+resetOwnerCredentials();

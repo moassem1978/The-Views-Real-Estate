@@ -222,44 +222,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// Custom domain redirect and security middleware
-app.use((req, res, next) => {
-  const customDomain = process.env.CUSTOM_DOMAIN || 'www.theviewsconsultancy.com';
-  const host = req.get('Host');
-  const isCustomDomain = host?.includes('theviewsconsultancy.com');
-  const isReplitDomain = host?.includes('replit.app') || host?.includes('replit.dev') || host?.includes('janeway.replit.dev');
-
-  // Skip redirect for API requests and health checks to avoid breaking functionality
-  if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path.startsWith('/uploads')) {
-    return next();
-  }
-
-  // Only redirect from Replit domains to custom domain for non-development environments
-  if (host && isReplitDomain && !isCustomDomain && process.env.NODE_ENV === 'production') {
-    const protocol = 'https';
-    // Preserve the original URL path and query parameters
-    const redirectUrl = `${protocol}://${customDomain}${req.originalUrl}`;
-    console.log(`Redirecting from ${host} to ${customDomain}`);
-    return res.redirect(301, redirectUrl);
-  }
-
-  // Add security headers for all domains in production
-  if (process.env.NODE_ENV === 'production') {
+// Security middleware only - no redirects in development
+  app.use((req, res, next) => {
+    // Add basic security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  }
 
-  // Add CORS headers for development
-  if (process.env.NODE_ENV !== 'production') {
+    // Add CORS headers for development
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  }
 
-  next();
-});
+    next();
+  });
 
 (async () => {
   const server = await registerRoutes(app, upload, uploadsDir);

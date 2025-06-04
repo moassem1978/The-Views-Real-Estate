@@ -4,36 +4,20 @@ import App from "./App";
 import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-import FrontendMonitoring from "./lib/monitoring";
 
-// Enhanced error handling for app loading
+// Lightweight error handling
 function initializeApp() {
-  try {
-    // Initialize monitoring first
-    FrontendMonitoring.initialize();
-    console.log("✅ Frontend monitoring initialized successfully");
-  } catch (error) {
-    console.warn("⚠️ Frontend monitoring initialization failed:", error);
-  }
+  console.log("✅ App initializing...");
 }
 
-// Global error handler for unhandled promise rejections
+// Basic error handlers
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
-  FrontendMonitoring.captureError(
-    new Error(`Unhandled promise rejection: ${event.reason}`),
-    'unhandled_promise'
-  );
   event.preventDefault();
 });
 
-// Global error handler for uncaught errors
 window.addEventListener('error', (event) => {
   console.error('Uncaught error:', event.error);
-  FrontendMonitoring.captureError(
-    event.error || new Error(event.message),
-    'uncaught_error'
-  );
 });
 
 // Initialize the app
