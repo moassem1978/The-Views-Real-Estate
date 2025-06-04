@@ -229,8 +229,13 @@ app.use((req, res, next) => {
   const isCustomDomain = host?.includes('theviewsconsultancy.com');
   const isReplitDomain = host?.includes('replit.app') || host?.includes('replit.dev') || host?.includes('janeway.replit.dev');
 
-  // Only redirect from Replit domains to custom domain
-  if (host && isReplitDomain && !isCustomDomain) {
+  // Skip redirect for API requests and health checks to avoid breaking functionality
+  if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path.startsWith('/uploads')) {
+    return next();
+  }
+
+  // Only redirect from Replit domains to custom domain for non-development environments
+  if (host && isReplitDomain && !isCustomDomain && process.env.NODE_ENV === 'production') {
     const protocol = 'https';
     // Preserve the original URL path and query parameters
     const redirectUrl = `${protocol}://${customDomain}${req.originalUrl}`;
@@ -238,16 +243,17 @@ app.use((req, res, next) => {
     return res.redirect(301, redirectUrl);
   }
 
-  // Add security headers for custom domain
-  if (isCustomDomain) {
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  // Add security headers for all domains in production
+  if (process.env.NODE_ENV === 'production') {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  }
 
-    // Add CORS headers for better compatibility
-    res.setHeader('Access-Control-Allow-Origin', `https://${customDomain}`);
+  // Add CORS headers for development
+  if (process.env.NODE_ENV !== 'production') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
@@ -346,7 +352,7 @@ app.use((req, res, next) => {
     // Log the error with both monitoring service and error logger
     const userId = _req.user ? (_req.user as any).id : null;
     const context = _req.path || 'server_error';
-    
+
     // Use monitoring service for comprehensive error tracking
     monitoringService.captureError(err, context, userId);
 
