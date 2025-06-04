@@ -389,7 +389,8 @@ export default function Header() {
             )}
             <Link 
               href="/" 
-              className={`py-2 font-medium ${location === "/" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              className={`block py-3 font-medium ${location === "/" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              onClick={() => setMobileMenuOpen(false)}
             >
               Home
             </Link>
@@ -404,9 +405,9 @@ export default function Header() {
                 </svg>
               </button>
               <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobilePropertiesOpen ? 'block' : 'hidden'}`}>
-                <Link href="/properties?type=Primary" className="block py-1 text-rich-black hover:text-copper transition-colors">Primary</Link>
-                <Link href="/properties?type=Resale" className="block py-1 text-rich-black hover:text-copper transition-colors">Resale</Link>
-                <Link href="/international" className="block py-1 text-rich-black hover:text-copper transition-colors">International</Link>
+                <Link href="/properties?type=Primary" className="block py-2 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Primary</Link>
+                <Link href="/properties?type=Resale" className="block py-2 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Resale</Link>
+                <Link href="/international" className="block py-2 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>International</Link>
               </div>
             </div>
             <div className="py-2">
@@ -420,26 +421,29 @@ export default function Header() {
                 </svg>
               </button>
               <div className={`pl-4 mt-2 space-y-2 border-l-2 border-copper/20 ${mobileServicesOpen ? 'block' : 'hidden'}`}>
-                <Link href="/services/buyer-representation" className="block py-1 text-rich-black hover:text-copper transition-colors">Buyer Representation</Link>
-                <Link href="/services/seller-representation" className="block py-1 text-rich-black hover:text-copper transition-colors">Seller Representation</Link>
-                <Link href="/services/investment" className="block py-1 text-rich-black hover:text-copper transition-colors">Investment</Link>
+                <Link href="/services/buyer-representation" className="block py-2 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Buyer Representation</Link>
+                <Link href="/services/seller-representation" className="block py-2 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Seller Representation</Link>
+                <Link href="/services/investment" className="block py-2 text-rich-black hover:text-copper transition-colors" onClick={() => setMobileMenuOpen(false)}>Investment</Link>
               </div>
             </div>
             <Link 
               href="/projects" 
-              className={`py-2 font-medium ${location === "/projects" || location.startsWith("/projects/") ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              className={`block py-3 font-medium ${location === "/projects" || location.startsWith("/projects/") ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              onClick={() => setMobileMenuOpen(false)}
             >
               Projects
             </Link>
             <Link 
               href="/about" 
-              className={`py-2 font-medium ${location === "/about" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              className={`block py-3 font-medium ${location === "/about" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              onClick={() => setMobileMenuOpen(false)}
             >
               About
             </Link>
             <Link 
               href="/contact" 
-              className={`py-2 font-medium ${location === "/contact" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              className={`block py-3 font-medium ${location === "/contact" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              onClick={() => setMobileMenuOpen(false)}
             >
               Contact
             </Link>
@@ -448,7 +452,8 @@ export default function Header() {
               <>
                 <Link 
                   href="/dashboard" 
-                  className={`py-2 font-medium ${location === "/dashboard" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                  className={`block py-3 font-medium ${location === "/dashboard" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   Dashboard
                 </Link>
@@ -457,13 +462,15 @@ export default function Header() {
                   <>
                     <Link 
                       href="/user-management" 
-                      className={`py-2 font-medium ${location === "/user-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                      className={`block py-3 font-medium ${location === "/user-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                      onClick={() => setMobileMenuOpen(false)}
                     >
                       User Management
                     </Link>
                     <Link 
                       href="/project-management" 
-                      className={`py-2 font-medium ${location === "/project-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                      className={`block py-3 font-medium ${location === "/project-management" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+                      onClick={() => setMobileMenuOpen(false)}
                     >
                       Project Management
                     </Link>
