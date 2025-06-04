@@ -278,7 +278,7 @@ export function setupAuth(app: Express) {
         const testAccount = await nodemailer.createTestAccount();
         
         // Create reusable transporter
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
           host: process.env.EMAIL_HOST || "smtp.ethereal.email",
           port: parseInt(process.env.EMAIL_PORT || "587"),
           secure: process.env.EMAIL_SECURE === "true", 
@@ -335,21 +335,43 @@ export function setupAuth(app: Express) {
   // Enhanced login endpoint with improved session handling
   app.post("/api/login", (req, res, next) => {
     console.log(`Login attempt for username: ${req.body.username}`);
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
+    // Validate request body format
+    if (!req.body || typeof req.body.username !== 'string' || typeof req.body.password !== 'string') {
+      console.error('Invalid login request format:', req.body);
+      return res.status(400).json({ message: "Invalid request format. Username and password are required." });
+    }
+    
+    // Clean the input data
+    const cleanUsername = req.body.username.trim();
+    const cleanPassword = req.body.password;
+    
+    if (!cleanUsername || !cleanPassword) {
+      console.error('Empty username or password provided');
+      return res.status(400).json({ message: "Username and password cannot be empty." });
+    }
+    
+    console.log(`Cleaned username: "${cleanUsername}"`);
+    
+    // Update request body with cleaned data for passport
+    req.body.username = cleanUsername;
+    req.body.password = cleanPassword;
     
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         console.error("Login error:", err);
-        return next(err);
+        return res.status(500).json({ message: "Authentication service error" });
       }
       
       if (!user) {
-        console.log(`Login failed for ${req.body.username}: ${info?.message || 'Unknown reason'}`);
+        console.log(`Login failed for ${cleanUsername}: ${info?.message || 'Unknown reason'}`);
         return res.status(401).json({ message: info?.message || "Invalid username or password" });
       }
       
       // Check if the user is active
       if (!user.isActive) {
-        console.log(`Login rejected for inactive account: ${req.body.username}`);
+        console.log(`Login rejected for inactive account: ${cleanUsername}`);
         return res.status(403).json({ message: "Your account has been deactivated" });
       }
       
