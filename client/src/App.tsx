@@ -13,6 +13,7 @@ import { useAnalytics } from "./hooks/use-analytics";
 
 // Import necessary components from ui library
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { X, Download, RefreshCw } from "lucide-react";
 
 // Streamlined loading fallback

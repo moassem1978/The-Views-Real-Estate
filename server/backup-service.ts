@@ -28,7 +28,8 @@ export class BackupService {
 
   async createBackup(operation: string, userId?: number): Promise<string> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupFile = path.join(this.backupDir, `backup-${timestamp}-${operation}.json`);
+    const sanitizedOperation = operation.replace(/[^a-zA-Z0-9-_]/g, '_');
+    const backupFile = path.join(this.backupDir, `backup-${timestamp}-${sanitizedOperation}.json`);
 
     try {
       const allProperties = await db.select().from(properties);

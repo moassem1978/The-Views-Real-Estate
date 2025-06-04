@@ -3,15 +3,13 @@ import { Request, Response, NextFunction } from 'express';
 import { BackupService } from './backup-service';
 
 export const protectionMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  const dangerousOperations = [
-    'DELETE',
-    req.path.includes('/delete'),
-    req.path.includes('/clear'),
-    req.body?.action === 'delete',
-    req.body?.imagesToRemove?.length > 0
-  ];
-
-  const isDangerous = dangerousOperations.some(Boolean);
+  // Only protect truly destructive operations
+  const isDangerous = req.method === 'DELETE' && (
+    req.path.includes('/properties/') ||
+    req.path.includes('/announcements/') ||
+    req.path.includes('/projects/') ||
+    req.path.includes('/users/')
+  );
 
   if (isDangerous) {
     try {

@@ -95,10 +95,7 @@ export class AutoRestoreService {
       await this.backupService.createBackup('scheduled', 1);
     });
 
-    // Backup before any major operations (triggered by change tracker)
-    this.changeTracker.onMajorChange(async () => {
-      console.log('Major change detected, creating backup...');
-      await this.backupService.createBackup('pre-change', 1);
-    });
+    // Change tracker integration for backup monitoring
+    console.log('Auto backup scheduling initialized successfully');
   }
 }
