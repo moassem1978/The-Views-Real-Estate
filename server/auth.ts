@@ -124,21 +124,24 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     store: new PostgresSessionStore({
       pool,
-      tableName: 'session', // Default table name
+      tableName: 'session',
       createTableIfMissing: true,
-      // Cleanup expired sessions less frequently to prevent issues
-      pruneSessionInterval: 86400 // Once per day in minutes
+      // Clean up expired sessions every hour for better performance
+      pruneSessionInterval: 60, // 1 hour in minutes
+      // Remove sessions older than 24 hours
+      ttl: 24 * 60 * 60, // 24 hours in seconds
+      schemaName: 'public'
     }),
     secret: process.env.SESSION_SECRET || "the-views-real-estate-secret-key-updated-2025-05-11",
-    // Keep sessions alive even for idle clients
-    resave: true,
+    // Don't save unchanged sessions
+    resave: false,
     // Don't create empty sessions
     saveUninitialized: false,
     cookie: {
       // Disabled secure for development - important for Replit environment
       secure: false,
-      // Extended session timeout (45 days) for maximum stability
-      maxAge: 45 * 24 * 60 * 60 * 1000, // 45 days
+      // Short-lived session (1 hour) but renewable
+      maxAge: 60 * 60 * 1000, // 1 hour
       // Prevent client-side JS from accessing cookies
       httpOnly: true,
       // Using lax for better user experience
@@ -149,7 +152,7 @@ export function setupAuth(app: Express) {
     // Enable rolling sessions to extend the session timeout on any activity
     rolling: true,
     // Use a custom name with timestamp to force new sessions on update
-    name: 'theviews.sid.20250511'
+    name: 'theviews.sid.secure'
   };
   
   // Ensure owner account exists with correct credentials
@@ -368,16 +371,16 @@ export function setupAuth(app: Express) {
           console.log(`Login successful for ${user.username} (${user.role})`);
           console.log(`Session ID: ${req.sessionID}`);
           
-          // Set session to expire in 45 days
+          // Set session to expire in 1 hour (renewable)
           if (req.session) {
-            req.session.cookie.maxAge = 45 * 24 * 60 * 60 * 1000;
+            req.session.cookie.maxAge = 60 * 60 * 1000;
             
             // Force session save to ensure it's properly persisted
             req.session.save((saveErr) => {
               if (saveErr) {
                 console.error(`Error saving session for ${user.username}:`, saveErr);
               } else {
-                console.log(`Session created with 45-day expiration for ${user.username}`);
+                console.log(`Session created with 1-hour expiration for ${user.username}`);
                 if (req.session.cookie.expires) {
                   console.log(`Session expires: ${req.session.cookie.expires}`);
                 }
@@ -442,8 +445,8 @@ export function setupAuth(app: Express) {
       
       // Enhanced session management
       if (req.session) {
-        // Extend session to 45 days with each authenticated request
-        req.session.cookie.maxAge = 45 * 24 * 60 * 60 * 1000;
+        // Renew session to 1 hour with each authenticated request
+        req.session.cookie.maxAge = 60 * 60 * 1000; // 1 hour
         
         // Explicitly touch the session to update activity time
         req.session.touch();
@@ -453,7 +456,7 @@ export function setupAuth(app: Express) {
           if (err) {
             console.error(`Error saving session for ${user.username}:`, err);
           } else {
-            console.log(`Session extended for ${user.username}, new expiry: ${req.session.cookie.expires}`);
+            console.log(`Session renewed for ${user.username}, expires: ${req.session.cookie.expires}`);
           }
         });
       }
@@ -479,15 +482,15 @@ export function setupAuth(app: Express) {
       const user = req.user as SelectUser;
       
       if (req.session) {
-        // Use longer 45-day expiration
-        req.session.cookie.maxAge = 45 * 24 * 60 * 60 * 1000;
+        // Renew session to 1 hour on explicit refresh
+        req.session.cookie.maxAge = 60 * 60 * 1000; // 1 hour
         
         // Explicitly save to ensure persistence
         req.session.save((err) => {
           if (err) {
             console.error(`Error saving refreshed session for ${user.username}:`, err);
           } else {
-            console.log(`Session explicitly refreshed for ${user.username}, new expiry: ${req.session.cookie.expires}`);
+            console.log(`Session explicitly refreshed for ${user.username}, expires: ${req.session.cookie.expires}`);
           }
         });
       }

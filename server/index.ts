@@ -375,6 +375,11 @@ app.use((req, res, next) => {
   const healthMonitor = HealthMonitor.getInstance();
   healthMonitor.startMonitoring();
 
+  // Session monitoring and cleanup
+  const { SessionMonitor } = await import('./session-monitor');
+  const sessionMonitor = SessionMonitor.getInstance();
+  sessionMonitor.startMonitoring();
+
   // Auto-restore service
   const { AutoRestoreService } = await import('./auto-restore-service');
   const autoRestoreService = AutoRestoreService.getInstance();
