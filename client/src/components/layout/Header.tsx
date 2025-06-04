@@ -367,9 +367,9 @@ export default function Header() {
       </div>
 
       {/* Mobile menu */}
-      <div className={`md:hidden bg-white border-t border-copper/10 ${mobileMenuOpen ? 'block animate-in' : 'hidden'}`}>
+      <div className={`md:hidden bg-white border-t border-copper/10 shadow-lg ${mobileMenuOpen ? 'block animate-in' : 'hidden'}`}>
         <div className="container mx-auto px-4 py-3">
-          <nav className="flex flex-col space-y-3">
+          <nav className="flex flex-col space-y-1">
             {user && (
               <div className="flex items-center justify-between py-2 mb-2 border-b border-copper/20">
                 <div>
@@ -389,14 +389,14 @@ export default function Header() {
             )}
             <Link 
               href="/" 
-              className={`block py-3 font-medium ${location === "/" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              className={`block py-4 px-2 font-medium ${location === "/" ? "text-copper bg-copper/5" : "text-rich-black"} hover:text-copper hover:bg-copper/5 transition-colors rounded-md`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Home
             </Link>
             <div className="py-2">
               <button 
-                className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
+                className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full py-3 text-left"
                 onClick={() => setMobilePropertiesOpen(!mobilePropertiesOpen)}
               >
                 Properties
@@ -412,7 +412,7 @@ export default function Header() {
             </div>
             <div className="py-2">
               <button 
-                className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full"
+                className="font-medium text-rich-black hover:text-copper transition-colors flex justify-between w-full py-3 text-left"
                 onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
               >
                 Services
@@ -428,21 +428,21 @@ export default function Header() {
             </div>
             <Link 
               href="/projects" 
-              className={`block py-3 font-medium ${location === "/projects" || location.startsWith("/projects/") ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              className={`block py-4 px-2 font-medium ${location === "/projects" || location.startsWith("/projects/") ? "text-copper bg-copper/5" : "text-rich-black"} hover:text-copper hover:bg-copper/5 transition-colors rounded-md`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Projects
             </Link>
             <Link 
               href="/about" 
-              className={`block py-3 font-medium ${location === "/about" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              className={`block py-4 px-2 font-medium ${location === "/about" ? "text-copper bg-copper/5" : "text-rich-black"} hover:text-copper hover:bg-copper/5 transition-colors rounded-md`}
               onClick={() => setMobileMenuOpen(false)}
             >
               About
             </Link>
             <Link 
               href="/contact" 
-              className={`block py-3 font-medium ${location === "/contact" ? "text-copper" : "text-rich-black"} hover:text-copper transition-colors`}
+              className={`block py-4 px-2 font-medium ${location === "/contact" ? "text-copper bg-copper/5" : "text-rich-black"} hover:text-copper hover:bg-copper/5 transition-colors rounded-md`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Contact
