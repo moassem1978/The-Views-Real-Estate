@@ -213,7 +213,7 @@ args = "pkill -f \"tsx\" || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "sleep 1"
+args = "sleep 2"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

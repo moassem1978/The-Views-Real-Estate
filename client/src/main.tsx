@@ -29,6 +29,11 @@ if (!container) {
 }
 
 try {
+  // Prevent popup behavior
+  if (window.self !== window.top) {
+    window.top.location.href = window.location.href;
+  }
+
   const root = createRoot(container);
   root.render(
     <QueryClientProvider client={queryClient}>

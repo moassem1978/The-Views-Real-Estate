@@ -482,11 +482,12 @@ app.use((req, res, next) => {
     port = 5000;
   }
 
-  server.listen(port, "0.0.0.0", () => {
+  // Optimize for performance - use only port 5000
+  const PORT = 5000;
+  server.listen(PORT, '0.0.0.0', () => {
     const actualPort = server.address()?.port || port;
-    console.log(`✅ Server running on port ${actualPort}`);
-    console.log(`🌐 Access at: http://localhost:${actualPort}`);
-    console.log(`📱 Mobile health: http://localhost:${actualPort}/mobile-health`);
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`🌐 Access at: http://localhost:${PORT}`);
     console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
   });
 
