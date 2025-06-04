@@ -1,6 +1,13 @@
+import React from "react";
 import { createRoot } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import FrontendMonitoring from "@/lib/monitoring";
 import App from "./App";
 import "./index.css";
+
+// Initialize monitoring as early as possible
+FrontendMonitoring.initialize();
 
 // Mount the application with optimized hydration
 const rootElement = document.getElementById("root");

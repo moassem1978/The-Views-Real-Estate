@@ -45,6 +45,8 @@
     "@replit/object-storage": "^1.0.0",
     "@replit/vite-plugin-shadcn-theme-json": "^0.0.4",
     "@sendgrid/mail": "^8.1.5",
+    "@sentry/node": "^9.25.1",
+    "@sentry/react": "^9.25.1",
     "@tanstack/react-query": "^5.60.5",
     "@types/multer": "^1.4.12",
     "@types/node-cron": "^3.0.11",

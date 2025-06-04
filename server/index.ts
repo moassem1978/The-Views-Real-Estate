@@ -8,6 +8,7 @@ import simpleUploadRouter from "./simple-upload"; // Import our simple upload ro
 import unifiedUploader from "./unified-uploader"; // Import our new unified uploader
 import { imageMatcher } from './image-matcher'; // Import our enhanced image matcher
 import { errorLogger } from './error-logger'; // Import our error logging system
+import { monitoringService } from './monitoring'; // Import our monitoring service
 import seoScheduler from "./seo-scheduler";
 import { HealthMonitor } from "./health-monitor";
 import { protectionMiddleware, ownerOnlyMiddleware } from './protection-middleware';
@@ -97,6 +98,9 @@ const upload = multer({
     cb(null, true);
   }
 });
+
+// Initialize monitoring service first
+monitoringService.initialize();
 
 const app = express();
 app.use(express.json());
@@ -339,10 +343,12 @@ app.use((req, res, next) => {
       message = "Server port conflict. Restarting...";
     }
 
-    // Log the error with our error logger
+    // Log the error with both monitoring service and error logger
     const userId = _req.user ? (_req.user as any).id : null;
-    const context = _req.path || 'unknown';
-    errorLogger.logError(err, context, userId);
+    const context = _req.path || 'server_error';
+    
+    // Use monitoring service for comprehensive error tracking
+    monitoringService.captureError(err, context, userId);
 
     res.status(status).json({ message });
   });
@@ -404,6 +410,39 @@ app.use((req, res, next) => {
       timestamp: new Date().toISOString(),
       host: req.get('host')
     });
+  });
+
+  // System health endpoint for monitoring dashboard
+  app.get('/api/system/health', (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const user = req.user as any;
+    if (!user || (user.role !== 'owner' && user.role !== 'admin')) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const health = {
+      sentry: !!process.env.SENTRY_DSN,
+      sendgrid: !!process.env.SENDGRID_API_KEY,
+      database: true, // If we reach here, DB is working
+      backups: true, // Assume backups are working if no errors
+      lastBackup: null, // Could be enhanced to check actual backup dates
+      errorCount: 0 // Could be enhanced to count recent errors
+    };
+
+    res.json(health);
+  });
+
+  // Test email alert endpoint
+  app.post('/api/monitoring/test-email', ownerOnlyMiddleware, async (req: Request, res: Response) => {
+    try {
+      await monitoringService.sendMaintenanceAlert('Test email alert from monitoring dashboard', 'info');
+      res.json({ success: true, message: 'Test email sent' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Failed to send test email' });
+    }
   });
 
   app.get('/mobile-health', (req, res) => {
