@@ -1,7 +1,8 @@
 
-const { scrypt, randomBytes } = require('crypto');
-const { promisify } = require('util');
-const { Pool } = require('pg');
+import { scrypt, randomBytes } from 'crypto';
+import { promisify } from 'util';
+import pkg from 'pg';
+const { Pool } = pkg;
 
 const scryptAsync = promisify(scrypt);
 
