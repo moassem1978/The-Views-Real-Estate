@@ -684,8 +684,8 @@ COPY public.seo_optimization_log (id, optimization_date, status, keywords_update
 --
 
 COPY public.session (sid, sess, expire) FROM stdin;
+Ks_JW1QDGjHdzkK1GCQK_OWDJ8KzVEtP	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-19T06:03:25.480Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-19 06:03:26
 UvNX5eHiVqll4huTv_E3WPg_81xpoOAf	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-29T05:20:52.266Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-29 05:20:53
-Ks_JW1QDGjHdzkK1GCQK_OWDJ8KzVEtP	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-19T06:02:02.671Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-19 06:02:03
 JU7GCpMUeZUfHfIP8mepTTr2hogZrpPF	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-18T09:38:57.043Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 09:38:58
 PUgIbYbvz8WwWILQfqrSZBhxzUAm1rrl	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T14:50:15.962Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 17:23:22
 dFHz06UsD45maPBTgdMfdCcasKwUmlKb	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-25T14:18:21.745Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-25 14:18:22
@@ -733,8 +733,8 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active, password_hash, first_name, last_name) FROM stdin;
+1	owner	29453541c5060b472276048cdfcd8d639ca958baf4a60c52ddefbbe5b4ce5b509067b5323b78d962316455810e6da44cc9fe14e88948736e7cf1a31ba371a6f9.a9c380d30398c6e312669aa1db0b439c	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t	\N	\N	\N
-1	owner	7ee0b187664ff7c70337347b985962a4c70dec12f8fdc4977536b4a484bcd687732670c877e26432e546b4f1fbae40ab015400f0e48cadb6d0ca0a1b45811cd2.078823ecc79ea33c1ccaea9324da66d1	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 \.
 
 
