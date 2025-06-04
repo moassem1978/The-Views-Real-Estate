@@ -473,4 +473,13 @@ app.use((req, res, next) => {
       process.exit(1);
     }
   });
+
+  // Restore endpoints
+  const { addRestoreEndpoints } = await import('./restore-endpoint');
+  await addRestoreEndpoints(app);
+
+  // Initialize enhanced backup scheduler
+  const { EnhancedBackupScheduler } = await import('./enhanced-backup-scheduler');
+  const backupScheduler = EnhancedBackupScheduler.getInstance();
+  await backupScheduler.initializeScheduler();
 })();

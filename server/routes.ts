@@ -4307,6 +4307,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   const { addRestoreEndpoints } = await import('./restore-endpoint');
   await addRestoreEndpoints(app);
 
+  // Add backup endpoints
+  const { addBackupEndpoints } = await import('./backup-endpoints');
+  await addBackupEndpoints(app);
+
   // Create HTTP server
   const httpServer = createServer(app);
   // ===== CONTENT MARKETING & SEO ROUTES =====
