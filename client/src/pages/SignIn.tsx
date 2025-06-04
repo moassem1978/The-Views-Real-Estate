@@ -85,9 +85,10 @@ export default function SignIn() {
                   <input 
                     type="text" 
                     className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
-                    placeholder="username"
+                    placeholder="Enter your username"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => setUsername(e.target.value.trim())}
+                    autoComplete="username"
                     required
                   />
                 </div>
@@ -97,9 +98,10 @@ export default function SignIn() {
                   <input 
                     type="password" 
                     className="w-full p-3 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors" 
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
                     required
                   />
                 </div>

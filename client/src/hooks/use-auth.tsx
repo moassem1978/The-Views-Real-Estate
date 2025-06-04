@@ -55,8 +55,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      // Basic validation
+      if (!credentials.username || !credentials.password) {
+        throw new Error("Username and password are required");
+      }
+      
+      // Clean the credentials
+      const cleanCredentials = {
+        username: credentials.username.trim(),
+        password: credentials.password
+      };
+      
+      const res = await apiRequest("POST", "/api/login", cleanCredentials);
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+      
+      return data;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -66,9 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.message || "Please check your credentials and try again",
         variant: "destructive",
       });
     },
