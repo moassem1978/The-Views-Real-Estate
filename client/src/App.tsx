@@ -3,6 +3,7 @@ import { Route, Switch } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
+import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { clearImageCache } from "./lib/utils";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -372,6 +373,7 @@ function App() {
             <Toaster />
           </div>
         </AuthProvider>
+        <OfflineIndicator />
       </ErrorBoundary>
     </QueryClientProvider>
   );
