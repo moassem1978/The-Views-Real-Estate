@@ -31,6 +31,13 @@ export class BackupService {
     const backupFile = path.join(this.backupDir, `backup-${timestamp}-${sanitizedOperation}.json`);
 
     try {
+      // Test database connection first
+      const { testConnection } = await import('./db');
+      const isConnected = await testConnection();
+      if (!isConnected) {
+        throw new Error('Database connection failed');
+      }
+
       const allProperties = await db.select().from(properties);
       const allAnnouncements = await db.select().from(announcements);
       const allProjects = await db.select().from(projects);

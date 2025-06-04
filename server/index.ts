@@ -12,8 +12,7 @@ import { monitoringService } from './monitoring'; // Import our monitoring servi
 import seoScheduler from "./seo-scheduler";
 import { HealthMonitor } from "./health-monitor";
 import { protectionMiddleware, ownerOnlyMiddleware } from './protection-middleware';
-import { BackupService } from './backup-service';
-import { ChangeTracker } from './change-tracker';
+// Backup services will be imported only when needed
 
 // Create and prepare all upload directories with proper permissions
 function prepareUploadDirectories() {
@@ -490,12 +489,11 @@ app.use((req, res, next) => {
     port = 5000;
   }
 
-  // Optimize for performance - use only port 5000
+  // Use port 5000 with proper binding
   const PORT = 5000;
   server.listen(PORT, '0.0.0.0', () => {
-    const actualPort = server.address()?.port || port;
     console.log(`✅ Server running on port ${PORT}`);
-    console.log(`🌐 Access at: http://localhost:${PORT}`);
+    console.log(`🌐 Access at: http://0.0.0.0:${PORT}`);
     console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
   });
 

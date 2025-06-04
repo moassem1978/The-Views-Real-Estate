@@ -24,9 +24,8 @@ class ErrorLogger {
   public logError(error: Error | string, context: string = 'general', userId: number | string | null = null) {
     try {
       this.ensureLogDir();
-      this.checkRotation();
-
-      const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+      
+      const timestamp = new Date().toISOString();
       const errorMessage = error instanceof Error ? error.message : error;
       const errorStack = error instanceof Error ? error.stack : '';
       
@@ -42,8 +41,12 @@ class ErrorLogger {
       
       const logEntry = `[${timestamp}][${context}][User:${userId || 'anonymous'}] ${errorMessage}\n${errorStack ? `Stack: ${errorStack}\n` : ''}\n`;
       
-      fs.appendFileSync(this.errorLogFile, logEntry);
-      console.error(`Logged error from ${context}:`, errorMessage);
+      // Use appendFile instead of appendFileSync for better performance
+      fs.appendFile(this.errorLogFile, logEntry, (err) => {
+        if (err) console.error('Failed to write to error log:', err);
+      });
+      
+      console.error(`Error in ${context}:`, errorMessage);
     } catch (loggingError) {
       console.error('Error while logging error:', loggingError);
     }
