@@ -24,16 +24,21 @@ export default function SignIn() {
     e.preventDefault();
     setLocalError("");
     
-    if (!username || !password) {
+    if (!username.trim() || !password) {
       setLocalError("Username and password are required");
       return;
     }
     
-    loginMutation.mutate({ username, password }, {
+    // Clean username input
+    const cleanUsername = username.trim().toLowerCase();
+    
+    loginMutation.mutate({ username: cleanUsername, password }, {
       onError: (error) => {
+        console.error("Login error:", error);
         setLocalError(error.message || "Login failed. Please check your credentials.");
       },
       onSuccess: () => {
+        console.log("Login successful, redirecting to dashboard");
         setLocation("/dashboard");
       }
     });

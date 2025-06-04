@@ -62,17 +62,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Clean the credentials
       const cleanCredentials = {
-        username: credentials.username.trim(),
+        username: credentials.username.trim().toLowerCase(),
         password: credentials.password
       };
       
+      console.log("Attempting login with username:", cleanCredentials.username);
+      
       const res = await apiRequest("POST", "/api/login", cleanCredentials);
-      const data = await res.json();
       
       if (!res.ok) {
-        throw new Error(data.message || "Login failed");
+        const errorData = await res.json().catch(() => ({ message: "Login failed" }));
+        throw new Error(errorData.message || `Login failed with status ${res.status}`);
       }
       
+      const data = await res.json();
       return data;
     },
     onSuccess: (user: User) => {
