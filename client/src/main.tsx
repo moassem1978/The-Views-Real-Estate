@@ -1,26 +1,42 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import FrontendMonitoring from "@/lib/monitoring";
 import App from "./App";
 import "./index.css";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 
-// Initialize monitoring as early as possible
-FrontendMonitoring.initialize();
-
-// Mount the application with optimized hydration
-const rootElement = document.getElementById("root");
-
-if (!rootElement) {
-  throw new Error("Failed to find the root element");
+// Enhanced error handling for app loading
+const container = document.getElementById("root");
+if (!container) {
+  console.error("Root element not found");
+  throw new Error("Root element not found");
 }
 
-// Create a root for concurrent mode rendering
-const root = createRoot(rootElement);
+try {
+  const root = createRoot(container);
+  root.render(
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  );
+  console.log("✅ React app rendered successfully");
+} catch (error) {
+  console.error("❌ Failed to render React app:", error);
 
-// Render the app
-root.render(<App />);
+  // Fallback: Show error message
+  container.innerHTML = `
+    <div style="padding: 20px; font-family: Arial, sans-serif; color: #dc2626;">
+      <h1>Application Loading Error</h1>
+      <p>The application failed to load. Please refresh the page or contact support.</p>
+      <details style="margin-top: 10px;">
+        <summary>Error Details</summary>
+        <pre style="background: #f3f4f6; padding: 10px; border-radius: 4px; overflow: auto;">
+${error instanceof Error ? error.stack : String(error)}
+        </pre>
+      </details>
+    </div>
+  `;
+}
 
 // Register service worker
 if ('serviceWorker' in navigator) {
