@@ -33,8 +33,9 @@ class ErrorLogger {
       if (typeof errorMessage === 'string') {
         if (errorMessage.includes('Image not found:') || 
             errorMessage.includes('test-upload.html') ||
-            (errorMessage.includes('ENOENT') && errorMessage.includes('backup-')) ||
-            errorMessage.includes('request aborted')) {
+            (errorMessage.includes('ENOENT') && (errorMessage.includes('backup-') || errorMessage.includes('/backups/'))) ||
+            errorMessage.includes('request aborted') ||
+            errorMessage.includes('no such file or directory, open') && errorMessage.includes('.json')) {
           return; // Don't log these minor issues
         }
       }

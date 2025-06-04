@@ -27,7 +27,8 @@ export class BackupService {
 
   async createBackup(operation: string, userId?: number): Promise<string> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const sanitizedOperation = operation.replace(/[^a-zA-Z0-9-_]/g, '_');
+    // More aggressive sanitization to prevent path issues
+    const sanitizedOperation = operation.replace(/[^a-zA-Z0-9-_]/g, '_').replace(/_{2,}/g, '_').replace(/^_+|_+$/g, '') || 'unknown';
     const backupFile = path.join(this.backupDir, `backup-${timestamp}-${sanitizedOperation}.json`);
 
     try {
