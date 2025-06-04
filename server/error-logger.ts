@@ -33,7 +33,9 @@ class ErrorLogger {
       // Skip logging certain non-critical errors
       if (typeof errorMessage === 'string') {
         if (errorMessage.includes('Image not found:') || 
-            errorMessage.includes('ENOENT') && errorMessage.includes('test-upload.html')) {
+            errorMessage.includes('test-upload.html') ||
+            (errorMessage.includes('ENOENT') && errorMessage.includes('backup-')) ||
+            errorMessage.includes('request aborted')) {
           return; // Don't log these minor issues
         }
       }

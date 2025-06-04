@@ -1,4 +1,3 @@
-
 import { db } from './db';
 import { properties, announcements, projects, users } from '@shared/schema';
 import { monitoringService } from './monitoring';
@@ -51,19 +50,19 @@ export class BackupService {
 
       fs.writeFileSync(backupFile, JSON.stringify(backup, null, 2));
       console.log(`✅ Backup created: ${backupFile}`);
-      
+
       // Send success alert
       await monitoringService.sendBackupAlert('success', `Backup created successfully: ${path.basename(backupFile)}`);
       monitoringService.captureMessage(`Backup created: ${operation}`, 'info', 'backup');
-      
+
       return backupFile;
     } catch (error) {
       console.error('❌ Backup failed:', error);
-      
+
       // Send failure alert and capture error
       await monitoringService.sendBackupAlert('failure', `Backup failed: ${error instanceof Error ? error.message : String(error)}`);
       monitoringService.captureError(error instanceof Error ? error : new Error(String(error)), 'backup', userId);
-      
+
       throw error;
     }
   }
@@ -71,7 +70,7 @@ export class BackupService {
   async restoreFromBackup(backupFile: string): Promise<void> {
     try {
       const backupData = JSON.parse(fs.readFileSync(backupFile, 'utf8'));
-      
+
       // Clear existing data
       await db.delete(properties);
       await db.delete(announcements);

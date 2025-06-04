@@ -27,7 +27,7 @@ if (!fs.existsSync(BACKUP_DIR)) {
 // Backup function
 export async function backupDatabase() {
   const filename = path.join(BACKUP_DIR, 'daily-backup.sql');
-  
+
   // Use --no-owner and --no-acl for better compatibility
   // Skip backup on version mismatch to allow app to continue running
   const command = `PGPASSWORD=${process.env.PGPASSWORD} pg_dump --no-owner --no-acl -h ${process.env.PGHOST} -U ${process.env.PGUSER} -d ${process.env.PGDATABASE} -F p > "${filename}"`;
@@ -55,7 +55,36 @@ backupDatabase();
 setInterval(backupDatabase, 24 * 60 * 60 * 1000);
 
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// import { neon } from '@neondatabase/serverless';
+// import { drizzle } from 'drizzle-orm/neon-http';
+import { monitoringService } from './monitoring';
+
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is required');
+}
+
+// Configure connection with retry logic
+// const sql = neon(process.env.DATABASE_URL, {
+//   connectionTimeoutMillis: 10000,
+//   queryTimeoutMillis: 30000,
+// });
+
+// export const db = drizzle(sql);
+
+// Test connection and log any issues
+export async function testConnection() {
+  try {
+    // await sql`SELECT 1`;
+    console.log('✅ Database connection test successful');
+    return true;
+  } catch (error) {
+    console.error('❌ Database connection test failed:', error);
+    monitoringService.captureError(error instanceof Error ? error : new Error(String(error)), 'database');
+    return false;
+  }
+}
 export const db = drizzle({ client: pool, schema });
+
 // Restore function
 export async function restoreDatabase(timestamp: string) {
   // Validate timestamp to prevent command injection

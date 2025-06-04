@@ -102,6 +102,14 @@ const upload = multer({
 // Initialize monitoring service first
 monitoringService.initialize();
 
+// Test database connection
+import { testConnection } from './db';
+testConnection().then(success => {
+  if (!success) {
+    console.warn('⚠️ Database connection issues detected - some features may not work properly');
+  }
+});
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
