@@ -76,9 +76,15 @@ export default function OTPLogin() {
 
     setLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/auth/verify-otp", {
-        sessionId,
-        otp: otp.trim()
+      const response = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+          otp: otp.trim()
+        })
       });
 
       if (!response.ok) {

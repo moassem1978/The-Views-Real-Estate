@@ -21,6 +21,7 @@ import Blog from "@/pages/Blog";
 import ArticlePage from "@/pages/ArticlePage";
 import Dashboard from "@/pages/Dashboard";
 import SignIn from "@/pages/SignIn";
+import OTPLogin from "@/pages/OTPLogin";
 import NotFound from "@/pages/not-found";
 import InternationalProperties from "@/pages/InternationalProperties";
 import Announcements from "@/pages/Announcements";
@@ -117,6 +118,7 @@ function AppContent() {
               <Route path="/announcements" component={Announcements} />
               <Route path="/announcements/:id" component={AnnouncementDetails} />
               <Route path="/signin" component={SignIn} />
+              <Route path="/otp-login" component={OTPLogin} />
               <Route path="/dashboard">
                 <ProtectedRoute>
                   <Dashboard />
