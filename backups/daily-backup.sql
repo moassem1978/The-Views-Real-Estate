@@ -689,7 +689,6 @@ UvNX5eHiVqll4huTv_E3WPg_81xpoOAf	{"cookie":{"originalMaxAge":3888000000,"expires
 JU7GCpMUeZUfHfIP8mepTTr2hogZrpPF	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-18T09:38:57.043Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-18 09:38:58
 PUgIbYbvz8WwWILQfqrSZBhxzUAm1rrl	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T14:50:15.962Z","secure":true,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 17:23:22
 dFHz06UsD45maPBTgdMfdCcasKwUmlKb	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-06-25T14:18:21.745Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-25 14:18:22
-zmz1wyY9XLB8sM6cz48q6_GS9n4v3IdU	{"cookie":{"originalMaxAge":3600000,"expires":"2025-06-04T18:06:10.816Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-04 18:06:11
 pNuHQ4ywSy0tXZcGIP4PQrxq-3_pdpYJ	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-13T03:34:46.573Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-13 03:34:47
 2GO_z3ZTu1qERWLW48mBcuWBQiEhs0DJ	{"cookie":{"originalMaxAge":3888000000,"expires":"2025-07-09T17:57:59.643Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-07-09 17:58:00
 wAw1hCyk6GHqN7dpRyuJ4m9gkWx95fRJ	{"cookie":{"originalMaxAge":2592000000,"expires":"2025-06-07T11:22:50.423Z","secure":false,"httpOnly":true,"path":"/","sameSite":"lax"},"passport":{"user":1}}	2025-06-07 16:12:48
@@ -734,7 +733,7 @@ COPY public.testimonials (id, client_name, client_location, rating, testimonial,
 --
 
 COPY public.users (id, username, password, email, full_name, phone, is_agent, created_at, role, created_by, is_active, password_hash, first_name, last_name) FROM stdin;
-1	owner	8b7ff7ecbfdf36cc5c84ac094b2e90926cb29b793167b83aae18cebf06fdd8ccbe7bd761403ba754c194741cd71d5852b5ae70f5155f3c128641ab9ffbf31f5e.eeb523387c028590195e56d6509e305f	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
+1	owner	d0018c8563439ba408bd796db82d271d7b4d9d10eb7a3410f46eda578af7318fed6040dc0990d88a2082a6a0857ea5df657dbf19f365259e85d72ac20223bdc2.01c46ef76488499da8b6aa359e5aca88	owner@theviews.com	System Owner	\N	t	2025-04-04T05:33:01.546Z	owner	\N	t	\N	\N	\N
 2	Dina	6db0d437fe53359aafbf1b8f9abea096cb93ba0a9a3e68f2e061d025b0d418c2a3c0f9a0b055488a6968b8dbb0a8e6aab3e0ab60150d23c08d268b0e6649fe0b.405a94cd5000bccaf5592d15efc38709	assem@theviewsconsultancy.com	Dina Mohamed 		f	2025-04-04T13:44:32.994Z	admin	1	t	\N	\N	\N
 \.
 
