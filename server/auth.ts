@@ -11,6 +11,7 @@ import { pool } from "./db";
 import { User as SelectUser } from "@shared/schema";
 import { userRoles } from "@shared/schema";
 import nodemailer from "nodemailer";
+import { setupOTPAuth } from "./otp-auth";
 
 declare global {
   namespace Express {
@@ -119,6 +120,9 @@ export function requireRole(roles: string | string[]) {
 }
 
 export function setupAuth(app: Express) {
+  // Set up OTP authentication endpoints
+  setupOTPAuth(app);
+  
   // Set up PostgreSQL session store
   const PostgresSessionStore = connectPgSimple(session);
   
