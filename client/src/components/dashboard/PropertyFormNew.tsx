@@ -434,7 +434,7 @@ export default function PropertyForm({
               
               if (response.ok) {
                 const uploadResult = await response.json();
-                const newImageUrl = uploadResult.fileUrls?.[0] || uploadResult.imageUrls?.[0];
+                const newImageUrl = uploadResult.imageUrls?.[0] || uploadResult.fileUrls?.[0];
                 
                 if (newImageUrl) {
                   console.log(`Replacing image at index ${adjustedIndex} with: ${newImageUrl}`);
@@ -463,11 +463,13 @@ export default function PropertyForm({
           });
 
           if (!response.ok) {
-            throw new Error(`New image upload failed with status: ${response.status}`);
+            const errorText = await response.text();
+            console.error(`New image upload failed with status ${response.status}:`, errorText);
+            throw new Error(`New image upload failed with status: ${response.status} - ${errorText}`);
           }
 
           const uploadResult = await response.json();
-          const newImageUrls = uploadResult.fileUrls || uploadResult.imageUrls || [];
+          const newImageUrls = uploadResult.imageUrls || uploadResult.fileUrls || [];
           console.log(`Uploaded ${newImageUrls.length} new images successfully:`, newImageUrls);
           
           // Add new images to the final list
