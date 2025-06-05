@@ -147,6 +147,18 @@ export default function SignIn() {
                 </button>
               </form>
               
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-3">Alternative login method:</p>
+                  <Link 
+                    href="/otp-login" 
+                    className="inline-block w-full p-3 bg-white border-2 border-[#D4AF37] text-[#D4AF37] font-medium rounded-md hover:bg-[#D4AF37] hover:text-white transition-all"
+                  >
+                    Login with One-Time Password (OTP)
+                  </Link>
+                </div>
+              </div>
+              
               <div className="text-center mt-6 text-sm text-gray-600">
                 <p>For administrative assistance, please contact the system administrator.</p>
               </div>
