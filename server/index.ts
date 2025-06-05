@@ -12,7 +12,6 @@ import { monitoringService } from './monitoring'; // Import our monitoring servi
 import seoScheduler from "./seo-scheduler";
 import { HealthMonitor } from "./health-monitor";
 import { protectionMiddleware, ownerOnlyMiddleware } from './protection-middleware';
-// Backup services will be imported only when needed
 
 // Create and prepare all upload directories with proper permissions
 function prepareUploadDirectories() {
@@ -272,20 +271,28 @@ app.use((req, res, next) => {
     res.json({ success, message: success ? "Error logs cleared" : "Failed to clear error logs" });
   });
 
-  // Backup management endpoints (owner only)
+  // Backup management endpoints (owner only) - with improved error handling
   app.get("/api/backups", ownerOnlyMiddleware, (req: Request, res: Response) => {
-    const backupService = BackupService.getInstance();
-    const backups = backupService.getAvailableBackups();
-    res.json({ backups, count: backups.length });
+    try {
+      const { BackupService } = require('./backup-service');
+      const backupService = BackupService.getInstance();
+      const backups = backupService.getAvailableBackups();
+      res.json({ backups, count: backups.length });
+    } catch (error) {
+      console.error('Error getting backups:', error);
+      res.json({ backups: [], count: 0, error: 'Backup service unavailable' });
+    }
   });
 
   app.post("/api/backups/create", ownerOnlyMiddleware, async (req: Request, res: Response) => {
     try {
+      const { BackupService } = require('./backup-service');
       const backupService = BackupService.getInstance();
       const user = req.user as any;
       const backupFile = await backupService.createBackup('manual', user.id);
       res.json({ success: true, backupFile, message: "Backup created successfully" });
     } catch (error) {
+      console.error('Backup creation error:', error);
       res.status(500).json({ success: false, error: "Backup creation failed" });
     }
   });
@@ -293,15 +300,17 @@ app.use((req, res, next) => {
   app.post("/api/backups/restore", ownerOnlyMiddleware, async (req: Request, res: Response) => {
     try {
       const { backupFile } = req.body;
+      const { BackupService } = require('./backup-service');
       const backupService = BackupService.getInstance();
       await backupService.restoreFromBackup(path.join(process.cwd(), 'backups', backupFile));
       res.json({ success: true, message: "Backup restored successfully" });
     } catch (error) {
+      console.error('Backup restoration error:', error);
       res.status(500).json({ success: false, error: "Backup restoration failed" });
     }
   });
 
-  // Change tracking endpoint (admin/owner only)
+  // Change tracking endpoint (admin/owner only) - with improved error handling
   app.get("/api/changes", (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Authentication required" });
@@ -312,10 +321,16 @@ app.use((req, res, next) => {
       return res.status(403).json({ message: "Admin access required" });
     }
 
-    const changeTracker = ChangeTracker.getInstance();
-    const count = req.query.count ? parseInt(String(req.query.count)) : 50;
-    const changes = changeTracker.getRecentChanges(count);
-    res.json({ changes, count: changes.length });
+    try {
+      const { ChangeTracker } = require('./change-tracker');
+      const changeTracker = ChangeTracker.getInstance();
+      const count = req.query.count ? parseInt(String(req.query.count)) : 50;
+      const changes = changeTracker.getRecentChanges(count);
+      res.json({ changes, count: changes.length });
+    } catch (error) {
+      console.error('Error getting changes:', error);
+      res.json({ changes: [], count: 0, error: 'Change tracker unavailable' });
+    }
   });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -365,19 +380,33 @@ app.use((req, res, next) => {
     next();
   });
 
-  // Health monitoring
-  const healthMonitor = HealthMonitor.getInstance();
-  healthMonitor.startMonitoring();
+  // Initialize optional services with error handling
+  try {
+    const { HealthMonitor } = await import('./health-monitor');
+    const healthMonitor = HealthMonitor.getInstance();
+    healthMonitor.startMonitoring();
+    console.log('✅ Health monitoring started');
+  } catch (error) {
+    console.warn('⚠️ Health monitoring failed to start:', error);
+  }
 
-  // Session monitoring and cleanup
-  const { SessionMonitor } = await import('./session-monitor');
-  const sessionMonitor = SessionMonitor.getInstance();
-  sessionMonitor.startMonitoring();
+  try {
+    const { SessionMonitor } = await import('./session-monitor');
+    const sessionMonitor = SessionMonitor.getInstance();
+    sessionMonitor.startMonitoring();
+    console.log('✅ Session monitoring started');
+  } catch (error) {
+    console.warn('⚠️ Session monitoring failed to start:', error);
+  }
 
-  // Auto-restore service
-  const { AutoRestoreService } = await import('./auto-restore-service');
-  const autoRestoreService = AutoRestoreService.getInstance();
-  await autoRestoreService.scheduleAutoBackups();
+  try {
+    const { AutoRestoreService } = await import('./auto-restore-service');
+    const autoRestoreService = AutoRestoreService.getInstance();
+    await autoRestoreService.scheduleAutoBackups();
+    console.log('✅ Auto-restore service started');
+  } catch (error) {
+    console.warn('⚠️ Auto-restore service failed to start:', error);
+  }
 
   // Request timeout middleware (30 seconds)
   app.use((req: Request, res: Response, next: NextFunction) => {

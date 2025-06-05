@@ -26,8 +26,25 @@ export class BackupService {
   }
 
   async createBackup(operation: string, userId?: number): Promise<string> {
+    try {
+      console.log(`🔄 Creating backup for operation: ${operation}`);
+
+      // Ensure backup directory exists with proper error handling
+      try {
+        if (!fs.existsSync(this.backupDir)) {
+          fs.mkdirSync(this.backupDir, { recursive: true, mode: 0o755 });
+          console.log(`📁 Created backup directory: ${this.backupDir}`);
+        }
+      } catch (dirError) {
+        console.error(`❌ Failed to create backup directory: ${dirError}`);
+        // Use a fallback directory
+        this.backupDir = path.join(process.cwd(), 'backups');
+        if (!fs.existsSync(this.backupDir)) {
+          fs.mkdirSync(this.backupDir, { recursive: true, mode: 0o755 });
+        }
+      }
+
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    // More aggressive sanitization to prevent path issues
     const sanitizedOperation = operation.replace(/[^a-zA-Z0-9-_]/g, '_').replace(/_{2,}/g, '_').replace(/^_+|_+$/g, '') || 'unknown';
     const backupFile = path.join(this.backupDir, `backup-${timestamp}-${sanitizedOperation}.json`);
 

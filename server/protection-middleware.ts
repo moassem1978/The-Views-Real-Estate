@@ -13,14 +13,19 @@ export const protectionMiddleware = async (req: Request, res: Response, next: Ne
 
   if (isDangerous) {
     try {
-      // Create automatic backup before any dangerous operation
-      const backupService = BackupService.getInstance();
-      const userId = req.user ? (req.user as any).id : null;
-      // Sanitize the operation name to prevent file path issues
-      const rawOperation = `${req.method}-${req.path}`;
-      const operation = rawOperation.replace(/[^a-zA-Z0-9-_]/g, '_').replace(/_{2,}/g, '_').replace(/^_+|_+$/g, '') || 'unknown_operation';
-      
-      await backupService.createBackup(operation, userId);
+      try {
+        // Create automatic backup before any dangerous operation
+        const backupService = BackupService.getInstance();
+        const userId = req.user ? (req.user as any).id : null;
+        // Sanitize the operation name to prevent file path issues
+        const rawOperation = `${req.method}-${req.path}`;
+        const operation = rawOperation.replace(/[^a-zA-Z0-9-_]/g, '_').replace(/_{2,}/g, '_').replace(/^_+|_+$/g, '') || 'unknown_operation';
+        
+        await backupService.createBackup(operation, userId);
+      } catch (backupError) {
+        console.warn('⚠️ PROTECTION: Backup failed but allowing operation to continue:', backupError);
+        // Continue with the operation even if backup fails
+      }
       console.log(`🔒 PROTECTION: Backup created before ${operation}`);
       
       // Add warning headers
