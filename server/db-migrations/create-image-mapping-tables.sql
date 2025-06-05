@@ -1,7 +1,7 @@
 
 -- Create property image mappings table
 CREATE TABLE IF NOT EXISTS property_image_mappings (
-  image_id UUID PRIMARY KEY,
+  image_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id INTEGER NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   original_filename TEXT NOT NULL,
   current_filename TEXT NOT NULL,
@@ -24,7 +24,7 @@ ON property_image_mappings(property_id, image_order);
 
 -- Create property backups table
 CREATE TABLE IF NOT EXISTS property_backups (
-  backup_id UUID PRIMARY KEY,
+  backup_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id INTEGER NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   backup_data JSONB NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
@@ -38,5 +38,6 @@ ON property_backups(property_id);
 CREATE INDEX IF NOT EXISTS idx_property_backups_created_at 
 ON property_backups(created_at DESC);
 
--- Add UUID extension if not exists
+-- Ensure UUID extension exists
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
