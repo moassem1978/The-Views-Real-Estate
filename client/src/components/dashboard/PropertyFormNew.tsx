@@ -46,6 +46,10 @@ export default function PropertyForm({
   const [uploading, setUploading] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
+  const [imagePreviewModal, setImagePreviewModal] = useState(false);
+  const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
+  const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
+  const [imagesToReplace, setImagesToReplace] = useState<Map<number, File>>(new Map());
   const isEditing = !!propertyId;
 
   // Form definition with default values
@@ -206,7 +210,7 @@ export default function PropertyForm({
     };
   }, []);
 
-  // Image handlers with preview functionality
+  // Enhanced image change handlers with explicit management
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       // Add new files to the existing ones instead of replacing them
@@ -218,18 +222,49 @@ export default function PropertyForm({
     }
   };
 
-  // Image preview functionality
-  const handlePreview = (image: string) => {
-    setPreviewImage(image);
-    setPreviewVisible(true);
+  // Open image preview modal with navigation
+  const openImagePreview = (imageIndex: number, isExisting: boolean = false) => {
+    setCurrentPreviewIndex(imageIndex);
+    setImagePreviewModal(true);
+    
+    if (isExisting && existingImages[imageIndex]) {
+      setPreviewImage(existingImages[imageIndex]);
+    } else if (!isExisting && images[imageIndex]) {
+      setPreviewImage(URL.createObjectURL(images[imageIndex]));
+    }
   };
 
-  // Close image preview
-  const handlePreviewClose = () => {
-    setPreviewVisible(false);
+  // Close image preview modal
+  const closeImagePreview = () => {
+    setImagePreviewModal(false);
+    setPreviewImage('');
   };
 
-  // Remove a selected image before upload with X button
+  // Navigate through images in preview
+  const navigatePreview = (direction: 'prev' | 'next') => {
+    const totalExisting = existingImages.length;
+    const totalNew = images.length;
+    const totalImages = totalExisting + totalNew;
+    
+    let newIndex = currentPreviewIndex;
+    if (direction === 'next') {
+      newIndex = (currentPreviewIndex + 1) % totalImages;
+    } else {
+      newIndex = currentPreviewIndex === 0 ? totalImages - 1 : currentPreviewIndex - 1;
+    }
+    
+    setCurrentPreviewIndex(newIndex);
+    
+    // Update preview image
+    if (newIndex < totalExisting) {
+      setPreviewImage(existingImages[newIndex]);
+    } else {
+      const newImageIndex = newIndex - totalExisting;
+      setPreviewImage(URL.createObjectURL(images[newImageIndex]));
+    }
+  };
+
+  // Remove a selected new image before upload
   const removeSelectedImage = (index: number) => {
     setImages(prevImages => {
       const newImages = [...prevImages];
@@ -238,13 +273,33 @@ export default function PropertyForm({
     });
   };
 
-  // Remove an existing image with X button
-  const removeExistingImage = (index: number) => {
-    setExistingImages(prevImages => {
-      const newImages = [...prevImages];
-      newImages.splice(index, 1);
-      return newImages;
-    });
+  // Mark existing image for deletion (don't remove immediately)
+  const markImageForDeletion = (index: number) => {
+    setImagesToDelete(prev => [...prev, index]);
+  };
+
+  // Unmark image for deletion
+  const unmarkImageForDeletion = (index: number) => {
+    setImagesToDelete(prev => prev.filter(i => i !== index));
+  };
+
+  // Replace an existing image
+  const replaceExistingImage = (index: number, file: File) => {
+    setImagesToReplace(prev => new Map(prev.set(index, file)));
+  };
+
+  // Handle file input for replacing specific image
+  const handleReplaceImage = (index: number) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        replaceExistingImage(index, file);
+      }
+    };
+    input.click();
   };
 
   // Create/Update property mutation
@@ -342,115 +397,119 @@ export default function PropertyForm({
       // Get the property ID (either from the saved property or existing ID)
       const savedPropertyId = isEditing ? propertyId : property.id;
 
-      // Step 2: Handle image uploads and existing images
-      if (images.length > 0) {
-        try {
-          setUploading(true);
-          console.log(`Uploading ${images.length} images for property ${savedPropertyId}`);
+      // Step 2: Handle explicit image changes
+      try {
+        setUploading(true);
+        
+        // Start with existing images, apply deletions and replacements
+        let finalImages = [...existingImages];
+        
+        // Remove images marked for deletion (in reverse order to maintain indices)
+        const sortedDeletions = [...imagesToDelete].sort((a, b) => b - a);
+        sortedDeletions.forEach(index => {
+          if (index < finalImages.length) {
+            console.log(`Removing image at index ${index}: ${finalImages[index]}`);
+            finalImages.splice(index, 1);
+          }
+        });
+        
+        // Handle image replacements
+        if (imagesToReplace.size > 0) {
+          console.log(`Processing ${imagesToReplace.size} image replacements`);
+          
+          for (const [originalIndex, newFile] of imagesToReplace.entries()) {
+            // Adjust index based on deletions that occurred before this index
+            const adjustedIndex = originalIndex - imagesToDelete.filter(delIndex => delIndex < originalIndex).length;
+            
+            if (adjustedIndex >= 0 && adjustedIndex < finalImages.length) {
+              // Upload the replacement image
+              const formData = new FormData();
+              formData.append('images', newFile);
+              formData.append('propertyId', savedPropertyId.toString());
+              
+              const response = await fetch(`/api/upload/property-images-direct`, {
+                method: 'POST',
+                body: formData,
+              });
+              
+              if (response.ok) {
+                const uploadResult = await response.json();
+                const newImageUrl = uploadResult.fileUrls?.[0] || uploadResult.imageUrls?.[0];
+                
+                if (newImageUrl) {
+                  console.log(`Replacing image at index ${adjustedIndex} with: ${newImageUrl}`);
+                  finalImages[adjustedIndex] = newImageUrl;
+                }
+              }
+            }
+          }
+        }
+        
+        // Handle new image uploads
+        if (images.length > 0) {
+          console.log(`Uploading ${images.length} new images for property ${savedPropertyId}`);
 
-          // Create FormData
           const formData = new FormData();
-
-          // Add property ID to help the server associate images with the right property
           formData.append('propertyId', savedPropertyId.toString());
 
-          // Log what we're doing
-          console.log(`Uploading ${images.length} images for property ID: ${savedPropertyId}`);
-
-          // Add each image to the form data
           images.forEach((image, idx) => {
-            console.log(`Adding image ${idx + 1}/${images.length}: ${image.name} (${Math.round(image.size/1024)}KB)`);
+            console.log(`Adding new image ${idx + 1}/${images.length}: ${image.name} (${Math.round(image.size/1024)}KB)`);
             formData.append('images', image);
           });
 
-          // Use direct upload endpoint which doesn't require authentication
           const response = await fetch(`/api/upload/property-images-direct`, {
             method: 'POST',
             body: formData,
           });
 
           if (!response.ok) {
-            throw new Error(`Image upload failed with status: ${response.status}`);
+            throw new Error(`New image upload failed with status: ${response.status}`);
           }
 
           const uploadResult = await response.json();
-          const imageUrls = uploadResult.fileUrls || uploadResult.imageUrls || [];
-          console.log(`Uploaded ${imageUrls.length} images successfully:`, imageUrls);
-
-          // Step 3: Update the property with the uploaded image URLs and existing images
-
-          // Create a set of unique image URLs to prevent duplication
-          const uniqueImageUrls = new Set([...(existingImages || []), ...imageUrls]);
-          const validImages = Array.from(uniqueImageUrls);
-
-          console.log(`Updating property with ${validImages.length} total unique images`);
-          console.log('Existing images:', existingImages);
-          console.log('New image URLs:', imageUrls);
-          console.log('Final unique image list:', validImages);
-
-          // Ensure all images have the correct path format (add leading slash if missing)
-          const formattedImages = validImages.map(img => {
-            if (typeof img === 'string' && !img.startsWith('/') && !img.startsWith('http')) {
-              return `/${img}`;
-            }
-            return img;
-          });
-
-          console.log('Formatted image list with correct paths:', formattedImages);
-
-          // Update property with the deduplicated images, letting the database handle the JSON conversion
-          const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-            images: formattedImages
-          });
-
-          if (!updateResponse.ok) {
-            throw new Error(`Property image update failed with status: ${updateResponse.status}`);
-          }
-
-          console.log(`Successfully updated property ${savedPropertyId} with ${validImages.length} images`);
-        } catch (error) {
-          console.error("Error updating property images:", error);
-          toast({
-            variant: "destructive",
-            title: "Error updating property images",
-            description: error instanceof Error ? error.message : "Failed to update property images"
-          });
-          return; // Don't close the form on error
-        } finally {
-          setUploading(false);
+          const newImageUrls = uploadResult.fileUrls || uploadResult.imageUrls || [];
+          console.log(`Uploaded ${newImageUrls.length} new images successfully:`, newImageUrls);
+          
+          // Add new images to the final list
+          finalImages.push(...newImageUrls);
         }
-      } else if (existingImages.length > 0 && isEditing) {
-        // CRITICAL FIX: Enhanced handling of existing images in update requests
-        try {
-          console.log(`Updating property ${savedPropertyId} with ${existingImages.length} existing images`);
-          console.log("Existing images to preserve:", existingImages);
 
-          // First, ensure all images are properly formatted strings
-          const validatedImages = existingImages.map(img => 
-            typeof img === 'string' ? img.trim() : String(img)
-          ).filter(Boolean);
-
-          console.log(`Prepared ${validatedImages.length} validated image strings`);
-
-          // Send the update request with proper images array format
-          const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
-            images: validatedImages
-          });
-
-          if (!updateResponse.ok) {
-            throw new Error(`Property image update failed with status: ${updateResponse.status}`);
+        // Ensure all images have the correct path format
+        const formattedImages = finalImages.map(img => {
+          if (typeof img === 'string' && !img.startsWith('/') && !img.startsWith('http')) {
+            return `/${img}`;
           }
+          return img;
+        }).filter(Boolean);
 
-          console.log(`Successfully updated property ${savedPropertyId} with ${validatedImages.length} images`);
-        } catch (error) {
-          console.error("Error updating property images:", error);
-          toast({
-            variant: "destructive",
-            title: "Error updating property images",
-            description: error instanceof Error ? error.message : "Failed to update property images"
-          });
-          return; // Don't close the form on error
+        console.log(`Final image list for property ${savedPropertyId}:`, formattedImages);
+
+        // Update property with the final image list
+        const updateResponse = await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
+          images: formattedImages
+        });
+
+        if (!updateResponse.ok) {
+          throw new Error(`Property image update failed with status: ${updateResponse.status}`);
         }
+
+        console.log(`Successfully updated property ${savedPropertyId} with ${formattedImages.length} images`);
+        
+        // Reset image change tracking
+        setImagesToDelete([]);
+        setImagesToReplace(new Map());
+        setImages([]);
+        
+      } catch (error) {
+        console.error("Error processing image changes:", error);
+        toast({
+          variant: "destructive",
+          title: "Error updating property images",
+          description: error instanceof Error ? error.message : "Failed to update property images"
+        });
+        return; // Don't close the form on error
+      } finally {
+        setUploading(false);
       }
 
       // Success notification
@@ -998,9 +1057,10 @@ export default function PropertyForm({
               </CardContent>
             </Card>
 
-            {/* Image Upload Section */}
+            {/* Enhanced Image Management Section */}
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-2">Property Images</h3>
+              <p className="text-sm text-gray-600 mb-4">Click any image to preview. Make explicit changes to avoid mixing up images.</p>
 
               {/* Image upload button */}
               <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-md p-6 cursor-pointer hover:border-gray-400 transition-colors" onClick={() => document.getElementById('image-upload')?.click()}>
@@ -1019,58 +1079,243 @@ export default function PropertyForm({
                 </div>
               </div>
 
-              {/* Preview of selected images */}
-              {images.length > 0 && (
+              {/* Existing images with enhanced controls */}
+              {existingImages.length > 0 && (
                 <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2">New Images to Upload:</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {images.map((image, index) => (
-                      <div key={`new-${index}`} className="relative">
-                        <img 
-                          src={URL.createObjectURL(image)} 
-                          alt={`Preview ${index}`} 
-                          className="w-full h-24 object-cover rounded-md"
-                          onClick={() => handlePreview(URL.createObjectURL(image))}
-                        />
-                        <button 
-                          type="button"
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                          onClick={() => removeSelectedImage(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                  <h4 className="text-sm font-medium mb-2">Current Property Images:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {existingImages.map((image, index) => (
+                      <div key={`existing-${index}`} className="relative group">
+                        <div className={`relative ${imagesToDelete.includes(index) ? 'opacity-50' : ''}`}>
+                          <img 
+                            src={image} 
+                            alt={`Property image ${index + 1}`} 
+                            className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => openImagePreview(index, true)}
+                          />
+                          
+                          {/* Image overlay with actions */}
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-md flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                              <button 
+                                type="button"
+                                className="bg-blue-500 text-white rounded-full p-1 hover:bg-blue-600 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openImagePreview(index, true);
+                                }}
+                                title="Preview image"
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </button>
+                              
+                              <button 
+                                type="button"
+                                className="bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleReplaceImage(index);
+                                }}
+                                title="Replace image"
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                              </button>
+                              
+                              {imagesToDelete.includes(index) ? (
+                                <button 
+                                  type="button"
+                                  className="bg-yellow-500 text-white rounded-full p-1 hover:bg-yellow-600 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    unmarkImageForDeletion(index);
+                                  }}
+                                  title="Undo delete"
+                                >
+                                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                  </svg>
+                                </button>
+                              ) : (
+                                <button 
+                                  type="button"
+                                  className="bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markImageForDeletion(index);
+                                  }}
+                                  title="Mark for deletion"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Replacement indicator */}
+                          {imagesToReplace.has(index) && (
+                            <div className="absolute top-1 left-1 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                              Will Replace
+                            </div>
+                          )}
+                          
+                          {/* Deletion indicator */}
+                          {imagesToDelete.includes(index) && (
+                            <div className="absolute top-1 left-1 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                              Will Delete
+                            </div>
+                          )}
+                        </div>
+                        
+                        <p className="text-xs text-gray-500 mt-1 text-center">Image {index + 1}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Existing images (when editing) */}
-              {existingImages.length > 0 && (
+              {/* New images to upload */}
+              {images.length > 0 && (
                 <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2">Existing Images:</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {existingImages.map((image, index) => (
-                      <div key={`existing-${index}`} className="relative">
+                  <h4 className="text-sm font-medium mb-2">New Images to Upload:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {images.map((image, index) => (
+                      <div key={`new-${index}`} className="relative group">
                         <img 
-                          src={image} 
-                          alt={`Existing ${index}`} 
-                          className="w-full h-24 object-cover rounded-md"
-                          onClick={() => handlePreview(image)}
+                          src={URL.createObjectURL(image)} 
+                          alt={`New image ${index + 1}`} 
+                          className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => openImagePreview(existingImages.length + index, false)}
                         />
                         <button 
                           type="button"
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                          onClick={() => removeExistingImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          onClick={() => removeSelectedImage(index)}
+                          title="Remove image"
                         >
                           <X className="h-4 w-4" />
                         </button>
+                        <p className="text-xs text-gray-500 mt-1 text-center">New {index + 1}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+
+              {/* Change summary */}
+              {(imagesToDelete.length > 0 || imagesToReplace.size > 0 || images.length > 0) && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <h5 className="text-sm font-medium text-blue-800 mb-2">Pending Changes:</h5>
+                  <ul className="text-xs text-blue-700 space-y-1">
+                    {imagesToDelete.length > 0 && (
+                      <li>• {imagesToDelete.length} image(s) will be deleted</li>
+                    )}
+                    {imagesToReplace.size > 0 && (
+                      <li>• {imagesToReplace.size} image(s) will be replaced</li>
+                    )}
+                    {images.length > 0 && (
+                      <li>• {images.length} new image(s) will be added</li>
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
+
+            {/* Enhanced Image Preview Modal */}
+            {imagePreviewModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                <div className="max-w-4xl max-h-full p-4 relative">
+                  <div className="bg-white rounded-lg overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b">
+                      <h3 className="text-lg font-medium">
+                        Image Preview ({currentPreviewIndex + 1} of {existingImages.length + images.length})
+                      </h3>
+                      <button 
+                        onClick={closeImagePreview}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <X className="h-6 w-6" />
+                      </button>
+                    </div>
+                    
+                    <div className="relative">
+                      <img 
+                        src={previewImage} 
+                        alt="Preview" 
+                        className="max-w-full max-h-96 mx-auto block"
+                      />
+                      
+                      {/* Navigation buttons */}
+                      {(existingImages.length + images.length) > 1 && (
+                        <>
+                          <button 
+                            onClick={() => navigatePreview('prev')}
+                            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75"
+                          >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+                          
+                          <button 
+                            onClick={() => navigatePreview('next')}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75"
+                          >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="p-4 border-t bg-gray-50">
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm text-gray-600">
+                          {currentPreviewIndex < existingImages.length ? 
+                            `Current Property Image ${currentPreviewIndex + 1}` : 
+                            `New Image ${currentPreviewIndex - existingImages.length + 1}`
+                          }
+                        </div>
+                        
+                        <div className="flex space-x-2">
+                          {currentPreviewIndex < existingImages.length && (
+                            <>
+                              <button 
+                                onClick={() => handleReplaceImage(currentPreviewIndex)}
+                                className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                              >
+                                Replace
+                              </button>
+                              
+                              {imagesToDelete.includes(currentPreviewIndex) ? (
+                                <button 
+                                  onClick={() => unmarkImageForDeletion(currentPreviewIndex)}
+                                  className="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
+                                >
+                                  Undo Delete
+                                </button>
+                              ) : (
+                                <button 
+                                  onClick={() => markImageForDeletion(currentPreviewIndex)}
+                                  className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </form>

@@ -340,22 +340,27 @@ export class DatabaseStorage implements IStorage {
     console.log(`Updating property ${id} with:`, updates);
 
     try {
+      // Import the new backup manager
+      const { ImageBackupManager } = await import('./utils/imageBackupManager');
+      const { ImageValidator } = await import('./utils/imageValidator');
+
       // BACKUP: Create image backup before any modifications
       if ('images' in updates) {
         const existingProperty = await this.getPropertyById(id);
         if (existingProperty && existingProperty.images) {
-          // Create backup entry in a separate backup table or log
-          console.log(`BACKUP: Creating image backup for property ${id}`);
-          await this.createImageBackup(id, existingProperty.images);
+          console.log(`📦 Creating image backup for property ${id}`);
+          await ImageBackupManager.createImageBackup(id, existingProperty.images);
         }
 
         // Validate files exist before updating
         if (Array.isArray(updates.images) && updates.images.length > 0) {
-          const fileValidator = new FileValidator();
-          const validation = fileValidator.validatePropertyImages(updates.images);
+          const validation = ImageValidator.validateImageList(updates.images);
 
-          if (validation.missingCount > 0) {
-            console.warn(`⚠️  Property ${id}: ${validation.missingCount} image files are missing, using only valid images`);
+          if (validation.invalidImages.length > 0) {
+            console.warn(`⚠️  Property ${id}: ${validation.invalidImages.length} image files are missing or invalid`);
+            validation.invalidImages.forEach(invalid => {
+              console.warn(`   - ${invalid.filename}: ${invalid.error}`);
+            });
           }
 
           // Only use validated images
@@ -369,6 +374,16 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error(`Error updating property ${id}:`, error);
       return undefined;
+    }
+  }
+
+  // Remove the old createImageBackup method since we're using the new manager
+  private async createImageBackup(propertyId: number, images: string[]): Promise<void> {
+    try {
+      const { ImageBackupManager } = await import('./utils/imageBackupManager');
+      await ImageBackupManager.createImageBackup(propertyId, images);
+    } catch (error) {
+      console.error(`Error creating image backup for property ${propertyId}:`, error);
     }
   }
 
