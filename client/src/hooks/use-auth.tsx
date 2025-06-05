@@ -71,9 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Username and password are required");
       }
       
-      // Clean the credentials
+      // Clean the credentials (don't convert to lowercase - preserve original case)
       const cleanCredentials = {
-        username: credentials.username.trim().toLowerCase(),
+        username: credentials.username.trim(),
         password: credentials.password
       };
       
