@@ -10,6 +10,18 @@ import { User } from "../types";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { toast } from "@/hooks/use-toast";
 
+// Helper function to make API requests with the correct signature
+async function makeApiRequest(url: string, method: string, data?: any) {
+  return apiRequest(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: data ? JSON.stringify(data) : undefined,
+  });
+}
+
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
@@ -36,7 +48,6 @@ type RegisterData = {
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
   const {
     data: user,
     error,
@@ -68,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("Attempting login with username:", cleanCredentials.username);
       
-      const res = await apiRequest("POST", "/api/login", cleanCredentials);
+      const res = await makeApiRequest("/api/login", "POST", cleanCredentials);
       
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: "Login failed" }));
@@ -97,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (userData: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", userData);
+      const res = await makeApiRequest("/api/register", "POST", userData);
       return await res.json();
     },
     onSuccess: (user: User) => {
@@ -118,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      await makeApiRequest("/api/logout", "POST");
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
