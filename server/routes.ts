@@ -4141,13 +4141,37 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Handle incorrect image paths by redirecting to correct uploads path
+  // Handle incorrect image paths and missing files
   app.get('/properties/*', (req, res) => {
-    console.log(`Image not found: ${req.path}`);
+    console.log(`Image request for: ${req.path}`);
     const filename = path.basename(req.path);
-    const correctPath = `/uploads/properties/${filename}`;
-    console.log(`Redirecting to correct path: ${correctPath}`);
-    res.redirect(correctPath);
+    
+    // Check if file exists in correct location first
+    const correctFilePath = path.join(process.cwd(), 'public', 'uploads', 'properties', filename);
+    if (fs.existsSync(correctFilePath)) {
+      console.log(`Found file, redirecting to: /uploads/properties/${filename}`);
+      return res.redirect(`/uploads/properties/${filename}`);
+    }
+    
+    // If file doesn't exist, serve a placeholder SVG
+    console.log(`File not found: ${filename}, serving placeholder`);
+    const placeholderSvg = `
+      <svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+        <rect width="400" height="300" fill="#f3f4f6"/>
+        <rect x="150" y="100" width="100" height="80" fill="#d1d5db" rx="4"/>
+        <circle cx="175" cy="120" r="8" fill="#9ca3af"/>
+        <polygon points="165,145 175,135 185,145 185,160 165,160" fill="#9ca3af"/>
+        <text x="200" y="210" font-family="Arial, sans-serif" font-size="14" fill="#6b7280" text-anchor="middle">
+          Image Unavailable
+        </text>
+        <text x="200" y="230" font-family="Arial, sans-serif" font-size="12" fill="#9ca3af" text-anchor="middle">
+          ${filename}
+        </text>
+      </svg>
+    `;
+    
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(placeholderSvg);
   });
 
   // Enhanced file access route with advanced file matching
