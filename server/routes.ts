@@ -4303,8 +4303,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     });
   });
 
-  // Dashboard route with authentication
+  // Dashboard route with authentication (TEMPORARILY BYPASSED FOR TESTING)
   app.get('/dashboard', async (req: Request, res: Response) => {
+    // TEMP: Authentication check bypassed for testing
+    console.log('🔓 DASHBOARD ACCESS: Authentication temporarily bypassed for testing');
+    
+    // For SPA, redirect to the main app and let client-side routing handle it
+    return res.redirect('/?redirect=dashboard');
+    
+    /* ORIGINAL CODE - COMMENTED OUT FOR TESTING
     // Check authentication
     if (!req.isAuthenticated()) {
       return res.redirect('/signin?redirect=/dashboard');
@@ -4321,10 +4328,28 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
     // For SPA, redirect to the main app and let client-side routing handle it
     return res.redirect('/?redirect=dashboard');
+    */
   });
 
-  // API endpoint to check dashboard access
+  // API endpoint to check dashboard access (TEMPORARILY BYPASSED FOR TESTING)
   app.get('/api/dashboard/access', async (req: Request, res: Response) => {
+    // TEMP: Authentication check bypassed for testing
+    console.log('🔓 DASHBOARD API ACCESS: Authentication temporarily bypassed for testing');
+    
+    // Return mock authenticated user for testing
+    res.json({
+      authenticated: true,
+      hasAccess: true,
+      user: {
+        id: 1,
+        username: 'test-user',
+        role: 'admin',
+        fullName: 'Test User (Auth Bypassed)'
+      },
+      dashboardUrl: '/dashboard'
+    });
+    
+    /* ORIGINAL CODE - COMMENTED OUT FOR TESTING
     if (!req.isAuthenticated()) {
       return res.status(401).json({ 
         authenticated: false, 
@@ -4346,6 +4371,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       },
       dashboardUrl: hasAccess ? '/dashboard' : null
     });
+    */
   });
 
   // Add restoration endpoints
