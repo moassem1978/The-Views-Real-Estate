@@ -140,8 +140,8 @@ function App() {
   useEffect(() => {
     // Initialize monitoring and other services
     try {
-      FrontendMonitoring.init();
-      console.log("✅ Frontend monitoring initialized");
+      FrontendMonitoring.initialize();
+      console.log("✅ Frontend monitoring initialized successfully");
     } catch (error) {
       console.warn("⚠️ Frontend monitoring initialization failed:", error);
     }
