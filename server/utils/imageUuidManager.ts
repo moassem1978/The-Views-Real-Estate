@@ -195,86 +195,221 @@ export class ImageUuidManager {
   }
 
   /**
-   * Create backup before property modification
+   * Create comprehensive backup before property modification
    */
   static async createPropertyBackup(propertyId: number): Promise<string> {
     try {
       const backupId = uuidv4();
+      console.log(`📦 Creating comprehensive backup ${backupId} for property ${propertyId}`);
       
-      // Get current property data
-      const propertyResult = await pool.query('SELECT * FROM properties WHERE id = $1', [propertyId]);
-      const imageMappings = await this.getPropertyImageMappings(propertyId);
+      // Get current property data with error handling
+      let propertyData = null;
+      try {
+        const propertyResult = await pool.query('SELECT * FROM properties WHERE id = $1', [propertyId]);
+        propertyData = propertyResult.rows[0] || null;
+      } catch (dbError) {
+        console.error(`Failed to fetch property ${propertyId} for backup:`, dbError);
+        throw new Error(`Database error during backup: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`);
+      }
 
+      if (!propertyData) {
+        throw new Error(`Property ${propertyId} not found for backup`);
+      }
+      
+      // Get image mappings with error handling
+      let imageMappings: ImageMapping[] = [];
+      try {
+        imageMappings = await this.getPropertyImageMappings(propertyId);
+      } catch (mappingError) {
+        console.warn(`Failed to get image mappings for property ${propertyId}:`, mappingError);
+        // Continue with empty mappings rather than failing
+      }
+
+      // Create comprehensive backup data
       const backupData: PropertyImageBackup = {
         propertyId,
         backupId,
-        originalData: propertyResult.rows[0] || null,
+        originalData: propertyData,
         imageMapping: imageMappings,
         backupTimestamp: new Date().toISOString()
       };
 
-      // Save backup
-      await pool.query(`
-        INSERT INTO property_backups (backup_id, property_id, backup_data, created_at)
-        VALUES ($1, $2, $3, $4)
-      `, [backupId, propertyId, JSON.stringify(backupData), new Date()]);
+      // Validate backup data before saving
+      if (!backupData.originalData) {
+        throw new Error('Invalid backup data: missing property data');
+      }
 
-      console.log(`✅ Created backup ${backupId} for property ${propertyId}`);
+      // Save backup with retry logic
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          await pool.query(`
+            INSERT INTO property_backups (backup_id, property_id, backup_data, created_at)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (backup_id) DO UPDATE SET
+              backup_data = EXCLUDED.backup_data,
+              created_at = EXCLUDED.created_at
+          `, [backupId, propertyId, JSON.stringify(backupData), new Date()]);
+          
+          break; // Success, exit retry loop
+        } catch (saveError) {
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            throw new Error(`Failed to save backup after ${maxRetries} attempts: ${saveError instanceof Error ? saveError.message : 'Unknown error'}`);
+          }
+          console.warn(`Backup save attempt ${retryCount} failed, retrying...`, saveError);
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Progressive delay
+        }
+      }
+
+      console.log(`✅ Successfully created backup ${backupId} for property ${propertyId} with ${imageMappings.length} image mappings`);
       return backupId;
+      
     } catch (error) {
-      console.error('Error creating property backup:', error);
-      throw error;
+      console.error(`❌ Critical error creating backup for property ${propertyId}:`, error);
+      throw new Error(`Backup creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
-   * Restore from backup
+   * Restore from backup with comprehensive error handling
    */
   static async restoreFromBackup(backupId: string): Promise<boolean> {
+    console.log(`🔄 Attempting to restore from backup ${backupId}`);
+    
     try {
+      // Fetch backup with validation
       const result = await pool.query(
         'SELECT * FROM property_backups WHERE backup_id = $1',
         [backupId]
       );
 
       if (result.rows.length === 0) {
-        console.error(`Backup ${backupId} not found`);
+        console.error(`❌ Backup ${backupId} not found in database`);
         return false;
       }
 
-      const backup: PropertyImageBackup = JSON.parse(result.rows[0].backup_data);
+      let backup: PropertyImageBackup;
+      try {
+        backup = JSON.parse(result.rows[0].backup_data);
+      } catch (parseError) {
+        console.error(`❌ Failed to parse backup data for ${backupId}:`, parseError);
+        return false;
+      }
 
-      // Restore property data
-      if (backup.originalData) {
+      // Validate backup data structure
+      if (!backup.propertyId || !backup.originalData) {
+        console.error(`❌ Invalid backup data structure for ${backupId}`);
+        return false;
+      }
+
+      console.log(`📋 Restoring property ${backup.propertyId} from backup created at ${backup.backupTimestamp}`);
+
+      // Begin transaction for atomic restore
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        // Restore property data with comprehensive field mapping
         const propertyData = backup.originalData;
-        await pool.query(`
+        await client.query(`
           UPDATE properties SET 
-            title = $1, description = $2, images = $3, photos = $4
-          WHERE id = $5
+            title = $1, 
+            description = $2, 
+            images = $3, 
+            photos = $4,
+            updated_at = $5,
+            city = $6,
+            price = $7,
+            property_type = $8,
+            listing_type = $9,
+            bedrooms = $10,
+            bathrooms = $11
+          WHERE id = $12
         `, [
           propertyData.title,
           propertyData.description,
           propertyData.images,
           propertyData.photos,
+          new Date(), // Update timestamp to mark restore
+          propertyData.city || propertyData.location,
+          propertyData.price,
+          propertyData.property_type || propertyData.propertyType,
+          propertyData.listing_type || propertyData.listingType,
+          propertyData.bedrooms,
+          propertyData.bathrooms,
           backup.propertyId
         ]);
-      }
 
-      // Restore image mappings
-      if (backup.imageMapping.length > 0) {
-        // Clear existing mappings
-        await pool.query('DELETE FROM property_image_mappings WHERE property_id = $1', [backup.propertyId]);
+        // Restore image mappings if available
+        if (backup.imageMapping && backup.imageMapping.length > 0) {
+          console.log(`📸 Restoring ${backup.imageMapping.length} image mappings`);
+          
+          // Clear existing mappings
+          await client.query('DELETE FROM property_image_mappings WHERE property_id = $1', [backup.propertyId]);
+          
+          // Restore mappings with error handling
+          try {
+            await this.saveImageMappingsWithTransaction(client, backup.imageMapping);
+          } catch (mappingError) {
+            console.warn(`⚠️  Failed to restore image mappings, continuing with property restore:`, mappingError);
+          }
+        }
+
+        await client.query('COMMIT');
+        console.log(`✅ Successfully restored property ${backup.propertyId} from backup ${backupId}`);
         
-        // Restore mappings
-        await this.saveImageMappings(backup.imageMapping);
+        return true;
+
+      } catch (transactionError) {
+        await client.query('ROLLBACK');
+        console.error(`❌ Transaction failed during restore of backup ${backupId}:`, transactionError);
+        return false;
+      } finally {
+        client.release();
       }
 
-      console.log(`✅ Restored property ${backup.propertyId} from backup ${backupId}`);
-      return true;
     } catch (error) {
-      console.error('Error restoring from backup:', error);
+      console.error(`❌ Critical error restoring from backup ${backupId}:`, error);
       return false;
     }
+  }
+
+  /**
+   * Save image mappings within a transaction
+   */
+  private static async saveImageMappingsWithTransaction(client: any, mappings: ImageMapping[]): Promise<void> {
+    if (mappings.length === 0) return;
+
+    const values = mappings.map(mapping => [
+      mapping.imageId,
+      mapping.propertyId,
+      mapping.originalFilename,
+      mapping.currentFilename,
+      mapping.altText,
+      mapping.order,
+      mapping.uploadedAt,
+      mapping.fileSize || 0,
+      mapping.mimeType || 'image/jpeg'
+    ]);
+
+    const placeholders = values.map((_, index) => 
+      `($${index * 9 + 1}, $${index * 9 + 2}, $${index * 9 + 3}, $${index * 9 + 4}, $${index * 9 + 5}, $${index * 9 + 6}, $${index * 9 + 7}, $${index * 9 + 8}, $${index * 9 + 9})`
+    ).join(', ');
+
+    const query = `
+      INSERT INTO property_image_mappings (
+        image_id, property_id, original_filename, current_filename, 
+        alt_text, image_order, uploaded_at, file_size, mime_type
+      ) VALUES ${placeholders}
+      ON CONFLICT (image_id) DO UPDATE SET
+        alt_text = EXCLUDED.alt_text,
+        image_order = EXCLUDED.image_order
+    `;
+
+    await client.query(query, values.flat());
   }
 
   /**
