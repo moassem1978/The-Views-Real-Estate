@@ -27,12 +27,19 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (_req, file, cb) => {
-    // Generate a unique filename to prevent conflicts
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const originalExt = path.extname(file.originalname);
-    const filename = file.fieldname + '-' + uniqueSuffix + originalExt;
-
-    cb(null, filename);
+    // Generate unique filename using timestamp and original name
+    const timestamp = Date.now();
+    const cleanOriginalName = file.originalname.replace(/\s/g, '');
+    const uniqueName = `${timestamp}-${cleanOriginalName}`;
+    
+    // Ensure proper extension
+    let ext = path.extname(file.originalname).toLowerCase();
+    if (!ext) {
+      ext = '.jpg'; // Default fallback
+    }
+    
+    const finalFilename = uniqueName.endsWith(ext) ? uniqueName : uniqueName + ext;
+    cb(null, finalFilename);
   }
 });
 

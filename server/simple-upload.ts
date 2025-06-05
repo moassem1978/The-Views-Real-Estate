@@ -20,9 +20,18 @@ const fallbackDir = path.join(process.cwd(), 'uploads', 'properties');
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
   filename: (_req, file, cb) => {
-    const uniqueHash = crypto.randomBytes(16).toString('hex');
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    cb(null, `images-${Date.now()}-${uniqueHash}${ext}`);
+    const timestamp = Date.now();
+    const cleanOriginalName = file.originalname.replace(/\s/g, '');
+    const uniqueName = `${timestamp}-${cleanOriginalName}`;
+    
+    // Ensure proper extension
+    let ext = path.extname(file.originalname).toLowerCase();
+    if (!ext) {
+      ext = '.jpg'; // Default fallback
+    }
+    
+    const finalFilename = uniqueName.endsWith(ext) ? uniqueName : uniqueName + ext;
+    cb(null, finalFilename);
   }
 });
 

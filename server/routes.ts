@@ -115,38 +115,33 @@ const diskStorage = multer.diskStorage({
   },
 
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    // Create unique filename using timestamp and original name without spaces
+    const timestamp = Date.now();
+    const cleanOriginalName = file.originalname.replace(/\s/g, '');
+    const uniqueName = `${timestamp}-${cleanOriginalName}`;
 
     // Get original extension or use a default
     let ext = path.extname(file.originalname).toLowerCase();
-
-    // If AI file or no extension, handle appropriately
-    if (file.originalname.toLowerCase().endsWith('.ai') || 
-        file.mimetype === 'application/postscript' || 
-        file.mimetype === 'application/illustrator') {
-      console.log(`Processing Adobe Illustrator file: ${file.originalname}`);
-      ext = '.ai';
-    } else if (!ext) {
-      ext = '.jpg';
-      console.log(`No extension detected, defaulting to ${ext}`);
+    if (!ext) {
+      // If no extension, determine from mimetype
+      if (file.mimetype.includes('jpeg') || file.mimetype.includes('jpg')) {
+        ext = '.jpg';
+      } else if (file.mimetype.includes('png')) {
+        ext = '.png';
+      } else if (file.mimetype.includes('gif')) {
+        ext = '.gif';
+      } else if (file.mimetype.includes('webp')) {
+        ext = '.webp';
+      } else {
+        ext = '.jpg'; // Default fallback
+      }
     }
 
-    // Fixed naming convention for all images
-    // For property-images endpoint, use 'images-{timestamp}-{random}.ext'
-    // This matches the format that's currently being used in the database
-    let filename;
-    if (req.path.includes('property-images')) {
-      filename = 'images-' + uniqueSuffix + ext;
-    } else if (req.path.includes('announcement-image')) {
-      filename = 'announcement-' + uniqueSuffix + ext;
-    } else if (req.path.includes('project-images')) {
-      filename = 'project-' + uniqueSuffix + ext;
-    } else {
-      filename = 'logo-' + uniqueSuffix + ext;
-    }
+    // Ensure the unique name includes the extension
+    const finalFilename = uniqueName.endsWith(ext) ? uniqueName : uniqueName + ext;
 
-    console.log(`Generated filename: ${filename}`);
-    cb(null, filename);
+    console.log(`Generated unique filename: ${finalFilename} from original: ${file.originalname}`);
+    cb(null, finalFilename);
   }
 });
 
