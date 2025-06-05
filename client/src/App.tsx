@@ -12,8 +12,9 @@ import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import Home from "@/pages/Home";
 import Properties from "@/pages/Properties";
 import PropertyDetails from "@/pages/PropertyDetails";
+import ListingDetail from "@/pages/ListingDetail";
 import Projects from "@/pages/Projects";
-import ProjectDetails from "@/pages/ProjectDetails";
+import ProjectDetail from "@/pages/ProjectDetail";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import Services from "@/pages/Services";
@@ -106,9 +107,9 @@ function AppContent() {
               <Route path="/" component={Home} />
               <Route path="/properties" component={Properties} />
               <Route path="/properties/:id" component={PropertyDetails} />
-              <Route path="/international" component={InternationalProperties} />
+              <Route path="/listing/:id" component={ListingDetail} />
               <Route path="/projects" component={Projects} />
-              <Route path="/projects/:slug" component={ProjectDetails} />
+              <Route path="/projects/:slug" component={ProjectDetail} />
               <Route path="/about" component={About} />
               <Route path="/contact" component={Contact} />
               <Route path="/services" component={Services} />
