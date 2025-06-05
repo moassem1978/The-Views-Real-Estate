@@ -265,7 +265,7 @@ export default function Header() {
           </button>
 {!user ? (
             <>
-              <Link href="/signin" className="hidden md:inline-flex items-center px-5 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
+              <Link href="/otp-login" className="hidden md:inline-flex items-center px-5 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
                 <span className="font-medium">Sign In</span>
               </Link>
             </>
@@ -482,7 +482,7 @@ export default function Header() {
             {/* Sign In / Dashboard prominent link */}
             <div className="py-4 border-t border-copper/10">
               {!user ? (
-                <Link href="/signin" className="flex items-center px-4 py-2 font-medium text-copper hover:text-copper-dark transition-colors">
+                <Link href="/otp-login" className="flex items-center px-4 py-2 font-medium text-copper hover:text-copper-dark transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                   </svg>
@@ -520,7 +520,7 @@ export default function Header() {
 
             <div className="flex space-x-4 py-4">
               {!user ? (
-                <Link href="/signin" className="inline-flex items-center px-4 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
+                <Link href="/otp-login" className="inline-flex items-center px-4 py-2 rounded bg-copper text-white hover:bg-copper-dark transition-colors shadow-sm">
                   <span className="font-medium">Sign In</span>
                 </Link>
               ) : (
