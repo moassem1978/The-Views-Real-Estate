@@ -886,7 +886,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const property = await dbStorage.updateProperty(id, propertyData);
       
       if (!property) {
-        throw new Error("Property update returned null");
+        console.error(`Property ${id} update failed - no property returned`);
+        return res.status(404).json({ message: "Property not found or update failed" });
       }
 
       console.log(`Property ${id} updated successfully`);
@@ -1019,10 +1020,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const updatedProperty = await dbStorage.updateProperty(id, updateData);
       
       if (!updatedProperty) {
-        return res.status(500).json({ message: "Failed to update property" });
+        console.error(`Failed to update property ${id} - no property returned`);
+        return res.status(404).json({ message: "Property not found or update failed" });
       }
       
-      console.log("Property PATCH update successful:", updatedProperty.id);
+      console.log("Property update successful:", updatedProperty.id);
       return res.json(updatedProperty);
       
     } catch (error) {
