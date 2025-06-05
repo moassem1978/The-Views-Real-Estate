@@ -19,7 +19,7 @@ import Contact from "@/pages/Contact";
 import Services from "@/pages/Services";
 import Blog from "@/pages/Blog";
 import ArticlePage from "@/pages/ArticlePage";
-import Dashboard from "@/pages/Dashboard";
+import SimpleDashboard from "@/pages/SimpleDashboard";
 import SignIn from "@/pages/SignIn";
 import OTPLogin from "@/pages/OTPLogin";
 import NotFound from "@/pages/not-found";
@@ -119,7 +119,7 @@ function AppContent() {
               <Route path="/announcements/:id" component={AnnouncementDetails} />
               <Route path="/signin" component={SignIn} />
               <Route path="/otp-login" component={OTPLogin} />
-              <ProtectedRoute path="/dashboard" component={Dashboard} />
+              <ProtectedRoute path="/dashboard" component={SimpleDashboard} />
               <Route component={NotFound} />
             </Switch>
           </Suspense>
