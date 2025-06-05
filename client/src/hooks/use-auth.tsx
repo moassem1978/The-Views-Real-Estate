@@ -89,12 +89,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       return data;
     },
-    onSuccess: (user: User) => {
+    onSuccess: async (user: User) => {
+      // Force refresh user data to ensure frontend state is synchronized
       queryClient.setQueryData(["/api/user"], user);
+      await refetchUser();
+      
+      console.log("Login successful, redirecting to dashboard");
+      
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.fullName || user.username}!`,
       });
+      
+      // Redirect to dashboard after successful login
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
     },
     onError: (error: Error) => {
       console.error("Login error:", error);
