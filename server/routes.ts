@@ -12,6 +12,17 @@ import fs from "fs";
 import util from "util";
 import { setupAuth } from "./auth";
 import { optimizeImage, generateThumbnail, generateMultipleSizes } from "./utils/imageOptimizer";
+import { 
+  uploadPhotosForProperty, 
+  uploadPhotos, 
+  getPropertyPhotos, 
+  deletePhoto, 
+  reorderPhotos, 
+  updatePhotoMetadata, 
+  validatePhotoIntegrity, 
+  cleanupOrphanedFiles 
+} from "./photoRoutes";
+import { protectionMiddleware } from "./protection-middleware";
 
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
@@ -3333,6 +3344,67 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       });
     }
   });
+
+  // Enhanced Photo Management System Routes
+  
+  // Upload photos for a specific property with full safety and backup integration
+  app.post('/api/photos/upload/:propertyId', (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    next();
+  }, protectionMiddleware, uploadPhotosForProperty);
+  
+  // Upload photos without property association (for new listings)
+  app.post('/api/photos/upload', (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    next();
+  }, uploadPhotos);
+  
+  // Get all photos for a property with metadata
+  app.get('/api/photos/property/:propertyId', getPropertyPhotos);
+  
+  // Delete a specific photo with safety checks
+  app.delete('/api/photos/property/:propertyId/photo/:filename', (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    next();
+  }, protectionMiddleware, deletePhoto);
+  
+  // Reorder photos for a property (drag and drop functionality)
+  app.put('/api/photos/property/:propertyId/reorder', (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    next();
+  }, reorderPhotos);
+  
+  // Update photo metadata (alt text, captions)
+  app.put('/api/photos/property/:propertyId/photo/:filename', (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    next();
+  }, updatePhotoMetadata);
+  
+  // Validate photo integrity and fix missing references
+  app.get('/api/photos/property/:propertyId/validate', (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    next();
+  }, validatePhotoIntegrity);
+  
+  // Admin cleanup for orphaned files (dashboard access)
+  app.post('/api/photos/cleanup', (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    next();
+  }, cleanupOrphanedFiles);
 
   // Legacy endpoint - keeping for compatibility
   app.post('/api/upload/property-images-direct-old', async (req: Request, res: Response) => {
