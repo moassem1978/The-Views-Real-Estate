@@ -18,6 +18,7 @@ import type {
   PaginatedResult,
   SiteSettings
 } from "../shared/schema";
+import { FileValidator } from './utils/fileValidator';
 
 interface IStorage {
   // User operations
@@ -335,8 +336,34 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateProperty(id: number, updates: Partial<Property>): Promise<Property | undefined> {
+  async updateProperty(id: number, updates: any): Promise<any> {
+    console.log(`Updating property ${id} with:`, updates);
+
     try {
+      // BACKUP: Create image backup before any modifications
+      if ('images' in updates) {
+        const existingProperty = await this.getPropertyById(id);
+        if (existingProperty && existingProperty.images) {
+          // Create backup entry in a separate backup table or log
+          console.log(`BACKUP: Creating image backup for property ${id}`);
+          await this.createImageBackup(id, existingProperty.images);
+        }
+
+        // Validate files exist before updating
+        if (Array.isArray(updates.images) && updates.images.length > 0) {
+          const fileValidator = new FileValidator();
+          const validation = fileValidator.validatePropertyImages(updates.images);
+
+          if (validation.missingCount > 0) {
+            console.warn(`⚠️  Property ${id}: ${validation.missingCount} image files are missing, using only valid images`);
+          }
+
+          // Only use validated images
+          updates.images = validation.validImages;
+          console.log(`✅ Property ${id}: Using ${validation.validImages.length} validated images`);
+        }
+      }
+
       const [property] = await db.update(properties).set(updates).where(eq(properties.id, id)).returning();
       return property;
     } catch (error) {

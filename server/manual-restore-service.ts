@@ -55,15 +55,40 @@ export class ManualRestoreService {
         const missingImages: string[] = [];
         const validImages: string[] = [];
         
-        // Check which images are missing
+        // Validate each image file exists before including in restoration
         for (const imageUrl of currentImages) {
           const filename = path.basename(imageUrl);
           const imagePath = path.join(this.publicUploadsDir, filename);
           
-          if (fs.existsSync(imagePath)) {
-            validImages.push(imageUrl);
-          } else {
+          if (!fs.existsSync(imagePath)) {
+            console.warn(`⚠️  Missing file for property ${property.id}: ${filename}`);
             missingImages.push(imageUrl);
+            
+            // Try to restore from attached_assets if available
+            const attachedAssetPath = path.join(this.attachedAssetsDir, filename);
+            if (fs.existsSync(attachedAssetPath)) {
+              try {
+                fs.copyFileSync(attachedAssetPath, imagePath);
+                console.log(`✅ Restored missing file from assets: ${filename}`);
+                validImages.push(imageUrl);
+              } catch (error) {
+                console.error(`❌ Failed to restore ${filename} from assets:`, error);
+              }
+            }
+          } else {
+            // File exists, validate it's accessible and not corrupted
+            try {
+              const stats = fs.statSync(imagePath);
+              if (stats.size > 0) {
+                validImages.push(imageUrl);
+              } else {
+                console.warn(`⚠️  Empty file detected: ${filename}`);
+                missingImages.push(imageUrl);
+              }
+            } catch (error) {
+              console.warn(`⚠️  File access error for ${filename}:`, error);
+              missingImages.push(imageUrl);
+            }
           }
         }
         
