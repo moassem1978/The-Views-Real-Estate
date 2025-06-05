@@ -344,29 +344,53 @@ export class DatabaseStorage implements IStorage {
       const { ImageBackupManager } = await import('./utils/imageBackupManager');
       const { ImageValidator } = await import('./utils/imageValidator');
 
-      // BACKUP: Create image backup before any modifications
-      if ('images' in updates) {
+      // COMPREHENSIVE BACKUP: Create backup with full metadata before any modifications
+      if ('images' in updates || 'photos' in updates) {
         const existingProperty = await this.getPropertyById(id);
-        if (existingProperty && existingProperty.images) {
-          console.log(`📦 Creating image backup for property ${id}`);
-          await ImageBackupManager.createImageBackup(id, existingProperty.images);
+        if (existingProperty) {
+          console.log(`📦 Creating comprehensive backup for property ${id}`);
+          
+          // Backup both legacy images and new photo metadata
+          const legacyImages = existingProperty.images || [];
+          const photoMetadata = existingProperty.photos || [];
+          
+          await ImageBackupManager.createImageBackup(id, legacyImages, photoMetadata);
+        }
+      }
+
+      // Validate legacy images if provided
+      if ('images' in updates && Array.isArray(updates.images) && updates.images.length > 0) {
+        const validation = ImageValidator.validateImageList(updates.images);
+
+        if (validation.invalidImages.length > 0) {
+          console.warn(`⚠️  Property ${id}: ${validation.invalidImages.length} image files are missing or invalid`);
+          validation.invalidImages.forEach(invalid => {
+            console.warn(`   - ${invalid.filename}: ${invalid.error}`);
+          });
         }
 
-        // Validate files exist before updating
-        if (Array.isArray(updates.images) && updates.images.length > 0) {
-          const validation = ImageValidator.validateImageList(updates.images);
+        updates.images = validation.validImages;
+        console.log(`✅ Property ${id}: Using ${validation.validImages.length} validated legacy images`);
+      }
 
-          if (validation.invalidImages.length > 0) {
-            console.warn(`⚠️  Property ${id}: ${validation.invalidImages.length} image files are missing or invalid`);
-            validation.invalidImages.forEach(invalid => {
-              console.warn(`   - ${invalid.filename}: ${invalid.error}`);
-            });
-          }
+      // Validate photo metadata if provided
+      if ('photos' in updates && Array.isArray(updates.photos) && updates.photos.length > 0) {
+        const validatedPhotos = updates.photos
+          .map((photo: any, index: number) => ({
+            filename: photo.filename,
+            altText: photo.altText || `Property image ${index + 1}`
+          }))
+          .filter((photo: any) => {
+            const validation = ImageValidator.validateImageExists(photo.filename);
+            if (!validation.isValid) {
+              console.warn(`⚠️  Invalid photo: ${photo.filename} - ${validation.error}`);
+              return false;
+            }
+            return true;
+          });
 
-          // Only use validated images
-          updates.images = validation.validImages;
-          console.log(`✅ Property ${id}: Using ${validation.validImages.length} validated images`);
-        }
+        updates.photos = validatedPhotos;
+        console.log(`✅ Property ${id}: Using ${validatedPhotos.length} validated photos with metadata`);
       }
 
       const [property] = await db.update(properties).set(updates).where(eq(properties.id, id)).returning();
