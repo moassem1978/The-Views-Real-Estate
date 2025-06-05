@@ -518,12 +518,16 @@ app.use((req, res, next) => {
     port = 5000;
   }
 
-  // Use port 5000 with proper binding
-  const PORT = 5000;
+  // Use port from environment or default to 5000
+  const PORT = process.env.PORT || 5000;
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`🌐 Access at: http://0.0.0.0:${PORT}`);
-    console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`🚀 Production deployment ready`);
+    } else {
+      console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
+    }
   });
 
   server.on('error', (err: any) => {
