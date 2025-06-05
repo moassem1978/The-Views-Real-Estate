@@ -1057,6 +1057,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
                       .filter(img => img && typeof img === 'string' && img.trim() !== '')
                       .map(img => String(img).trim());
                     console.log(`Parsed JSON array: ${processedImages.length} images`);
+                  } else {
+                    console.warn("Parsed JSON is not an array, treating as empty");
+                    processedImages = [];
                   }
                 } catch (parseError) {
                   console.error(`JSON parse error for images: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
@@ -1083,12 +1086,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           const errorMessage = imageError instanceof Error ? imageError.message : 'Unknown error';
           console.error(`Error processing images for property ${id}:`, errorMessage);
           
-          // Return specific error for image processing failures
-          return res.status(500).json({ 
-            error: "Image update failed", 
-            detail: errorMessage,
-            message: "Failed to process property images. Please try again with valid image files."
-          });
+          // Don't return error immediately - continue with update but skip image processing
+          console.warn("Image processing failed, continuing update without image changes");
+          // Remove images from updateData if processing failed
+          if (updateData.images !== undefined) {
+            delete updateData.images;
+          }
         }
       }
       
