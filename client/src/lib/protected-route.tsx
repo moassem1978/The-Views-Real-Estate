@@ -40,13 +40,12 @@ export function ProtectedRoute({
     );
   }
 
-  // Authentication check with debug logging (TEMPORARILY BYPASSED FOR TESTING)
+  // Authentication check
   if (!user) {
-    console.debug(`🔓 [ProtectedRoute] Authentication temporarily bypassed for testing path ${path}`);
-    // TEMP: Allow access without authentication for testing
+    console.debug(`[ProtectedRoute] User not authenticated, redirecting to signin from path: ${path}`);
     return (
       <Route path={path}>
-        <Component />
+        <Redirect to={redirectUrl} replace />
       </Route>
     );
   }

@@ -4525,29 +4525,25 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     });
   });
 
-  // Dashboard route with authentication bypass for testing
-  app.get('/dashboard', async (req: Request, res: Response) => {
-    console.log('🏠 DASHBOARD ROUTE ACCESS ATTEMPT - BYPASS ENABLED');
-    console.log('Request details:', {
-      sessionID: req.sessionID,
-      isAuthenticated: req.isAuthenticated(),
-      hasUser: !!req.user,
-      userRole: req.user?.role || 'No user',
-      headers: {
-        userAgent: req.headers['user-agent'],
-        referer: req.headers.referer,
-        cookie: req.headers.cookie ? 'Present' : 'Missing'
-      }
-    });
-
-    // BYPASS: Allow dashboard access without authentication for testing
-    console.log('✅ Dashboard access granted via bypass - redirecting to SPA');
-    return res.redirect('/?redirect=dashboard');
+  // Dashboard route with proper authentication
+  app.get('/dashboard', (req: Request, res: Response) => {
+    console.log('🏠 DASHBOARD ROUTE ACCESS ATTEMPT');
+    console.log('Session data:', req.session);
+    console.log('User authenticated:', req.isAuthenticated());
+    console.log('User object:', req.user);
+    
+    if (req.isAuthenticated?.() || req.session?.user) {
+      console.log('✅ Dashboard access granted - user authenticated');
+      return res.redirect('/?redirect=dashboard');
+    }
+    
+    console.log('❌ Dashboard access denied - redirecting to signin');
+    return res.redirect('/signin');
   });
 
-  // API endpoint to check dashboard access with bypass for testing
+  // API endpoint to check dashboard access
   app.get('/api/dashboard/access', async (req: Request, res: Response) => {
-    console.log('🔍 DASHBOARD API ACCESS CHECK - BYPASS ENABLED');
+    console.log('🔍 DASHBOARD API ACCESS CHECK');
     console.log('Auth state:', {
       sessionID: req.sessionID,
       isAuthenticated: req.isAuthenticated(),
@@ -4555,21 +4551,24 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       userRole: req.user?.role || 'No user'
     });
 
-    // BYPASS: Allow dashboard access without authentication for testing
-    console.log('✅ Dashboard API access granted via bypass');
-
-    res.json({
-      authenticated: true,
-      hasAccess: true,
-      user: {
-        id: 1,
-        username: 'test-user',
-        role: 'admin',
-        fullName: 'Test User'
-      },
-      dashboardUrl: '/dashboard',
-      timestamp: new Date().toISOString()
-    });
+    if (req.isAuthenticated?.() || req.session?.user) {
+      console.log('✅ Dashboard API access granted - user authenticated');
+      res.json({
+        authenticated: true,
+        hasAccess: true,
+        user: req.user,
+        dashboardUrl: '/dashboard',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      console.log('❌ Dashboard API access denied - not authenticated');
+      res.status(401).json({
+        authenticated: false,
+        hasAccess: false,
+        message: 'Authentication required',
+        timestamp: new Date().toISOString()
+      });
+    }
   });
 
   // Add restoration endpoints
