@@ -1667,21 +1667,20 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Property images upload with ID parameter (used by the enhanced form component)
+  // Property images upload with ID parameter (UUID-based system)
   app.post("/api/upload/property-images/:id", finalUpload.array('images', 10), async (req: Request, res: Response) => {
-    console.log("==== STANDARD PROPERTY IMAGES UPLOAD ENDPOINT CALLED ====");
-    console.log("User agent:", req.headers['user-agent']);
-    console.log("Session ID:", req.sessionID);
-    console.log("Is authenticated:", req.isAuthenticated());
+    console.log("==== UUID-BASED PROPERTY IMAGES UPLOAD ENDPOINT CALLED ====");
     
     try {
+      // Import UUID manager
+      const { ImageUuidManager } = await import('./utils/imageUuidManager');
+      
       // Check if user is authenticated
       if (!req.isAuthenticated()) {
         console.error("Property images upload failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required to upload property images" });
       }
 
-      // Get the authenticated user from request
       const user = req.user as Express.User;
       console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
 
@@ -1694,124 +1693,89 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       console.log(`Received property images upload request for property ID ${propertyId}`);
 
-      // Process the uploaded files
-      const files = req.files as Express.Multer.File[];
-      console.log(`Received ${files.length} files`);
-
-      // Optimize images before storing
-      const optimizedImagePaths: string[] = [];
-      
-      for (const file of files) {
-        try {
-          console.log(`Optimizing image: ${file.originalname}`);
-          
-          // Read the uploaded file
-          const inputBuffer = fs.readFileSync(file.path);
-          
-          // Optimize the image
-          const optimizedBuffer = await optimizeImage(inputBuffer);
-          
-          // Generate filename with .webp extension
-          const timestamp = Date.now();
-          const randomId = Math.round(Math.random() * 1E9);
-          const optimizedFilename = `optimized-${timestamp}-${randomId}.webp`;
-          const optimizedPath = path.join(process.cwd(), 'public', 'uploads', 'properties', optimizedFilename);
-          
-          // Save optimized image
-          fs.writeFileSync(optimizedPath, optimizedBuffer);
-          
-          // Generate thumbnail
-          const thumbnailBuffer = await generateThumbnail(inputBuffer, 400);
-          const thumbnailFilename = `thumb-${timestamp}-${randomId}.webp`;
-          const thumbnailPath = path.join(process.cwd(), 'public', 'uploads', 'properties', thumbnailFilename);
-          fs.writeFileSync(thumbnailPath, thumbnailBuffer);
-          
-          // Clean up original file
-          fs.unlinkSync(file.path);
-          
-          // Add to paths array
-          optimizedImagePaths.push(`/uploads/properties/${optimizedFilename}`);
-          
-          console.log(`Successfully optimized: ${file.originalname} -> ${optimizedFilename}`);
-        } catch (optimizationError) {
-          console.error(`Failed to optimize image ${file.originalname}:`, optimizationError);
-          // Fallback to original file
-          const fallbackPath = `/uploads/properties/${file.filename}`;
-          optimizedImagePaths.push(fallbackPath);
-        }
-      }
-
-      // Additional fields sent by Windows/Chrome browsers
-      const additionalFiles: Express.Multer.File[] = [];
-      Object.keys(req.files || {}).forEach(key => {
-        if (key.startsWith('image_')) {
-          const imageFile = (req.files as any)[key];
-          if (Array.isArray(imageFile)) {
-            additionalFiles.push(...imageFile);
-          } else if (imageFile) {
-            additionalFiles.push(imageFile);
-          }
-        }
-      });
-
-      // If we found additional files, combine them with the main files
-      const allFiles = [...files, ...additionalFiles];
-      // Make allFiles unique by filename
-      const uniqueFiles = allFiles.filter((file, index, self) => 
-        index === self.findIndex(f => f.filename === file.filename)
-      );
-
-      console.log(`Processing ${uniqueFiles.length} unique files`);
-
-      if (uniqueFiles.length === 0) {
-        console.warn("No valid files were uploaded");
-        return res.status(400).json({ message: "No valid files were uploaded" });
-      }
-
-      // Get the property to update
+      // Get the property to check permissions
       const property = await dbStorage.getPropertyById(propertyId);
       if (!property) {
         console.error(`Property not found: ${propertyId}`);
         return res.status(404).json({ message: "Property not found" });
       }
 
-      // Check permission - owner and admin can update any property, regular users only their own
+      // Check permission
       if (user.role === 'user' && property.createdBy !== user.id) {
-        console.error(`Permission denied: User ${user.username} attempted to upload images for property ${propertyId} created by user ${property.createdBy}`);
+        console.error(`Permission denied: User ${user.username} attempted to upload images for property ${propertyId}`);
         return res.status(403).json({ message: "You do not have permission to update this property" });
       }
 
-      // Format file paths for storage - make all paths absolute for frontend consistency
-      const imagePaths = uniqueFiles.map(file => `/uploads/properties/${file.filename}`);
-      console.log("Image paths to add:", imagePaths);
+      // Create backup before modification
+      const backupId = await ImageUuidManager.createPropertyBackup(propertyId);
+      console.log(`Created backup ${backupId} for property ${propertyId}`);
 
-      // Get existing images from the property
-      const existingImages = Array.isArray(property.images) ? property.images : [];
-      console.log("Existing images:", existingImages);
+      try {
+        // Process uploaded files
+        const files = req.files as Express.Multer.File[];
+        console.log(`Processing ${files.length} files`);
 
-      // Combine existing images with new ones
-      const updatedImages = [...existingImages, ...imagePaths];
-      console.log("Updated images array:", updatedImages);
+        if (files.length === 0) {
+          return res.status(400).json({ message: "No files were uploaded" });
+        }
 
-      // Update the property with the new images
-      const updatedProperty = await dbStorage.updateProperty(propertyId, {
-        images: updatedImages
-      });
+        // Get existing image mappings
+        const existingMappings = await ImageUuidManager.getPropertyImageMappings(propertyId);
+        const startOrder = existingMappings.length;
 
-      if (!updatedProperty) {
-        console.error(`Failed to update property ${propertyId} with new images`);
-        return res.status(500).json({ message: "Failed to update property with new images" });
+        // Create UUID mappings for new images
+        const newMappings = await ImageUuidManager.createImageMappings(files, propertyId, startOrder);
+        
+        // Save mappings to database
+        await ImageUuidManager.saveImageMappings(newMappings);
+
+        // Get all mappings for the property
+        const allMappings = await ImageUuidManager.getPropertyImageMappings(propertyId);
+        
+        // Generate image URLs for legacy compatibility
+        const imageUrls = ImageUuidManager.generateImageUrls(allMappings);
+
+        // Update property with new image URLs
+        const updatedProperty = await dbStorage.updateProperty(propertyId, {
+          images: imageUrls
+        });
+
+        if (!updatedProperty) {
+          // Restore from backup on failure
+          await ImageUuidManager.restoreFromBackup(backupId);
+          return res.status(500).json({ message: "Failed to update property with new images" });
+        }
+
+        console.log(`✅ Successfully added ${files.length} images to property ${propertyId} with UUID management`);
+        
+        return res.status(200).json({ 
+          message: "Images uploaded successfully with UUID tracking", 
+          property: updatedProperty,
+          imageMappings: newMappings,
+          backupId
+        });
+
+      } catch (uploadError) {
+        console.error('Error during UUID upload process:', uploadError);
+        
+        // Restore from backup on any failure
+        try {
+          await ImageUuidManager.restoreFromBackup(backupId);
+          console.log(`Restored property ${propertyId} from backup due to upload failure`);
+        } catch (restoreError) {
+          console.error('Failed to restore from backup:', restoreError);
+        }
+        
+        throw uploadError;
       }
 
-      console.log(`Successfully added ${imagePaths.length} images to property ${propertyId}`);
-      return res.status(200).json({ 
-        message: "Images uploaded successfully", 
-        property: updatedProperty 
-      });
     } catch (error) {
-      console.error("Error processing property images upload:", error);
+      console.error("Error processing UUID-based property images upload:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      return res.status(500).json({ message: `Failed to upload property images: ${errorMessage}` });
+      return res.status(500).json({ 
+        message: `Failed to upload property images: ${errorMessage}`,
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
     }
   });
 
@@ -2833,6 +2797,278 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
       } catch (e) {
         currentImages = [];
+
+  // UUID Image Management Routes
+  
+  // Get image mappings for a property
+  app.get("/api/properties/:id/image-mappings", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const propertyId = parseInt(req.params.id);
+      if (isNaN(propertyId)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      const { ImageUuidManager } = await import('./utils/imageUuidManager');
+      const mappings = await ImageUuidManager.getPropertyImageMappings(propertyId);
+      
+      res.json({
+        success: true,
+        mappings,
+        imageUrls: ImageUuidManager.generateImageUrls(mappings)
+      });
+    } catch (error) {
+      console.error('Error getting image mappings:', error);
+      res.status(500).json({ 
+        message: "Failed to get image mappings",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Reorder images by UUID
+  app.put("/api/properties/:id/reorder-images", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const propertyId = parseInt(req.params.id);
+      const { imageIds } = req.body;
+
+      if (isNaN(propertyId) || !Array.isArray(imageIds)) {
+        return res.status(400).json({ message: "Invalid request data" });
+      }
+
+      const { ImageUuidManager } = await import('./utils/imageUuidManager');
+      
+      // Create backup before reordering
+      const backupId = await ImageUuidManager.createPropertyBackup(propertyId);
+      
+      try {
+        // Reorder images
+        await ImageUuidManager.reorderImages(propertyId, imageIds);
+        
+        // Get updated mappings and regenerate URLs
+        const updatedMappings = await ImageUuidManager.getPropertyImageMappings(propertyId);
+        const imageUrls = ImageUuidManager.generateImageUrls(updatedMappings);
+        
+        // Update property with new order
+        await dbStorage.updateProperty(propertyId, { images: imageUrls });
+        
+        res.json({
+          success: true,
+          message: "Images reordered successfully",
+          mappings: updatedMappings,
+          backupId
+        });
+      } catch (error) {
+        // Restore from backup on failure
+        await ImageUuidManager.restoreFromBackup(backupId);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error reordering images:', error);
+      res.status(500).json({ 
+        message: "Failed to reorder images",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Delete image by UUID
+  app.delete("/api/properties/:id/images/:imageId", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const propertyId = parseInt(req.params.id);
+      const { imageId } = req.params;
+
+      if (isNaN(propertyId) || !imageId) {
+        return res.status(400).json({ message: "Invalid request data" });
+      }
+
+      const { ImageUuidManager } = await import('./utils/imageUuidManager');
+      
+      // Create backup before deletion
+      const backupId = await ImageUuidManager.createPropertyBackup(propertyId);
+      
+      try {
+        // Delete the image
+        const deleted = await ImageUuidManager.deleteImage(imageId);
+        
+        if (!deleted) {
+          return res.status(404).json({ message: "Image not found" });
+        }
+        
+        // Get updated mappings and regenerate URLs
+        const updatedMappings = await ImageUuidManager.getPropertyImageMappings(propertyId);
+        const imageUrls = ImageUuidManager.generateImageUrls(updatedMappings);
+        
+        // Update property with remaining images
+        await dbStorage.updateProperty(propertyId, { images: imageUrls });
+        
+        res.json({
+          success: true,
+          message: "Image deleted successfully",
+          mappings: updatedMappings,
+          backupId
+        });
+      } catch (error) {
+        // Restore from backup on failure
+        await ImageUuidManager.restoreFromBackup(backupId);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      res.status(500).json({ 
+        message: "Failed to delete image",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Migrate legacy images to UUID system
+  app.post("/api/properties/:id/migrate-images", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.user as Express.User;
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const propertyId = parseInt(req.params.id);
+      if (isNaN(propertyId)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      const property = await dbStorage.getPropertyById(propertyId);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      const { ImageUuidManager } = await import('./utils/imageUuidManager');
+      
+      // Create backup before migration
+      const backupId = await ImageUuidManager.createPropertyBackup(propertyId);
+      
+      try {
+        // Get existing images
+        const legacyImages = Array.isArray(property.images) ? property.images : [];
+        
+        if (legacyImages.length === 0) {
+          return res.json({
+            success: true,
+            message: "No images to migrate",
+            mappings: []
+          });
+        }
+        
+        // Migrate to UUID system
+        const mappings = await ImageUuidManager.migrateLegacyImages(propertyId, legacyImages);
+        
+        // Generate new URLs
+        const imageUrls = ImageUuidManager.generateImageUrls(mappings);
+        
+        // Update property with UUID-based URLs
+        await dbStorage.updateProperty(propertyId, { images: imageUrls });
+        
+        res.json({
+          success: true,
+          message: `Successfully migrated ${mappings.length} images to UUID system`,
+          mappings,
+          backupId
+        });
+      } catch (error) {
+        // Restore from backup on failure
+        await ImageUuidManager.restoreFromBackup(backupId);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error migrating images:', error);
+      res.status(500).json({ 
+        message: "Failed to migrate images",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Validate property images
+  app.get("/api/properties/:id/validate-images", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const propertyId = parseInt(req.params.id);
+      if (isNaN(propertyId)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      const { ImageUuidManager } = await import('./utils/imageUuidManager');
+      const validation = await ImageUuidManager.validatePropertyImages(propertyId);
+      
+      res.json({
+        success: true,
+        validation
+      });
+    } catch (error) {
+      console.error('Error validating images:', error);
+      res.status(500).json({ 
+        message: "Failed to validate images",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Restore property from backup
+  app.post("/api/properties/restore/:backupId", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.user as Express.User;
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { backupId } = req.params;
+      if (!backupId) {
+        return res.status(400).json({ message: "Invalid backup ID" });
+      }
+
+      const { ImageUuidManager } = await import('./utils/imageUuidManager');
+      const restored = await ImageUuidManager.restoreFromBackup(backupId);
+      
+      if (restored) {
+        res.json({
+          success: true,
+          message: "Property restored from backup successfully"
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          message: "Backup not found or restore failed"
+        });
+      }
+    } catch (error) {
+      console.error('Error restoring from backup:', error);
+      res.status(500).json({ 
+        message: "Failed to restore from backup",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
       }
 
       // Add new images
