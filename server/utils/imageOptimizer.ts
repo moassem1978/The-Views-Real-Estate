@@ -3,8 +3,9 @@ import path from 'path';
 import fs from 'fs';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB max file size
-const MAX_DIMENSION = 1920; // Max width/height
-const THUMBNAIL_SIZE = 400; // Thumbnail size for listings
+const MAX_DIMENSION = 1280; // Optimized for fast loading
+const THUMBNAIL_SIZE = 300; // Smaller thumbnails for grid view
+const MEDIUM_SIZE = 800; // Medium size for detail views
 
 export async function optimizeImage(inputBuffer: Buffer, options: { generateThumbnail?: boolean, quality?: number } = {}) {
   try {
@@ -94,9 +95,9 @@ export async function generateThumbnail(inputBuffer: Buffer, size: number = THUM
 export async function generateMultipleSizes(inputBuffer: Buffer) {
   try {
     const sizes = [
-      { name: 'thumbnail', width: 400, height: 300 },
+      { name: 'thumbnail', width: 300, height: 225 },
       { name: 'medium', width: 800, height: 600 },
-      { name: 'large', width: 1200, height: 900 }
+      { name: 'large', width: 1280, height: 960 }
     ];
 
     const results: { [key: string]: Buffer } = {};

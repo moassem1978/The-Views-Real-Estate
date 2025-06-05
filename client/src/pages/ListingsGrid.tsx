@@ -1,93 +1,87 @@
-import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import ListingCard from "../components/properties/ListingCard";
-import { Property } from "../types";
-import { Loader2 } from "lucide-react";
 
-interface ListingsResponse {
-  data: Property[];
-  totalCount: number;
-  pageCount: number;
-  page: number;
-  pageSize: number;
+import React, { useEffect, useState } from "react";
+import ListingCard from "../components/properties/ListingCard";
+import { Button } from "@/components/ui/button";
+
+interface Listing {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  photos: string[];
 }
 
-const ListingsGrid = () => {
-  const [page, setPage] = useState(1);
-  const pageSize = 24;
+const ITEMS_PER_PAGE = 12;
 
-  const { data: listings, isLoading, error } = useQuery<ListingsResponse>({
-    queryKey: ['listings', page, pageSize],
-    queryFn: async () => {
-      const response = await fetch(`/api/listings?page=${page}&pageSize=${pageSize}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch listings');
-      }
-      return response.json();
-    },
-  });
+const ListingsPage = () => {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [displayedListings, setDisplayedListings] = useState<Listing[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#B87333]" />
-        <span className="ml-2 text-[#B87333]">Loading listings...</span>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchListings();
+  }, []);
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-red-600 mb-2">Error Loading Listings</h2>
-          <p className="text-gray-600">Please try again later.</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    updateDisplayedListings();
+  }, [listings, currentPage]);
+
+  const fetchListings = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/listings");
+      const data = await res.json();
+      setListings(data);
+      setHasMore(data.length > ITEMS_PER_PAGE);
+    } catch (error) {
+      console.error("Failed to fetch listings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateDisplayedListings = () => {
+    const endIndex = currentPage * ITEMS_PER_PAGE;
+    const newDisplayed = listings.slice(0, endIndex);
+    setDisplayedListings(newDisplayed);
+    setHasMore(endIndex < listings.length);
+  };
+
+  const loadMore = () => {
+    setCurrentPage(prev => prev + 1);
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Property Listings</h1>
-        <p className="text-gray-600">
-          Showing {listings?.data.length || 0} of {listings?.totalCount || 0} properties
-        </p>
-      </div>
-
+    <div className="p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {listings?.data.map(listing => (
-          <ListingCard key={listing.id} listing={listing} />
+        {displayedListings.map((listing, index) => (
+          <ListingCard key={listing.id} listing={listing} priority={index < 4} />
         ))}
       </div>
-
-      {/* Pagination */}
-      {listings && listings.pageCount > 1 && (
-        <div className="flex justify-center mt-8 space-x-2">
-          <button
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="px-4 py-2 bg-[#B87333] text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#A0632D] transition-colors"
-          >
-            Previous
-          </button>
-
-          <span className="px-4 py-2 bg-gray-100 rounded">
-            Page {page} of {listings.pageCount}
-          </span>
-
-          <button
-            onClick={() => setPage(Math.min(listings.pageCount, page + 1))}
-            disabled={page === listings.pageCount}
-            className="px-4 py-2 bg-[#B87333] text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#A0632D] transition-colors"
-          >
-            Next
-          </button>
+      
+      {loading && (
+        <div className="flex justify-center mt-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+      
+      {hasMore && !loading && (
+        <div className="flex justify-center mt-8">
+          <Button onClick={loadMore} variant="outline" size="lg">
+            Load More Listings ({listings.length - displayedListings.length} remaining)
+          </Button>
+        </div>
+      )}
+      
+      {!hasMore && displayedListings.length > 0 && (
+        <div className="text-center mt-8 text-gray-500">
+          All listings loaded ({displayedListings.length} total)
         </div>
       )}
     </div>
   );
 };
 
-export default ListingsGrid;
+export default ListingsPage;

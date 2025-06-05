@@ -106,7 +106,7 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
       <img
         src={imageSrc}
         alt={alt}
-        loading="lazy"
+        loading={index < 3 ? "eager" : "lazy"}
         decoding="async"
         fetchpriority={index === 0 ? "high" : "auto"}
         className={`w-full h-full object-cover transition-all duration-300 ${
@@ -114,7 +114,7 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
         }`}
         onLoad={handleLoad}
         onError={handleError}
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px, 300px"
       />
     </div>
   );
