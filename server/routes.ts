@@ -902,64 +902,49 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // Enhanced PATCH endpoint with strict error handling, validation, backup logic, and unique IDs
-  app.patch("/api/properties/:id", async (req: Request, res: Response) => {
-    const startTime = Date.now();
+  // Production-grade PATCH endpoint with multer integration
+  app.patch("/api/properties/:id", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+    const propertyId = req.params.id;
     let backupId: string | null = null;
-    
+
     try {
-      console.log("🔧 Enhanced PATCH endpoint for property update called");
-      
-      // Strict authentication check
+      console.log(`🔧 Production PATCH endpoint for property ${propertyId}`);
+
+      // ✅ Step 1: Authentication check
       if (!req.isAuthenticated()) {
         console.error("❌ Property update failed: User not authenticated");
         return res.status(401).json({ 
           success: false,
           error: "AUTHENTICATION_REQUIRED",
-          message: "Authentication required to update properties",
-          timestamp: new Date().toISOString()
+          message: "Authentication required to update properties"
         });
       }
 
-      // Validate property ID with strict error handling
-      const id = parseInt(req.params.id);
+      // ✅ Step 2: Validate property ID
+      const id = parseInt(propertyId);
       if (isNaN(id) || id <= 0) {
-        console.error(`❌ Invalid property ID: ${req.params.id}`);
+        console.error(`❌ Invalid property ID: ${propertyId}`);
         return res.status(400).json({ 
           success: false,
           error: "INVALID_PROPERTY_ID",
-          message: "Property ID must be a positive integer",
-          providedId: req.params.id
+          message: "Property ID must be a positive integer"
         });
       }
-      
-      // Get the existing property with error handling
-      let existingProperty;
-      try {
-        existingProperty = await dbStorage.getPropertyById(id);
-      } catch (dbError) {
-        console.error(`❌ Database error fetching property ${id}:`, dbError);
-        return res.status(500).json({ 
-          success: false,
-          error: "DATABASE_ERROR",
-          message: "Failed to fetch property from database",
-          propertyId: id
-        });
-      }
-      
-      if (!existingProperty) {
+
+      // ✅ Step 3: Get existing property and create backup
+      const originalProperty = await dbStorage.getPropertyById(id);
+      if (!originalProperty) {
         console.error(`❌ Property ${id} not found`);
         return res.status(404).json({ 
           success: false,
           error: "PROPERTY_NOT_FOUND",
-          message: "Property not found",
-          propertyId: id
+          message: "Property not found"
         });
       }
 
       // Check user permissions
       const user = req.user as Express.User;
-      if (user.role === 'user' && existingProperty.createdBy !== user.id) {
+      if (user.role === 'user' && originalProperty.createdBy !== user.id) {
         console.error(`❌ Permission denied: User ${user.username} attempted to update property ${id}`);
         return res.status(403).json({ 
           success: false,
@@ -967,327 +952,125 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           message: "You do not have permission to update this property"
         });
       }
-      
-      console.log(`🔄 Processing property ${id} update with enhanced validation`);
-      
-      // CREATE BACKUP BEFORE ANY CHANGES
-      try {
-        const { ImageBackupManager } = await import('./utils/imageBackupManager');
-        await ImageBackupManager.createImageBackup(
-          id, 
-          Array.isArray(existingProperty.images) ? existingProperty.images : [],
-          Array.isArray(existingProperty.photos) ? existingProperty.photos : []
-        );
-        
-        // Also create UUID-based backup if available
-        try {
-          const { ImageUuidManager } = await import('./utils/imageUuidManager');
-          backupId = await ImageUuidManager.createPropertyBackup(id);
-          console.log(`✅ Created backup ${backupId} for property ${id}`);
-        } catch (uuidError) {
-          console.warn("UUID backup failed, continuing with standard backup:", uuidError);
-        }
-      } catch (backupError) {
-        console.error(`⚠️  Backup creation failed for property ${id}:`, backupError);
-        // Continue with update but log the backup failure
-      }
-      
-      // Create a safe update object with strict field validation
-      const updateData: any = {};
-      const validationErrors: string[] = [];
-      
-      // Define allowed fields with type validation
-      const allowedFields = {
-        'title': 'string',
-        'description': 'string', 
-        'city': 'string',
-        'state': 'string',
-        'country': 'string',
-        'propertyType': 'string',
-        'listingType': 'string',
-        'price': 'number',
-        'downPayment': 'number',
-        'installmentAmount': 'number',
-        'installmentPeriod': 'number',
-        'isFullCash': 'boolean',
-        'bedrooms': 'number',
-        'bathrooms': 'number',
-        'builtUpArea': 'number',
-        'plotSize': 'number',
-        'gardenSize': 'number',
-        'floor': 'number',
-        'isGroundUnit': 'boolean',
-        'isFeatured': 'boolean',
-        'isHighlighted': 'boolean',
-        'isNewListing': 'boolean',
-        'projectName': 'string',
-        'developerName': 'string',
-        'yearBuilt': 'number',
-        'status': 'string',
-        'images': 'array',
-        'references': 'string'
-      };
 
-      // Validate and process each field
-      for (const [field, expectedType] of Object.entries(allowedFields)) {
-        if (req.body.hasOwnProperty(field) && req.body[field] !== undefined) {
-          const value = req.body[field];
-          
-          // Type validation
-          if (expectedType === 'string' && typeof value !== 'string') {
-            validationErrors.push(`Field '${field}' must be a string`);
-            continue;
-          }
-          if (expectedType === 'number' && typeof value !== 'number' && !Number.isFinite(Number(value))) {
-            validationErrors.push(`Field '${field}' must be a number`);
-            continue;
-          }
-          if (expectedType === 'boolean' && typeof value !== 'boolean') {
-            validationErrors.push(`Field '${field}' must be a boolean`);
-            continue;
-          }
-          if (expectedType === 'array' && !Array.isArray(value) && typeof value !== 'string') {
-            validationErrors.push(`Field '${field}' must be an array or string`);
-            continue;
-          }
-          
-          updateData[field] = value;
-        }
+      // Create backup before any changes
+      try {
+        const { ImageUuidManager } = await import('./utils/imageUuidManager');
+        backupId = await ImageUuidManager.createPropertyBackup(id);
+        console.log(`✅ Created backup ${backupId} for property ${id}`);
+      } catch (backupError) {
+        console.warn("⚠️ Backup creation failed, continuing:", backupError);
       }
-      
-      // Return validation errors if any
-      if (validationErrors.length > 0) {
-        console.error(`❌ Field validation errors:`, validationErrors);
+
+      // ✅ Step 4: Validate required fields
+      const { title, price, description } = req.body;
+      if (title && !title.trim()) {
         return res.status(400).json({ 
           success: false,
           error: "VALIDATION_ERROR",
-          message: "Field validation failed",
-          validationErrors
+          message: "Title cannot be empty"
         });
       }
-      
-      // Handle reference fields with safety
-      if (req.body.references || req.body.reference) {
-        const refValue = req.body.references || req.body.reference;
-        updateData.references = String(refValue).trim();
-        console.log(`📝 Setting reference to: ${updateData.references}`);
+
+      if (price && (isNaN(Number(price)) || Number(price) < 0)) {
+        return res.status(400).json({ 
+          success: false,
+          error: "VALIDATION_ERROR",
+          message: "Price must be a valid positive number"
+        });
       }
-      
-      // ENHANCED IMAGE PROCESSING WITH STRICT VALIDATION
-      if (req.body.hasOwnProperty('images')) {
-        console.log("🖼️  Processing images field with enhanced validation");
-        
-        try {
-          const { ImageValidator } = await import('./utils/imageValidator');
-          
-          // Handle uploaded files with strict validation
-          if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-            console.log(`📁 Processing ${req.files.length} uploaded image files`);
-            
-            const validatedImages: string[] = [];
-            const processingErrors: string[] = [];
-            const uniqueImageIds = new Set<string>();
-            
-            for (const file of req.files as Express.Multer.File[]) {
-              try {
-                // Generate unique ID for this image
-                const { v4: uuidv4 } = await import('uuid');
-                const uniqueId = uuidv4();
-                
-                console.log(`🔍 Validating file: ${file.originalname} (ID: ${uniqueId})`);
-                
-                // Strict file validation
-                const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                if (!allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
-                  throw new Error(`Invalid file type: ${file.mimetype}. Allowed: ${allowedMimeTypes.join(', ')}`);
-                }
-                
-                // File size validation (25MB limit)
-                const maxFileSize = 25 * 1024 * 1024;
-                if (file.size > maxFileSize) {
-                  throw new Error(`File too large: ${Math.round(file.size / 1024 / 1024)}MB. Maximum: 25MB`);
-                }
-                
-                // File existence and content validation
-                if (!file.filename || file.size === 0) {
-                  throw new Error(`Invalid or empty file`);
-                }
-                
-                // Prevent duplicate filenames
-                if (uniqueImageIds.has(file.filename)) {
-                  throw new Error(`Duplicate filename detected: ${file.filename}`);
-                }
-                uniqueImageIds.add(file.filename);
-                
-                // Sharp image validation (if available)
-                try {
-                  const sharp = await import('sharp');
-                  const metadata = await sharp.default(file.path).metadata();
-                  
-                  // Validate image dimensions
-                  if (!metadata.width || !metadata.height) {
-                    throw new Error(`Invalid image dimensions`);
-                  }
-                  
-                  // Check for reasonable dimensions (not too small, not too large)
-                  if (metadata.width < 50 || metadata.height < 50) {
-                    throw new Error(`Image too small: ${metadata.width}x${metadata.height}. Minimum: 50x50`);
-                  }
-                  
-                  if (metadata.width > 10000 || metadata.height > 10000) {
-                    throw new Error(`Image too large: ${metadata.width}x${metadata.height}. Maximum: 10000x10000`);
-                  }
-                  
-                  console.log(`✅ Sharp validation passed: ${metadata.width}x${metadata.height}, format: ${metadata.format}`);
-                  
-                } catch (sharpError) {
-                  console.warn(`⚠️  Sharp validation failed for ${file.originalname}:`, sharpError);
-                  // Continue without Sharp validation if it fails
-                }
-                
-                // File system validation
-                const validation = ImageValidator.validateImageExists(file.filename);
-                if (!validation.isValid) {
-                  throw new Error(`File validation failed: ${validation.error}`);
-                }
-                
-                // Generate final image URL with unique ID
-                const imageUrl = `/uploads/properties/${file.filename}`;
-                validatedImages.push(imageUrl);
-                
-                console.log(`✅ Successfully validated image: ${file.originalname} -> ${imageUrl} (ID: ${uniqueId})`);
-                
-              } catch (fileError) {
-                const error = `${file.originalname || 'unnamed'}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`;
-                console.error(`❌ Image processing error: ${error}`);
-                processingErrors.push(error);
-              }
+
+      // ✅ Step 5: Process uploaded images with Sharp
+      const processedImagePaths: string[] = [];
+
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        console.log(`📁 Processing ${req.files.length} uploaded images`);
+
+        for (const file of req.files) {
+          try {
+            // Generate unique filename
+            const { v4: uuidv4 } = await import('uuid');
+            const imageId = uuidv4();
+            const newFilename = `${imageId}.webp`;
+            const outputDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+            const outputPath = path.join(outputDir, newFilename);
+
+            // Ensure directory exists
+            if (!fs.existsSync(outputDir)) {
+              fs.mkdirSync(outputDir, { recursive: true });
             }
-            
-            // Handle validation results
-            if (processingErrors.length > 0 && validatedImages.length === 0) {
-              console.error("❌ All image files failed validation:", processingErrors);
-              
-              // Restore from backup if available
-              if (backupId) {
-                try {
-                  const { ImageUuidManager } = await import('./utils/imageUuidManager');
-                  await ImageUuidManager.restoreFromBackup(backupId);
-                  console.log(`🔄 Restored property ${id} from backup due to validation failure`);
-                } catch (restoreError) {
-                  console.error("❌ Failed to restore from backup:", restoreError);
-                }
-              }
-              
-              return res.status(400).json({ 
-                success: false,
-                error: "IMAGE_VALIDATION_FAILED",
-                message: "All uploaded files failed validation",
-                details: processingErrors,
-                fallbackMessage: "Please check file types, sizes, and formats. Supported: JPEG, PNG, GIF, WebP (max 25MB)"
-              });
+
+            // Validate file type
+            const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
+              console.warn(`❌ Invalid file type: ${file.mimetype} for ${file.originalname}`);
+              continue;
             }
+
+            // Process with Sharp
+            const sharp = await import('sharp');
+            const metadata = await sharp.default(file.path || file.buffer)
+              .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+              .toFormat('webp', { quality: 85 })
+              .toFile(outputPath);
+
+            console.log(`✅ Processed image: ${file.originalname} -> ${newFilename} (${metadata.width}x${metadata.height})`);
             
-            // Log validation summary
-            if (processingErrors.length > 0) {
-              console.warn(`⚠️  Partial validation success: ${validatedImages.length} valid, ${processingErrors.length} failed`);
+            processedImagePaths.push(`/uploads/properties/${newFilename}`);
+
+            // Clean up temp file
+            if (file.path && fs.existsSync(file.path)) {
+              fs.unlinkSync(file.path);
             }
-            
-            // Combine with existing images
-            const existingImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
-            updateData.images = [...existingImages, ...validatedImages];
-            console.log(`📸 Combined images: ${existingImages.length} existing + ${validatedImages.length} new = ${updateData.images.length} total`);
-            
-          } else {
-            // Handle images from request body with validation
-            let processedImages: string[] = [];
-            
-            if (req.body.images === null || req.body.images === '') {
-              processedImages = [];
-              console.log("🗑️  Clearing images (explicit null/empty)");
-            } else if (Array.isArray(req.body.images)) {
-              // Validate each image URL
-              const imageValidation = ImageValidator.validateImageList(req.body.images);
-              processedImages = imageValidation.validImages;
-              
-              if (imageValidation.invalidImages.length > 0) {
-                console.warn(`⚠️  Some images failed validation:`, imageValidation.invalidImages);
-              }
-              
-              console.log(`📋 Processed array: ${processedImages.length} valid images`);
-            } else if (typeof req.body.images === 'string') {
-              const imageStr = req.body.images.trim();
-              
-              if (imageStr.startsWith('[') && imageStr.endsWith(']')) {
-                try {
-                  const parsed = JSON.parse(imageStr);
-                  if (Array.isArray(parsed)) {
-                    const imageValidation = ImageValidator.validateImageList(parsed);
-                    processedImages = imageValidation.validImages;
-                    console.log(`📝 Parsed and validated JSON array: ${processedImages.length} images`);
-                  }
-                } catch (parseError) {
-                  console.error(`❌ JSON parse error:`, parseError);
-                  throw new Error("Invalid JSON format for images array");
-                }
-              } else if (imageStr.includes(',')) {
-                const imageArray = imageStr.split(',').map(img => img.trim()).filter(img => img !== '');
-                const imageValidation = ImageValidator.validateImageList(imageArray);
-                processedImages = imageValidation.validImages;
-                console.log(`📋 Split and validated comma-separated: ${processedImages.length} images`);
-              } else if (imageStr !== '') {
-                const imageValidation = ImageValidator.validateImageList([imageStr]);
-                processedImages = imageValidation.validImages;
-                console.log(`📄 Single image validated: ${processedImages.length} valid`);
-              }
-            }
-            
-            updateData.images = processedImages;
-            console.log(`🖼️  Final processed images count: ${processedImages.length}`);
+
+          } catch (imgErr) {
+            console.error(`❌ Failed to process image ${file.originalname}:`, imgErr);
+            // Continue processing other images
           }
-          
-        } catch (imageError) {
-          const errorMessage = imageError instanceof Error ? imageError.message : 'Unknown error';
-          console.error(`❌ Critical image processing error for property ${id}:`, errorMessage);
-          
-          // Restore from backup if available
-          if (backupId) {
-            try {
-              const { ImageUuidManager } = await import('./utils/imageUuidManager');
-              await ImageUuidManager.restoreFromBackup(backupId);
-              console.log(`🔄 Restored property ${id} from backup due to critical error`);
-            } catch (restoreError) {
-              console.error("❌ Failed to restore from backup:", restoreError);
-            }
-          }
-          
-          return res.status(500).json({ 
-            success: false,
-            error: "IMAGE_PROCESSING_ERROR",
-            message: "Critical error processing images",
-            details: errorMessage,
-            fallbackMessage: "The system automatically restored the previous image state. Please try again with different images."
-          });
         }
       }
-      
-      // Remove undefined values
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key] === undefined) {
-          delete updateData[key];
+
+      // ✅ Step 6: Prepare update data
+      const updateData: any = {};
+
+      // Copy valid fields from request body
+      const validFields = [
+        'title', 'description', 'city', 'state', 'country', 'propertyType', 
+        'listingType', 'price', 'downPayment', 'installmentAmount', 'installmentPeriod',
+        'isFullCash', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize',
+        'floor', 'isGroundUnit', 'isFeatured', 'isHighlighted', 'isNewListing',
+        'projectName', 'developerName', 'yearBuilt', 'status', 'references'
+      ];
+
+      for (const field of validFields) {
+        if (req.body.hasOwnProperty(field) && req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
         }
-      });
-      
-      console.log(`📊 Final update data: ${Object.keys(updateData).length} fields`);
-      
-      // Perform the update with error handling
-      let updatedProperty;
-      try {
-        updatedProperty = await dbStorage.updateProperty(id, updateData);
-      } catch (updateError) {
-        console.error(`❌ Database update failed for property ${id}:`, updateError);
-        
-        // Restore from backup if available
+      }
+
+      // Handle images - merge new processed images with existing ones
+      if (processedImagePaths.length > 0) {
+        const existingImages = Array.isArray(originalProperty.images) ? originalProperty.images : [];
+        updateData.images = [...existingImages, ...processedImagePaths];
+        console.log(`📸 Combined ${existingImages.length} existing + ${processedImagePaths.length} new = ${updateData.images.length} total images`);
+      } else if (req.body.hasOwnProperty('images')) {
+        // Handle images from request body
+        if (Array.isArray(req.body.images)) {
+          updateData.images = req.body.images;
+        } else if (typeof req.body.images === 'string') {
+          try {
+            updateData.images = JSON.parse(req.body.images);
+          } catch {
+            updateData.images = req.body.images.split(',').map((url: string) => url.trim());
+          }
+        }
+      }
+
+      // ✅ Step 7: Update property in database
+      const updatedProperty = await dbStorage.updateProperty(id, updateData);
+
+      if (!updatedProperty) {
+        // Restore from backup on failure
         if (backupId) {
           try {
             const { ImageUuidManager } = await import('./utils/imageUuidManager');
@@ -1297,61 +1080,42 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             console.error("❌ Failed to restore from backup:", restoreError);
           }
         }
-        
-        return res.status(500).json({ 
-          success: false,
-          error: "DATABASE_UPDATE_ERROR",
-          message: "Failed to update property in database",
-          details: updateError instanceof Error ? updateError.message : 'Unknown error',
-          fallbackMessage: "The system automatically restored the previous state."
-        });
-      }
-      
-      if (!updatedProperty) {
-        console.error(`❌ Update returned null for property ${id}`);
         return res.status(500).json({ 
           success: false,
           error: "UPDATE_FAILED",
-          message: "Property update failed - no data returned"
+          message: "Failed to update property in database"
         });
       }
-      
-      const processingTime = Date.now() - startTime;
-      console.log(`✅ Property ${id} updated successfully in ${processingTime}ms`);
-      
-      return res.json({
+
+      console.log(`✅ Property ${id} updated successfully`);
+
+      return res.status(200).json({ 
         success: true,
-        message: "Property updated successfully",
+        message: 'Property updated successfully', 
         property: updatedProperty,
-        processingTime: `${processingTime}ms`,
-        backupId: backupId || undefined,
-        timestamp: new Date().toISOString()
+        processedImages: processedImagePaths.length,
+        backupId: backupId || undefined
       });
-      
-    } catch (error) {
-      const processingTime = Date.now() - startTime;
-      console.error(`❌ Critical error in PATCH property update (${processingTime}ms):`, error);
-      
+
+    } catch (err) {
+      console.error('❌ Property update failed:', err);
+
       // Emergency restore from backup if available
       if (backupId) {
         try {
           const { ImageUuidManager } = await import('./utils/imageUuidManager');
           await ImageUuidManager.restoreFromBackup(backupId);
-          console.log(`🔄 Emergency restore completed for property ${req.params.id}`);
+          console.log(`🔄 Emergency restore completed for property ${propertyId}`);
         } catch (restoreError) {
           console.error("❌ Emergency restore failed:", restoreError);
         }
       }
-      
-      return res.status(500).json({ 
+
+      return res.status(500).json({
         success: false,
-        error: "CRITICAL_ERROR",
-        message: "A critical error occurred during property update",
-        details: error instanceof Error ? error.message : "Unknown error",
-        processingTime: `${processingTime}ms`,
-        fallbackMessage: "The system attempted to restore the previous state. Please contact support if the issue persists.",
-        timestamp: new Date().toISOString(),
-        debug: process.env.NODE_ENV === 'development' ? error : undefined
+        error: 'SERVER_ERROR',
+        message: 'Server error during property update',
+        details: err instanceof Error ? err.message : 'Unknown error'
       });
     }
   });

@@ -276,5 +276,51 @@ export class StrictImageProcessor {
   static generateBackupId(propertyId: number): string {
     return `backup_${propertyId}_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
   }
+
+  /**
+   * Optimize image with Sharp for web delivery
+   */
+  static async optimizeImageWithSharp(
+    inputPath: string | Buffer, 
+    outputPath: string,
+    options: {
+      width?: number;
+      height?: number;
+      quality?: number;
+      format?: 'webp' | 'jpeg' | 'png';
+    } = {}
+  ): Promise<{ width: number; height: number; size: number }> {
+    const {
+      width = 1200,
+      height = 1200,
+      quality = 85,
+      format = 'webp'
+    } = options;
+
+    try {
+      const sharp = await import('sharp');
+      
+      const metadata = await sharp.default(inputPath)
+        .resize({ 
+          width, 
+          height, 
+          fit: 'inside', 
+          withoutEnlargement: true 
+        })
+        .toFormat(format, { quality })
+        .toFile(outputPath);
+
+      console.log(`📐 Image optimized: ${metadata.width}x${metadata.height}, ${Math.round(metadata.size / 1024)}KB`);
+      
+      return {
+        width: metadata.width,
+        height: metadata.height,
+        size: metadata.size
+      };
+    } catch (error) {
+      console.error('Sharp optimization failed:', error);
+      throw new Error(`Image optimization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
 }
 ```
