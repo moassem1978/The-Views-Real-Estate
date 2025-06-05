@@ -6,7 +6,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import FrontendMonitoring from "@/lib/monitoring";
 import { ErrorBoundary } from "react-error-boundary";
-import { useAnalytics } from "@/hooks/use-analytics";
+import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 
 // Pages - lazy loaded for better performance
 import Home from "@/pages/Home";
@@ -95,11 +95,10 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetError
 }
 
 function AppContent() {
-  useAnalytics();
-
   return (
     <AuthProvider>
       <Router>
+        <AnalyticsTracker />
         <div className="min-h-screen bg-background">
           <OfflineIndicator />
           <Suspense fallback={<LoadingSpinner />}>

@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { User } from "../types";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 type AuthContextType = {
   user: User | null;
