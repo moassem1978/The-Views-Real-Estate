@@ -64,7 +64,7 @@ export const properties = pgTable("properties", {
   yearBuilt: integer("year_built"),
   views: text("views"),
   amenities: jsonb("amenities").notNull(),
-  images: jsonb("images").notNull(),
+  photos: jsonb("photos").notNull(), // Changed from images to photos with structured data
   latitude: doublePrecision("latitude"),
   longitude: doublePrecision("longitude"),
   status: text("status").notNull().default(publicationStatus.DRAFT), // Publication status
@@ -99,6 +99,15 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
 export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
   id: true,
 });
+
+// Photo type for structured photo data
+export interface PropertyPhoto {
+  filename: string;
+  altText: string;
+  uploadedAt?: string;
+  fileSize?: number;
+  mimeType?: string;
+}
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;

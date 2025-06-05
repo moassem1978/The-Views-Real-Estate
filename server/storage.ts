@@ -220,7 +220,11 @@ export class DatabaseStorage implements IStorage {
       developerName: row.developer_name || '',
       latitude: parseFloat(row.latitude) || null,
       longitude: parseFloat(row.longitude) || null,
-      images: Array.isArray(row.images) ? row.images : [],
+      // Support both legacy images and new structured photos
+    images: Array.isArray(row.images) ? row.images : 
+            (typeof row.images === 'string' && row.images ? JSON.parse(row.images) : []),
+    photos: Array.isArray(row.photos) ? row.photos : 
+            (typeof row.photos === 'string' && row.photos ? JSON.parse(row.photos) : []),
       amenities: Array.isArray(row.amenities) ? row.amenities : [],
       agentId: parseInt(row.agent_id) || 1
     };
@@ -354,7 +358,7 @@ export class DatabaseStorage implements IStorage {
   async searchProperties(filters: Partial<PropertySearchFilters>, page = 1, pageSize = 24): Promise<PaginatedResult<Property>> {
     try {
       const offset = (page - 1) * pageSize;
-      
+
       let whereClause = 'WHERE 1=1';
       const params: any[] = [];
       let paramIndex = 1;

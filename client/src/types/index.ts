@@ -58,7 +58,8 @@ export interface Property {
   year_built?: number; // Snake case variant
   views?: string;
   amenities?: string[] | string; // Allow both array and JSON string
-  images?: string[] | string; // Allow both array and JSON string
+  images?: string[] | string; // Legacy support for old image format
+  photos?: PropertyPhoto[] | string; // New structured photo format
   latitude?: number;
   longitude?: number;
   createdAt?: string;
@@ -73,6 +74,15 @@ export interface Property {
   
   // Allow any other string indexing for flexibility with database columns
   [key: string]: any;
+}
+
+// Photo type for structured photo data
+export interface PropertyPhoto {
+  filename: string;
+  altText: string;
+  uploadedAt?: string;
+  fileSize?: number;
+  mimeType?: string;
 }
 
 export interface Testimonial {

@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Property } from "../../types";
 import { formatPrice, parseJsonArray, getImageUrl } from "@/lib/utils";
 import PropertyImage from "@/components/properties/PropertyImage";
+import path from 'path'; // Import the 'path' module
 
 interface PropertyCardProps {
   property: Property;
@@ -16,24 +17,24 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   useEffect(() => {
     console.log(`PropertyCard: Initializing for property #${property.id}`);
     console.log(`PropertyCard: Raw images data:`, property.images);
-    
+
     try {
       // Use our utility function to safely parse the images array
       const images = parseJsonArray(property.images);
       console.log(`PropertyCard: Parsed images:`, images);
-      
+
       // Set image source with fallback
       if (images && images.length > 0) {
         // Process image path to handle escaping and formatting issues
         let imagePath = images[0];
-        
+
         // Skip empty path
         if (!imagePath) {
           console.log(`PropertyCard: Empty image path, using placeholder`);
           setMainImage('/placeholder-property.svg');
           return;
         }
-        
+
         // Remove any escaping and normalize slashes
         imagePath = imagePath
           .replace(/"/g, '')
@@ -42,24 +43,24 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           .replace(/\\/g, '/')
           .replace(/\\\//g, '/')
           .trim();
-        
+
         // Add leading slash if missing
         if (!imagePath.startsWith('/') && !imagePath.startsWith('http')) {
           imagePath = `/${imagePath}`;
         }
-        
+
         // Fix path format issues
         if (imagePath.includes('uploads/properties') && !imagePath.includes('/uploads/properties')) {
           imagePath = imagePath.replace('uploads/properties', '/uploads/properties');
         }
-        
+
         // Prefer optimized WebP images if available
         if (imagePath.includes('uploads/properties') && !imagePath.includes('optimized-') && !imagePath.endsWith('.webp')) {
           const filename = path.basename(imagePath, path.extname(imagePath));
           const webpPath = imagePath.replace(filename, `optimized-${filename}`).replace(/\.(jpg|jpeg|png)$/i, '.webp');
           imagePath = webpPath;
         }
-        
+
         // No timestamp needed for cached images
         console.log(`PropertyCard: Setting image path to:`, imagePath);
         setMainImage(imagePath);
@@ -72,7 +73,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       console.error("Error processing property images:", error);
       setMainImage('/placeholder-property.svg');
     }
-    
+
     setImageError(false);
   }, [property]);
 
@@ -106,6 +107,25 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     return result;
   };
 
+  // Get the first image for the card display - prefer photos over legacy images
+  const getFirstImage = () => {
+    if (property.photos && property.photos.length > 0) {
+      return {
+        src: property.photos[0].filename,
+        alt: property.photos[0].altText
+      };
+    }
+    if (property.images && property.images.length > 0) {
+      return {
+        src: property.images[0],
+        alt: `${property.title} - Property Image`
+      };
+    }
+    return null;
+  };
+
+  const firstImage = getFirstImage();
+
   return (
     <div className="property-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">
       <Link href={`/properties/${property.id}`} className="block relative overflow-hidden">
@@ -116,6 +136,15 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             alt={property.title}
             className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
           />
+          <img
+              src={firstImage?.src || '/placeholder-property.svg'}
+              alt={firstImage?.alt || property.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder-property.svg';
+              }}
+            />
 
           {/* Price Tag */}
           <div className="absolute bottom-0 left-0 z-10 px-3 py-1.5 bg-[#B87333] text-white font-medium rounded-tr-md">
