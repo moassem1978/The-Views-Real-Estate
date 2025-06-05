@@ -808,71 +808,80 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(403).json({ message: "You do not have permission to update this property" });
       }
 
-      // Create clean copy of request body with all fields
-      const propertyData = {...req.body};
-      
       console.log("Property update request for ID:", id);
       
-      // Safely handle images field
-      if (propertyData.images !== undefined) {
+      // Create a clean update object
+      const propertyData: any = {};
+      
+      // Copy all provided fields except undefined ones
+      Object.keys(req.body).forEach(key => {
+        if (req.body[key] !== undefined) {
+          propertyData[key] = req.body[key];
+        }
+      });
+      
+      // Safely handle images field with better error recovery
+      if (req.body.hasOwnProperty('images')) {
         try {
-          if (Array.isArray(propertyData.images)) {
-            // Already an array, just filter out any invalid entries
-            propertyData.images = propertyData.images.filter(img => img && typeof img === 'string');
-          } else if (typeof propertyData.images === 'string') {
-            if (propertyData.images.trim().startsWith('[')) {
-              // Try to parse JSON
-              propertyData.images = JSON.parse(propertyData.images);
-            } else if (propertyData.images.includes(',')) {
-              // Comma-separated string
-              propertyData.images = propertyData.images.split(',').map(img => img.trim()).filter(Boolean);
-            } else if (propertyData.images.trim()) {
-              // Single image
-              propertyData.images = [propertyData.images.trim()];
-            } else {
-              // Empty string
-              propertyData.images = [];
+          let processedImages: string[] = [];
+          
+          if (req.body.images === null || req.body.images === '') {
+            processedImages = [];
+          } else if (Array.isArray(req.body.images)) {
+            processedImages = req.body.images
+              .filter(img => img && typeof img === 'string' && img.trim() !== '')
+              .map(img => String(img).trim());
+          } else if (typeof req.body.images === 'string') {
+            const imageStr = req.body.images.trim();
+            if (imageStr.startsWith('[') && imageStr.endsWith(']')) {
+              try {
+                const parsed = JSON.parse(imageStr);
+                if (Array.isArray(parsed)) {
+                  processedImages = parsed
+                    .filter(img => img && typeof img === 'string')
+                    .map(img => String(img).trim());
+                }
+              } catch (parseError) {
+                console.warn("JSON parse failed, treating as single image");
+                processedImages = imageStr ? [imageStr] : [];
+              }
+            } else if (imageStr.includes(',')) {
+              processedImages = imageStr.split(',')
+                .map(img => img.trim())
+                .filter(img => img !== '');
+            } else if (imageStr !== '') {
+              processedImages = [imageStr];
             }
-          } else {
-            // Invalid format, preserve existing
-            propertyData.images = existingProperty.images || [];
           }
+          
+          propertyData.images = processedImages;
+          console.log(`Processed ${processedImages.length} images for update`);
+          
         } catch (error) {
           console.error("Error processing images field:", error);
-          // Fallback to existing images on error
+          // Keep existing images on error
           propertyData.images = existingProperty.images || [];
         }
-      } else {
-        // No images field provided, preserve existing
-        propertyData.images = existingProperty.images || [];
       }
-
-      // Ensure images is a valid array
-      if (!Array.isArray(propertyData.images)) {
-        propertyData.images = [];
-      }
-
-      console.log(`Updating property with ${propertyData.images.length} images`);
 
       // Handle reference fields safely
       if (propertyData.reference || propertyData.references) {
         const refValue = propertyData.reference || propertyData.references;
-        propertyData.references = refValue;
-      } else if (existingProperty.references) {
-        propertyData.references = existingProperty.references;
-      }
-
-      // Handle property type
-      if (propertyData.propertyType) {
-        propertyData.property_type = propertyData.propertyType;
-      } else if (existingProperty.propertyType) {
-        propertyData.propertyType = existingProperty.propertyType;
+        propertyData.references = String(refValue);
+        console.log(`Setting reference to: ${propertyData.references}`);
       }
 
       // If a regular user updates a property, set status back to pending_approval
       if (user.role === 'user') {
         propertyData.status = 'pending_approval';
       }
+
+      // Remove any undefined values
+      Object.keys(propertyData).forEach(key => {
+        if (propertyData[key] === undefined) {
+          delete propertyData[key];
+        }
+      });
 
       const property = await dbStorage.updateProperty(id, propertyData);
       
@@ -885,7 +894,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     } catch (error) {
       console.error("Error updating property:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      res.status(500).json({ message: `Failed to update property: ${errorMessage}` });
+      res.status(500).json({ 
+        message: `Failed to update property: ${errorMessage}`,
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
     }
   });
 
@@ -894,9 +906,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     try {
       console.log("PATCH endpoint for property update called");
       
-      // No authentication check for now to simplify the process
-      console.log("Authentication check bypassed for property PATCH endpoint");
-      
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.error("Property update failed: User not authenticated");
+        return res.status(401).json({ message: "Authentication required to update properties" });
+      }
+
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid property ID" });
@@ -908,118 +923,99 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(404).json({ message: "Property not found" });
       }
       
-      console.log(`Patching property ${id} with:`, req.body);
+      console.log(`Patching property ${id} with safe data processing`);
       
-      // Create a clean update object merging the existing data with the updates
-      const updateData = {
-        ...existingProperty, // Start with all existing data
-        ...req.body,         // Apply the updates on top
-      };
+      // Create a safe update object with only the changed fields
+      const updateData: any = {};
       
-      // CRITICAL FIX: Improved handling of reference fields
-      console.log("REFERENCE FIELD FIX: Processing reference fields with improved logic");
-      
-      // Determine the single reference value to use across all reference fields
-      let finalReferenceValue = '';
-      
-      // Priority order: references > reference > reference_number > existing values
-      if (req.body.references) {
-        console.log(`Using provided references field: ${req.body.references}`);
-        finalReferenceValue = req.body.references;
-      } else if (req.body.reference) {
-        console.log(`Using provided reference field: ${req.body.reference}`);
-        finalReferenceValue = req.body.reference;
-      } else if (req.body.reference_number) {
-        console.log(`Using provided reference_number field: ${req.body.reference_number}`);
-        finalReferenceValue = req.body.reference_number;
-      } else if (existingProperty.references) {
-        console.log(`Preserving existing references field: ${existingProperty.references}`);
-        finalReferenceValue = existingProperty.references;
-      } else if (existingProperty.reference) {
-        console.log(`Preserving existing reference field: ${existingProperty.reference}`);
-        finalReferenceValue = existingProperty.reference;
+      // Only include fields that are actually in the request body
+      const allowedFields = [
+        'title', 'description', 'city', 'state', 'country', 'propertyType', 
+        'listingType', 'price', 'downPayment', 'installmentAmount', 'installmentPeriod',
+        'isFullCash', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize',
+        'floor', 'isGroundUnit', 'isFeatured', 'isHighlighted', 'isNewListing',
+        'projectName', 'developerName', 'yearBuilt', 'status', 'images', 'references'
+      ];
+
+      for (const field of allowedFields) {
+        if (req.body.hasOwnProperty(field) && req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
       }
       
-      // Apply the same value to all reference fields for consistency
-      updateData.references = finalReferenceValue;
+      // Handle reference fields with safety
+      if (req.body.references || req.body.reference) {
+        const refValue = req.body.references || req.body.reference;
+        updateData.references = String(refValue);
+        console.log(`Setting reference to: ${updateData.references}`);
+      }
       
-      console.log("Final reference value:", finalReferenceValue);
-      
-      // IMPROVED CRITICAL FIX: Simplified image handling that's reliable
-      if (req.body.images) {
-        console.log("IMAGE FIELD FIX: Processing image data");
+      // Handle images with comprehensive safety checks
+      if (req.body.hasOwnProperty('images')) {
+        console.log("Processing images field safely");
         
-        if (Array.isArray(req.body.images)) {
-          // Direct array - most reliable case
-          updateData.images = req.body.images.map(img => String(img)).filter(Boolean);
-          console.log(`Using ${updateData.images.length} images from request array`);
-        } else if (typeof req.body.images === 'string') {
-          try {
-            // Try to parse as JSON if it looks like JSON
-            if (req.body.images.trim().startsWith('[')) {
-              const parsedImages = JSON.parse(req.body.images);
-              if (Array.isArray(parsedImages)) {
-                updateData.images = parsedImages.map(img => String(img)).filter(Boolean);
-                console.log(`Parsed ${updateData.images.length} images from JSON string`);
-              } else {
-                // Fallback for non-array JSON
-                updateData.images = [req.body.images];
-                console.log("Using string as single image path");
+        try {
+          let processedImages: string[] = [];
+          
+          if (req.body.images === null || req.body.images === '') {
+            // Explicitly clearing images
+            processedImages = [];
+            console.log("Clearing images (null or empty string)");
+          } else if (Array.isArray(req.body.images)) {
+            // Already an array
+            processedImages = req.body.images
+              .filter(img => img && typeof img === 'string' && img.trim() !== '')
+              .map(img => String(img).trim());
+            console.log(`Processed array of ${processedImages.length} images`);
+          } else if (typeof req.body.images === 'string') {
+            const imageStr = req.body.images.trim();
+            if (imageStr.startsWith('[') && imageStr.endsWith(']')) {
+              // JSON array string
+              try {
+                const parsed = JSON.parse(imageStr);
+                if (Array.isArray(parsed)) {
+                  processedImages = parsed
+                    .filter(img => img && typeof img === 'string' && img.trim() !== '')
+                    .map(img => String(img).trim());
+                  console.log(`Parsed JSON array: ${processedImages.length} images`);
+                }
+              } catch (parseError) {
+                console.error("JSON parse error, treating as single image");
+                processedImages = imageStr ? [imageStr] : [];
               }
-            } else if (req.body.images.includes(',')) {
-              // Comma-separated list
-              updateData.images = req.body.images.split(',')
+            } else if (imageStr.includes(',')) {
+              // Comma-separated string
+              processedImages = imageStr.split(',')
                 .map(img => img.trim())
-                .filter(Boolean);
-              console.log(`Split string into ${updateData.images.length} images by comma`);
-            } else if (!req.body.images.trim()) {
-              // Empty string - keep existing
-              updateData.images = existingProperty.images || [];
-              console.log("Empty string, keeping existing images");
-            } else {
-              // Single image path
-              updateData.images = [req.body.images.trim()];
-              console.log(`Using as single image path: ${updateData.images[0]}`);
-            }
-          } catch (e) {
-            console.error("Error processing images:", e);
-            // If parsing fails, use as simple string or preserve existing
-            if (req.body.images.trim()) {
-              updateData.images = [req.body.images.trim()];
-              console.log("Using as single image after parsing failure");
-            } else {
-              updateData.images = existingProperty.images || [];
-              console.log("Keeping existing images after parsing failure");
+                .filter(img => img !== '');
+              console.log(`Split comma-separated: ${processedImages.length} images`);
+            } else if (imageStr !== '') {
+              // Single image
+              processedImages = [imageStr];
+              console.log("Single image string");
             }
           }
-        } else {
-          // Unknown format, preserve existing
-          console.log("Unknown image format, preserving existing images");
-          updateData.images = existingProperty.images || [];
+          
+          updateData.images = processedImages;
+          console.log(`Final images count: ${processedImages.length}`);
+          
+        } catch (imageError) {
+          console.error("Error processing images, preserving existing:", imageError);
+          // Don't update images if there's an error
+          delete updateData.images;
         }
-      } else {
-        // No images in request, preserve existing
-        updateData.images = existingProperty.images || [];
-        console.log("No images in request, preserving existing images");
       }
       
-      // Ensure we have a valid array
-      if (!Array.isArray(updateData.images)) {
-        updateData.images = [];
-        console.log("Fixed non-array images value to empty array");
-      }
-      
-      // Debugging - print final reference field values and image count
-      console.log("Final property update data:", {
-        id: updateData.id,
-        reference: updateData.reference,
-        references: updateData.references,
-        reference_number: updateData.reference_number,
-        imageCount: Array.isArray(updateData.images) ? updateData.images.length : 'not an array',
-        firstImage: Array.isArray(updateData.images) && updateData.images.length > 0 ? updateData.images[0] : 'none'
+      // Ensure we don't send undefined values
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
       });
       
-      // Update the property
+      console.log("Final update data keys:", Object.keys(updateData));
+      
+      // Update the property with only the safe fields
       const updatedProperty = await dbStorage.updateProperty(id, updateData);
       
       if (!updatedProperty) {
@@ -1028,11 +1024,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       console.log("Property PATCH update successful:", updatedProperty.id);
       return res.json(updatedProperty);
+      
     } catch (error) {
       console.error("Error in PATCH property update:", error);
       return res.status(500).json({ 
         message: "Failed to update property", 
-        error: error instanceof Error ? error.message : "Unknown error" 
+        error: error instanceof Error ? error.message : "Unknown error",
+        details: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
   });
