@@ -417,10 +417,17 @@ export class DatabaseStorage implements IStorage {
         console.log(`✅ Property ${id}: Using ${validatedPhotos.length} filename-validated photos with metadata`);
       }
 
-      const [property] = await db.update(properties).set(updates).where(eq(properties.id, id)).returning();
+      const result = await db.update(properties).set(updates).where(eq(properties.id, id)).returning();
+      
+      if (!result || result.length === 0) {
+        console.error(`No property found with ID ${id} to update`);
+        throw new Error(`Property with ID ${id} not found`);
+      }
+
+      const property = result[0];
       
       // Log the final state for debugging
-      console.log(`📋 Property ${id} updated. Final image state:`, {
+      console.log(`📋 Property ${id} updated successfully. Final image state:`, {
         legacyImagesCount: property.images ? property.images.length : 0,
         photosCount: property.photos ? property.photos.length : 0
       });
@@ -428,7 +435,7 @@ export class DatabaseStorage implements IStorage {
       return property;
     } catch (error) {
       console.error(`Error updating property ${id}:`, error);
-      return undefined;
+      throw error; // Throw the error instead of returning undefined
     }
   }
 
