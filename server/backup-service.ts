@@ -44,11 +44,10 @@ export class BackupService {
         }
       }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const sanitizedOperation = operation.replace(/[^a-zA-Z0-9-_]/g, '_').replace(/_{2,}/g, '_').replace(/^_+|_+$/g, '') || 'unknown';
-    const backupFile = path.join(this.backupDir, `backup-${timestamp}-${sanitizedOperation}.json`);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const sanitizedOperation = operation.replace(/[^a-zA-Z0-9-_]/g, '_').replace(/_{2,}/g, '_').replace(/^_+|_+$/g, '') || 'unknown';
+      const backupFile = path.join(this.backupDir, `backup-${timestamp}-${sanitizedOperation}.json`);
 
-    try {
       // Test database connection first
       const { testConnection } = await import('./db');
       const isConnected = await testConnection();

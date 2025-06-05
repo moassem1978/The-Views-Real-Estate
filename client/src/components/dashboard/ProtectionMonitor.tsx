@@ -66,6 +66,21 @@ export default function ProtectionMonitor() {
     if (!confirm(`Are you sure you want to restore from ${backupFile}? This will overwrite current data.`)) {
       return;
     }
+    
+    try {
+      const response = await fetch('/api/backups/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ backupFile })
+      });
+
+      if (response.ok) {
+        alert('Backup restored successfully');
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Failed to restore backup:', error);
+    }
   };
 
   const autoRestore = async () => {
@@ -84,22 +99,6 @@ export default function ProtectionMonitor() {
       }
     } catch (error) {
       alert('Auto-restoration error: ' + error.message);
-    }
-  };
-
-    try {
-      const response = await fetch('/api/backups/restore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ backupFile })
-      });
-
-      if (response.ok) {
-        alert('Backup restored successfully');
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Failed to restore backup:', error);
     }
   };
 
