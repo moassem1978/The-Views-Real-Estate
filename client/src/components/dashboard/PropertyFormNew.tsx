@@ -417,7 +417,7 @@ export default function PropertyForm({
         if (imagesToReplace.size > 0) {
           console.log(`Processing ${imagesToReplace.size} image replacements`);
           
-          for (const [originalIndex, newFile] of imagesToReplace.entries()) {
+          for (const [originalIndex, newFile] of Array.from(imagesToReplace.entries())) {
             // Adjust index based on deletions that occurred before this index
             const adjustedIndex = originalIndex - imagesToDelete.filter(delIndex => delIndex < originalIndex).length;
             
