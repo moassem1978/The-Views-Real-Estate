@@ -3,10 +3,21 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+import sharp from 'sharp';
 import { ImageBackupManager } from './imageBackupManager';
 import { ImageValidator } from './imageValidator';
 import { storage as dbStorage } from '../storage';
-import { convertImagesToPhotos } from './photoUtils';
+
+export interface PhotoData {
+  filename: string;
+  originalName: string;
+  altText: string;
+  uploadedAt: string;
+  fileSize: number;
+  mimeType: string;
+  order: number;
+}
 
 export interface PhotoUploadResult {
   success: boolean;
@@ -21,40 +32,51 @@ export interface PhotoUploadResult {
 
 export class PhotoUploadHandler {
   private static readonly UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'properties');
+  private static readonly IMAGES_DIR = path.join(process.cwd(), 'public', 'images');
   private static readonly MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
   private static readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-  static async ensureUploadDirectory(): Promise<void> {
+  static async ensureDirectories(): Promise<void> {
     try {
-      if (!fs.existsSync(this.UPLOAD_DIR)) {
-        fs.mkdirSync(this.UPLOAD_DIR, { recursive: true, mode: 0o777 });
-        console.log(`📁 Created upload directory: ${this.UPLOAD_DIR}`);
-      }
+      // Ensure both upload and images directories exist
+      const directories = [this.UPLOAD_DIR, this.IMAGES_DIR];
       
-      // Ensure proper permissions
-      fs.chmodSync(this.UPLOAD_DIR, 0o777);
+      for (const dir of directories) {
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true, mode: 0o777 });
+          console.log(`📁 Created directory: ${dir}`);
+        }
+        fs.chmodSync(dir, 0o777);
+      }
     } catch (error) {
-      console.error('Error ensuring upload directory:', error);
-      throw new Error('Failed to create upload directory');
+      console.error('Error ensuring directories:', error);
+      throw new Error('Failed to create required directories');
     }
+  }
+
+  static generateUniqueFilename(originalName: string): string {
+    const timestamp = Date.now();
+    const uuid = uuidv4().split('-')[0]; // Use first part of UUID
+    const ext = path.extname(originalName).toLowerCase() || '.jpg';
+    const baseName = path.basename(originalName, ext)
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .substring(0, 20);
+    
+    return `photo-${timestamp}-${uuid}-${baseName}${ext}`;
   }
 
   static createMulterStorage(): multer.StorageEngine {
     return multer.diskStorage({
       destination: (req, file, cb) => {
-        this.ensureUploadDirectory().then(() => {
+        this.ensureDirectories().then(() => {
           cb(null, this.UPLOAD_DIR);
         }).catch(err => {
           cb(err, '');
         });
       },
       filename: (req, file, cb) => {
-        const timestamp = Date.now();
-        const randomId = Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-        const filename = `photo-${timestamp}-${randomId}${ext}`;
-        
-        console.log(`📸 Generated photo filename: ${filename} for ${file.originalname}`);
+        const filename = this.generateUniqueFilename(file.originalname);
+        console.log(`📸 Generated unique filename: ${filename} for ${file.originalname}`);
         cb(null, filename);
       }
     });
@@ -75,6 +97,27 @@ export class PhotoUploadHandler {
         }
       }
     });
+  }
+
+  static async processImageWithSharp(filePath: string): Promise<void> {
+    try {
+      const processedPath = path.join(this.IMAGES_DIR, path.basename(filePath));
+      
+      await sharp(filePath)
+        .resize(1920, 1080, { 
+          fit: 'inside', 
+          withoutEnlargement: true 
+        })
+        .jpeg({ 
+          quality: 85, 
+          progressive: true 
+        })
+        .toFile(processedPath);
+
+      console.log(`🖼️ Processed image with Sharp: ${processedPath}`);
+    } catch (error) {
+      console.warn('Sharp processing failed, using original:', error);
+    }
   }
 
   static async handlePhotoUpload(
@@ -102,7 +145,10 @@ export class PhotoUploadHandler {
 
       for (const file of files) {
         try {
-          // Validate the uploaded file
+          // Process image with Sharp
+          await this.processImageWithSharp(file.path);
+
+          // Validate the uploaded file exists
           const validation = ImageValidator.validateImageExists(file.filename);
           
           if (!validation.isValid) {
@@ -110,9 +156,9 @@ export class PhotoUploadHandler {
             continue;
           }
 
-          // Create photo object
+          // Create photo object with unique filename
           const photo = {
-            filename: file.filename,
+            filename: file.filename, // Already unique from multer
             altText: this.generateAltText(file.originalname, uploadedPhotos.length),
             url: `/uploads/properties/${file.filename}`
           };
@@ -174,17 +220,18 @@ export class PhotoUploadHandler {
         throw new Error(`Property ${propertyId} not found`);
       }
 
-      // Get existing photos
+      // Get existing photos - preserve original filenames when editing
       const existingPhotos = Array.isArray(property.photos) ? property.photos : [];
       const existingImages = Array.isArray(property.images) ? property.images : [];
 
-      // Add new photos to existing
+      // Add new photos to existing (preserving original filenames in photos array)
       const updatedPhotos = [
         ...existingPhotos,
-        ...newPhotos.map(photo => ({
-          filename: photo.filename,
+        ...newPhotos.map((photo, index) => ({
+          filename: photo.filename, // Keep unique filename
           altText: photo.altText,
-          uploadedAt: new Date().toISOString()
+          uploadedAt: new Date().toISOString(),
+          order: existingPhotos.length + index
         }))
       ];
 

@@ -384,19 +384,23 @@ export class DatabaseStorage implements IStorage {
         console.log(`✅ Property ${id}: Using ${validation.validImages.length} filename-validated legacy images`);
       }
 
-      // Process photo metadata - ensure filenames are properly referenced
+      // Process photo metadata - preserve original filenames when editing
       if ('photos' in updates && Array.isArray(updates.photos)) {
         const validatedPhotos = updates.photos
           .map((photo: any, index: number) => {
-            // Ensure filename is properly formatted (no path, just filename)
+            // Preserve original filename structure - don't modify existing filenames
             let filename = photo.filename;
-            if (filename && filename.includes('/')) {
+            
+            // Only clean filename if it contains paths (new uploads)
+            if (filename && filename.includes('/') && !filename.startsWith('photo-')) {
               filename = filename.split('/').pop() || '';
             }
             
             return {
               filename: filename,
-              altText: photo.altText || `Property image ${index + 1}`
+              altText: photo.altText || `Property image ${index + 1}`,
+              uploadedAt: photo.uploadedAt || new Date().toISOString(),
+              order: photo.order !== undefined ? photo.order : index
             };
           })
           .filter((photo: any) => {
@@ -405,16 +409,25 @@ export class DatabaseStorage implements IStorage {
               return false;
             }
             
-            const validation = ImageValidator.validateImageExists(photo.filename);
-            if (!validation.isValid) {
-              console.warn(`⚠️  Invalid photo: ${photo.filename} - ${validation.error}`);
-              return false;
+            // For editing listings, only validate if explicitly requested
+            // This allows preserving original filenames even if files are temporarily missing
+            if (photo.filename.startsWith('photo-')) {
+              // This is a new upload, validate it exists
+              const validation = ImageValidator.validateImageExists(photo.filename);
+              if (!validation.isValid) {
+                console.warn(`⚠️  New photo validation failed: ${photo.filename} - ${validation.error}`);
+                return false;
+              }
+            } else {
+              // This is an existing photo, preserve it even if file is missing
+              console.log(`🔄 Preserving existing photo filename: ${photo.filename}`);
             }
+            
             return true;
           });
 
         updates.photos = validatedPhotos;
-        console.log(`✅ Property ${id}: Using ${validatedPhotos.length} filename-validated photos with metadata`);
+        console.log(`✅ Property ${id}: Using ${validatedPhotos.length} photos (preserving original filenames)`);
       }
 
       const result = await db.update(properties).set(updates).where(eq(properties.id, id)).returning();

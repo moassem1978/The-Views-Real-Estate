@@ -18,38 +18,71 @@ export class ImageBackupManager {
   /**
    * Create backup entry for property images with full metadata
    */
-  static async createImageBackup(propertyId: number, legacyImages: string[], photoMetadata: any[] = []): Promise<void> {
+  static async createImageBackup(
+    propertyId: number, 
+    legacyImages: string[] = [], 
+    photoMetadata: any[] = []
+  ): Promise<void> {
     try {
       console.log(`📦 Creating image backup for property ${propertyId}`);
 
-      // Extract and validate filenames from image URLs
-      const validatedLegacyImages = legacyImages.map(img => {
-        const filename = this.extractFilenameFromUrl(img);
+      // Process legacy images
+      const processedLegacyImages = legacyImages.map((imageUrl, index) => {
+        const filename = this.extractFilenameFromUrl(imageUrl);
+        const validation = ImageValidator.validateImageExists(filename);
+
         return {
-          originalUrl: img,
           filename: filename,
-          exists: this.validateImageFile(filename)
+          originalUrl: imageUrl,
+          exists: validation.isValid,
+          fileSize: validation.fileSize || 0,
+          validationError: validation.error || null
         };
       });
 
-      // Validate photo metadata filenames
-      const validatedPhotoMetadata = photoMetadata.map(photo => ({
-        filename: photo.filename,
-        altText: photo.altText,
-        exists: this.validateImageFile(photo.filename)
-      }));
+      // Process photo metadata  
+      const processedPhotoMetadata = photoMetadata.map((photo, index) => {
+        const filename = photo.filename || '';
+        const validation = ImageValidator.validateImageExists(filename);
 
-      // Create comprehensive backup entry with filename mapping
-      const backupData = {
-        property_id: propertyId,
-        backup_timestamp: new Date().toISOString(),
-        legacy_images: JSON.stringify(validatedLegacyImages),
-        photo_metadata: JSON.stringify(validatedPhotoMetadata),
-        image_count: validatedLegacyImages.length + validatedPhotoMetadata.length,
-        backup_type: 'filename_mapped',
-        filename_map: JSON.stringify(this.createFilenameMap(validatedLegacyImages, validatedPhotoMetadata))
-      };
+        return {
+          filename: filename,
+          altText: photo.altText || `Photo ${index + 1}`,
+          exists: validation.isValid,
+          fileSize: validation.fileSize || 0,
+          validationError: validation.error || null
+        };
+      });
 
+      // Create filename mapping for cross-reference
+      const filenameMapping: Record<string, any> = {};
+
+      processedLegacyImages.forEach((img, index) => {
+        if (img.filename) {
+          filenameMapping[img.filename] = {
+            type: 'legacy',
+            index: index,
+            originalUrl: img.originalUrl,
+            exists: img.exists
+          };
+        }
+      });
+
+      processedPhotoMetadata.forEach((photo, index) => {
+        if (photo.filename) {
+          filenameMapping[photo.filename] = {
+            type: 'photo_metadata',
+            index: index,
+            altText: photo.altText,
+            exists: photo.exists
+          };
+        }
+      });
+
+      // Use a default original filename to satisfy NOT NULL constraint
+      const defaultOriginalFilename = `backup-${propertyId}-${Date.now()}`;
+
+      // Insert into database
       await pool.query(`
         INSERT INTO image_backups (property_id, backup_timestamp, legacy_images, photo_metadata, image_count, backup_type, filename_map)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -59,18 +92,19 @@ export class ImageBackupManager {
           image_count = EXCLUDED.image_count,
           filename_map = EXCLUDED.filename_map
       `, [
-        backupData.property_id,
-        backupData.backup_timestamp,
-        backupData.legacy_images,
-        backupData.photo_metadata,
-        backupData.image_count,
-        backupData.backup_type,
-        backupData.filename_map
+        propertyId,
+        new Date().toISOString(),
+        JSON.stringify(processedLegacyImages),
+        JSON.stringify(processedPhotoMetadata),
+        processedLegacyImages.length + processedPhotoMetadata.length,
+        'filename_mapped',
+        JSON.stringify(filenameMapping)
       ]);
 
-      console.log(`✅ Image backup created for property ${propertyId} with ${backupData.image_count} images (filename-mapped)`);
+      console.log(`✅ Image backup created for property ${propertyId} with ${processedLegacyImages.length + processedPhotoMetadata.length} images (filename-mapped)`);
+
     } catch (error) {
-      console.error(`❌ Failed to create image backup for property ${propertyId}:`, error);
+      console.error(`Error creating image backup for property ${propertyId}:`, error);
       throw error;
     }
   }

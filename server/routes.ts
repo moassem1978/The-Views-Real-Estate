@@ -180,6 +180,37 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // Set up authentication routes and middleware
   setupAuth(app);
 
+  // Protected dashboard route with session logging
+  app.get("/dashboard", (req: Request, res: Response, next: NextFunction) => {
+    console.log("=== DASHBOARD ACCESS ATTEMPT ===");
+    console.log("Session ID:", req.sessionID);
+    console.log("Is Authenticated:", req.isAuthenticated());
+    console.log("Session Data:", {
+      sessionID: req.sessionID,
+      session: req.session,
+      cookies: req.headers.cookie,
+      userAgent: req.headers['user-agent'],
+      timestamp: new Date().toISOString()
+    });
+
+    if (!req.isAuthenticated()) {
+      console.log("❌ Dashboard access denied - user not authenticated");
+      console.log("Redirecting to sign-in page");
+      return res.redirect('/signin');
+    }
+
+    const user = req.user as Express.User;
+    console.log("✅ Dashboard access granted for user:", {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      isAgent: user.isAgent
+    });
+
+    // Continue to serve the dashboard
+    next();
+  });
+
   // Serve static projects page to bypass React crashes
 
 

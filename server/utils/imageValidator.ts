@@ -7,12 +7,14 @@ export interface ImageValidationResult {
   filePath?: string;
   error?: string;
   fileSize?: number;
+  exists?: boolean;
 }
 
 export class ImageValidator {
   private static readonly IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
   private static readonly MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
   private static readonly BASE_UPLOAD_PATH = 'public/uploads/properties';
+  private static readonly BASE_IMAGES_PATH = 'public/images';
 
   /**
    * Validate if an image file exists and is accessible
@@ -20,17 +22,27 @@ export class ImageValidator {
   static validateImageExists(filename: string): ImageValidationResult {
     try {
       // Clean filename and construct full path
-      const cleanFilename = filename.replace(/^\/+/, '');
-      const fullPath = path.join(this.BASE_UPLOAD_PATH, cleanFilename);
+      const cleanFilename = filename.replace(/^\/+/, '').replace('/uploads/properties/', '');
+      const uploadPath = path.join(this.BASE_UPLOAD_PATH, cleanFilename);
+      const imagesPath = path.join(this.BASE_IMAGES_PATH, cleanFilename);
       
-      console.log(`Validating image: ${filename} -> ${fullPath}`);
+      console.log(`Validating image: ${filename} -> ${uploadPath} or ${imagesPath}`);
 
-      // Check if file exists
-      if (!existsSync(fullPath)) {
+      // Check if file exists in either location
+      let fullPath = uploadPath;
+      let exists = existsSync(uploadPath);
+      
+      if (!exists) {
+        fullPath = imagesPath;
+        exists = existsSync(imagesPath);
+      }
+
+      if (!exists) {
         return {
           isValid: false,
           error: `File not found: ${filename}`,
-          filePath: fullPath
+          filePath: uploadPath,
+          exists: false
         };
       }
 
@@ -42,7 +54,8 @@ export class ImageValidator {
         return {
           isValid: false,
           error: `Path is not a file: ${filename}`,
-          filePath: fullPath
+          filePath: fullPath,
+          exists: true
         };
       }
 
@@ -52,7 +65,8 @@ export class ImageValidator {
           isValid: false,
           error: `File is empty: ${filename}`,
           filePath: fullPath,
-          fileSize: stats.size
+          fileSize: stats.size,
+          exists: true
         };
       }
 
@@ -61,7 +75,8 @@ export class ImageValidator {
           isValid: false,
           error: `File too large: ${filename} (${Math.round(stats.size / 1024 / 1024)}MB)`,
           filePath: fullPath,
-          fileSize: stats.size
+          fileSize: stats.size,
+          exists: true
         };
       }
 
@@ -72,7 +87,8 @@ export class ImageValidator {
           isValid: false,
           error: `Invalid image extension: ${filename}`,
           filePath: fullPath,
-          fileSize: stats.size
+          fileSize: stats.size,
+          exists: true
         };
       }
 
@@ -81,7 +97,8 @@ export class ImageValidator {
       return {
         isValid: true,
         filePath: fullPath,
-        fileSize: stats.size
+        fileSize: stats.size,
+        exists: true
       };
 
     } catch (error) {
@@ -89,13 +106,14 @@ export class ImageValidator {
       return {
         isValid: false,
         error: `Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        filePath: undefined
+        filePath: undefined,
+        exists: false
       };
     }
   }
 
   /**
-   * Validate multiple images and return results
+   * Validate multiple images and return results - used in restore operations
    */
   static validateImageList(imageList: string[]): {
     validImages: string[];
@@ -110,7 +128,7 @@ export class ImageValidator {
       const result = this.validateImageExists(image);
       validationResults.push(result);
 
-      if (result.isValid) {
+      if (result.isValid && result.exists) {
         validImages.push(image);
       } else {
         invalidImages.push({
@@ -132,21 +150,32 @@ export class ImageValidator {
 
   /**
    * Restore images by validating they exist before updating property
+   * Enhanced for restore scripts to check file existence before DB insertion
    */
   static async validateBeforeRestore(propertyId: number, imagesToRestore: string[]): Promise<{
     canRestore: boolean;
     validImages: string[];
     missingImages: string[];
     errors: string[];
+    existingFiles: string[];
   }> {
     console.log(`🔍 Validating ${imagesToRestore.length} images for property ${propertyId} restore`);
 
     const validation = this.validateImageList(imagesToRestore);
     
     const errors: string[] = [];
-    const missingImages = validation.invalidImages.map(invalid => {
+    const missingImages: string[] = [];
+    const existingFiles: string[] = [];
+
+    validation.invalidImages.forEach(invalid => {
       errors.push(`${invalid.filename}: ${invalid.error}`);
-      return invalid.filename;
+      missingImages.push(invalid.filename);
+    });
+
+    validation.validationResults.forEach((result, index) => {
+      if (result.exists) {
+        existingFiles.push(imagesToRestore[index]);
+      }
     });
 
     const canRestore = validation.validImages.length > 0;
@@ -159,12 +188,42 @@ export class ImageValidator {
     console.log(`- Can restore: ${canRestore}`);
     console.log(`- Valid images: ${validation.validImages.length}`);
     console.log(`- Missing images: ${missingImages.length}`);
+    console.log(`- Existing files: ${existingFiles.length}`);
 
     return {
       canRestore,
       validImages: validation.validImages,
       missingImages,
-      errors
+      errors,
+      existingFiles
     };
+  }
+
+  /**
+   * Check if photo files exist before database insertion (for restore scripts)
+   */
+  static validatePhotosForDBInsertion(photos: Array<{ filename: string; [key: string]: any }>): {
+    validPhotos: Array<{ filename: string; [key: string]: any }>;
+    invalidPhotos: Array<{ filename: string; error: string }>;
+  } {
+    const validPhotos: Array<{ filename: string; [key: string]: any }> = [];
+    const invalidPhotos: Array<{ filename: string; error: string }> = [];
+
+    photos.forEach(photo => {
+      const validation = this.validateImageExists(photo.filename);
+      
+      if (validation.isValid && validation.exists) {
+        validPhotos.push(photo);
+      } else {
+        invalidPhotos.push({
+          filename: photo.filename,
+          error: validation.error || 'File does not exist'
+        });
+      }
+    });
+
+    console.log(`DB insertion validation: ${validPhotos.length} valid, ${invalidPhotos.length} invalid photos`);
+    
+    return { validPhotos, invalidPhotos };
   }
 }
