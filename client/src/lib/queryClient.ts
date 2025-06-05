@@ -32,15 +32,30 @@ async function throwIfResNotOk(res: Response) {
 
 /**
  * Makes an API request with improved error handling and caching for GET requests
- * @param method - HTTP method
- * @param url - API endpoint
- * @param data - Optional request body
- * @returns Response object
+ * Supports both new (url, options) and legacy (method, url, data) signatures
  */
 export async function apiRequest(
-  url: string,
-  options: RequestInit = {},
+  urlOrMethod: string,
+  optionsOrUrl?: RequestInit | string,
+  data?: any
 ): Promise<Response> {
+  let url: string;
+  let options: RequestInit;
+
+  // Handle legacy three-parameter signature: (method, url, data)
+  if (typeof optionsOrUrl === 'string') {
+    const method = urlOrMethod;
+    url = optionsOrUrl;
+    options = {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: data ? JSON.stringify(data) : undefined,
+    };
+  } else {
+    // Handle new two-parameter signature: (url, options)
+    url = urlOrMethod;
+    options = optionsOrUrl || {};
+  }
   // Create a unique key for this request for caching
   const requestKey = `${options.method || 'GET'}-${url}-${JSON.stringify(options.body || {})}`;
 
