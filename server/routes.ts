@@ -3179,6 +3179,161 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // Enhanced photo upload endpoint with backup integration
+  app.post('/api/photos/upload/:propertyId?', async (req: Request, res: Response) => {
+    try {
+      const { PhotoUploadHandler } = await import('./utils/photoUploadHandler');
+      
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Authentication required" 
+        });
+      }
+
+      const propertyId = req.params.propertyId ? parseInt(req.params.propertyId) : undefined;
+      
+      // Create upload middleware
+      const upload = PhotoUploadHandler.createUploadMiddleware();
+      
+      // Process upload using promisified middleware
+      await new Promise<void>((resolve, reject) => {
+        upload.array('photos', 20)(req, res, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      // Handle the upload
+      const result = await PhotoUploadHandler.handlePhotoUpload(req, res, propertyId);
+      
+      return res.json({
+        success: result.success,
+        message: `Successfully uploaded ${result.totalUploaded} photos`,
+        uploadedPhotos: result.uploadedPhotos,
+        errors: result.errors,
+        totalUploaded: result.totalUploaded
+      });
+
+    } catch (error) {
+      console.error('Enhanced photo upload error:', error);
+      return res.status(500).json({
+        success: false,
+        message: "Photo upload failed",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Photo restore endpoints
+  app.post('/api/photos/restore/:propertyId', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.user as Express.User;
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const propertyId = parseInt(req.params.propertyId);
+      if (isNaN(propertyId)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      const { PhotoRestoreService } = await import('./utils/photoRestoreService');
+      const result = await PhotoRestoreService.restorePropertyPhotos(propertyId);
+
+      return res.json({
+        success: result.success,
+        message: result.success 
+          ? `Restored ${result.restoredCount} photos for property ${propertyId}`
+          : `Failed to restore photos for property ${propertyId}`,
+        restoredCount: result.restoredCount,
+        restoredPhotos: result.restoredPhotos,
+        errors: result.errors
+      });
+
+    } catch (error) {
+      console.error('Photo restore error:', error);
+      return res.status(500).json({
+        success: false,
+        message: "Photo restore failed",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post('/api/photos/restore-all', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.user as Express.User;
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { PhotoRestoreService } = await import('./utils/photoRestoreService');
+      const result = await PhotoRestoreService.restoreAllPhotosFromAssets();
+
+      return res.json({
+        success: result.success,
+        message: result.success 
+          ? `Restored ${result.restoredCount} photos from attached_assets`
+          : "Failed to restore photos from attached_assets",
+        restoredCount: result.restoredCount,
+        restoredPhotos: result.restoredPhotos,
+        errors: result.errors
+      });
+
+    } catch (error) {
+      console.error('Bulk photo restore error:', error);
+      return res.status(500).json({
+        success: false,
+        message: "Bulk photo restore failed",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post('/api/photos/rebuild-associations', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.user as Express.User;
+      if (user.role !== 'admin' && user.role !== 'owner') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { PhotoRestoreService } = await import('./utils/photoRestoreService');
+      const result = await PhotoRestoreService.rebuildPropertyPhotoAssociations();
+
+      return res.json({
+        success: result.success,
+        message: result.success 
+          ? `Rebuilt associations for ${result.restoredCount} photos`
+          : "Failed to rebuild photo associations",
+        restoredCount: result.restoredCount,
+        restoredPhotos: result.restoredPhotos,
+        errors: result.errors
+      });
+
+    } catch (error) {
+      console.error('Photo association rebuild error:', error);
+      return res.status(500).json({
+        success: false,
+        message: "Photo association rebuild failed",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Legacy endpoint - keeping for compatibility
   app.post('/api/upload/property-images-direct-old', async (req: Request, res: Response) => {
     try {
