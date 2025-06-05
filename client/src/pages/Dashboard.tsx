@@ -91,26 +91,53 @@ function Dashboard() {
   // Fetch stats for the dashboard
   const { data: propertyStats } = useQuery({
     queryKey: ['/api/properties'],
+    queryFn: async () => {
+      const response = await fetch('/api/properties', {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch properties');
+      }
+      return response.json();
+    },
     select: (data: any) => ({
       totalCount: data?.totalCount || 0,
     }),
-    enabled: !!user,
+    enabled: true, // Always enable since we have bypass authentication
   });
 
   const { data: announcementStats } = useQuery({
     queryKey: ['/api/announcements'],
+    queryFn: async () => {
+      const response = await fetch('/api/announcements', {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch announcements');
+      }
+      return response.json();
+    },
     select: (data: any) => ({
       totalCount: data?.totalCount || 0,
     }),
-    enabled: !!user,
+    enabled: true, // Always enable since we have bypass authentication
   });
 
   const { data: projectStats } = useQuery({
     queryKey: ['/api/projects'],
+    queryFn: async () => {
+      const response = await fetch('/api/projects', {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
+      }
+      return response.json();
+    },
     select: (data: any) => ({
       totalCount: data?.totalCount || 0,
     }),
-    enabled: !!user,
+    enabled: true, // Always enable since we have bypass authentication
   });
 
   // Dashboard state
@@ -119,6 +146,16 @@ function Dashboard() {
     isLoading: authLoading,
     hasError: false
   });
+  
+  // Update state when user changes
+  useEffect(() => {
+    setState({
+      userExists: !!user,
+      isLoading: authLoading,
+      hasError: false
+    });
+  }, [user, authLoading]);
+  
   console.log("Dashboard state:", state);
 
   // Property form handlers
@@ -451,9 +488,13 @@ function Dashboard() {
               // Prevent closing when clicking outside
               e.preventDefault();
             }}
+            aria-describedby="property-form-description"
           >
             <DialogHeader className="flex-shrink-0">
               <DialogTitle>{selectedPropertyId ? "Edit Property" : "Add New Property"}</DialogTitle>
+              <div id="property-form-description" className="sr-only">
+                {selectedPropertyId ? "Edit the selected property details" : "Add a new property to the system"}
+              </div>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto pr-2 -mr-2">
               <PropertyForm 
@@ -485,9 +526,13 @@ function Dashboard() {
               // Prevent closing when clicking outside
               e.preventDefault();
             }}
+            aria-describedby="announcement-form-description"
           >
             <DialogHeader className="flex-shrink-0">
               <DialogTitle>{selectedAnnouncementId ? "Edit Announcement" : "Add New Announcement"}</DialogTitle>
+              <div id="announcement-form-description" className="sr-only">
+                {selectedAnnouncementId ? "Edit the selected announcement details" : "Create a new announcement for the website"}
+              </div>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto pr-2 -mr-2">
               <AnnouncementForm 

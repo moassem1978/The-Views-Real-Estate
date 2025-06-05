@@ -90,11 +90,24 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
         queryParams.append('city', cityFilter);
       }
 
-      const response = await apiRequest("GET", `/api/properties?${queryParams.toString()}`);
+      const response = await fetch(`/api/properties?${queryParams.toString()}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch properties: ${response.status}`);
+      }
+      
       const result = await response.json();
       console.log("Dashboard API Response:", result);
       return result;
     },
+    retry: 3,
+    staleTime: 30000, // 30 seconds
   });
 
   // Delete property mutation
