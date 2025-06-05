@@ -217,6 +217,55 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // Use either the provided upload and uploads directory or the defaults
   const finalUpload = customUpload || upload;
   const finalUploadsDir = customUploadsDir || uploadsDir;
+  // API route for listings (used by ListingsGrid component)
+  app.get("/api/listings", async (req: Request, res: Response) => {
+    try {
+      // Extract pagination parameters from query
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 24;
+
+      // Get paginated properties (same as properties endpoint but specifically for listings)
+      const result = await dbStorage.getAllProperties(page, pageSize);
+      
+      // Transform the data to match the Listing interface expected by the frontend
+      const transformedData = {
+        ...result,
+        data: result.data.map(property => ({
+          id: property.id,
+          title: property.title,
+          description: property.description,
+          price: property.price,
+          photos: property.images || [], // Map images to photos for compatibility
+          city: property.city,
+          state: property.state,
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms,
+          propertyType: property.propertyType,
+          listingType: property.listingType,
+          isFeatured: property.isFeatured,
+          isNewListing: property.isNewListing,
+          builtUpArea: property.builtUpArea,
+          plotSize: property.plotSize,
+          downPayment: property.downPayment,
+          installmentAmount: property.installmentAmount,
+          installmentPeriod: property.installmentPeriod,
+          isFullCash: property.isFullCash,
+          references: property.references,
+          reference: property.references, // Provide both field names
+          reference_number: property.references,
+          createdAt: property.createdAt,
+          updatedAt: property.updatedAt
+        }))
+      };
+
+      console.log(`Listings API: Returning ${transformedData.data.length} listings out of ${transformedData.totalCount} total`);
+      res.json(transformedData);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      res.status(500).json({ error: "Failed to fetch listings" });
+    }
+  });
+
   // API routes for properties
   app.get("/api/properties", async (req: Request, res: Response) => {
     try {
