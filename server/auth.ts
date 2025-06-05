@@ -165,6 +165,9 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Set up OTP authentication endpoints after passport is initialized
+  setupOTPAuth(app);
+
   // Debug authentication attempts
   passport.use(
     new LocalStrategy(async (username: string, password: string, done: any) => {

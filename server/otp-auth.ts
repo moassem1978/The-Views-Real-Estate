@@ -127,7 +127,7 @@ export function setupOTPAuth(app: Express) {
       } else {
         // Fallback: set session manually
         if (req.session) {
-          req.session.passport = { user: user.id };
+          (req.session as any).passport = { user: user.id };
           req.session.save((err) => {
             if (err) {
               console.error("Error saving session:", err);
