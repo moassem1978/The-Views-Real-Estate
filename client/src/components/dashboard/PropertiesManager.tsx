@@ -91,7 +91,9 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
       }
 
       const response = await apiRequest("GET", `/api/properties?${queryParams.toString()}`);
-      return response.json();
+      const result = await response.json();
+      console.log("Dashboard API Response:", result);
+      return result;
     },
   });
 
