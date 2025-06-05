@@ -811,115 +811,76 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Create clean copy of request body with all fields
       const propertyData = {...req.body};
       
-      console.log("*** FIXING PROPERTY UPDATE ***");
+      console.log("Property update request for ID:", id);
       
-      // Critical fields: Reference Number handling - log all possible variations
-      console.log("Reference Number Check:", {
-        reference: propertyData.reference,
-        references: propertyData.references,
-        reference_number: propertyData.reference_number
-      });
-      
-      // Ensure reference number is preserved if it exists in either format
-      if (propertyData.reference) {
-        console.log(`Setting reference number to: ${propertyData.reference}`);
-        // Set in all formats to ensure it's saved
-        propertyData.references = propertyData.reference;
-        propertyData.reference_number = propertyData.reference;
-      } else if (propertyData.references) {
-        console.log(`Using references field: ${propertyData.references}`);
-        propertyData.reference = propertyData.references;
-        propertyData.reference_number = propertyData.references;
-      } else if (propertyData.reference_number) {
-        console.log(`Using reference_number field: ${propertyData.reference_number}`);
-        propertyData.reference = propertyData.reference_number;
-        propertyData.references = propertyData.reference_number;
-      } else if (existingProperty.references) {
-        // Preserve the existing reference if none provided
-        console.log(`Preserving existing reference: ${existingProperty.references}`);
-        propertyData.reference = existingProperty.references;
-        propertyData.references = existingProperty.references;
-        propertyData.reference_number = existingProperty.references;
-      }
-      
-      // Critical field: Property Type
-      if (propertyData.propertyType) {
-        console.log(`Processing property type: ${propertyData.propertyType}`);
-        // Ensure it's saved correctly to the database
-        propertyData.property_type = propertyData.propertyType;
-      } else if (existingProperty.propertyType) {
-        // Preserve existing property type if none provided
-        console.log(`Preserving existing property type: ${existingProperty.propertyType}`);
-        propertyData.propertyType = existingProperty.propertyType;
-        propertyData.property_type = existingProperty.propertyType;
-      }
-      
-      // Make sure we preserve existing images if none are provided in the update
-      if (!propertyData.images && existingProperty && existingProperty.images) {
-        console.log(`Preserving ${Array.isArray(existingProperty.images) ? existingProperty.images.length : 0} existing images`);
-        propertyData.images = existingProperty.images;
-      }
-      
-      // Ensure images is always a proper array
-      if (propertyData.images) {
-        if (!Array.isArray(propertyData.images)) {
-          console.log("Converting images to array format");
-          try {
-            // If it's a string that looks like an array, parse it
-            if (typeof propertyData.images === 'string' && 
-                propertyData.images.trim().startsWith('[') && 
-                propertyData.images.trim().endsWith(']')) {
+      // Safely handle images field
+      if (propertyData.images !== undefined) {
+        try {
+          if (Array.isArray(propertyData.images)) {
+            // Already an array, just filter out any invalid entries
+            propertyData.images = propertyData.images.filter(img => img && typeof img === 'string');
+          } else if (typeof propertyData.images === 'string') {
+            if (propertyData.images.trim().startsWith('[')) {
+              // Try to parse JSON
               propertyData.images = JSON.parse(propertyData.images);
-            } else if (typeof propertyData.images === 'string') {
-              // Handle comma-separated strings
+            } else if (propertyData.images.includes(',')) {
+              // Comma-separated string
               propertyData.images = propertyData.images.split(',').map(img => img.trim()).filter(Boolean);
+            } else if (propertyData.images.trim()) {
+              // Single image
+              propertyData.images = [propertyData.images.trim()];
+            } else {
+              // Empty string
+              propertyData.images = [];
             }
-          } catch (error) {
-            console.error("Error parsing images string:", error);
-            // Fallback to existing images
+          } else {
+            // Invalid format, preserve existing
             propertyData.images = existingProperty.images || [];
           }
+        } catch (error) {
+          console.error("Error processing images field:", error);
+          // Fallback to existing images on error
+          propertyData.images = existingProperty.images || [];
         }
-        
-        // Final validation - must be array
-        if (!Array.isArray(propertyData.images)) {
-          propertyData.images = [];
-        }
-        
-        console.log(`Updating with ${propertyData.images.length} images`);
+      } else {
+        // No images field provided, preserve existing
+        propertyData.images = existingProperty.images || [];
+      }
+
+      // Ensure images is a valid array
+      if (!Array.isArray(propertyData.images)) {
+        propertyData.images = [];
+      }
+
+      console.log(`Updating property with ${propertyData.images.length} images`);
+
+      // Handle reference fields safely
+      if (propertyData.reference || propertyData.references) {
+        const refValue = propertyData.reference || propertyData.references;
+        propertyData.references = refValue;
+      } else if (existingProperty.references) {
+        propertyData.references = existingProperty.references;
+      }
+
+      // Handle property type
+      if (propertyData.propertyType) {
+        propertyData.property_type = propertyData.propertyType;
+      } else if (existingProperty.propertyType) {
+        propertyData.propertyType = existingProperty.propertyType;
       }
 
       // If a regular user updates a property, set status back to pending_approval
       if (user.role === 'user') {
         propertyData.status = 'pending_approval';
       }
-      
-      console.log("Final property data to save:", propertyData);
-
-      // Final validation and logging of critical fields before saving
-      console.log("Final validation of critical fields:", {
-        reference: propertyData.reference || "(empty)",
-        references: propertyData.references || "(empty)",
-        reference_number: propertyData.reference_number || "(empty)",
-        propertyType: propertyData.propertyType || "(empty)",
-        property_type: propertyData.property_type || "(empty)"
-      });
 
       const property = await dbStorage.updateProperty(id, propertyData);
       
-      // Log success with verification of saved data
-      console.log("Property updated successfully:", {
-        id: property.id,
-        title: property.title,
-        // Critical fields verification
-        references: property.references || "(missing)",
-        propertyType: property.propertyType || "(missing)",
-        // Image summary
-        imageCount: Array.isArray(property.images) ? property.images.length : "(unknown)",
-        // Status info
-        status: property.status
-      });
+      if (!property) {
+        throw new Error("Property update returned null");
+      }
 
+      console.log(`Property ${id} updated successfully`);
       res.json(property);
     } catch (error) {
       console.error("Error updating property:", error);
