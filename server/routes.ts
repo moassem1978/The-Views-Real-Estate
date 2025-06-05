@@ -951,59 +951,144 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.log(`Setting reference to: ${updateData.references}`);
       }
       
-      // Handle images with comprehensive safety checks
+      // Handle images with comprehensive safety checks and validation
       if (req.body.hasOwnProperty('images')) {
         console.log("Processing images field safely");
         
         try {
-          let processedImages: string[] = [];
-          
-          if (req.body.images === null || req.body.images === '') {
-            // Explicitly clearing images
-            processedImages = [];
-            console.log("Clearing images (null or empty string)");
-          } else if (Array.isArray(req.body.images)) {
-            // Already an array
-            processedImages = req.body.images
-              .filter(img => img && typeof img === 'string' && img.trim() !== '')
-              .map(img => String(img).trim());
-            console.log(`Processed array of ${processedImages.length} images`);
-          } else if (typeof req.body.images === 'string') {
-            const imageStr = req.body.images.trim();
-            if (imageStr.startsWith('[') && imageStr.endsWith(']')) {
-              // JSON array string
+          // Validate if we have uploaded files
+          if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+            console.log(`Processing ${req.files.length} uploaded image files`);
+            
+            // Process uploaded files with validation
+            const validatedImages: string[] = [];
+            const validationErrors: string[] = [];
+            
+            for (const file of req.files as Express.Multer.File[]) {
               try {
-                const parsed = JSON.parse(imageStr);
-                if (Array.isArray(parsed)) {
-                  processedImages = parsed
-                    .filter(img => img && typeof img === 'string' && img.trim() !== '')
-                    .map(img => String(img).trim());
-                  console.log(`Parsed JSON array: ${processedImages.length} images`);
+                console.log(`Validating uploaded file: ${file.originalname || 'unnamed'}`);
+                
+                // Validate file type
+                const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!allowedMimeTypes.includes(file.mimetype)) {
+                  const error = `Invalid file type for ${file.originalname}: ${file.mimetype}. Allowed types: ${allowedMimeTypes.join(', ')}`;
+                  console.error(`Image validation error: ${error}`);
+                  validationErrors.push(error);
+                  continue;
                 }
-              } catch (parseError) {
-                console.error("JSON parse error, treating as single image");
-                processedImages = imageStr ? [imageStr] : [];
+                
+                // Validate file size (25MB limit)
+                const maxFileSize = 25 * 1024 * 1024; // 25MB
+                if (file.size > maxFileSize) {
+                  const error = `File too large: ${file.originalname} (${Math.round(file.size / 1024 / 1024)}MB). Maximum allowed: 25MB`;
+                  console.error(`Image validation error: ${error}`);
+                  validationErrors.push(error);
+                  continue;
+                }
+                
+                // Validate file actually exists and has content
+                if (!file.filename || file.size === 0) {
+                  const error = `Invalid or empty file: ${file.originalname}`;
+                  console.error(`Image validation error: ${error}`);
+                  validationErrors.push(error);
+                  continue;
+                }
+                
+                // File passed validation
+                const imageUrl = `/uploads/properties/${file.filename}`;
+                validatedImages.push(imageUrl);
+                console.log(`✅ Validated and processed image: ${file.originalname} -> ${imageUrl}`);
+                
+              } catch (fileError) {
+                const error = `Error processing file ${file.originalname || 'unnamed'}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`;
+                console.error(`Image processing error: ${error}`);
+                validationErrors.push(error);
               }
-            } else if (imageStr.includes(',')) {
-              // Comma-separated string
-              processedImages = imageStr.split(',')
-                .map(img => img.trim())
-                .filter(img => img !== '');
-              console.log(`Split comma-separated: ${processedImages.length} images`);
-            } else if (imageStr !== '') {
-              // Single image
-              processedImages = [imageStr];
-              console.log("Single image string");
             }
+            
+            // Return validation errors if any files failed
+            if (validationErrors.length > 0 && validatedImages.length === 0) {
+              console.error("All image files failed validation:", validationErrors);
+              return res.status(400).json({ 
+                error: "Image validation failed", 
+                details: validationErrors,
+                message: "All uploaded files failed validation. Please check file types and sizes."
+              });
+            }
+            
+            // Log validation summary
+            if (validationErrors.length > 0) {
+              console.warn(`Image validation partial success: ${validatedImages.length} valid, ${validationErrors.length} failed`);
+            }
+            
+            // Get existing images and add new validated ones
+            const existingImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+            updateData.images = [...existingImages, ...validatedImages];
+            console.log(`Added ${validatedImages.length} new images to ${existingImages.length} existing images`);
+            
+          } else {
+            // Handle images from request body (URLs or existing image management)
+            let processedImages: string[] = [];
+            
+            if (req.body.images === null || req.body.images === '') {
+              // Explicitly clearing images
+              processedImages = [];
+              console.log("Clearing images (null or empty string)");
+            } else if (Array.isArray(req.body.images)) {
+              // Already an array - validate each URL
+              processedImages = req.body.images
+                .filter(img => {
+                  if (!img || typeof img !== 'string' || img.trim() === '') {
+                    console.warn(`Filtering out invalid image URL: ${img}`);
+                    return false;
+                  }
+                  return true;
+                })
+                .map(img => String(img).trim());
+              console.log(`Processed array of ${processedImages.length} image URLs`);
+            } else if (typeof req.body.images === 'string') {
+              const imageStr = req.body.images.trim();
+              if (imageStr.startsWith('[') && imageStr.endsWith(']')) {
+                // JSON array string
+                try {
+                  const parsed = JSON.parse(imageStr);
+                  if (Array.isArray(parsed)) {
+                    processedImages = parsed
+                      .filter(img => img && typeof img === 'string' && img.trim() !== '')
+                      .map(img => String(img).trim());
+                    console.log(`Parsed JSON array: ${processedImages.length} images`);
+                  }
+                } catch (parseError) {
+                  console.error(`JSON parse error for images: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+                  processedImages = imageStr ? [imageStr] : [];
+                }
+              } else if (imageStr.includes(',')) {
+                // Comma-separated string
+                processedImages = imageStr.split(',')
+                  .map(img => img.trim())
+                  .filter(img => img !== '');
+                console.log(`Split comma-separated: ${processedImages.length} images`);
+              } else if (imageStr !== '') {
+                // Single image
+                processedImages = [imageStr];
+                console.log("Single image string");
+              }
+            }
+            
+            updateData.images = processedImages;
+            console.log(`Final images count from body: ${processedImages.length}`);
           }
           
-          updateData.images = processedImages;
-          console.log(`Final images count: ${processedImages.length}`);
-          
         } catch (imageError) {
-          console.error("Error processing images, preserving existing:", imageError);
-          // Don't update images if there's an error
-          delete updateData.images;
+          const errorMessage = imageError instanceof Error ? imageError.message : 'Unknown error';
+          console.error(`Error processing images for property ${id}:`, errorMessage);
+          
+          // Return specific error for image processing failures
+          return res.status(500).json({ 
+            error: "Image update failed", 
+            detail: errorMessage,
+            message: "Failed to process property images. Please try again with valid image files."
+          });
         }
       }
       
