@@ -4303,6 +4303,51 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     });
   });
 
+  // Dashboard route with authentication
+  app.get('/dashboard', async (req: Request, res: Response) => {
+    // Check authentication
+    if (!req.isAuthenticated()) {
+      return res.redirect('/signin?redirect=/dashboard');
+    }
+
+    const user = req.user as Express.User;
+    
+    // Check if user has dashboard access (admin, owner, or agent roles)
+    if (!['admin', 'owner', 'agent'].includes(user.role)) {
+      return res.status(403).json({ 
+        message: "Access denied. Dashboard access requires admin, owner, or agent privileges." 
+      });
+    }
+
+    // For SPA, redirect to the main app and let client-side routing handle it
+    return res.redirect('/?redirect=dashboard');
+  });
+
+  // API endpoint to check dashboard access
+  app.get('/api/dashboard/access', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ 
+        authenticated: false, 
+        message: "Authentication required" 
+      });
+    }
+
+    const user = req.user as Express.User;
+    const hasAccess = ['admin', 'owner', 'agent'].includes(user.role);
+
+    res.json({
+      authenticated: true,
+      hasAccess,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        fullName: user.fullName
+      },
+      dashboardUrl: hasAccess ? '/dashboard' : null
+    });
+  });
+
   // Add restoration endpoints
   const { addRestoreEndpoints } = await import('./restore-endpoint');
   await addRestoreEndpoints(app);
