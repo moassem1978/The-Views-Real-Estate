@@ -4141,6 +4141,15 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
+  // Handle incorrect image paths by redirecting to correct uploads path
+  app.get('/properties/*', (req, res) => {
+    console.log(`Image not found: ${req.path}`);
+    const filename = path.basename(req.path);
+    const correctPath = `/uploads/properties/${filename}`;
+    console.log(`Redirecting to correct path: ${correctPath}`);
+    res.redirect(correctPath);
+  });
+
   // Enhanced file access route with advanced file matching
   app.get('/uploads/*', (req, res) => {
     console.log(`Enhanced file access request for: ${req.path}`);
