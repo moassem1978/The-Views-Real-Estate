@@ -101,20 +101,69 @@ async function ensureOwnerAccount() {
   }
 }
 
+// Authentication middleware with comprehensive session debugging
+export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  console.log('=== SESSION DEBUG - Auth Middleware ===');
+  console.log('Session info:', {
+    sessionID: req.sessionID,
+    sessionExists: !!req.session,
+    sessionData: req.session,
+    isAuthenticated: req.isAuthenticated(),
+    user: req.user,
+    cookies: req.headers.cookie,
+    userAgent: req.headers['user-agent'],
+    path: req.path,
+    method: req.method
+  });
+  
+  if (req.session) {
+    console.log('Session details:', {
+      id: req.session.id,
+      cookie: req.session.cookie,
+      passport: req.session.passport
+    });
+  }
+  
+  if (req.isAuthenticated()) {
+    console.log('Authentication successful, proceeding...');
+    return next();
+  }
+  
+  console.log('Authentication failed, redirecting to login');
+  res.status(401).json({ 
+    message: "Authentication required",
+    sessionID: req.sessionID,
+    timestamp: new Date().toISOString()
+  });
+}
+
 // Middleware for role-based access control
 export function requireRole(roles: string | string[]) {
   const allowedRoles = Array.isArray(roles) ? roles : [roles];
   
   return (req: Request, res: Response, next: NextFunction) => {
+    console.log('=== SESSION DEBUG - Role Check ===');
+    console.log('Required roles:', allowedRoles);
+    console.log('Session info:', {
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user
+    });
+    
     if (!req.isAuthenticated()) {
+      console.log('Role check failed - not authenticated');
       return res.status(401).json({ message: "Not authenticated" });
     }
     
     const user = req.user as SelectUser;
+    console.log('User role check:', { userRole: user.role, allowedRoles });
+    
     if (!user.role || !allowedRoles.includes(user.role)) {
+      console.log('Role check failed - insufficient permissions');
       return res.status(403).json({ message: "Insufficient permissions" });
     }
     
+    console.log('Role check passed');
     next();
   };
 }
@@ -338,8 +387,15 @@ export function setupAuth(app: Express) {
 
   // Enhanced login endpoint with improved session handling
   app.post("/api/login", (req, res, next) => {
+    console.log('=== SESSION DEBUG - Login Attempt ===');
     console.log(`Login attempt for username: ${req.body.username}`);
     console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('Session before login:', {
+      sessionID: req.sessionID,
+      session: req.session,
+      isAuthenticated: req.isAuthenticated(),
+      cookies: req.headers.cookie
+    });
     
     // Validate request body format
     if (!req.body || typeof req.body.username !== 'string' || typeof req.body.password !== 'string') {
@@ -363,6 +419,14 @@ export function setupAuth(app: Express) {
     req.body.password = cleanPassword;
     
     passport.authenticate("local", (err: any, user: any, info: any) => {
+      console.log('=== SESSION DEBUG - Passport Callback ===');
+      console.log('Authentication result:', { err: !!err, user: !!user, info });
+      console.log('Session during auth:', {
+        sessionID: req.sessionID,
+        sessionExists: !!req.session,
+        isAuthenticated: req.isAuthenticated()
+      });
+      
       if (err) {
         console.error("Login error:", err);
         return res.status(500).json({ message: "Authentication service error" });
@@ -370,6 +434,7 @@ export function setupAuth(app: Express) {
       
       if (!user) {
         console.log(`Login failed for ${cleanUsername}: ${info?.message || 'Unknown reason'}`);
+        console.log('Session after failed auth:', req.session);
         return res.status(401).json({ message: info?.message || "Invalid username or password" });
       }
       
@@ -382,8 +447,17 @@ export function setupAuth(app: Express) {
       // Process login with retry mechanism
       const processLogin = (attempt = 1) => {
         req.login(user, (loginErr) => {
+          console.log('=== SESSION DEBUG - Login Process ===');
+          console.log(`Attempt ${attempt} for user: ${req.body.username}`);
+          console.log('Session before req.login:', {
+            sessionID: req.sessionID,
+            session: req.session,
+            isAuthenticated: req.isAuthenticated()
+          });
+          
           if (loginErr) {
             console.error(`Session creation error for ${req.body.username} (attempt ${attempt}):`, loginErr);
+            console.log('Session after login error:', req.session);
             
             // Retry login if session creation fails (up to 3 attempts)
             if (attempt < 3) {
@@ -395,22 +469,40 @@ export function setupAuth(app: Express) {
           }
           
           // Log successful login
+          console.log('=== SESSION DEBUG - Login Success ===');
           console.log(`Login successful for ${user.username} (${user.role})`);
           console.log(`Session ID: ${req.sessionID}`);
+          console.log('Session after successful login:', {
+            sessionID: req.sessionID,
+            session: req.session,
+            isAuthenticated: req.isAuthenticated(),
+            user: req.user
+          });
           
           // Set session to expire in 1 hour (renewable)
           if (req.session) {
             req.session.cookie.maxAge = 60 * 60 * 1000;
+            console.log('Session cookie settings:', {
+              maxAge: req.session.cookie.maxAge,
+              expires: req.session.cookie.expires,
+              secure: req.session.cookie.secure,
+              httpOnly: req.session.cookie.httpOnly,
+              sameSite: req.session.cookie.sameSite
+            });
             
             // Force session save to ensure it's properly persisted
             req.session.save((saveErr) => {
+              console.log('=== SESSION DEBUG - Session Save ===');
               if (saveErr) {
                 console.error(`Error saving session for ${user.username}:`, saveErr);
+                console.log('Session state during save error:', req.session);
               } else {
                 console.log(`Session created with 1-hour expiration for ${user.username}`);
-                if (req.session.cookie.expires) {
-                  console.log(`Session expires: ${req.session.cookie.expires}`);
-                }
+                console.log('Final session state:', {
+                  sessionID: req.sessionID,
+                  expires: req.session.cookie.expires,
+                  isAuthenticated: req.isAuthenticated()
+                });
               }
               
               // Return the user without the password
@@ -462,9 +554,20 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
+    console.log('=== SESSION DEBUG - User Endpoint ===');
+    console.log('Session info:', {
+      sessionID: req.sessionID,
+      session: req.session,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user,
+      cookies: req.headers.cookie
+    });
+    
     try {
       // Check authentication status
       if (!req.isAuthenticated()) {
+        console.log('User endpoint - authentication failed');
+        console.log('Session details:', req.session);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
