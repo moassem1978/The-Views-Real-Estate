@@ -275,6 +275,12 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
   const totalCount = data?.totalCount || 0;
   const pageCount = data?.pageCount || 1;
 
+  console.log("PropertiesManager - Raw data:", data);
+  console.log("PropertiesManager - Extracted properties:", properties);
+  console.log("PropertiesManager - Properties length:", properties.length);
+  console.log("PropertiesManager - Data keys:", data ? Object.keys(data) : 'no data');
+  console.log("PropertiesManager - Query state:", { isLoading, error: error?.message });
+
   return (
     <div className="space-y-6">
       {/* Delete confirmation dialog */}
