@@ -161,6 +161,15 @@ export default function SignIn() {
               
               <div className="text-center mt-6 text-sm text-gray-600">
                 <p>For administrative assistance, please contact the system administrator.</p>
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-yellow-800 text-sm mb-2">Development Mode</p>
+                  <button 
+                    onClick={() => setLocation("/dashboard")}
+                    className="inline-block px-4 py-2 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition-colors"
+                  >
+                    Access Dashboard (Dev Bypass)
+                  </button>
+                </div>
               </div>
             </div>
           </div>
