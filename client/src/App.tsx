@@ -119,11 +119,7 @@ function AppContent() {
               <Route path="/announcements/:id" component={AnnouncementDetails} />
               <Route path="/signin" component={SignIn} />
               <Route path="/otp-login" component={OTPLogin} />
-              <Route path="/dashboard">
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              </Route>
+              <ProtectedRoute path="/dashboard" component={Dashboard} />
               <Route component={NotFound} />
             </Switch>
           </Suspense>
