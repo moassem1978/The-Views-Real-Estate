@@ -104,36 +104,73 @@ async function ensureOwnerAccount() {
 // Authentication middleware with comprehensive session debugging
 export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   console.log('=== SESSION DEBUG - Auth Middleware ===');
+  console.log(`🔐 Auth check for: ${req.method} ${req.path}`);
   console.log('Session info:', {
     sessionID: req.sessionID,
     sessionExists: !!req.session,
-    sessionData: req.session,
     isAuthenticated: req.isAuthenticated(),
-    user: req.user,
-    cookies: req.headers.cookie,
+    hasUser: !!req.user,
+    cookies: req.headers.cookie ? 'Present' : 'Missing',
     userAgent: req.headers['user-agent'],
-    path: req.path,
-    method: req.method
+    timestamp: new Date().toISOString()
   });
   
   if (req.session) {
     console.log('Session details:', {
       id: req.session.id,
-      cookie: req.session.cookie,
-      passport: req.session.passport
+      cookieMaxAge: req.session.cookie.maxAge,
+      cookieExpires: req.session.cookie.expires,
+      cookieSecure: req.session.cookie.secure,
+      cookieHttpOnly: req.session.cookie.httpOnly,
+      passport: req.session.passport ? 'Present' : 'Missing'
+    });
+  } else {
+    console.log('❌ No session object found');
+  }
+  
+  if (req.user) {
+    console.log('User details:', {
+      id: req.user.id,
+      username: req.user.username,
+      role: req.user.role,
+      isActive: req.user.isActive
     });
   }
   
+  // Special debugging for dashboard access
+  if (req.path === '/dashboard' || req.path.startsWith('/api/dashboard')) {
+    console.log('🏠 DASHBOARD ACCESS ATTEMPT:');
+    console.log('  - Path:', req.path);
+    console.log('  - Method:', req.method);
+    console.log('  - Authenticated:', req.isAuthenticated());
+    console.log('  - Session ID:', req.sessionID);
+    console.log('  - User Role:', req.user?.role || 'No user');
+    console.log('  - Referer:', req.headers.referer || 'Direct access');
+  }
+  
   if (req.isAuthenticated()) {
-    console.log('Authentication successful, proceeding...');
+    console.log('✅ Authentication successful, proceeding...');
     return next();
   }
   
-  console.log('Authentication failed, redirecting to login');
+  console.log('❌ Authentication failed');
+  console.log('Failure details:', {
+    hasSession: !!req.session,
+    sessionID: req.sessionID,
+    hasPassportSession: !!(req.session?.passport),
+    userInSession: !!(req.session?.passport?.user),
+    path: req.path
+  });
+  
   res.status(401).json({ 
     message: "Authentication required",
     sessionID: req.sessionID,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    path: req.path,
+    debug: {
+      hasSession: !!req.session,
+      hasPassportData: !!(req.session?.passport)
+    }
   });
 }
 

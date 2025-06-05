@@ -1,8 +1,8 @@
-
 import { pool } from '../db';
 import { ImageValidator } from './imageValidator';
 import { existsSync, copyFileSync, mkdirSync } from 'fs';
 import path from 'path';
+import fs from 'fs';
 
 export interface ImageBackupEntry {
   propertyId: number;
@@ -18,81 +18,112 @@ export class ImageBackupManager {
   /**
    * Create backup entry for property images with full metadata
    */
-  static async createImageBackup(propertyId: number, imageList: string[], photoList?: Array<{ filename: string; altText?: string }>): Promise<boolean> {
+  static async createImageBackup(propertyId: number, legacyImages: string[], photoMetadata: any[] = []): Promise<void> {
     try {
-      console.log(`📦 Creating comprehensive image backup for property ${propertyId}`);
-      console.log(`   Legacy images: ${imageList.length}, Photo metadata: ${photoList?.length || 0}`);
+      console.log(`📦 Creating image backup for property ${propertyId}`);
 
-      // Validate images before backup
-      const validation = ImageValidator.validateImageList(imageList);
-      
-      if (validation.validImages.length === 0 && (!photoList || photoList.length === 0)) {
-        console.warn(`⚠️  No valid images or photos to backup for property ${propertyId}`);
+      // Extract and validate filenames from image URLs
+      const validatedLegacyImages = legacyImages.map(img => {
+        const filename = this.extractFilenameFromUrl(img);
+        return {
+          originalUrl: img,
+          filename: filename,
+          exists: this.validateImageFile(filename)
+        };
+      });
+
+      // Validate photo metadata filenames
+      const validatedPhotoMetadata = photoMetadata.map(photo => ({
+        filename: photo.filename,
+        altText: photo.altText,
+        exists: this.validateImageFile(photo.filename)
+      }));
+
+      // Create comprehensive backup entry with filename mapping
+      const backupData = {
+        property_id: propertyId,
+        backup_timestamp: new Date().toISOString(),
+        legacy_images: JSON.stringify(validatedLegacyImages),
+        photo_metadata: JSON.stringify(validatedPhotoMetadata),
+        image_count: validatedLegacyImages.length + validatedPhotoMetadata.length,
+        backup_type: 'filename_mapped',
+        filename_map: JSON.stringify(this.createFilenameMap(validatedLegacyImages, validatedPhotoMetadata))
+      };
+
+      await pool.query(`
+        INSERT INTO image_backups (property_id, backup_timestamp, legacy_images, photo_metadata, image_count, backup_type, filename_map)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (property_id, backup_timestamp) DO UPDATE SET
+          legacy_images = EXCLUDED.legacy_images,
+          photo_metadata = EXCLUDED.photo_metadata,
+          image_count = EXCLUDED.image_count,
+          filename_map = EXCLUDED.filename_map
+      `, [
+        backupData.property_id,
+        backupData.backup_timestamp,
+        backupData.legacy_images,
+        backupData.photo_metadata,
+        backupData.image_count,
+        backupData.backup_type,
+        backupData.filename_map
+      ]);
+
+      console.log(`✅ Image backup created for property ${propertyId} with ${backupData.image_count} images (filename-mapped)`);
+    } catch (error) {
+      console.error(`❌ Failed to create image backup for property ${propertyId}:`, error);
+      throw error;
+    }
+  }
+
+  private static extractFilenameFromUrl(url: string): string {
+    // Extract filename from URL path
+    const urlParts = url.split('/');
+    return urlParts[urlParts.length - 1] || '';
+  }
+
+  private static validateImageFile(filename: string): boolean {
+    if (!filename) return false;
+
+    const possiblePaths = [
+      path.join(process.cwd(), 'public', 'uploads', 'properties', filename),
+      path.join(process.cwd(), 'uploads', 'properties', filename)
+    ];
+
+    return possiblePaths.some(filePath => {
+      try {
+        return fs.existsSync(filePath);
+      } catch (error) {
         return false;
       }
+    });
+  }
 
-      // Create backup table if it doesn't exist
-      await this.ensureBackupTableExists();
+  private static createFilenameMap(legacyImages: any[], photoMetadata: any[]): Record<string, any> {
+    const map: Record<string, any> = {};
 
-      // Prepare photo metadata with preserved order
-      let validPhotos: Array<{ filename: string; altText?: string; order: number }> = [];
-      
-      if (photoList && photoList.length > 0) {
-        // Validate each photo and preserve order
-        validPhotos = photoList
-          .map((photo, index) => ({
-            filename: photo.filename,
-            altText: photo.altText || `Property image ${index + 1}`,
-            order: index
-          }))
-          .filter(photo => {
-            const validation = ImageValidator.validateImageExists(photo.filename);
-            if (!validation.isValid) {
-              console.warn(`⚠️  Photo validation failed: ${photo.filename} - ${validation.error}`);
-              return false;
-            }
-            return true;
-          });
-      } else if (validation.validImages.length > 0) {
-        // Convert legacy images to photo format with preserved order
-        validPhotos = validation.validImages.map((image, index) => ({
-          filename: image,
-          altText: `Property image ${index + 1}`,
-          order: index
-        }));
+    legacyImages.forEach((img, index) => {
+      if (img.filename) {
+        map[img.filename] = {
+          type: 'legacy',
+          index: index,
+          originalUrl: img.originalUrl,
+          exists: img.exists
+        };
       }
+    });
 
-      // Store comprehensive backup record
-      const backupTimestamp = new Date().toISOString();
-      await pool.query(
-        `INSERT INTO ${this.BACKUP_TABLE} (property_id, original_images, original_photos, backup_timestamp, created_at) 
-         VALUES ($1, $2, $3, $4, NOW())
-         ON CONFLICT (property_id) 
-         DO UPDATE SET original_images = $2, original_photos = $3, backup_timestamp = $4, created_at = NOW()`,
-        [
-          propertyId, 
-          JSON.stringify(validation.validImages), 
-          JSON.stringify(validPhotos),
-          backupTimestamp
-        ]
-      );
-
-      console.log(`✅ Comprehensive backup created for property ${propertyId} at ${backupTimestamp}`);
-      console.log(`   Valid legacy images: ${validation.validImages.length}`);
-      console.log(`   Valid photos with metadata: ${validPhotos.length}`);
-      
-      if (validation.invalidImages.length > 0) {
-        console.warn(`   Invalid images skipped: ${validation.invalidImages.length}`);
-        validation.invalidImages.forEach(invalid => {
-          console.warn(`     - ${invalid.filename}: ${invalid.error}`);
-        });
+    photoMetadata.forEach((photo, index) => {
+      if (photo.filename) {
+        map[photo.filename] = {
+          type: 'photo_metadata',
+          index: index,
+          altText: photo.altText,
+          exists: photo.exists
+        };
       }
+    });
 
-      return true;
-    } catch (error) {
-      console.error(`Error creating comprehensive backup for property ${propertyId}:`, error);
-      return false;
-    }
+    return map;
   }
 
   /**
@@ -139,7 +170,7 @@ export class ImageBackupManager {
       if (backupPhotos.length > 0) {
         // Restore with full metadata, preserving order
         const sortedPhotos = backupPhotos.sort((a, b) => (a.order || 0) - (b.order || 0));
-        
+
         for (const photo of sortedPhotos) {
           const validation = ImageValidator.validateImageExists(photo.filename);
           if (validation.isValid) {
@@ -157,7 +188,7 @@ export class ImageBackupManager {
       } else if (backupImages.length > 0) {
         // Fallback to legacy images
         const validation = await ImageValidator.validateBeforeRestore(propertyId, backupImages);
-        
+
         if (validation.canRestore) {
           restoredImages = validation.validImages;
           // Convert to photo format for consistency
@@ -166,7 +197,7 @@ export class ImageBackupManager {
             altText: `Property image ${index + 1}`
           }));
         }
-        
+
         errors.push(...validation.errors);
         console.log(`✅ Restored ${restoredImages.length} legacy images`);
       }
@@ -251,7 +282,7 @@ export class ImageBackupManager {
           created_at TIMESTAMP DEFAULT NOW()
         )
       `);
-      
+
       // Add photo column if it doesn't exist (for existing installations)
       await pool.query(`
         ALTER TABLE ${this.BACKUP_TABLE} 

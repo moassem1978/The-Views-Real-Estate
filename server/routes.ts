@@ -115,11 +115,10 @@ const diskStorage = multer.diskStorage({
   },
 
   filename: function (req, file, cb) {
-    // Create unique filename using timestamp and original name without spaces
+    // Create unique filename using timestamp + original name format
     const timestamp = Date.now();
-    const cleanOriginalName = file.originalname.replace(/\s/g, '');
-    const uniqueName = `${timestamp}-${cleanOriginalName}`;
-
+    const cleanOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace all non-alphanumeric chars except dots and hyphens
+    
     // Get original extension or use a default
     let ext = path.extname(file.originalname).toLowerCase();
     if (!ext) {
@@ -137,8 +136,9 @@ const diskStorage = multer.diskStorage({
       }
     }
 
-    // Ensure the unique name includes the extension
-    const finalFilename = uniqueName.endsWith(ext) ? uniqueName : uniqueName + ext;
+    // Format: timestamp-originalname.ext (ensuring unique filenames)
+    const nameWithoutExt = path.basename(cleanOriginalName, path.extname(cleanOriginalName));
+    const finalFilename = `${timestamp}-${nameWithoutExt}${ext}`;
 
     console.log(`Generated unique filename: ${finalFilename} from original: ${file.originalname}`);
     cb(null, finalFilename);
@@ -4298,62 +4298,85 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     });
   });
 
-  // Dashboard route with authentication (TEMPORARILY BYPASSED FOR TESTING)
+  // Dashboard route with authentication and enhanced debugging
   app.get('/dashboard', async (req: Request, res: Response) => {
-    // TEMP: Authentication check bypassed for testing
-    console.log('🔓 DASHBOARD ACCESS: Authentication temporarily bypassed for testing');
-    
-    // For SPA, redirect to the main app and let client-side routing handle it
-    return res.redirect('/?redirect=dashboard');
-    
-    /* ORIGINAL CODE - COMMENTED OUT FOR TESTING
-    // Check authentication
+    console.log('🏠 DASHBOARD ROUTE ACCESS ATTEMPT');
+    console.log('Request details:', {
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      hasUser: !!req.user,
+      userRole: req.user?.role || 'No user',
+      headers: {
+        userAgent: req.headers['user-agent'],
+        referer: req.headers.referer,
+        cookie: req.headers.cookie ? 'Present' : 'Missing'
+      }
+    });
+
+    // Check authentication with detailed logging
     if (!req.isAuthenticated()) {
+      console.log('❌ Dashboard access denied - not authenticated');
+      console.log('Session state:', {
+        sessionExists: !!req.session,
+        sessionID: req.sessionID,
+        passportUser: req.session?.passport?.user || 'Not found'
+      });
       return res.redirect('/signin?redirect=/dashboard');
     }
 
     const user = req.user as Express.User;
+    console.log('✅ User authenticated for dashboard:', {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      isActive: user.isActive
+    });
     
     // Check if user has dashboard access (admin, owner, or agent roles)
     if (!['admin', 'owner', 'agent'].includes(user.role)) {
+      console.log('❌ Dashboard access denied - insufficient permissions');
+      console.log('User role insufficient:', user.role);
       return res.status(403).json({ 
-        message: "Access denied. Dashboard access requires admin, owner, or agent privileges." 
+        message: "Access denied. Dashboard access requires admin, owner, or agent privileges.",
+        userRole: user.role,
+        requiredRoles: ['admin', 'owner', 'agent']
       });
     }
 
+    console.log('✅ Dashboard access granted - redirecting to SPA');
     // For SPA, redirect to the main app and let client-side routing handle it
     return res.redirect('/?redirect=dashboard');
-    */
   });
 
-  // API endpoint to check dashboard access (TEMPORARILY BYPASSED FOR TESTING)
+  // API endpoint to check dashboard access with proper authentication
   app.get('/api/dashboard/access', async (req: Request, res: Response) => {
-    // TEMP: Authentication check bypassed for testing
-    console.log('🔓 DASHBOARD API ACCESS: Authentication temporarily bypassed for testing');
-    
-    // Return mock authenticated user for testing
-    res.json({
-      authenticated: true,
-      hasAccess: true,
-      user: {
-        id: 1,
-        username: 'test-user',
-        role: 'admin',
-        fullName: 'Test User (Auth Bypassed)'
-      },
-      dashboardUrl: '/dashboard'
+    console.log('🔍 DASHBOARD API ACCESS CHECK');
+    console.log('Auth state:', {
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      hasUser: !!req.user,
+      userRole: req.user?.role || 'No user'
     });
-    
-    /* ORIGINAL CODE - COMMENTED OUT FOR TESTING
+
     if (!req.isAuthenticated()) {
+      console.log('❌ Dashboard API access denied - not authenticated');
       return res.status(401).json({ 
         authenticated: false, 
-        message: "Authentication required" 
+        message: "Authentication required",
+        sessionID: req.sessionID,
+        timestamp: new Date().toISOString()
       });
     }
 
     const user = req.user as Express.User;
     const hasAccess = ['admin', 'owner', 'agent'].includes(user.role);
+
+    console.log('✅ Dashboard API access check completed:', {
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+      hasAccess: hasAccess
+    });
 
     res.json({
       authenticated: true,
@@ -4364,9 +4387,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         role: user.role,
         fullName: user.fullName
       },
-      dashboardUrl: hasAccess ? '/dashboard' : null
+      dashboardUrl: hasAccess ? '/dashboard' : null,
+      timestamp: new Date().toISOString()
     });
-    */
   });
 
   // Add restoration endpoints

@@ -348,7 +348,7 @@ export class DatabaseStorage implements IStorage {
       if ('images' in updates || 'photos' in updates) {
         const existingProperty = await this.getPropertyById(id);
         if (existingProperty) {
-          console.log(`📦 Creating comprehensive backup for property ${id}`);
+          console.log(`📦 Creating filename-mapped backup for property ${id}`);
           
           // Backup both legacy images and new photo metadata
           const legacyImages = existingProperty.images || [];
@@ -358,9 +358,20 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Validate legacy images if provided
-      if ('images' in updates && Array.isArray(updates.images) && updates.images.length > 0) {
-        const validation = ImageValidator.validateImageList(updates.images);
+      // Process legacy images - convert URLs to strict filename references
+      if ('images' in updates && Array.isArray(updates.images)) {
+        const processedImages = updates.images.map(img => {
+          // If it's a URL, extract the filename and convert to standard format
+          if (typeof img === 'string' && img.includes('/')) {
+            const filename = img.split('/').pop() || '';
+            return `/uploads/properties/${filename}`;
+          }
+          // If it's already a filename, ensure proper path format
+          return img.startsWith('/uploads/properties/') ? img : `/uploads/properties/${img}`;
+        });
+
+        // Validate all processed images
+        const validation = ImageValidator.validateImageList(processedImages);
 
         if (validation.invalidImages.length > 0) {
           console.warn(`⚠️  Property ${id}: ${validation.invalidImages.length} image files are missing or invalid`);
@@ -370,17 +381,30 @@ export class DatabaseStorage implements IStorage {
         }
 
         updates.images = validation.validImages;
-        console.log(`✅ Property ${id}: Using ${validation.validImages.length} validated legacy images`);
+        console.log(`✅ Property ${id}: Using ${validation.validImages.length} filename-validated legacy images`);
       }
 
-      // Validate photo metadata if provided
-      if ('photos' in updates && Array.isArray(updates.photos) && updates.photos.length > 0) {
+      // Process photo metadata - ensure filenames are properly referenced
+      if ('photos' in updates && Array.isArray(updates.photos)) {
         const validatedPhotos = updates.photos
-          .map((photo: any, index: number) => ({
-            filename: photo.filename,
-            altText: photo.altText || `Property image ${index + 1}`
-          }))
+          .map((photo: any, index: number) => {
+            // Ensure filename is properly formatted (no path, just filename)
+            let filename = photo.filename;
+            if (filename && filename.includes('/')) {
+              filename = filename.split('/').pop() || '';
+            }
+            
+            return {
+              filename: filename,
+              altText: photo.altText || `Property image ${index + 1}`
+            };
+          })
           .filter((photo: any) => {
+            if (!photo.filename) {
+              console.warn(`⚠️  Photo missing filename - skipping`);
+              return false;
+            }
+            
             const validation = ImageValidator.validateImageExists(photo.filename);
             if (!validation.isValid) {
               console.warn(`⚠️  Invalid photo: ${photo.filename} - ${validation.error}`);
@@ -390,10 +414,17 @@ export class DatabaseStorage implements IStorage {
           });
 
         updates.photos = validatedPhotos;
-        console.log(`✅ Property ${id}: Using ${validatedPhotos.length} validated photos with metadata`);
+        console.log(`✅ Property ${id}: Using ${validatedPhotos.length} filename-validated photos with metadata`);
       }
 
       const [property] = await db.update(properties).set(updates).where(eq(properties.id, id)).returning();
+      
+      // Log the final state for debugging
+      console.log(`📋 Property ${id} updated. Final image state:`, {
+        legacyImagesCount: property.images ? property.images.length : 0,
+        photosCount: property.photos ? property.photos.length : 0
+      });
+      
       return property;
     } catch (error) {
       console.error(`Error updating property ${id}:`, error);
