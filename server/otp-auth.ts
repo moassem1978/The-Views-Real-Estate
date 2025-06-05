@@ -1,6 +1,7 @@
 import { Express, Request, Response } from "express";
 import { storage } from "./storage";
 import crypto from "crypto";
+import passport from "passport";
 
 // In-memory OTP storage (for production, use Redis or database)
 const otpStore = new Map<string, { code: string; expires: number; userId: number }>();
@@ -103,25 +104,62 @@ export function setupOTPAuth(app: Express) {
         return res.status(404).json({ message: "User not found or inactive" });
       }
       
-      // Login user
-      req.login(user, (err) => {
-        if (err) {
-          console.error("Error creating session:", err);
-          return res.status(500).json({ message: "Failed to create session" });
-        }
-        
-        // Clean up OTP
-        otpStore.delete(sessionId);
-        
-        console.log(`User ${user.username} logged in via OTP`);
-        
-        // Return user without password
-        const { password, ...userWithoutPassword } = user;
-        res.json({
-          message: "Login successful",
-          user: userWithoutPassword
+      // Create session manually since req.login may not be available
+      if (req.login && typeof req.login === 'function') {
+        req.login(user, (err) => {
+          if (err) {
+            console.error("Error creating session:", err);
+            return res.status(500).json({ message: "Failed to create session" });
+          }
+          
+          // Clean up OTP
+          otpStore.delete(sessionId);
+          
+          console.log(`User ${user.username} logged in via OTP`);
+          
+          // Return user without password
+          const { password, ...userWithoutPassword } = user;
+          res.json({
+            message: "Login successful",
+            user: userWithoutPassword
+          });
         });
-      });
+      } else {
+        // Fallback: set session manually
+        if (req.session) {
+          req.session.passport = { user: user.id };
+          req.session.save((err) => {
+            if (err) {
+              console.error("Error saving session:", err);
+              return res.status(500).json({ message: "Failed to create session" });
+            }
+            
+            // Clean up OTP
+            otpStore.delete(sessionId);
+            
+            console.log(`User ${user.username} logged in via OTP`);
+            
+            // Return user without password
+            const { password, ...userWithoutPassword } = user;
+            res.json({
+              message: "Login successful",
+              user: userWithoutPassword
+            });
+          });
+        } else {
+          // Clean up OTP
+          otpStore.delete(sessionId);
+          
+          console.log(`User ${user.username} logged in via OTP`);
+          
+          // Return user without password
+          const { password, ...userWithoutPassword } = user;
+          res.json({
+            message: "Login successful",
+            user: userWithoutPassword
+          });
+        }
+      }
       
     } catch (error) {
       console.error("Error verifying OTP:", error);

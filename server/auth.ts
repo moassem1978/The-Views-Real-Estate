@@ -120,9 +120,6 @@ export function requireRole(roles: string | string[]) {
 }
 
 export function setupAuth(app: Express) {
-  // Set up OTP authentication endpoints
-  setupOTPAuth(app);
-  
   // Set up PostgreSQL session store
   const PostgresSessionStore = connectPgSimple(session);
   
