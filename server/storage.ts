@@ -619,7 +619,7 @@ export class DatabaseStorage implements IStorage {
 
 export const storage = new DatabaseStorage();
 
-import { strictImageProcessor } from './utils/imageProcessor';
+// Image processor import removed - functionality integrated elsewhere
 
 export async function createPropertyInDB(propertyData: any, imageFiles?: Express.Multer.File[]): Promise<{ success: boolean; property?: any; error?: string }> {
   try {
