@@ -285,6 +285,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Authentication check
       if (!req.isAuthenticated()) {
+        console.error("Property update failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required" });
       }
 
@@ -293,6 +294,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       const user = req.user as Express.User;
+      console.log(`User updating property: ${user.username} (${user.role})`);
 
       // Get existing property
       const existingProperty = await dbStorage.getPropertyById(propertyId);
@@ -300,7 +302,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         return res.status(404).json({ message: "Property not found" });
       }
 
-      // Permission check
+      // Permission check - allow admin and owner to edit any property
       if (user.role === 'user' && existingProperty.createdBy !== user.id) {
         return res.status(403).json({ message: "Permission denied" });
       }
@@ -373,9 +375,13 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         'projectName', 'developerName', 'yearBuilt', 'status', 'references', 'address', 'zipCode'
       ];
 
-      // Only update fields that are provided
+      // Only update fields that are provided (allow empty strings for some fields)
       for (const field of validFields) {
-        if (req.body.hasOwnProperty(field) && req.body[field] !== undefined && req.body[field] !== '') {
+        if (req.body.hasOwnProperty(field) && req.body[field] !== undefined) {
+          // For required fields like title, don't allow empty
+          if (['title', 'description'].includes(field) && req.body[field] === '') {
+            continue;
+          }
           updateData[field] = req.body[field];
         }
       }
@@ -618,7 +624,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   // DELETE PROPERTY
   app.delete("/api/properties/:id", async (req: Request, res: Response) => {
     try {
+      console.log(`=== DELETING PROPERTY ${req.params.id} ===`);
+      
       if (!req.isAuthenticated()) {
+        console.error("Property deletion failed: User not authenticated");
         return res.status(401).json({ message: "Authentication required" });
       }
 
@@ -628,22 +637,26 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       const user = req.user as Express.User;
+      console.log(`User deleting property: ${user.username} (${user.role})`);
+      
       const existingProperty = await dbStorage.getPropertyById(id);
 
       if (!existingProperty) {
         return res.status(404).json({ message: "Property not found" });
       }
 
+      // Allow admin and owner to delete any property
       if (user.role === 'user' && existingProperty.createdBy !== user.id) {
         return res.status(403).json({ message: "Permission denied" });
       }
 
       const success = await dbStorage.deleteProperty(id);
       if (!success) {
-        return res.status(404).json({ message: "Property not found" });
+        return res.status(500).json({ message: "Failed to delete property from database" });
       }
 
-      res.status(204).send();
+      console.log(`✅ Property ${id} deleted successfully`);
+      res.status(200).json({ message: "Property deleted successfully" });
     } catch (error) {
       console.error("Error deleting property:", error);
       res.status(500).json({ message: "Failed to delete property" });

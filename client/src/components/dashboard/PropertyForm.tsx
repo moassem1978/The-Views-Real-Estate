@@ -124,74 +124,55 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
-    setError(null);
-    setSuccess(null);
+    setError("");
 
     try {
-      const formDataToSend = new FormData();
+      // Validate required fields
+      if (!formData.title?.trim()) {
+        throw new Error("Title is required");
+      }
+      if (!formData.description?.trim()) {
+        throw new Error("Description is required");
+      }
+      if (!formData.price || formData.price <= 0) {
+        throw new Error("Price must be greater than 0");
+      }
+      if (!formData.city?.trim()) {
+        throw new Error("City is required");
+      }
 
-      // Add property fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'images') {
-          // Handle existing images separately
-          if (value && Array.isArray(value)) {
-            formDataToSend.append('existingImages', JSON.stringify(value));
-          }
-        } else if (value !== undefined && value !== null && value !== '') {
-          formDataToSend.append(key, String(value));
+      const processedData = {
+        ...formData,
+        price: Number(formData.price),
+        bedrooms: Number(formData.bedrooms) || 0,
+        bathrooms: Number(formData.bathrooms) || 0,
+        builtUpArea: formData.builtUpArea ? Number(formData.builtUpArea) : undefined,
+        plotSize: formData.plotSize ? Number(formData.plotSize) : undefined,
+        downPayment: formData.downPayment ? Number(formData.downPayment) : undefined,
+        installmentAmount: formData.installmentAmount ? Number(formData.installmentAmount) : undefined,
+        yearBuilt: formData.yearBuilt ? Number(formData.yearBuilt) : undefined,
+        images: uploadedImages,
+        zipCode: formData.zipCode || '00000',
+      };
+
+      // Remove undefined values but keep empty strings for optional fields
+      Object.keys(processedData).forEach(key => {
+        if (processedData[key] === undefined) {
+          delete processedData[key];
         }
       });
 
-      // Add new image files
-      selectedFiles.forEach(file => {
-        formDataToSend.append('images', file);
-      });
+      console.log("Submitting property data:", processedData);
 
-      const url = property?.id 
-        ? `/api/properties/${property.id}`
-        : '/api/properties';
+      const result = await onSubmit(processedData as Property);
+      console.log("Form submission result:", result);
 
-      const method = property?.id ? 'PATCH' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        body: formDataToSend,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to ${property?.id ? 'update' : 'create'} property`);
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        setSuccess(`Property ${property?.id ? 'updated' : 'created'} successfully!`);
-
-        // Reset form for new properties
-        if (!property?.id) {
-          setFormData({
-            title: '', description: '', address: '', city: '', state: '', zipCode: '',
-            country: 'Egypt', price: 0, downPayment: 0, installmentAmount: 0,
-            installmentPeriod: '', isFullCash: false, propertyType: 'apartment',
-            listingType: 'Primary', bedrooms: 1, bathrooms: 1, builtUpArea: 0,
-            plotSize: 0, gardenSize: 0, floor: '', isGroundUnit: false,
-            isFeatured: false, isNewListing: false, isHighlighted: false,
-            projectName: '', developerName: '', yearBuilt: undefined,
-            images: [], references: ''
-          });
-          setSelectedFiles([]);
-        }
-
-        // Call parent callback
-        onSubmit(result.property);
-      } else {
-        throw new Error(result.message || 'Operation failed');
-      }
     } catch (error) {
-      console.error('Form submission error:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      console.error("Form submission error:", error);
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsSubmitting(false);
     }

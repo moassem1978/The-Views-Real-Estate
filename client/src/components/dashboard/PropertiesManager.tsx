@@ -113,7 +113,24 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
   // Delete property mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest("DELETE", `/api/properties/${id}`);
+      console.log(`Deleting property ${id}`);
+      const response = await fetch(`/api/properties/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to delete property: ${response.statusText}`);
+      }
+      
+      // Handle both 200 and 204 responses
+      if (response.status === 204) {
+        return { success: true };
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -126,11 +143,14 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
       setPropertyToDelete(null);
     },
     onError: (error: any) => {
+      console.error("Delete mutation error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to delete property",
         variant: "destructive",
       });
+      setDeleteDialogOpen(false);
+      setPropertyToDelete(null);
     },
   });
 
