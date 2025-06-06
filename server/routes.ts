@@ -1847,7 +1847,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   }, cleanupOrphanedFiles);
 
   // Legacy endpoint - keeping for compatibility
-  app.post('/api/upload/property-images-direct-old', (req: Request, res: Response) => {
+  app.post('/api/upload/property-images-direct-old', async (req: Request, res: Response) => {
     try {
       console.log("==== UNIVERSAL PROPERTY IMAGE UPLOAD CALLED ====");
       console.log("Cross-platform upload endpoint - authenticated or public");
@@ -3053,8 +3053,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   const { addBackupEndpoints } = await import('./backup-endpoints');
   await addBackupEndpoints(app);
 
-  // Create HTTP server
-  const httpServer = createServer(app);
   // ===== CONTENT MARKETING & SEO ROUTES =====
   
   // Blog Articles API
