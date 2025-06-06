@@ -47,7 +47,7 @@ export default function PropertyForm({
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const isEditing = !!propertyId;
-  
+
   // Form definition with default values
   const form = useForm({
     defaultValues: {
@@ -76,7 +76,7 @@ export default function PropertyForm({
       country: "Egypt",
     }
   });
-  
+
   // Fetch available projects for dropdown
   const { data: projects } = useQuery({
     queryKey: ["/api/projects"],
@@ -106,7 +106,7 @@ export default function PropertyForm({
       }
     };
   }, []);
-  
+
   // Update form when property data is loaded
   useEffect(() => {
     if (isEditing && propertyData) {
@@ -114,7 +114,7 @@ export default function PropertyForm({
       if (propertyData.images && Array.isArray(propertyData.images)) {
         setExistingImages(propertyData.images);
       }
-      
+
       // Update form values with property data
       form.reset({
         title: propertyData.title || "",
@@ -144,30 +144,30 @@ export default function PropertyForm({
       });
     }
   }, [isEditing, propertyData, form]);
-  
+
   // Image handlers with preview functionality
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       // Add new files to the existing ones instead of replacing them
       const newFiles = Array.from(e.target.files as FileList);
       setImages(prevImages => [...prevImages, ...newFiles]);
-      
+
       // Reset the file input to allow selecting more files later
       e.target.value = '';
     }
   };
-  
+
   // Image preview functionality
   const handlePreview = (image: string) => {
     setPreviewImage(image);
     setPreviewVisible(true);
   };
-  
+
   // Close image preview
   const handlePreviewClose = () => {
     setPreviewVisible(false);
   };
-  
+
   // Remove a selected image before upload with X button
   const removeSelectedImage = (index: number) => {
     setImages(prevImages => {
@@ -269,7 +269,7 @@ export default function PropertyForm({
       if (propertyData.images && Array.isArray(propertyData.images)) {
         setExistingImages(propertyData.images);
       }
-      
+
       // Reset form values
       form.reset(getInitialValues());
     }
@@ -309,94 +309,94 @@ export default function PropertyForm({
       if (!data.state && data.city) {
         data.state = data.city;
       }
-      
+
       // Backend requires an address - use project name as address if not provided
       if (!data.address && data.projectName) {
         data.address = data.projectName;
       }
-      
+
       // Map the reference field to references (which is what the backend expects)
       if (data.reference) {
         data.references = data.reference;
       }
-      
+
       console.log("Sending property data with reference:", data.reference);
       console.log("References field value:", data.references);
-      
+
       // Step 1: Save property data first
       const response = await mutation.mutateAsync(data);
       const property = await response.json();
-      
+
       // Get the property ID (either from the saved property or existing ID)
       const savedPropertyId = isEditing ? propertyId : property.id;
-      
+
       // Step 2: Handle image uploads and existing images
       if (images.length > 0) {
         try {
           setUploading(true);
           console.log(`Uploading ${images.length} images for property ${savedPropertyId}`);
-          
+
           // Create FormData
           const formData = new FormData();
-          
+
           // Add property ID to help the server associate images with the right property
           formData.append('propertyId', savedPropertyId.toString());
-          
+
           // Log what we're doing
           console.log(`Uploading ${images.length} images for property ID: ${savedPropertyId}`);
-          
+
           // Add each image to the form data
           images.forEach((image, idx) => {
             console.log(`Adding image ${idx + 1}/${images.length}: ${image.name} (${Math.round(image.size/1024)}KB)`);
             formData.append('images', image);
           });
-          
+
           // Use direct upload endpoint which doesn't require authentication
           const response = await fetch(`/api/upload/property-images-direct`, {
             method: 'POST',
             body: formData,
             credentials: 'include'
           });
-          
+
           if (!response.ok) {
             throw new Error(`Image upload failed: ${response.status}`);
           }
-          
+
           const result = await response.json();
           console.log(`Response from server:`, result);
-          
+
           if (result.success && result.imageUrls) {
             console.log(`Successfully uploaded ${result.imageUrls.length} images`);
-            
+
             // Get the new image URLs from the response
             const newImageUrls = result.imageUrls || [];
             console.log(`New image URLs:`, newImageUrls);
-            
+
             // Make sure existingImages is an array
             const existingImgs = Array.isArray(existingImages) ? existingImages : [];
             console.log(`Existing images: ${existingImgs.length}`);
-            
+
             // Combine existing images with newly uploaded ones - ensure no duplicates
             const combinedImages = [...existingImgs];
-            
+
             // Add each new image URL if it's not already in the array
             newImageUrls.forEach((url: string) => {
               if (!combinedImages.includes(url)) {
                 combinedImages.push(url);
               }
             });
-            
+
             console.log(`Combined image count: ${combinedImages.length}`);
-            
+
             // Ensure we're working with an actual property ID
             if (savedPropertyId && typeof savedPropertyId === 'number' && savedPropertyId > 0) {
               console.log(`Updating property ${savedPropertyId} with ${combinedImages.length} total images`);
-              
+
               // Update the property with all images
               await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
                 images: combinedImages
               });
-              
+
               console.log(`Successfully updated property ${savedPropertyId} with images`);
             } else {
               console.error(`Invalid property ID: ${savedPropertyId}`);
@@ -404,7 +404,7 @@ export default function PropertyForm({
           } else {
             console.error(`Image upload response did not indicate success:`, result);
           }
-          
+
         } catch (error) {
           console.error("Error uploading images:", error);
           toast({
@@ -421,20 +421,20 @@ export default function PropertyForm({
           // Handle the case where we're only modifying existing images (e.g., removing some)
           // or where there are no images at all
           console.log(`Editing property ${savedPropertyId}${existingImages.length > 0 ? ` with ${existingImages.length} existing images` : ' (no images)'}`);
-          
+
           // Make sure we're not saving empty image paths
           const validImages = Array.isArray(existingImages) 
             ? existingImages.filter(img => img && typeof img === 'string' && img.trim() !== '')
             : [];
-          
+
           // Log what we're doing
           console.log(`Saving ${validImages.length} valid image paths for property ${savedPropertyId}`);
-          
+
           // Even if there are no images, update the property to ensure any removed images are cleared
           await apiRequest("PATCH", `/api/properties/${savedPropertyId}`, {
             images: validImages
           });
-          
+
           console.log(`Successfully updated property ${savedPropertyId} with ${validImages.length} images`);
         } catch (error) {
           console.error("Error updating property images:", error);
@@ -446,14 +446,14 @@ export default function PropertyForm({
           return; // Don't close the form on error
         }
       }
-      
+
       // Success notification
       toast({
         title: isEditing ? "Property updated" : "Property created",
         description: "Your property has been saved successfully.",
         variant: "default"
       });
-      
+
       // Only close the form after all operations have completed successfully
       if (onSuccess) {
         // Small delay to ensure toast is visible
@@ -461,7 +461,7 @@ export default function PropertyForm({
           onSuccess();
         }, 500);
       }
-      
+
     } catch (error) {
       console.error("Form submission error:", error);
       toast({
@@ -480,7 +480,7 @@ export default function PropertyForm({
       </div>
     );
   }
-  
+
   // Show error state 
   if (propertyError && isEditing) {
     return (
@@ -499,7 +499,7 @@ export default function PropertyForm({
   // Watch listing type to conditionally render fields
   const listingType = form.watch('listingType');
   const isResale = listingType === 'Resale';
-  
+
   // Watch city and update state field automatically
   const city = form.watch('city');
   useEffect(() => {
@@ -524,17 +524,22 @@ export default function PropertyForm({
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title*</FormLabel>
+                      <FormLabel>Property Title *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter property title" {...field} required />
+                        <Input 
+                          placeholder="Enter property title" 
+                          {...field} 
+                          className="w-full text-base"
+                          autoComplete="off"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
 
-                
+
+
                 <FormField
                   control={form.control}
                   name="reference"
@@ -728,7 +733,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Hidden state field that gets set based on city */}
                 <FormField
                   control={form.control}
@@ -745,7 +750,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="country"
@@ -820,7 +825,7 @@ export default function PropertyForm({
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Primary listing fields */}
                 {!isResale && (
                   <>
@@ -883,7 +888,7 @@ export default function PropertyForm({
                     />
                   </>
                 )}
-                
+
                 {/* Payment type switch */}
                 <FormField
                   control={form.control}
@@ -1029,7 +1034,7 @@ export default function PropertyForm({
                   )}
                 />
 
- 
+
 
                 <FormField
                   control={form.control}
@@ -1090,7 +1095,7 @@ export default function PropertyForm({
                   </Button>
                 )}
               </div>
-              
+
               {isEditing && (
                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                   <p className="text-sm text-yellow-800">
@@ -1099,7 +1104,7 @@ export default function PropertyForm({
                   </p>
                 </div>
               )}
-              
+
               {/* Existing images display */}
               {existingImages.length > 0 && (
                 <div className="mb-6">
@@ -1124,7 +1129,7 @@ export default function PropertyForm({
                   </div>
                 </div>
               )}
-              
+
               {/* New images input using DirectUploader */}
               <div className="space-y-4">
                 <div>
@@ -1142,7 +1147,7 @@ export default function PropertyForm({
                       }}
                     />
                   </div>
-                  
+
                   {/* Selected new images preview */}
                   {images.length > 0 && (
                     <div>

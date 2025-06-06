@@ -146,7 +146,7 @@ function Dashboard() {
     isLoading: authLoading,
     hasError: false
   });
-  
+
   // Update state when user changes
   useEffect(() => {
     setState({
@@ -155,7 +155,7 @@ function Dashboard() {
       hasError: false
     });
   }, [user, authLoading]);
-  
+
   console.log("Dashboard state:", state);
 
   // Property form handlers
@@ -283,7 +283,7 @@ function Dashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          
+
           <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
             {sections.map((section) => (
               <TabsTrigger 
@@ -479,7 +479,7 @@ function Dashboard() {
           }}
         >
           <DialogContent 
-            className="max-w-4xl h-[80vh] flex flex-col" 
+            className="w-full h-full max-w-none max-h-none m-0 p-0 rounded-none md:max-w-6xl md:max-h-[95vh] md:m-4 md:p-6 md:rounded-lg overflow-hidden" 
             onEscapeKeyDown={(e) => {
               // Prevent closing with Escape key
               e.preventDefault();
@@ -490,13 +490,13 @@ function Dashboard() {
             }}
             aria-describedby="property-form-description"
           >
-            <DialogHeader className="flex-shrink-0">
-              <DialogTitle>{selectedPropertyId ? "Edit Property" : "Add New Property"}</DialogTitle>
+            <DialogHeader className="p-4 md:p-0 border-b md:border-none">
+              <DialogTitle className="text-lg md:text-xl">{selectedPropertyId ? "Edit Property" : "Add New Property"}</DialogTitle>
               <div id="property-form-description" className="sr-only">
                 {selectedPropertyId ? "Edit the selected property details" : "Add a new property to the system"}
               </div>
             </DialogHeader>
-            <div className="flex-grow overflow-y-auto pr-2 -mr-2">
+            <div className="flex-1 overflow-y-auto p-0">
               <PropertyForm 
                 propertyId={selectedPropertyId} 
                 onSuccess={handlePropertyFormClose}

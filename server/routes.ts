@@ -604,12 +604,17 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         console.log(`Using zipCode: ${req.body.zipCode} for city: ${cityName}`);
       }
 
+      // Ensure zipCode is always set
+      if (!req.body.zipCode) {
+        req.body.zipCode = '00000';
+      }
+
       // Ensure required fields are present (made images optional)
-      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'zipCode', 'bedrooms', 'bathrooms', 'builtUpArea'];
+      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'bedrooms', 'bathrooms'];
       const missingFields = requiredFields.filter(field => {
         // Check if field is missing or empty
         const value = req.body[field];
-        return value === undefined || value === null || (Array.isArray(value) && value.length === 0) || value === '';
+        return value === undefined || value === null || value === '';
       });
 
       if (missingFields.length > 0) {
