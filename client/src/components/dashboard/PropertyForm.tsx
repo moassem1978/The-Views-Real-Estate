@@ -87,6 +87,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [images, setImages] = useState<string[]>([]); // Added images state
+  const [listing, setListing] = useState<{ id: number; images: string[] }>({ id: property?.id || 0, images: property?.images || [] }); // Added listing state
 
   const handleInputChange = (field: keyof Property, value: any) => {
     setFormData(prev => ({
@@ -120,6 +122,48 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
       ...prev,
       images: prev.images?.filter((_, i) => i !== index)
     }));
+  };
+
+    // Handle image deletion
+  const handleDeleteImage = async (imageToDelete: string, index: number) => {
+    try {
+      console.log('Deleting image:', imageToDelete, 'at index:', index);
+
+      // Extract filename from image URL
+      const filename = imageToDelete.split('/').pop() || imageToDelete;
+      console.log('Extracted filename:', filename);
+
+      const response = await fetch(`/api/properties/${listing.id}/photos/${encodeURIComponent(filename)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete image');
+      }
+
+      const result = await response.json();
+      console.log('Delete result:', result);
+
+      // Update local state with remaining images from server
+      const newImages = result.remainingImages || images.filter((_, i) => i !== index);
+      setImages(newImages);
+
+      // Also update the listing object
+      setListing(prev => ({
+        ...prev,
+        images: newImages
+      }));
+
+      toast.success(`Image deleted successfully. ${result.totalImages} images remaining.`);
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete image');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -541,6 +585,43 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
             </Button>
           </div>
         </form>
+                  {/* Existing Images */}
+                  {images.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Uploaded Images</h4>
+                      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                      {images.map((image, index) => {
+                    const imageUrl = typeof image === 'string' ? image : image.url || image.filename;
+                    const displayUrl = imageUrl.startsWith('/') ? imageUrl : `/uploads/properties/${imageUrl}`;
+
+                    return (
+                      <div key={`${imageUrl}-${index}`} className="relative group">
+                        <img 
+                          src={displayUrl} 
+                          alt={`Property ${index + 1}`}
+                          className="w-full h-24 object-cover rounded border"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder-property.svg';
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteImage(imageUrl, index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          title="Delete image"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                        <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                          {index + 1}
+                        </div>
+                      </div>
+                    );
+                  })}
+                      </div>
+                    </div>
+                  )}
       </CardContent>
     </Card>
   );
