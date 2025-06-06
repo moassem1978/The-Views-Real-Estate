@@ -340,21 +340,50 @@ export class DatabaseStorage implements IStorage {
     console.log(`Updating property ${id} with:`, updates);
 
     try {
-      // Simplified update without complex image validation for now
-      // Just ensure images is properly formatted if present
+      // Clean the updates object to only include valid property fields
+      const cleanUpdates: any = {};
+      
+      // Only include fields that exist in the database schema
+      const validFields = [
+        'title', 'description', 'references', 'address', 'city', 'state', 'zipCode', 'country',
+        'price', 'downPayment', 'installmentAmount', 'installmentPeriod', 'isFullCash',
+        'listingType', 'projectName', 'developerName', 'bedrooms', 'bathrooms', 'builtUpArea',
+        'plotSize', 'gardenSize', 'floor', 'isGroundUnit', 'propertyType', 'isFeatured',
+        'isNewListing', 'isHighlighted', 'yearBuilt', 'views', 'amenities', 'photos',
+        'latitude', 'longitude', 'status', 'approvedBy', 'updatedAt', 'agentId'
+      ];
+
+      for (const [key, value] of Object.entries(updates)) {
+        if (validFields.includes(key) && value !== undefined) {
+          cleanUpdates[key] = value;
+        }
+      }
+
+      // Handle images specifically - convert to photos array
       if ('images' in updates && Array.isArray(updates.images)) {
-        updates.images = updates.images.filter(img => img && typeof img === 'string');
-        console.log(`✅ Property ${id}: Using ${updates.images.length} images`);
+        const imageArray = updates.images.filter((img: any) => img && typeof img === 'string');
+        cleanUpdates.photos = imageArray.map((img: string) => ({
+          filename: img,
+          altText: `Property image`,
+          uploadedAt: new Date().toISOString()
+        }));
+        console.log(`✅ Property ${id}: Converting ${imageArray.length} images to photos`);
+        
+        // Remove images field from cleanUpdates to avoid conflicts
+        delete cleanUpdates.images;
       }
 
-      // Simple photo handling
-      if ('photos' in updates && Array.isArray(updates.photos)) {
-        updates.photos = updates.photos.filter(photo => photo && photo.filename);
-        console.log(`✅ Property ${id}: Using ${updates.photos.length} photos`);
+      console.log(`Executing database update for property ${id} with clean data:`, cleanUpdates);
+      
+      // Add updatedAt timestamp
+      cleanUpdates.updatedAt = new Date();
+      
+      // Convert photos array to JSON string for database storage
+      if (cleanUpdates.photos && Array.isArray(cleanUpdates.photos)) {
+        cleanUpdates.photos = JSON.stringify(cleanUpdates.photos);
       }
-
-      console.log(`Executing database update for property ${id}`);
-      const result = await db.update(properties).set(updates).where(eq(properties.id, id)).returning();
+      
+      const result = await db.update(properties).set(cleanUpdates).where(eq(properties.id, id)).returning();
 
       if (!result || result.length === 0) {
         console.error(`No property found with ID ${id} to update`);
