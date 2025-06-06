@@ -1457,14 +1457,22 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.log(`=== DELETING PHOTO FROM PROPERTY ${req.params.id} ===`);
       
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Authentication required" });
+        console.error("Photo deletion failed: User not authenticated");
+        return res.status(401).json({ 
+          success: false,
+          message: "Authentication required" 
+        });
       }
 
       const propertyId = parseInt(req.params.id);
-      const filename = req.params.filename;
+      const filename = decodeURIComponent(req.params.filename);
 
       if (isNaN(propertyId) || !filename) {
-        return res.status(400).json({ message: "Invalid property ID or filename" });
+        console.error(`Invalid parameters: propertyId=${propertyId}, filename=${filename}`);
+        return res.status(400).json({ 
+          success: false,
+          message: "Invalid property ID or filename" 
+        });
       }
 
       const user = req.user as Express.User;
@@ -1473,12 +1481,20 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Get the property first
       const property = await dbStorage.getPropertyById(propertyId);
       if (!property) {
-        return res.status(404).json({ message: "Property not found" });
+        console.error(`Property ${propertyId} not found`);
+        return res.status(404).json({ 
+          success: false,
+          message: "Property not found" 
+        });
       }
 
       // Check permissions
       if (user.role === 'user' && property.createdBy !== user.id) {
-        return res.status(403).json({ message: "Permission denied" });
+        console.error(`Permission denied: User ${user.id} cannot delete from property ${propertyId} owned by ${property.createdBy}`);
+        return res.status(403).json({ 
+          success: false,
+          message: "Permission denied" 
+        });
       }
 
       console.log(`Current images for property ${propertyId}:`, property.images);
@@ -1493,27 +1509,42 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           const parsed = JSON.parse(property.images);
           currentImages = Array.isArray(parsed) ? parsed : [property.images];
         } catch {
-          currentImages = [property.images];
+          currentImages = property.images ? [property.images] : [];
         }
       }
 
-      console.log(`Parsed current images:`, currentImages);
-      console.log(`Looking to delete filename:`, filename);
+      console.log(`Parsed current images (${currentImages.length}):`, currentImages);
+      console.log(`Looking to delete filename: "${filename}"`);
 
-      // Find and remove the image
+      // Find and remove the image with multiple matching strategies
+      const originalLength = currentImages.length;
       const updatedImages = currentImages.filter(img => {
         const imgFilename = img.split('/').pop() || img;
-        const match = imgFilename !== filename;
-        console.log(`Comparing "${imgFilename}" with "${filename}": ${match ? 'keep' : 'delete'}`);
-        return match;
+        const imgPath = img;
+        
+        // Try exact matches
+        const exactFilenameMatch = imgFilename === filename;
+        const exactPathMatch = imgPath === filename;
+        const pathContainsFilename = imgPath.includes(filename);
+        
+        const shouldKeep = !exactFilenameMatch && !exactPathMatch && !pathContainsFilename;
+        
+        if (!shouldKeep) {
+          console.log(`✅ Found match to delete: "${img}" (filename: "${imgFilename}")`);
+        }
+        
+        return shouldKeep;
       });
 
-      console.log(`Images after filtering:`, updatedImages);
+      console.log(`Images after filtering (${updatedImages.length}):`, updatedImages);
 
-      if (updatedImages.length === currentImages.length) {
+      if (updatedImages.length === originalLength) {
+        console.error(`Photo not found. Searched for: "${filename}"`);
+        console.error(`Available images:`, currentImages.map(img => img.split('/').pop()));
         return res.status(404).json({ 
+          success: false,
           message: "Photo not found in property images",
-          currentImages,
+          currentImages: currentImages.map(img => img.split('/').pop()),
           searchedFor: filename
         });
       }
@@ -1524,20 +1555,37 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       });
 
       if (!updated) {
-        return res.status(500).json({ message: "Failed to update property" });
+        console.error("Failed to update property in database");
+        return res.status(500).json({ 
+          success: false,
+          message: "Failed to update property" 
+        });
       }
 
-      // Try to delete physical file
-      const filePath = path.join(uploadsDir, filename);
-      if (fs.existsSync(filePath)) {
-        try {
-          fs.unlinkSync(filePath);
-          console.log(`✅ Physical file deleted: ${filePath}`);
-        } catch (error) {
-          console.warn(`⚠️ Could not delete physical file: ${error}`);
+      // Try to delete physical file from multiple possible locations
+      const possiblePaths = [
+        path.join(uploadsDir, filename),
+        path.join(process.cwd(), 'public', 'uploads', 'properties', filename),
+        path.join(process.cwd(), 'uploads', 'properties', filename),
+        path.join(process.cwd(), 'uploads', filename)
+      ];
+
+      let fileDeleted = false;
+      for (const filePath of possiblePaths) {
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+            console.log(`✅ Physical file deleted: ${filePath}`);
+            fileDeleted = true;
+            break;
+          } catch (error) {
+            console.warn(`⚠️ Could not delete physical file at ${filePath}: ${error}`);
+          }
         }
-      } else {
-        console.log(`⚠️ Physical file not found: ${filePath}`);
+      }
+
+      if (!fileDeleted) {
+        console.warn(`⚠️ Physical file not found in any location: ${filename}`);
       }
 
       console.log(`✅ Photo deleted successfully from property ${propertyId}`);
@@ -1547,12 +1595,14 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         message: "Photo deleted successfully",
         remainingImages: updatedImages,
         deletedImage: filename,
-        totalImages: updatedImages.length
+        totalImages: updatedImages.length,
+        fileDeleted
       });
 
     } catch (error) {
       console.error('Error deleting photo:', error);
       res.status(500).json({ 
+        success: false,
         message: "Failed to delete photo",
         error: error instanceof Error ? error.message : 'Unknown error'
       });

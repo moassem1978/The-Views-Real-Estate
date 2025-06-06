@@ -89,6 +89,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<string[]>([]); // Added images state
   const [listing, setListing] = useState<{ id: number; images: string[] }>({ id: property?.id || 0, images: property?.images || [] }); // Added listing state
+    const [uploadedImages, setUploadedImages] = useState<string[]>(property?.images || []);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const handleInputChange = (field: keyof Property, value: any) => {
     setFormData(prev => ({
@@ -128,6 +130,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
   const handleDeleteImage = async (imageToDelete: string, index: number) => {
     try {
       console.log('Deleting image:', imageToDelete, 'at index:', index);
+            setIsDeleting(imageToDelete);
 
       // Extract filename from image URL
       const filename = imageToDelete.split('/').pop() || imageToDelete;
@@ -149,6 +152,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
       const result = await response.json();
       console.log('Delete result:', result);
 
+            setUploadedImages(prevImages => prevImages.filter(img => img !== imageToDelete));
+
       // Update local state with remaining images from server
       const newImages = result.remainingImages || images.filter((_, i) => i !== index);
       setImages(newImages);
@@ -163,7 +168,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
     } catch (error) {
       console.error('Error deleting image:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to delete image');
-    }
+    } finally {
+                  setIsDeleting(null);
+        }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -491,29 +498,43 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
             <Label>Property Images</Label>
 
             {/* Existing Images */}
-            {formData.images && formData.images.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium mb-2">Current Images</h4>
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                  {formData.images.map((image, index) => (
-                    <div key={index} className="relative group">
+          {uploadedImages.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Current Images ({uploadedImages.length})</h4>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                {uploadedImages.map((image, index) => {
+                  const imageUrl = image.startsWith('/') ? image : `/uploads/properties/${image}`;
+                  const isBeingDeleted = isDeleting === image;
+
+                  return (
+                    <div key={`${image}-${index}`} className="relative group">
                       <img
-                        src={image}
+                        src={imageUrl}
                         alt={`Property image ${index + 1}`}
-                        className="w-full h-20 object-cover rounded border"
+                        className={`w-full h-20 object-cover rounded border ${isBeingDeleted ? 'opacity-50' : ''}`}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-property.svg';
+                        }}
                       />
                       <button
                         type="button"
-                        onClick={() => removeExistingImage(index)}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleDeleteImage(image, index)}
+                        disabled={isBeingDeleted}
+                        className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                        title="Delete image"
                       >
-                        <X className="w-3 h-3" />
+                        {isBeingDeleted ? '...' : <X className="w-3 h-3" />}
                       </button>
+                      <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                        {index + 1}
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
+          )}
 
             {/* New Image Upload */}
             <div>
