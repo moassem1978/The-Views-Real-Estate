@@ -355,7 +355,7 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`Executing database update for property ${id}`);
       const result = await db.update(properties).set(updates).where(eq(properties.id, id)).returning();
-      
+
       if (!result || result.length === 0) {
         console.error(`No property found with ID ${id} to update`);
         return undefined;
@@ -363,17 +363,17 @@ export class DatabaseStorage implements IStorage {
 
       const property = result[0];
       console.log(`✅ Property ${id} updated successfully`);
-      
+
       return property;
     } catch (error) {
       console.error(`Error updating property ${id}:`, error);
-      
+
       // Log more details about the error
       if (error instanceof Error) {
         console.error(`Error message: ${error.message}`);
         console.error(`Error stack: ${error.stack}`);
       }
-      
+
       // Return undefined instead of throwing to prevent 500 errors
       return undefined;
     }
@@ -618,3 +618,89 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
+
+import { strictImageProcessor } from './utils/imageProcessor';
+
+export async function createPropertyInDB(propertyData: any, imageFiles?: Express.Multer.File[]): Promise<{ success: boolean; property?: any; error?: string }> {
+  try {
+    console.log('Creating property in DB with data:', propertyData);
+    console.log('Image files count:', imageFiles?.length || 0);
+
+    // Validate required fields
+    if (!propertyData.title || !propertyData.propertyType) {
+      return {
+        success: false,
+        error: 'Title and property type are required'
+      };
+    }
+
+    // Process images first if provided
+    let imageUrls: string[] = [];
+    if (imageFiles && imageFiles.length > 0) {
+      console.log('Processing images...');
+      for (const file of imageFiles) {
+        try {
+          const processedImage = await strictImageProcessor.processImage(file);
+          if (processedImage.success && processedImage.url) {
+            imageUrls.push(processedImage.url);
+            console.log('Processed image successfully:', processedImage.url);
+          }
+        } catch (imageError) {
+          console.error('Error processing image:', imageError);
+          // Continue with other images
+        }
+      }
+    }
+
+    // Insert property into database
+    const query = `
+      INSERT INTO properties (
+        title, description, location, city, state, country, 
+        property_type, listing_type, price, bedrooms, bathrooms,
+        area, developer_name, zip_code, reference, status, 
+        created_by, images, is_highlighted, is_featured
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+      RETURNING *
+    `;
+
+    const values = [
+      propertyData.title,
+      propertyData.description || '',
+      propertyData.location || '',
+      propertyData.city || '',
+      propertyData.state || '',
+      propertyData.country || 'Egypt',
+      propertyData.propertyType,
+      propertyData.listingType || 'Primary',
+      parseFloat(propertyData.price) || 0,
+      parseInt(propertyData.bedrooms) || 0,
+      parseInt(propertyData.bathrooms) || 0,
+      parseFloat(propertyData.area) || 0,
+      propertyData.developerName || '',
+      propertyData.zipCode || '',
+      propertyData.reference || '',
+      propertyData.status || 'draft',
+      propertyData.createdBy,
+      JSON.stringify(imageUrls),
+      propertyData.isHighlighted === true || propertyData.isHighlighted === 'true',
+      propertyData.isFeatured === true || propertyData.isFeatured === 'true'
+    ];
+
+    console.log('Executing query with values:', values);
+    const result = await pool.query(query, values);
+    const createdProperty = result.rows[0];
+
+    console.log('Property created successfully:', createdProperty.id);
+    return {
+      success: true,
+      property: createdProperty
+    };
+
+  } catch (error) {
+    console.error('Error creating property:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
+  }
+}
