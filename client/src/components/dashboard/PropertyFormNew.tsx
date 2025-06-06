@@ -514,6 +514,15 @@ export default function PropertyForm({
         setUploading(false);
       }
 
+      // Invalidate and refetch queries to ensure UI reflects changes
+      await queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+      if (isEditing) {
+        await queryClient.invalidateQueries({ queryKey: [`/api/properties/${propertyId}`] });
+      }
+      
+      // Force a refetch to ensure data is current
+      await queryClient.refetchQueries({ queryKey: ["/api/properties"] });
+      
       // Success notification
       toast({
         title: isEditing ? "Property updated" : "Property created",
@@ -523,10 +532,10 @@ export default function PropertyForm({
 
       // Only close the form after all operations have completed successfully
       if (onSuccess) {
-        // Small delay to ensure toast is visible
+        // Small delay to ensure toast is visible and data is refreshed
         setTimeout(() => {
           onSuccess();
-        }, 500);
+        }, 1000);
       }
 
     } catch (error) {
