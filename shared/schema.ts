@@ -64,7 +64,7 @@ export const properties = pgTable("properties", {
   yearBuilt: integer("year_built"),
   views: text("views"),
   amenities: jsonb("amenities").notNull(),
-  photos: jsonb("photos").notNull(), // Changed from images to photos with structured data
+  photos: jsonb("photos").default([]).notNull(), // Changed from images to photos with structured data
   latitude: doublePrecision("latitude"),
   longitude: doublePrecision("longitude"),
   status: text("status").notNull().default(publicationStatus.DRAFT), // Publication status

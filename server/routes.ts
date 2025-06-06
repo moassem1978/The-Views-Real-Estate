@@ -568,14 +568,36 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
   app.post("/api/properties", async (req: Request, res: Response) => {
     try {
-      // First check if user is authenticated
-      if (!req.isAuthenticated()) {
-        console.error("Property creation failed: User not authenticated");
+      // Enhanced authentication check with session debugging
+      console.log("=== PROPERTY CREATION AUTH DEBUG ===");
+      console.log("Session ID:", req.sessionID);
+      console.log("Session data:", req.session);
+      console.log("isAuthenticated():", req.isAuthenticated());
+      console.log("req.user:", req.user);
+      console.log("Session passport:", req.session?.passport);
+      
+      // Check authentication using multiple methods
+      const isAuthenticatedViaPassport = req.isAuthenticated && req.isAuthenticated();
+      const hasUserInSession = req.user && typeof req.user === 'object';
+      const hasPassportSession = req.session?.passport?.user;
+      
+      if (!isAuthenticatedViaPassport && !hasUserInSession && !hasPassportSession) {
+        console.error("Property creation failed: User not authenticated via any method");
+        console.error("Auth check results:", {
+          isAuthenticatedViaPassport,
+          hasUserInSession,
+          hasPassportSession
+        });
         return res.status(401).json({ message: "Authentication required to create properties" });
       }
 
-      // Get the authenticated user from request
-      const user = req.user as Express.User;
+      // Get the authenticated user from request or session
+      const user = req.user as Express.User || req.session?.passport?.user;
+      if (!user) {
+        console.error("Property creation failed: No user object found");
+        return res.status(401).json({ message: "User session invalid" });
+      }
+      
       console.log(`User attempting to create property: ${user.username} (Role: ${user.role})`);
 
       // All authenticated users can create properties
@@ -633,6 +655,12 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       if (!req.body.images) {
         req.body.images = [];
         console.log("Initialized empty images array for new property");
+      }
+
+      // Ensure photos field exists for the new schema
+      if (!req.body.photos) {
+        req.body.photos = [];
+        console.log("Initialized empty photos array for new property");
       }
 
       // Format images field if it's a comma-separated string
