@@ -11,18 +11,7 @@ import path from "path";
 import fs from "fs";
 import util from "util";
 import { setupAuth } from "./auth";
-import { optimizeImage, generateThumbnail, generateMultipleSizes } from "./utils/imageOptimizer";
-import { 
-  uploadPhotosForProperty, 
-  uploadPhotos, 
-  getPropertyPhotos, 
-  deletePhoto, 
-  reorderPhotos, 
-  updatePhotoMetadata, 
-  validatePhotoIntegrity, 
-  cleanupOrphanedFiles 
-} from "./photoRoutes";
-import { protectionMiddleware } from "./protection-middleware";
+import { v4 as uuidv4 } from 'uuid';
 
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
@@ -39,184 +28,481 @@ const searchFiltersSchema = z.object({
   international: z.coerce.boolean().optional(),
 });
 
-// Configure multer for file uploads
-// Use public directory for better accessibility from the client
-const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-
-// Ensure the uploads directory and subdirectories exist with proper permissions
-const ensureDir = (dirPath: string) => {
+// Create uploads directory with proper permissions
+const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+const ensureUploadsDir = () => {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true, mode: 0o777 });
+  }
   try {
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true, mode: 0o777 });
-      console.log(`Created directory with full permissions: ${dirPath}`);
-    } else {
-      // Update permissions on existing directory
-      fs.chmodSync(dirPath, 0o777);
-      console.log(`Updated permissions for existing directory: ${dirPath}`);
-    }
+    fs.chmodSync(uploadsDir, 0o777);
   } catch (err) {
-    console.error(`Error creating or updating directory ${dirPath}:`, err);
+    console.warn("Could not set directory permissions:", err);
   }
 };
 
-// Also ensure the secondary uploads directory exists (for fallback compatibility)
-const secondaryUploadsDir = path.join(process.cwd(), 'uploads');
-ensureDir(secondaryUploadsDir);
-ensureDir(path.join(secondaryUploadsDir, 'properties'));
+ensureUploadsDir();
 
-// Create main uploads directory and subdirectories
-ensureDir(uploadsDir);
-ensureDir(path.join(uploadsDir, 'logos'));
-ensureDir(path.join(uploadsDir, 'properties'));
-ensureDir(path.join(uploadsDir, 'announcements'));
-ensureDir(path.join(uploadsDir, 'projects'));
-
-// Create a more permissive file filter
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  // Accept all file types for maximum compatibility
-  console.log(`Processing file: ${file.originalname} (${file.mimetype})`);
-  return cb(null, true);
-};
-
-const multerStorage = multer.memoryStorage();
-
-// Define the disk storage configuration
-const diskStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    let uploadPath = uploadsDir;
-
-    // Determine the correct subfolder based on upload type
-    if (req.path.includes('/api/upload/logo')) {
-      uploadPath = path.join(uploadsDir, 'logos');
-    } else if (req.path.includes('/api/upload/property-images')) {
-      uploadPath = path.join(uploadsDir, 'properties');
-    } else if (req.path.includes('/api/upload/announcement-image')) {
-      uploadPath = path.join(uploadsDir, 'announcements');
-    } else if (req.path.includes('/api/upload/project-images')) {
-      uploadPath = path.join(uploadsDir, 'projects');
-    }
-
-    // Make sure the directory exists with proper permissions
-    try {
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true, mode: 0o777 });
-        console.log(`Created upload directory with full permissions: ${uploadPath}`);
-      } else {
-        // Update permissions on existing directory
-        fs.chmodSync(uploadPath, 0o777);
-        console.log(`Updated permissions for existing upload directory: ${uploadPath}`);
-      }
-    } catch (err) {
-      console.error(`Failed to create or update upload directory ${uploadPath}:`, err);
-    }
-
-    // Also create the same directory in the secondary location for compatibility
-    try {
-      const secondaryPath = uploadPath.replace(/^.*?public/, 'uploads');
-      if (!fs.existsSync(secondaryPath)) {
-        fs.mkdirSync(secondaryPath, { recursive: true, mode: 0o777 });
-        console.log(`Created secondary upload directory: ${secondaryPath}`);
-      }
-    } catch (err) {
-      console.error(`Failed to create secondary upload directory:`, err);
-    }
-
-    console.log(`Uploading to directory: ${uploadPath}`);
-    cb(null, uploadPath);
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    ensureUploadsDir();
+    cb(null, uploadsDir);
   },
-
-  filename: function (req, file, cb) {
-    // Create unique filename using timestamp + original name format
+  filename: (req, file, cb) => {
     const timestamp = Date.now();
-    const cleanOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace all non-alphanumeric chars except dots and hyphens
-    
-    // Get original extension or use a default
-    let ext = path.extname(file.originalname).toLowerCase();
-    if (!ext) {
-      // If no extension, determine from mimetype
-      if (file.mimetype.includes('jpeg') || file.mimetype.includes('jpg')) {
-        ext = '.jpg';
-      } else if (file.mimetype.includes('png')) {
-        ext = '.png';
-      } else if (file.mimetype.includes('gif')) {
-        ext = '.gif';
-      } else if (file.mimetype.includes('webp')) {
-        ext = '.webp';
-      } else {
-        ext = '.jpg'; // Default fallback
-      }
+    const uniqueId = uuidv4().split('-')[0];
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    const safeName = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
+    const filename = `property-${timestamp}-${uniqueId}-${safeName}${ext}`;
+    cb(null, filename);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 25 * 1024 * 1024, // 25MB
+    files: 20
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype.toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Invalid file type: ${file.mimetype}. Allowed: ${allowedTypes.join(', ')}`));
+    }
+  }
+});
+
+// Image processing function
+async function processImage(filePath: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Validate file exists
+    if (!fs.existsSync(filePath)) {
+      return { success: false, error: "File not found" };
     }
 
-    // Format: timestamp-originalname.ext (ensuring unique filenames)
-    const nameWithoutExt = path.basename(cleanOriginalName, path.extname(cleanOriginalName));
-    const finalFilename = `${timestamp}-${nameWithoutExt}${ext}`;
+    const stats = fs.statSync(filePath);
+    if (stats.size === 0) {
+      return { success: false, error: "File is empty" };
+    }
 
-    console.log(`Generated unique filename: ${finalFilename} from original: ${file.originalname}`);
-    cb(null, finalFilename);
-  }
-});
+    // Try to process with Sharp if available
+    try {
+      const sharp = await import('sharp');
+      const metadata = await sharp.default(filePath).metadata();
 
-// Create multer configuration optimized for property uploads
-const upload = multer({
-  storage: diskStorage, // Use disk storage instead of memory for larger files
-  fileFilter: fileFilter,
-  limits: { 
-    fileSize: 15 * 1024 * 1024, // 15MB max file size to accommodate high-quality images
-    files: 10                   // Up to 10 files at once
-  }
-});
+      if (!metadata.width || !metadata.height) {
+        return { success: false, error: "Invalid image dimensions" };
+      }
 
-// Separate configuration for logo uploads (smaller size limit)
-const logoUpload = multer({
-  storage: diskStorage, // Changed to diskStorage for consistency
-  fileFilter: fileFilter,
-  limits: { 
-    fileSize: 2 * 1024 * 1024,  // 2MB max for logos
-    files: 1                     // Only one logo at a time
+      // Optimize the image
+      const optimizedPath = filePath.replace(/\.[^/.]+$/, '_optimized$&');
+      await sharp.default(filePath)
+        .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 85 })
+        .toFile(optimizedPath);
+
+      // Replace original with optimized
+      fs.renameSync(optimizedPath, filePath);
+
+      console.log(`✅ Processed image: ${path.basename(filePath)} (${metadata.width}x${metadata.height})`);
+      return { success: true };
+    } catch (sharpError) {
+      console.warn("Sharp processing failed, using original file:", sharpError);
+      return { success: true }; // Continue with original file
+    }
+  } catch (error) {
+    console.error("Image processing error:", error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
-});
+}
 
 export async function registerRoutes(app: Express, customUpload?: any, customUploadsDir?: string): Promise<Server> {
   // Set up authentication routes and middleware
   setupAuth(app);
 
-  // Protected dashboard route with session logging
+  // Protected dashboard route
   app.get("/dashboard", (req: Request, res: Response, next: NextFunction) => {
-    console.log("=== DASHBOARD ACCESS ATTEMPT ===");
-    console.log("Session ID:", req.sessionID);
-    console.log("Is Authenticated:", req.isAuthenticated());
-    console.log("Session Data:", {
-      sessionID: req.sessionID,
-      session: req.session,
-      cookies: req.headers.cookie,
-      userAgent: req.headers['user-agent'],
-      timestamp: new Date().toISOString()
-    });
-
     if (!req.isAuthenticated()) {
-      console.log("❌ Dashboard access denied - user not authenticated");
-      console.log("Redirecting to sign-in page");
       return res.redirect('/signin');
     }
-
-    const user = req.user as Express.User;
-    console.log("✅ Dashboard access granted for user:", {
-      id: user.id,
-      username: user.username,
-      role: user.role,
-      isAgent: user.isAgent
-    });
-
-    // Continue to serve the dashboard
     next();
   });
 
-  // Serve static projects page to bypass React crashes
+  // API routes for properties
+  app.get("/api/properties", async (req: Request, res: Response) => {
+    try {
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 100;
+      const result = await dbStorage.getAllProperties(page, pageSize);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      res.status(500).json({ message: "Failed to fetch properties" });
+    }
+  });
 
+  app.get("/api/properties/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
 
-  // Use either the provided upload and uploads directory or the defaults
-  const finalUpload = customUpload || upload;
-  const finalUploadsDir = customUploadsDir || uploadsDir;
+      const property = await dbStorage.getPropertyById(id);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      res.json(property);
+    } catch (error) {
+      console.error(`Error fetching property ${req.params.id}:`, error);
+      res.status(500).json({ message: "Failed to fetch property" });
+    }
+  });
+
+  // CREATE PROPERTY with image upload
+  app.post("/api/properties", upload.array('images', 20), async (req: Request, res: Response) => {
+    try {
+      console.log("=== PROPERTY CREATION WITH IMAGES ===");
+
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.user as Express.User;
+      console.log(`User creating property: ${user.username} (${user.role})`);
+
+      // Process uploaded files
+      const files = req.files as Express.Multer.File[];
+      const imageUrls: string[] = [];
+      const processingErrors: string[] = [];
+
+      if (files && files.length > 0) {
+        console.log(`Processing ${files.length} uploaded images`);
+
+        for (const file of files) {
+          const result = await processImage(file.path);
+          if (result.success) {
+            imageUrls.push(`/uploads/properties/${file.filename}`);
+            console.log(`✅ Processed: ${file.filename}`);
+          } else {
+            processingErrors.push(`${file.originalname}: ${result.error}`);
+            console.error(`❌ Failed: ${file.originalname} - ${result.error}`);
+          }
+        }
+      }
+
+      // Validate required fields
+      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'bedrooms', 'bathrooms'];
+      const missingFields = requiredFields.filter(field => {
+        const value = req.body[field];
+        return value === undefined || value === null || value === '';
+      });
+
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          message: `Missing required fields: ${missingFields.join(', ')}`
+        });
+      }
+
+      // Prepare property data
+      const propertyData = {
+        ...req.body,
+        images: imageUrls,
+        createdBy: user.id,
+        createdAt: new Date().toISOString(),
+        agentId: user.id,
+        status: 'published',
+        zipCode: req.body.zipCode || '00000'
+      };
+
+      // Convert numeric fields
+      ['price', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize', 'floor', 'yearBuilt'].forEach(field => {
+        if (propertyData[field] !== undefined && propertyData[field] !== '') {
+          const val = parseFloat(propertyData[field]);
+          if (!isNaN(val)) {
+            propertyData[field] = val;
+          }
+        }
+      });
+
+      // Convert boolean fields
+      ['isFullCash', 'isGroundUnit', 'isFeatured', 'isNewListing', 'isHighlighted'].forEach(field => {
+        if (typeof propertyData[field] === 'string') {
+          propertyData[field] = propertyData[field].toLowerCase() === 'true';
+        }
+      });
+
+      // Validate with schema
+      const validatedData = insertPropertySchema.parse(propertyData);
+
+      // Create property
+      const property = await dbStorage.createProperty(validatedData);
+
+      console.log(`✅ Property created: ID ${property.id} with ${imageUrls.length} images`);
+
+      const response: any = {
+        success: true,
+        message: "Property created successfully",
+        property,
+        imageCount: imageUrls.length
+      };
+
+      if (processingErrors.length > 0) {
+        response.imageErrors = processingErrors;
+        response.message += ` (${processingErrors.length} image processing errors)`;
+      }
+
+      res.status(201).json(response);
+
+    } catch (error) {
+      console.error("Error creating property:", error);
+
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: validationError.message 
+        });
+      }
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ 
+        message: `Failed to create property: ${errorMessage}`
+      });
+    }
+  });
+
+  // UPDATE PROPERTY with image upload
+  app.put("/api/properties/:id", upload.array('images', 20), async (req: Request, res: Response) => {
+    try {
+      console.log(`=== UPDATING PROPERTY ${req.params.id} ===`);
+
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      const user = req.user as Express.User;
+
+      // Get existing property
+      const existingProperty = await dbStorage.getPropertyById(id);
+      if (!existingProperty) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Check permissions
+      if (user.role === 'user' && existingProperty.createdBy !== user.id) {
+        return res.status(403).json({ message: "Permission denied" });
+      }
+
+      // Process any new uploaded files
+      const files = req.files as Express.Multer.File[];
+      const newImageUrls: string[] = [];
+
+      if (files && files.length > 0) {
+        console.log(`Processing ${files.length} new images for property ${id}`);
+
+        for (const file of files) {
+          const result = await processImage(file.path);
+          if (result.success) {
+            newImageUrls.push(`/uploads/properties/${file.filename}`);
+            console.log(`✅ Processed new image: ${file.filename}`);
+          }
+        }
+      }
+
+      // Handle existing images
+      let finalImages: string[] = [];
+
+      if (req.body.existingImages) {
+        // Parse existing images
+        try {
+          const existingImages = typeof req.body.existingImages === 'string' 
+            ? JSON.parse(req.body.existingImages)
+            : req.body.existingImages;
+
+          if (Array.isArray(existingImages)) {
+            finalImages = existingImages.filter((img: string) => img && typeof img === 'string');
+          }
+        } catch (e) {
+          console.warn("Failed to parse existing images, keeping original");
+          finalImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+        }
+      } else {
+        // Keep all existing images if not specified
+        finalImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+      }
+
+      // Add new images
+      finalImages = [...finalImages, ...newImageUrls];
+
+      // Prepare update data
+      const updateData: any = {};
+
+      // Copy valid fields
+      const validFields = [
+        'title', 'description', 'city', 'state', 'country', 'propertyType', 
+        'listingType', 'price', 'downPayment', 'installmentAmount', 'installmentPeriod',
+        'isFullCash', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize',
+        'floor', 'isGroundUnit', 'isFeatured', 'isHighlighted', 'isNewListing',
+        'projectName', 'developerName', 'yearBuilt', 'status', 'references'
+      ];
+
+      for (const field of validFields) {
+        if (req.body.hasOwnProperty(field) && req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+
+      updateData.images = finalImages;
+      updateData.updatedAt = new Date();
+
+      // Update property
+      const updatedProperty = await dbStorage.updateProperty(id, updateData);
+
+      if (!updatedProperty) {
+        return res.status(500).json({ message: "Failed to update property" });
+      }
+
+      console.log(`✅ Property ${id} updated with ${finalImages.length} total images`);
+
+      res.json({
+        success: true,
+        message: "Property updated successfully",
+        property: updatedProperty,
+        imageCount: finalImages.length,
+        newImagesAdded: newImageUrls.length
+      });
+
+    } catch (error) {
+      console.error("Error updating property:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ 
+        message: `Failed to update property: ${errorMessage}`
+      });
+    }
+  });
+
+  // STANDALONE IMAGE UPLOAD for existing properties
+  app.post("/api/properties/:id/upload-images", upload.array('images', 20), async (req: Request, res: Response) => {
+    try {
+      console.log(`=== UPLOADING IMAGES TO PROPERTY ${req.params.id} ===`);
+
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const propertyId = parseInt(req.params.id);
+      if (isNaN(propertyId)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      // Get existing property
+      const property = await dbStorage.getPropertyById(propertyId);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Process uploaded files
+      const newImageUrls: string[] = [];
+      const processingErrors: string[] = [];
+
+      for (const file of files) {
+        const result = await processImage(file.path);
+        if (result.success) {
+          newImageUrls.push(`/uploads/properties/${file.filename}`);
+        } else {
+          processingErrors.push(`${file.originalname}: ${result.error}`);
+        }
+      }
+
+      if (newImageUrls.length === 0) {
+        return res.status(400).json({ 
+          message: "No images were successfully processed",
+          errors: processingErrors
+        });
+      }
+
+      // Add to existing images
+      const existingImages = Array.isArray(property.images) ? property.images : [];
+      const updatedImages = [...existingImages, ...newImageUrls];
+
+      // Update property
+      await dbStorage.updateProperty(propertyId, { images: updatedImages });
+
+      console.log(`✅ Added ${newImageUrls.length} images to property ${propertyId}`);
+
+      res.json({
+        success: true,
+        message: `Successfully uploaded ${newImageUrls.length} images`,
+        imageUrls: newImageUrls,
+        totalImages: updatedImages.length,
+        errors: processingErrors.length > 0 ? processingErrors : undefined
+      });
+
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      res.status(500).json({ 
+        message: "Failed to upload images",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // DELETE PROPERTY
+  app.delete("/api/properties/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      const user = req.user as Express.User;
+      const existingProperty = await dbStorage.getPropertyById(id);
+
+      if (!existingProperty) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      if (user.role === 'user' && existingProperty.createdBy !== user.id) {
+        return res.status(403).json({ message: "Permission denied" });
+      }
+
+      const success = await dbStorage.deleteProperty(id);
+      if (!success) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      res.status(500).json({ message: "Failed to delete property" });
+    }
+  });
+
+  // Serve static files
+  app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+
+  // Create HTTP server
+  const httpServer = createServer(app);
+  
   // API route for listings (used by ListingsGrid component)
   app.get("/api/listings", async (req: Request, res: Response) => {
     try {
@@ -263,37 +549,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     } catch (error) {
       console.error('Error fetching listings:', error);
       res.status(500).json({ error: "Failed to fetch listings" });
-    }
-  });
-
-  // API routes for properties
-  app.get("/api/properties", async (req: Request, res: Response) => {
-    try {
-      // Extract pagination parameters from query
-      const page = req.query.page ? parseInt(req.query.page as string) : 1;
-      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 100;
-
-      // Get paginated properties
-      // Don't filter by user for admin and owner roles
-      if (req.isAuthenticated()) {
-        const user = req.user as Express.User;
-        console.log(`Authenticated user ${user.username} with role ${user.role} accessing property list`);
-
-        // Admin and owner can see all properties
-        // Regular users only see their own or published properties
-        if (user.role === 'admin' || user.role === 'owner') {
-          console.log('Admin/owner access - showing all properties');
-          const result = await dbStorage.getAllProperties(page, pageSize);
-          return res.json(result);
-        }
-      }
-
-      // Default behavior (non-authenticated users or regular users)
-      const result = await dbStorage.getAllProperties(page, pageSize);
-      res.json(result);
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-      res.status(500).json({ message: "Failed to fetch properties" });
     }
   });
 
@@ -479,728 +734,6 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  app.get("/api/properties/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid property ID" });
-      }
-
-      console.log(`Attempting to fetch property with ID: ${id}`);
-      
-      // Get property from storage
-      const property = await dbStorage.getPropertyById(id);
-      
-      if (!property) {
-        // Try direct database query as a backup
-        try {
-          console.log(`Property not found in storage, trying direct SQL query for ID: ${id}`);
-          // Use direct pool query instead of db.execute
-          const result = await pool.query("SELECT * FROM properties WHERE id = $1", [id]);
-          
-          // Check if we got results using rowCount
-          if (result && result.rowCount > 0) {
-            const dbProperty = result.rows[0];
-            console.log(`Found property ${id} via direct SQL`);
-            
-            // Convert the DB property to the correct format with full field mapping
-            const mappedProperty = {
-              id: dbProperty.id,
-              title: dbProperty.title || "",
-              description: dbProperty.description || "",
-              address: dbProperty.address || "",
-              city: dbProperty.city || "Unknown",
-              state: dbProperty.state || "",
-              zipCode: dbProperty.zip_code || "00000",
-              price: dbProperty.price || 0,
-              downPayment: dbProperty.down_payment || null,
-              installmentAmount: dbProperty.installment_amount || null,
-              installmentPeriod: dbProperty.installment_period || null,
-              isFullCash: dbProperty.is_full_cash || false,
-              listingType: dbProperty.listing_type || "Primary",
-              projectName: dbProperty.project_name || "",
-              developerName: dbProperty.developer_name || "",
-              bedrooms: dbProperty.bedrooms || 0,
-              bathrooms: dbProperty.bathrooms || 0,
-              builtUpArea: dbProperty.built_up_area || 0,
-              plotSize: dbProperty.plot_size || 0,
-              gardenSize: dbProperty.garden_size || 0,
-              floor: dbProperty.floor || 0,
-              isGroundUnit: dbProperty.is_ground_unit || false,
-              propertyType: dbProperty.property_type || "apartment",
-              isFeatured: dbProperty.is_featured || false,
-              isNewListing: dbProperty.is_new_listing || false,
-              isHighlighted: dbProperty.is_highlighted || false,
-              yearBuilt: dbProperty.year_built || 0,
-              views: dbProperty.views || 0,
-              amenities: dbProperty.amenities || [],
-              images: dbProperty.images || [],
-              latitude: dbProperty.latitude || 0,
-              longitude: dbProperty.longitude || 0,
-              country: dbProperty.country || "Egypt",
-              status: dbProperty.status || "active",
-              createdAt: dbProperty.created_at,
-              createdBy: dbProperty.created_by || 1,
-              approvedBy: dbProperty.approved_by || null,
-              agentId: dbProperty.agent_id || 1
-            };
-            
-            return res.json(mappedProperty);
-          }
-        } catch (sqlError) {
-          console.error(`SQL query for ID ${id} failed:`, sqlError);
-        }
-        
-        console.log(`Property with ID ${id} not found after all attempts`);
-        return res.status(404).json({ message: "Property not found" });
-      }
-      
-      console.log(`Successfully retrieved property: ${property.id} - ${property.title}`);
-      return res.json(property);
-    } catch (error) {
-      console.error(`Error fetching property with ID ${req.params.id}:`, error);
-      return res.status(500).json({ 
-        message: "Failed to fetch property", 
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  app.post("/api/properties", async (req: Request, res: Response) => {
-    try {
-      // Enhanced authentication check with session debugging
-      console.log("=== PROPERTY CREATION AUTH DEBUG ===");
-      console.log("Session ID:", req.sessionID);
-      console.log("Session data:", req.session);
-      console.log("isAuthenticated():", req.isAuthenticated());
-      console.log("req.user:", req.user);
-      console.log("Session passport:", req.session?.passport);
-      
-      // Check authentication using multiple methods
-      const isAuthenticatedViaPassport = req.isAuthenticated && req.isAuthenticated();
-      const hasUserInSession = req.user && typeof req.user === 'object';
-      const hasPassportSession = req.session?.passport?.user;
-      
-      if (!isAuthenticatedViaPassport && !hasUserInSession && !hasPassportSession) {
-        console.error("Property creation failed: User not authenticated via any method");
-        console.error("Auth check results:", {
-          isAuthenticatedViaPassport,
-          hasUserInSession,
-          hasPassportSession
-        });
-        return res.status(401).json({ message: "Authentication required to create properties" });
-      }
-
-      // Get the authenticated user from request or session
-      const user = req.user as Express.User || req.session?.passport?.user;
-      if (!user) {
-        console.error("Property creation failed: No user object found");
-        return res.status(401).json({ message: "User session invalid" });
-      }
-      
-      console.log(`User attempting to create property: ${user.username} (Role: ${user.role})`);
-
-      // All authenticated users can create properties
-      // Logging only a subset of data to prevent polluting logs
-      console.log("Creating property with title:", req.body.title);
-      console.log("Property type:", req.body.propertyType);
-      console.log("City:", req.body.city);
-      console.log("Image count:", Array.isArray(req.body.images) ? req.body.images.length : 'unknown');
-
-      // Add zipCode from city if not provided
-      if (!req.body.zipCode && req.body.city) {
-        console.log("No zipCode provided, using default based on city");
-        // Default zipCodes for common cities
-        const defaultZipCodes: Record<string, string> = {
-          'Cairo': '11511',
-          'Dubai': '00000',
-          'London': 'SW1A 1AA',
-          'Sheikh Zayed': '12311',
-          'North coast': '23511',
-          'Gouna': '84513',
-          'Red Sea': '84712'
-        };
-
-        const cityName = req.body.city as string;
-        req.body.zipCode = (defaultZipCodes[cityName] || '00000');
-        console.log(`Using zipCode: ${req.body.zipCode} for city: ${cityName}`);
-      }
-
-      // Ensure zipCode is always set
-      if (!req.body.zipCode) {
-        req.body.zipCode = '00000';
-      }
-
-      // Ensure required fields are present (made images optional)
-      const requiredFields = ['title', 'description', 'price', 'propertyType', 'city', 'bedrooms', 'bathrooms'];
-      const missingFields = requiredFields.filter(field => {
-        // Check if field is missing or empty
-        const value = req.body[field];
-        return value === undefined || value === null || value === '';
-      });
-
-      if (missingFields.length > 0) {
-        console.error(`Property creation failed: Missing required fields: ${missingFields.join(', ')}`);
-        return res.status(400).json({
-          message: `Missing required fields: ${missingFields.join(', ')}`
-        });
-      }
-
-      // Handle amenities if empty
-      if (!req.body.amenities) {
-        req.body.amenities = [];
-      }
-      
-      // Ensure images field exists
-      if (!req.body.images) {
-        req.body.images = [];
-        console.log("Initialized empty images array for new property");
-      }
-
-      // Ensure photos field exists for the new schema
-      if (!req.body.photos) {
-        req.body.photos = [];
-        console.log("Initialized empty photos array for new property");
-      }
-
-      // Format images field if it's a comma-separated string
-      if (typeof req.body.images === 'string') {
-        try {
-          console.log("Converting images string to array");
-          req.body.images = req.body.images.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
-          console.log(`Processed ${req.body.images.length} image URLs`);
-        } catch (error) {
-          console.error("Error parsing images string:", error);
-        }
-      }
-
-      // Make sure numeric fields are actually numbers
-      ['price', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize', 'floor', 'yearBuilt', 'agentId'].forEach(field => {
-        if (req.body[field] !== undefined && req.body[field] !== null && req.body[field] !== '') {
-          const val = parseFloat(req.body[field]);
-          if (!isNaN(val)) {
-            req.body[field] = val;
-          }
-        }
-      });
-
-      // Convert boolean fields if they're strings
-      ['isFullCash', 'isGroundUnit', 'isFeatured', 'isNewListing', 'isHighlighted'].forEach(field => {
-        if (typeof req.body[field] === 'string') {
-          req.body[field] = req.body[field].toLowerCase() === 'true';
-        }
-      });
-      
-      // Add required fields before validation
-      if (!req.body.createdAt) {
-        req.body.createdAt = new Date().toISOString();
-        console.log("Added createdAt:", req.body.createdAt);
-      }
-      
-      if (!req.body.agentId) {
-        req.body.agentId = user.id; // Default to current user as agent
-        console.log("Added agentId:", req.body.agentId);
-      }
-
-      // Validate with added fields
-      let propertyData;
-      try {
-        propertyData = insertPropertySchema.parse(req.body);
-        console.log("Property data validation succeeded with all required fields");
-      } catch (parseError) {
-        console.error("Property data validation failed:", parseError);
-        return res.status(400).json({
-          message: "Invalid property data. Please check all required fields.",
-          details: parseError instanceof Error ? parseError.message : String(parseError)
-        });
-      }
-      
-      // Add createdBy field and status
-      const propertyWithUser = {
-        ...propertyData,
-        createdBy: user.id,
-        status: 'published', // Admin properties are published immediately
-      };
-
-      // Handle critical fields: Reference number (in multiple formats)
-      if (propertyWithUser.reference) {
-        console.log(`Setting reference number to: ${propertyWithUser.reference}`);
-        // Set in all formats to ensure it's saved properly
-        propertyWithUser.references = propertyWithUser.reference;
-        propertyWithUser.reference_number = propertyWithUser.reference;
-      } else if (propertyWithUser.references) {
-        console.log(`Using references field: ${propertyWithUser.references}`);
-        propertyWithUser.reference = propertyWithUser.references;
-        propertyWithUser.reference_number = propertyWithUser.references;
-      } else if (propertyWithUser.reference_number) {
-        console.log(`Using reference_number field: ${propertyWithUser.reference_number}`);
-        propertyWithUser.reference = propertyWithUser.reference_number;
-        propertyWithUser.references = propertyWithUser.reference_number;
-      }
-      
-      // Critical field: Property Type
-      if (propertyWithUser.propertyType) {
-        console.log(`Processing property type: ${propertyWithUser.propertyType}`);
-        // Ensure it's saved correctly to the database
-        propertyWithUser.property_type = propertyWithUser.propertyType;
-      }
-      
-      // Log property data just before creation with critical fields
-      console.log("Attempting to create property with final data:", JSON.stringify({
-        title: propertyWithUser.title,
-        city: propertyWithUser.city,
-        reference: propertyWithUser.reference || "(empty)",
-        references: propertyWithUser.references || "(empty)",
-        reference_number: propertyWithUser.reference_number || "(empty)",
-        propertyType: propertyWithUser.propertyType || "(empty)",
-        property_type: propertyWithUser.property_type || "(empty)",
-        images: Array.isArray(propertyWithUser.images) ? 
-          `${propertyWithUser.images.length} images` : 
-          propertyWithUser.images
-      }));
-
-      const property = await dbStorage.createProperty(propertyWithUser);
-
-      // Log after DB operation success with detailed verification of critical fields
-      console.log("Property created successfully:", {
-        id: property.id,
-        title: property.title,
-        // Critical fields verification
-        references: property.references || "(missing)",
-        reference: property.reference || "(missing)",
-        reference_number: property.reference_number || "(missing)",
-        propertyType: property.propertyType || "(missing)",
-        property_type: property.property_type || "(missing)",
-        // Image summary
-        imageCount: Array.isArray(property.images) ? property.images.length : "(unknown)",
-        // Status info
-        status: property.status
-      });
-
-      res.status(201).json(property);
-    } catch (error) {
-      console.error("Error creating property:", error);
-
-      if (error instanceof ZodError) {
-        const validationError = fromZodError(error);
-        console.error("Validation error details:", validationError);
-        return res.status(400).json({ 
-          message: "Validation error: Please check your property data and try again.",
-          details: validationError.message 
-        });
-      } else {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error("Database or server error:", errorMessage);
-
-        // More specific error messages
-        if (errorMessage.includes("duplicate key")) {
-          return res.status(400).json({ 
-            message: "A property with this information already exists. Please modify your data." 
-          });
-        } else if (errorMessage.includes("foreign key")) {
-          return res.status(400).json({ 
-            message: "Invalid reference to another record (like agent ID). Please check your data." 
-          });
-        }
-
-        return res.status(500).json({ 
-          message: "Failed to create property. Please try again with different data." 
-        });
-      }
-    }
-  });
-
-  app.put("/api/properties/:id", async (req: Request, res: Response) => {
-    try {
-      // Check if user is authenticated
-      if (!req.isAuthenticated()) {
-        console.error("Property update failed: User not authenticated");
-        return res.status(401).json({ message: "Authentication required to update properties" });
-      }
-
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid property ID" });
-      }
-
-      // Get the authenticated user from request
-      const user = req.user as Express.User;
-      console.log(`User attempting to update property ${id}: ${user.username} (Role: ${user.role})`);
-
-      // Get the property to check ownership
-      const existingProperty = await dbStorage.getPropertyById(id);
-      if (!existingProperty) {
-        return res.status(404).json({ message: "Property not found" });
-      }
-
-      // Check if user has permission to update this property
-      // Owner and Admin can update any property
-      // Regular users can only update their own properties
-      if (user.role === 'user' && existingProperty.createdBy !== user.id) {
-        console.error(`Permission denied: User ${user.username} attempted to update property ${id} created by user ${existingProperty.createdBy}`);
-        return res.status(403).json({ message: "You do not have permission to update this property" });
-      }
-
-      console.log("Property update request for ID:", id);
-      
-      // Create a clean update object
-      const propertyData: any = {};
-      
-      // Copy all provided fields except undefined ones
-      Object.keys(req.body).forEach(key => {
-        if (req.body[key] !== undefined) {
-          propertyData[key] = req.body[key];
-        }
-      });
-      
-      // Safely handle images field with better error recovery
-      if (req.body.hasOwnProperty('images')) {
-        try {
-          let processedImages: string[] = [];
-          
-          if (req.body.images === null || req.body.images === '') {
-            processedImages = [];
-          } else if (Array.isArray(req.body.images)) {
-            processedImages = req.body.images
-              .filter(img => img && typeof img === 'string' && img.trim() !== '')
-              .map(img => String(img).trim());
-          } else if (typeof req.body.images === 'string') {
-            const imageStr = req.body.images.trim();
-            if (imageStr.startsWith('[') && imageStr.endsWith(']')) {
-              try {
-                const parsed = JSON.parse(imageStr);
-                if (Array.isArray(parsed)) {
-                  processedImages = parsed
-                    .filter(img => img && typeof img === 'string')
-                    .map(img => String(img).trim());
-                }
-              } catch (parseError) {
-                console.warn("JSON parse failed, treating as single image");
-                processedImages = imageStr ? [imageStr] : [];
-              }
-            } else if (imageStr.includes(',')) {
-              processedImages = imageStr.split(',')
-                .map(img => img.trim())
-                .filter(img => img !== '');
-            } else if (imageStr !== '') {
-              processedImages = [imageStr];
-            }
-          }
-          
-          propertyData.images = processedImages;
-          console.log(`Processed ${processedImages.length} images for update`);
-          
-        } catch (error) {
-          console.error("Error processing images field:", error);
-          // Keep existing images on error
-          propertyData.images = existingProperty.images || [];
-        }
-      }
-
-      // Handle reference fields safely
-      if (propertyData.reference || propertyData.references) {
-        const refValue = propertyData.reference || propertyData.references;
-        propertyData.references = String(refValue);
-        console.log(`Setting reference to: ${propertyData.references}`);
-      }
-
-      // If a regular user updates a property, set status back to pending_approval
-      if (user.role === 'user') {
-        propertyData.status = 'pending_approval';
-      }
-
-      // Remove any undefined values
-      Object.keys(propertyData).forEach(key => {
-        if (propertyData[key] === undefined) {
-          delete propertyData[key];
-        }
-      });
-
-      const property = await dbStorage.updateProperty(id, propertyData);
-      
-      if (!property) {
-        console.error(`Property ${id} update failed - no property returned`);
-        return res.status(404).json({ message: "Property not found or update failed" });
-      }
-
-      console.log(`Property ${id} updated successfully`);
-      res.json(property);
-    } catch (error) {
-      console.error("Error updating property:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      res.status(500).json({ 
-        message: `Failed to update property: ${errorMessage}`,
-        error: process.env.NODE_ENV === 'development' ? error : undefined
-      });
-    }
-  });
-
-  // Production-grade PATCH endpoint with multer integration
-  app.patch("/api/properties/:id", finalUpload.array('images', 10), async (req: Request, res: Response) => {
-    const propertyId = req.params.id;
-    let backupId: string | null = null;
-
-    try {
-      console.log(`🔧 Production PATCH endpoint for property ${propertyId}`);
-
-      // ✅ Step 1: Authentication check
-      if (!req.isAuthenticated()) {
-        console.error("❌ Property update failed: User not authenticated");
-        return res.status(401).json({ 
-          success: false,
-          error: "AUTHENTICATION_REQUIRED",
-          message: "Authentication required to update properties"
-        });
-      }
-
-      // ✅ Step 2: Validate property ID
-      const id = parseInt(propertyId);
-      if (isNaN(id) || id <= 0) {
-        console.error(`❌ Invalid property ID: ${propertyId}`);
-        return res.status(400).json({ 
-          success: false,
-          error: "INVALID_PROPERTY_ID",
-          message: "Property ID must be a positive integer"
-        });
-      }
-
-      // ✅ Step 3: Get existing property and create backup
-      const originalProperty = await dbStorage.getPropertyById(id);
-      if (!originalProperty) {
-        console.error(`❌ Property ${id} not found`);
-        return res.status(404).json({ 
-          success: false,
-          error: "PROPERTY_NOT_FOUND",
-          message: "Property not found"
-        });
-      }
-
-      // Check user permissions
-      const user = req.user as Express.User;
-      if (user.role === 'user' && originalProperty.createdBy !== user.id) {
-        console.error(`❌ Permission denied: User ${user.username} attempted to update property ${id}`);
-        return res.status(403).json({ 
-          success: false,
-          error: "PERMISSION_DENIED",
-          message: "You do not have permission to update this property"
-        });
-      }
-
-      // Create backup before any changes
-      try {
-        const { ImageUuidManager } = await import('./utils/imageUuidManager');
-        backupId = await ImageUuidManager.createPropertyBackup(id);
-        console.log(`✅ Created backup ${backupId} for property ${id}`);
-      } catch (backupError) {
-        console.warn("⚠️ Backup creation failed, continuing:", backupError);
-      }
-
-      // ✅ Step 4: Validate required fields
-      const { title, price, description } = req.body;
-      if (title && !title.trim()) {
-        return res.status(400).json({ 
-          success: false,
-          error: "VALIDATION_ERROR",
-          message: "Title cannot be empty"
-        });
-      }
-
-      if (price && (isNaN(Number(price)) || Number(price) < 0)) {
-        return res.status(400).json({ 
-          success: false,
-          error: "VALIDATION_ERROR",
-          message: "Price must be a valid positive number"
-        });
-      }
-
-      // ✅ Step 5: Process uploaded images with Sharp
-      const processedImagePaths: string[] = [];
-
-      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-        console.log(`📁 Processing ${req.files.length} uploaded images`);
-
-        for (const file of req.files) {
-          try {
-            // Generate unique filename
-            const { v4: uuidv4 } = await import('uuid');
-            const imageId = uuidv4();
-            const newFilename = `${imageId}.webp`;
-            const outputDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-            const outputPath = path.join(outputDir, newFilename);
-
-            // Ensure directory exists
-            if (!fs.existsSync(outputDir)) {
-              fs.mkdirSync(outputDir, { recursive: true });
-            }
-
-            // Validate file type
-            const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-            if (!allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
-              console.warn(`❌ Invalid file type: ${file.mimetype} for ${file.originalname}`);
-              continue;
-            }
-
-            // Process with Sharp
-            const sharp = await import('sharp');
-            const metadata = await sharp.default(file.path || file.buffer)
-              .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
-              .toFormat('webp', { quality: 85 })
-              .toFile(outputPath);
-
-            console.log(`✅ Processed image: ${file.originalname} -> ${newFilename} (${metadata.width}x${metadata.height})`);
-            
-            processedImagePaths.push(`/uploads/properties/${newFilename}`);
-
-            // Clean up temp file
-            if (file.path && fs.existsSync(file.path)) {
-              fs.unlinkSync(file.path);
-            }
-
-          } catch (imgErr) {
-            console.error(`❌ Failed to process image ${file.originalname}:`, imgErr);
-            // Continue processing other images
-          }
-        }
-      }
-
-      // ✅ Step 6: Prepare update data
-      const updateData: any = {};
-
-      // Copy valid fields from request body
-      const validFields = [
-        'title', 'description', 'city', 'state', 'country', 'propertyType', 
-        'listingType', 'price', 'downPayment', 'installmentAmount', 'installmentPeriod',
-        'isFullCash', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize',
-        'floor', 'isGroundUnit', 'isFeatured', 'isHighlighted', 'isNewListing',
-        'projectName', 'developerName', 'yearBuilt', 'status', 'references'
-      ];
-
-      for (const field of validFields) {
-        if (req.body.hasOwnProperty(field) && req.body[field] !== undefined) {
-          updateData[field] = req.body[field];
-        }
-      }
-
-      // Handle images - prioritize body images for deletions/updates
-      if (req.body.hasOwnProperty('images')) {
-        // Handle images from request body (including deletions)
-        if (Array.isArray(req.body.images)) {
-          updateData.images = req.body.images;
-          console.log(`📸 Setting images from array: ${req.body.images.length} images`);
-        } else if (typeof req.body.images === 'string') {
-          try {
-            updateData.images = JSON.parse(req.body.images);
-            console.log(`📸 Setting images from JSON string: ${updateData.images.length} images`);
-          } catch {
-            updateData.images = req.body.images.split(',').map((url: string) => url.trim());
-            console.log(`📸 Setting images from CSV: ${updateData.images.length} images`);
-          }
-        }
-      } else if (processedImagePaths.length > 0) {
-        // Only merge with existing if no images in body (pure upload case)
-        const existingImages = Array.isArray(originalProperty.images) ? originalProperty.images : [];
-        updateData.images = [...existingImages, ...processedImagePaths];
-        console.log(`📸 Combined ${existingImages.length} existing + ${processedImagePaths.length} new = ${updateData.images.length} total images`);
-      }
-
-      // ✅ Step 7: Update property in database
-      const updatedProperty = await dbStorage.updateProperty(id, updateData);
-
-      if (!updatedProperty) {
-        // Restore from backup on failure
-        if (backupId) {
-          try {
-            const { ImageUuidManager } = await import('./utils/imageUuidManager');
-            await ImageUuidManager.restoreFromBackup(backupId);
-            console.log(`🔄 Restored property ${id} from backup due to update failure`);
-          } catch (restoreError) {
-            console.error("❌ Failed to restore from backup:", restoreError);
-          }
-        }
-        return res.status(500).json({ 
-          success: false,
-          error: "UPDATE_FAILED",
-          message: "Failed to update property in database"
-        });
-      }
-
-      console.log(`✅ Property ${id} updated successfully`);
-
-      return res.status(200).json({ 
-        success: true,
-        message: 'Property updated successfully', 
-        property: updatedProperty,
-        processedImages: processedImagePaths.length,
-        backupId: backupId || undefined
-      });
-
-    } catch (err) {
-      console.error('❌ Property update failed:', err);
-
-      // Emergency restore from backup if available
-      if (backupId) {
-        try {
-          const { ImageUuidManager } = await import('./utils/imageUuidManager');
-          await ImageUuidManager.restoreFromBackup(backupId);
-          console.log(`🔄 Emergency restore completed for property ${propertyId}`);
-        } catch (restoreError) {
-          console.error("❌ Emergency restore failed:", restoreError);
-        }
-      }
-
-      return res.status(500).json({
-        success: false,
-        error: 'SERVER_ERROR',
-        message: 'Server error during property update',
-        details: err instanceof Error ? err.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.delete("/api/properties/:id", async (req: Request, res: Response) => {
-    try {
-      // Check if user is authenticated
-      if (!req.isAuthenticated()) {
-        console.error("Property deletion failed: User not authenticated");
-        return res.status(401).json({ message: "Authentication required to delete properties" });
-      }
-
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid property ID" });
-      }
-
-      // Get the authenticated user from request
-      const user = req.user as Express.User;
-      console.log(`User attempting to delete property ${id}: ${user.username} (Role: ${user.role})`);
-
-      // Get the property to check ownership
-      const existingProperty = await dbStorage.getPropertyById(id);
-      if (!existingProperty) {
-        return res.status(404).json({ message: "Property not found" });
-      }
-
-      // Check if user has permission to delete this property
-      // Owner and Admin can delete any property
-      // Regular users can only delete their own properties
-      if (user.role === 'user' && existingProperty.createdBy !== user.id) {
-        console.error(`Permission denied: User ${user.username} attempted to delete property ${id} created by user ${existingProperty.createdBy}`);
-        return res.status(403).json({ message: "You do not have permission to delete this property" });
-      }
-
-      const success = await dbStorage.deleteProperty(id);
-      if (!success) {
-        return res.status(404).json({ message: "Property not found" });
-      }
-
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting property:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      res.status(500).json({ message: `Failed to delete property: ${errorMessage}` });
-    }
-  });
-
   app.get("/api/properties/search", async (req: Request, res: Response) => {
     try {
       const filters = searchFiltersSchema.parse(req.query);
@@ -1292,7 +825,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // API routes for announcements
+  // API routes for announcements```
   app.get("/api/announcements", async (req: Request, res: Response) => {
     try {
       // Extract pagination parameters from query
@@ -1548,85 +1081,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // Logo upload endpoint with improved error handling and logging
-  app.post("/api/upload/logo", logoUpload.single('logo'), async (req: Request, res: Response) => {
+  app.post("/api/upload/logo", (req: Request, res: Response) => {
     try {
-      // Check if user is authenticated
-      if (!req.isAuthenticated()) {
-        console.error("Logo upload failed: User not authenticated");
-        return res.status(401).json({ message: "Authentication required to upload logo" });
-      }
-
-      // Get the authenticated user from request
-      const user = req.user as Express.User;
-      console.log(`User attempting to upload logo: ${user.username} (Role: ${user.role})`);
-
-      // Only admin and owner can upload a logo
-      if (user.role !== 'admin' && user.role !== 'owner') {
-        console.error(`Permission denied: User ${user.username} with role ${user.role} attempted to upload logo`);
-        return res.status(403).json({ message: "Only administrators and owners can update the company logo" });
-      }
-
-      console.log("Received logo upload request");
-      console.log("Request file:", req.file ? `File present: ${req.file.originalname}, mimetype: ${req.file.mimetype}, size: ${req.file.size}` : "No file present");
-
-      if (!req.file) {
-        console.error("File upload failed - No file received");
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-
-      console.log(`Logo file uploaded: ${req.file.filename} (${req.file.mimetype}), original: ${req.file.originalname}, size: ${req.file.size}`);
-
-      // Ensure the logo file is also copied to the public/uploads directory for web access
-      try {
-        const sourcePath = req.file.path;
-        const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'logos');
-
-        // Create the destination directory if it doesn't exist
-        fs.mkdirSync(publicUploadsDir, { recursive: true });
-
-        const destPath = path.join(publicUploadsDir, req.file.filename);
-
-        // Copy the file to public/uploads/logos
-        fs.copyFileSync(sourcePath, destPath);
-        console.log(`Copied logo file to ${destPath} for web access`);
-      } catch (err) {
-        console.error(`Error copying logo file to public directory: ${err}`);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        return res.status(500).json({ message: `Error copying logo file: ${errorMessage}` });
-      }
-
-      // Create the file URL relative to the server
-      const fileUrl = `/uploads/logos/${req.file.filename}`;
-
-      // Also ensure the file is properly saved to disk from memory storage
-      try {
-        // Ensure the destination directory exists
-        const publicDir = path.join(process.cwd(), 'public', 'uploads', 'logos');
-        if (!fs.existsSync(publicDir)) {
-          fs.mkdirSync(publicDir, { recursive: true, mode: 0o777 });
-          console.log(`Created directory: ${publicDir}`);
-        }
-
-        // Write the file to disk from buffer in memory storage
-        if (req.file.buffer) {
-          const destPath = path.join(publicDir, req.file.filename);
-          fs.writeFileSync(destPath, req.file.buffer);
-          console.log(`Wrote file from buffer to ${destPath}`);
-        }
-      } catch (writeErr) {
-        console.error(`Error writing file from buffer:`, writeErr);
-      }
-
-      // Update site settings with the new logo URL
-      const updatedSettings = await dbStorage.updateSiteSettings({
-        companyLogo: fileUrl
-      });
-
-      res.json({ 
-        message: "Logo uploaded successfully", 
-        logoUrl: fileUrl,
-        settings: updatedSettings
-      });
+       res.status(500).json({ message: `This api/upload/logo is deprecated` });
     } catch (error) {
       console.error('Error uploading logo:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -1635,66 +1092,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // Announcement image upload endpoint
-  app.post("/api/upload/announcement-image", finalUpload.single('image'), async (req: Request, res: Response) => {
-    try {
-      // Check if user is authenticated
-      if (!req.isAuthenticated()) {
-        console.error("Announcement image upload failed: User not authenticated");
-        return res.status(401).json({ message: "Authentication required to upload announcement images" });
-      }
-
-      // Get the authenticated user from request
-      const user = req.user as Express.User;
-      console.log(`User attempting to upload announcement image: ${user.username} (Role: ${user.role})`);
-
-      console.log("Received announcement image upload request");
-      console.log("Request file:", req.file ? `File present: ${req.file.originalname}, mimetype: ${req.file.mimetype}, size: ${req.file.size}` : "No file present");
-
-      if (!req.file) {
-        console.error("File upload failed - No file received");
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-
-      console.log(`Announcement image uploaded: ${req.file.filename} (${req.file.mimetype}), original: ${req.file.originalname}, size: ${req.file.size}`);
-
-      // Ensure the file is copied to the public/uploads directory for web access
-      try {
-        const sourcePath = req.file.path;
-        const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'announcements');
-
-        // Create the destination directory if it doesn't exist
-        fs.mkdirSync(publicUploadsDir, { recursive: true });
-
-        const destPath = path.join(publicUploadsDir, req.file.filename);
-
-        // Copy the file to public/uploads/announcements
-        fs.copyFileSync(sourcePath, destPath);
-        console.log(`Copied file to ${destPath} for web access`);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error(`Error copying announcement image to public directory: ${err}`);
-        return res.status(500).json({ message: `Error copying announcement image: ${errorMessage}` });
-      }
-
-      // Create the file URL relative to the server
-      const fileUrl = `/uploads/announcements/${req.file.filename}`;
-
-      // Also ensure the file is properly saved to disk from memory storage if needed
-      try {
-        // Check if we need to manually save from buffer (in case of memory storage)
-        if (req.file.buffer) {
-          const destPath = path.join(process.cwd(), 'public', 'uploads', 'announcements', req.file.filename);
-          fs.writeFileSync(destPath, req.file.buffer);
-          console.log(`Wrote file from buffer to ${destPath}`);
-        }
-      } catch (writeErr) {
-        console.error(`Error writing file from buffer:`, writeErr);
-      }
-
-      res.json({ 
-        message: "Announcement image uploaded successfully", 
-        imageUrl: fileUrl
-      });
+  app.post("/api/upload/announcement-image", (req: Request, res: Response) => {
+     try {
+       res.status(500).json({ message: `This api/upload/announcement-image is deprecated` });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error uploading announcement image:', error);
@@ -1703,109 +1103,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // Property images upload with ID parameter (UUID-based system)
-  app.post("/api/upload/property-images/:id", finalUpload.array('images', 10), async (req: Request, res: Response) => {
-    console.log("==== UUID-BASED PROPERTY IMAGES UPLOAD ENDPOINT CALLED ====");
-    
-    try {
-      // Import UUID manager
-      const { ImageUuidManager } = await import('./utils/imageUuidManager');
-      
-      // Check if user is authenticated
-      if (!req.isAuthenticated()) {
-        console.error("Property images upload failed: User not authenticated");
-        return res.status(401).json({ message: "Authentication required to upload property images" });
-      }
-
-      const user = req.user as Express.User;
-      console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
-
-      // Get the property ID from route params
-      const propertyId = Number(req.params.id);
-      if (isNaN(propertyId) || propertyId <= 0) {
-        console.error(`Invalid property ID: ${req.params.id}`);
-        return res.status(400).json({ message: "Invalid property ID" });
-      }
-
-      console.log(`Received property images upload request for property ID ${propertyId}`);
-
-      // Get the property to check permissions
-      const property = await dbStorage.getPropertyById(propertyId);
-      if (!property) {
-        console.error(`Property not found: ${propertyId}`);
-        return res.status(404).json({ message: "Property not found" });
-      }
-
-      // Check permission
-      if (user.role === 'user' && property.createdBy !== user.id) {
-        console.error(`Permission denied: User ${user.username} attempted to upload images for property ${propertyId}`);
-        return res.status(403).json({ message: "You do not have permission to update this property" });
-      }
-
-      // Create backup before modification
-      const backupId = await ImageUuidManager.createPropertyBackup(propertyId);
-      console.log(`Created backup ${backupId} for property ${propertyId}`);
-
-      try {
-        // Process uploaded files
-        const files = req.files as Express.Multer.File[];
-        console.log(`Processing ${files.length} files`);
-
-        if (files.length === 0) {
-          return res.status(400).json({ message: "No files were uploaded" });
-        }
-
-        // Get existing image mappings
-        const existingMappings = await ImageUuidManager.getPropertyImageMappings(propertyId);
-        const startOrder = existingMappings.length;
-
-        // Create UUID mappings for new images
-        const newMappings = await ImageUuidManager.createImageMappings(files, propertyId, startOrder);
-        
-        // Save mappings to database
-        await ImageUuidManager.saveImageMappings(newMappings);
-
-        // Get all mappings for the property
-        const allMappings = await ImageUuidManager.getPropertyImageMappings(propertyId);
-        
-        // Generate image URLs for legacy compatibility
-        const imageUrls = ImageUuidManager.generateImageUrls(allMappings);
-
-        // Update property with new image URLs
-        const updatedProperty = await dbStorage.updateProperty(propertyId, {
-          images: imageUrls
-        });
-
-        if (!updatedProperty) {
-          // Restore from backup on failure
-          await ImageUuidManager.restoreFromBackup(backupId);
-          return res.status(500).json({ message: "Failed to update property with new images" });
-        }
-
-        console.log(`✅ Successfully added ${files.length} images to property ${propertyId} with UUID management`);
-        
-        return res.status(200).json({ 
-          message: "Images uploaded successfully with UUID tracking", 
-          property: updatedProperty,
-          imageMappings: newMappings,
-          backupId
-        });
-
-      } catch (uploadError) {
-        console.error('Error during UUID upload process:', uploadError);
-        
-        // Restore from backup on any failure
-        try {
-          await ImageUuidManager.restoreFromBackup(backupId);
-          console.log(`Restored property ${propertyId} from backup due to upload failure`);
-        } catch (restoreError) {
-          console.error('Failed to restore from backup:', restoreError);
-        }
-        
-        throw uploadError;
-      }
-
+  app.post("/api/upload/property-images/:id", (req: Request, res: Response) => {
+    try{
+         res.status(500).json({ message: `This api/upload/property-images/:id is deprecated` });
     } catch (error) {
-      console.error("Error processing UUID-based property images upload:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       return res.status(500).json({ 
         message: `Failed to upload property images: ${errorMessage}`,
@@ -1815,117 +1116,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // Legacy property images upload endpoint (without ID)
-  app.post("/api/upload/property-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+  app.post("/api/upload/property-images", (req: Request, res: Response) => {
     try {
-      // Check if user is authenticated
-      if (!req.isAuthenticated()) {
-        console.error("Property images upload failed: User not authenticated");
-        return res.status(401).json({ message: "Authentication required to upload property images" });
-      }
-
-      // Get the authenticated user from request
-      const user = req.user as Express.User;
-      console.log(`User attempting to upload property images: ${user.username} (Role: ${user.role})`);
-
-      console.log("Received property images upload request");
-
-      // Log session information to help debug session timeouts
-      if (req.session) {
-        console.log(`Session ID: ${req.sessionID}`);
-        console.log(`Session cookie maxAge: ${req.session.cookie.maxAge}`);
-        console.log(`Session expires: ${req.session.cookie.expires ? new Date(req.session.cookie.expires).toISOString() : 'N/A'}`);
-      }
-
-      if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
-        console.log("No property image files received");
-        return res.status(400).json({ message: "No files uploaded" });
-      }
-
-      console.log(`Received ${Array.isArray(req.files) ? req.files.length : 0} files for upload`);
-
-      // Use the Express.Multer.File type to correctly handle files
-      const files = Array.isArray(req.files) 
-        ? req.files as Express.Multer.File[]
-        : [req.files as unknown as Express.Multer.File];
-
-      // Ensure the property uploads directory exists with proper permissions
-      const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-      fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
-      console.log(`Ensured uploads directory exists: ${publicUploadsDir}`);
-
-      // A much simpler and more direct approach for saving files
-      const fileUrls: string[] = [];
-
-      for (const file of files) {
-        try {
-          console.log(`Processing file: ${file.originalname}, size: ${(file.size / 1024).toFixed(2)}KB`);
-
-          const destPath = path.join(publicUploadsDir, file.filename);
-
-          // Direct approach: if we have a buffer, write it to the destination
-          if (file.buffer) {
-            fs.writeFileSync(destPath, file.buffer);
-            console.log(`Wrote file directly from buffer to ${destPath}`);
-          } 
-          // If we have the file.path, copy it to the destination
-          else if (file.path && fs.existsSync(file.path)) {
-            fs.copyFileSync(file.path, destPath);
-            console.log(`Copied file from ${file.path} to ${destPath}`);
-          }
-          // Double-check that the file exists at the expected location
-          else if (!fs.existsSync(destPath)) {
-            console.error(`File not found at ${destPath}, trying to recover`);
-
-            // Check if the file exists in the temp upload location
-            const tempPath = path.join(process.cwd(), 'uploads', 'properties', file.filename);
-            if (fs.existsSync(tempPath)) {
-              fs.copyFileSync(tempPath, destPath);
-              console.log(`Recovered file from ${tempPath} to ${destPath}`);
-            } else {
-              console.error(`File not found in any location, cannot recover`);
-            }
-          }
-
-          // Verify file was successfully saved
-          if (fs.existsSync(destPath)) {
-            console.log(`File successfully saved at ${destPath}`);
-
-            // Get file stats to verify
-            const stats = fs.statSync(destPath);
-            console.log(`File size on disk: ${stats.size} bytes`);
-
-            // Add URL to results
-            const fileUrl = `/uploads/properties/${file.filename}`;
-            fileUrls.push(fileUrl);
-          } else {
-            console.error(`Failed to save file ${file.originalname}`);
-            throw new Error(`Failed to save file ${file.originalname}`);
-          }
-
-          // Touch the session to keep it alive
-          if (req.session) {
-            req.session.touch();
-          }
-        } catch (fileError) {
-          console.error(`Error processing file ${file.originalname}:`, fileError);
-          return res.status(500).json({ 
-            message: `Error processing file ${file.originalname}`,
-            error: fileError instanceof Error ? fileError.message : 'Unknown error'
-          });
-        }
-      }
-
-      if (fileUrls.length === 0) {
-        return res.status(500).json({ message: "No files were successfully processed" });
-      }
-
-      console.log(`Successfully processed ${fileUrls.length} images. Returning URLs to client.`);
-
-      res.json({ 
-        message: "Property images uploaded successfully", 
-        imageUrls: fileUrls,
-        count: fileUrls.length
-      });
+       res.status(500).json({ message: `This  api/upload/property-images is deprecated` });
     } catch (error) {
       console.error('Error uploading property images:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -1934,113 +1127,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // Create a completely new property image upload endpoint with enhanced error handling
-  app.post("/api/upload/property-images-new", async (req: Request, res: Response) => {
-    console.log("==== NEW PROPERTY IMAGE UPLOAD ENDPOINT CALLED ====");
-
+  app.post("/api/upload/property-images-new",  (req: Request, res: Response) => {
     try {
-      // Check if user is authenticated
-      if (!req.isAuthenticated()) {
-        console.error("Property images upload failed: User not authenticated");
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const user = req.user as Express.User;
-      console.log(`User ${user.username} (${user.role}) attempting property image upload with new endpoint`);
-
-      // Create a new multer instance with more generous limits
-      const singleUpload = multer({
-        storage: multer.diskStorage({
-          destination: function(req, file, cb) {
-            // Ensure the directory exists
-            const dir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-            console.log(`Ensuring directory exists: ${dir}`);
-            fs.mkdirSync(dir, { recursive: true });
-            // Set permissions to ensure writability
-            try {
-              fs.chmodSync(dir, 0o777);
-              console.log(`Updated permissions for ${dir}`);
-            } catch (err) {
-              console.error(`Failed to update permissions for ${dir}:`, err);
-            }
-            cb(null, dir);
-          },
-          filename: function(req, file, cb) {
-            // Create a safe filename with timestamp
-            const timestamp = Date.now();
-            const fileExt = path.extname(file.originalname) || '.jpg';
-            const baseName = path.basename(file.originalname, fileExt)
-              .replace(/[^a-zA-Z0-9]/g, '_')
-              .substring(0, 40); // Limit filename length
-            const finalName = `${baseName}_${timestamp}${fileExt}`;
-            console.log(`Generated filename: ${finalName} for original: ${file.originalname}`);
-            cb(null, finalName);
-          }
-        }),
-        limits: { 
-          fileSize: 25 * 1024 * 1024, // 25MB limit per file
-          files: 20 // Allow up to 20 files
-        },
-        fileFilter: (req, file, cb) => {
-          // Accept only common image formats
-          const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
-          if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-          } else {
-            console.log(`Rejected file ${file.originalname} with mime type ${file.mimetype}`);
-            cb(null, false);
-            // Don't throw error here, just skip this file
-          }
-        }
-      }).array('images', 20); // Process up to 20 files
-
-      // Handle the upload using a promise
-      const uploadPromise = new Promise<{fileUrls: string[], count: number}>((resolve, reject) => {
-        singleUpload(req, res, function(err) {
-          if (err) {
-            console.error('Multer upload error:', err);
-            return reject(err);
-          }
-
-          console.log("Multer upload processing complete");
-
-          // Check if files exist
-          if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
-            console.error('No files in request');
-            return reject(new Error("No files uploaded"));
-          }
-
-          // Safely handle the files array - typescript doesn't fully recognize multer's type here
-          const uploadedFiles = req.files as Express.Multer.File[];
-          console.log(`Processing ${uploadedFiles.length} uploaded files`);
-
-          try {
-            const fileUrls = uploadedFiles.map(file => {
-              console.log(`File processed: ${file.originalname} -> ${file.filename} (${Math.round(file.size/1024)}KB)`);
-              return `/uploads/properties/${file.filename}`;
-            });
-
-            // Return success response
-            console.log(`Upload complete. Returning ${fileUrls.length} URLs`);
-            resolve({
-              fileUrls: fileUrls,
-              count: fileUrls.length
-            });
-          } catch (processError) {
-            console.error('Error processing files after upload:', processError);
-            reject(processError);
-          }
-        });
-      });
-
-      // Wait for upload to complete and send response
-      const result = await uploadPromise;
-      return res.status(200).json({
-        success: true,
-        message: "Images uploaded successfully",
-        imageUrls: result.fileUrls,
-        count: result.count
-      });
-
+      res.status(500).json({ message: `This api/upload/property-images-new is deprecated` });
     } catch (error) {
       console.error('Error in property images upload endpoint:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -2053,178 +1142,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // Enhanced iOS upload endpoint with better error handling and compatibility
-  app.post("/api/upload/ios", async (req: Request, res: Response) => {
-    console.log("============================================================");
-    console.log("==== iOS SPECIFIC UPLOAD ENDPOINT CALLED ====");
-    console.log("User agent:", req.headers['user-agent']);
-    console.log("Content type:", req.headers['content-type']);
-    console.log("Request headers:", req.headers);
-    console.log("============================================================");
-
-    // Set appropriate headers for iOS
-    res.set({
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    });
-    
+  app.post("/api/upload/ios",  (req: Request, res: Response) => {
     try {
-      // Enhanced authentication check with diagnostic info
-      if (!req.isAuthenticated()) {
-        console.error("iOS upload: Authentication failed - user is not logged in");
-        console.log("iOS auth debug:", {
-          session: req.session ? "Session exists" : "No session",
-          cookies: req.headers.cookie ? "Has cookies" : "No cookies",
-          user: req.user ? "User object exists" : "No user object"
-        });
-        
-        return res.status(401).json({ 
-          status: "error",
-          code: "AUTH_REQUIRED",
-          message: "Authentication required. Please log in first.",
-          debug: {
-            timestamp: new Date().toISOString(),
-            authPresent: false,
-            sessionExists: !!req.session
-          }
-        });
-      }
-      
-      // Log successful authentication
-      console.log("iOS upload: User authenticated successfully", {
-        userId: req.user.id,
-        username: req.user.username
-      });
-      
-      // Get the property ID from any possible source
-      // Priority: Headers > Query Params > Form Data
-      let propertyId: number | null = null;
-      
-      // Check custom header first (most reliable)
-      if (req.headers['x-property-id']) {
-        propertyId = parseInt(req.headers['x-property-id'] as string);
-        console.log(`iOS upload: Found propertyId ${propertyId} in custom header`);
-      }
-      
-      // Try query parameters if not in header
-      if (propertyId === null && req.query.propertyId) {
-        propertyId = parseInt(req.query.propertyId as string);
-        console.log(`iOS upload: Found propertyId ${propertyId} in query parameter`);
-      }
-      
-      // Setup multer specifically for iOS
-      const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-      fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
-      
-      const diskStorage = multer.diskStorage({
-        destination: function (req, file, cb) {
-          // Ensure directory exists with proper permissions
-          if (!fs.existsSync(publicUploadsDir)) {
-            fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
-          }
-          console.log(`iOS upload: Setting destination for ${file.originalname} to ${publicUploadsDir}`);
-          cb(null, publicUploadsDir);
-        },
-        filename: function (req, file, cb) {
-          // More robust iOS friendly file naming
-          const timestamp = Date.now();
-          const randomString = Math.random().toString(36).substring(2, 15);
-          const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-          const safeFilename = `ios-${timestamp}-${randomString}${ext}`;
-          console.log(`iOS upload: Generated filename: ${safeFilename} for ${file.originalname}`);
-          cb(null, safeFilename);
-        }
-      });
-
-      // Configure multer with optimal settings for iOS
-      const iosUpload = multer({
-        storage: diskStorage,
-        limits: { 
-          fileSize: 25 * 1024 * 1024, // 25MB limit
-          files: 20 // Allow more files
-        },
-        fileFilter: (req, file, cb) => {
-          // Accept all image types
-          if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-          } else {
-            cb(null, false);
-          }
-        }
-      }).array('files', 20);
-      
-      // Process the upload with iOS specific handling
-      iosUpload(req, res, async function(err) {
-        if (err) {
-          console.error("iOS upload error:", err);
-          if (err instanceof multer.MulterError) {
-            if (err.code === 'LIMIT_FILE_SIZE') {
-              return res.status(413).json({ message: "File too large. Maximum size is 15MB." });
-            } else if (err.code === 'LIMIT_FILE_COUNT') {
-              return res.status(413).json({ message: "Too many files. Maximum is 10 files." });
-            }
-          }
-          return res.status(500).json({ message: "Upload failed: " + err.message });
-        }
-        
-        console.log("iOS upload: Files processed, checking file uploads...");
-        
-        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-          console.error("iOS upload: No files were uploaded");
-          return res.status(400).json({ message: "No files were uploaded" });
-        }
-        
-        console.log(`iOS upload: Received ${req.files.length} files`);
-        
-        try {
-          // Get the property from the database
-          const property = await dbStorage.getPropertyById(propertyId);
-          
-          if (!property) {
-            console.error(`iOS upload: Property with ID ${propertyId} not found`);
-            return res.status(404).json({ 
-              status: "error",
-              code: "PROPERTY_NOT_FOUND",
-              message: `Property with ID ${propertyId} not found`
-            });
-          }
-          
-          console.log(`iOS upload: Found property: ${property.title}`);
-          
-          // Get the current images array or initialize empty
-          const currentImages = Array.isArray(property.images) ? property.images : [];
-          
-          // Add new image paths
-          const newImagePaths = req.files.map(file => `/uploads/properties/${file.filename}`);
-          
-          console.log(`iOS upload: Adding ${newImagePaths.length} new images to ${currentImages.length} existing images`);
-          
-          // Update property with new images (using dbStorage)
-          const updatedImages = [...currentImages, ...newImagePaths];
-          
-          // Save the updated property
-          const updatedProperty = await dbStorage.updateProperty(propertyId, { 
-            images: updatedImages 
-          });
-          
-          console.log(`iOS upload: Successfully added ${newImagePaths.length} images to property ${propertyId}`);
-          
-          // Return success response with image data
-          return res.status(200).json({
-            message: "Images uploaded successfully",
-            count: newImagePaths.length,
-            imageUrls: newImagePaths,
-            property: {
-              id: property.id,
-              title: property.title,
-              totalImageCount: updatedImages.length
-            }
-          });
-        } catch (error) {
-          console.error("iOS upload: Error updating property with images:", error);
-          return res.status(500).json({ message: "Failed to update property with images" });
-        }
-      });
+       res.status(500).json({ message: `This api/upload/ios is deprecated` });
     } catch (error) {
       console.error("iOS upload: Unexpected error:", error);
       return res.status(500).json({ message: "An unexpected error occurred" });
@@ -2232,261 +1152,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // Ultra-simplified Windows upload endpoint for maximum compatibility
-  app.post("/api/upload/windows", async (req: Request, res: Response) => {
-    console.log("============================================================");
-    console.log("==== SIMPLIFIED WINDOWS UPLOAD ENDPOINT CALLED ====");
-    console.log("User agent:", req.headers['user-agent']);
-    console.log("Content type:", req.headers['content-type']);
-    console.log("Request headers:", req.headers);
-    console.log("============================================================");
-    
+  app.post("/api/upload/windows", (req: Request, res: Response) => {
     try {
-      // Authentication check
-      if (!req.isAuthenticated()) {
-        console.error("Authentication failed");
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      // Get the property ID from any possible source
-      // Priority: Headers > Query Params > Form Data
-      let propertyId: number | null = null;
-      
-      // Check custom header first (most reliable)
-      if (req.headers['x-property-id']) {
-        propertyId = parseInt(req.headers['x-property-id'] as string);
-        console.log(`Found propertyId ${propertyId} in custom header`);
-      }
-      
-      // Try query parameters if not in header
-      if (propertyId === null && req.query.propertyId) {
-        propertyId = parseInt(req.query.propertyId as string);
-        console.log(`Found propertyId ${propertyId} in query parameter`);
-      }
-      
-      // Setup multer for Windows
-      const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-      fs.mkdirSync(publicUploadsDir, { recursive: true, mode: 0o777 });
-      
-      const diskStorage = multer.diskStorage({
-        destination: function (req, file, cb) {
-          console.log(`Setting destination for ${file.originalname} to ${publicUploadsDir}`);
-          cb(null, publicUploadsDir);
-        },
-        filename: function (req, file, cb) {
-          // Maximum simplicity in file naming
-          const timestamp = Date.now();
-          const safeFilename = `win-${timestamp}-${Math.floor(Math.random() * 1000000)}.jpg`;
-          console.log(`Generated filename: ${safeFilename} for ${file.originalname}`);
-          cb(null, safeFilename);
-        }
-      });
-      
-      // Create multer instance with extremely simple config for maximum cross-platform compatibility
-      const simpleUpload = multer({
-        storage: diskStorage,
-        limits: { 
-          fileSize: 25 * 1024 * 1024, // 25MB limit
-          files: 10 // Max 10 files
-        }
-      }).array('files', 10); // Accept 'files' field name to match our universal uploader HTML form
-      
-      // Process the upload with enhanced logging for cross-platform compatibility
-      simpleUpload(req, res, async function(err) {
-        // Extended logging for better debugging
-        console.log("======= UNIVERSAL UPLOADER PROCESSING =======");
-        console.log("User agent:", req.headers['user-agent']);
-        console.log("Content type:", req.get('Content-Type'));
-        console.log("Request body after multer:", req.body);
-        console.log("Files array:", Array.isArray(req.files) ? `Yes (${req.files.length} files)` : "No");
-        
-        try {
-          // Try to safely log the files
-          if (req.files && Array.isArray(req.files)) {
-            req.files.forEach((file, index) => {
-              console.log(`File ${index + 1}:`, {
-                fieldname: file.fieldname,
-                originalname: file.originalname,
-                encoding: file.encoding,
-                mimetype: file.mimetype,
-                size: `${Math.round(file.size/1024)} KB`,
-                filename: file.filename
-              });
-            });
-          } else {
-            console.log("No files array available");
-          }
-        } catch (logError) {
-          console.error("Error while logging files:", logError);
-        }
-        console.log("==========================================");
-        
-        // Check for multer errors
-        if (err) {
-          console.error('Multer upload error:', err);
-          return res.status(500).json({ message: `Upload processing error: ${err.message}` });
-        }
-        
-        // Get propertyId from form if not found earlier
-        if (propertyId === null && req.body && req.body.propertyId) {
-          const formId = parseInt(req.body.propertyId);
-          if (!isNaN(formId) && formId > 0) {
-            propertyId = formId;
-            console.log(`Found propertyId ${propertyId} in form data`);
-          }
-        }
-        
-        // Final validation of propertyId
-        if (propertyId === null || isNaN(propertyId) || propertyId <= 0) {
-          console.error(`Invalid or missing property ID: ${propertyId}`);
-          return res.status(400).json({ 
-            message: "Invalid or missing property ID. Please ensure the property ID is provided.",
-            receivedId: propertyId,
-            queryParams: req.query,
-            bodyKeys: Object.keys(req.body || {})
-          });
-        }
-        
-        // Check for files
-        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-          console.error('No files received');
-          return res.status(400).json({ message: "No files were received" });
-        }
-        
-        const files = req.files as Express.Multer.File[];
-        console.log(`Processing ${files.length} files for property ID ${propertyId}`);
-        
-        // Process files with maximum reliability
-        const fileUrls: string[] = [];
-        const errors: string[] = [];
-        
-        for (const file of files) {
-          try {
-            console.log(`Processing file: ${file.originalname || 'unnamed'}`);
-            
-            const filePath = file.path;
-            if (!fs.existsSync(filePath)) {
-              console.error(`File missing at ${filePath}`);
-              errors.push(`File ${file.originalname} was not saved correctly`);
-              continue;
-            }
-            
-            // Check file size as validation
-            const stats = fs.statSync(filePath);
-            if (stats.size === 0) {
-              console.error(`File at ${filePath} is empty`);
-              errors.push(`File ${file.originalname} is empty`);
-              continue;
-            }
-            
-            console.log(`Validated file: ${file.filename} (${stats.size} bytes)`);
-            
-            // Set liberal permissions
-            fs.chmodSync(filePath, 0o666);
-            
-            // Add to successful files
-            const fileUrl = `/uploads/properties/${file.filename}`;
-            fileUrls.push(fileUrl);
-          } catch (fileError) {
-            console.error(`Error processing file ${file.originalname}:`, fileError);
-            errors.push(`Error processing ${file.originalname}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`);
-          }
-        }
-        
-        // Return early if no files were processed
-        if (fileUrls.length === 0) {
-          console.error(`No files were successfully processed, errors: ${errors.join(', ')}`);
-          return res.status(500).json({ 
-            message: "Failed to process files",
-            errors
-          });
-        }
-        
-        // Update the property's images
-        try {
-          // Get the property
-          const property = await dbStorage.getPropertyById(propertyId);
-          
-          if (!property) {
-            console.error(`Property with ID ${propertyId} not found`);
-            return res.status(404).json({ 
-              message: "Property not found", 
-              propertyId,
-              imageUrls: fileUrls,
-              count: fileUrls.length,
-              note: "Images were uploaded but could not be associated with a property"
-            });
-          }
-          
-          // Combine existing and new images
-          const existingImages = Array.isArray(property.images) ? property.images : [];
-          console.log(`Property has ${existingImages.length} existing images + ${fileUrls.length} new images`);
-          
-          // Deep check to avoid exact duplicates and similar paths
-          const uniqueUrls = new Set<string>();
-          
-          // First add existing images, with de-duplication
-          for (const img of existingImages) {
-            if (typeof img === 'string' && img.trim() !== '') {
-              uniqueUrls.add(img);
-            }
-          }
-          
-          // Then add new images, avoiding duplicates
-          for (const newImg of fileUrls) {
-            if (typeof newImg === 'string' && newImg.trim() !== '') {
-              // Check if any existing image has the same filename component
-              const newImgBasename = newImg.split('/').pop();
-              let isDuplicate = false;
-              
-              // Skip this loop for images that don't have a valid filename
-              if (!newImgBasename) continue;
-              
-              // Check against existing images to prevent duplication
-              for (const existingImg of uniqueUrls) {
-                const existingBasename = existingImg.split('/').pop();
-                if (existingBasename === newImgBasename) {
-                  isDuplicate = true;
-                  console.log(`Found duplicate image: ${newImg} matches ${existingImg}`);
-                  break;
-                }
-              }
-              
-              if (!isDuplicate) {
-                uniqueUrls.add(newImg);
-              }
-            }
-          }
-          
-          const allImages = Array.from(uniqueUrls);
-          
-          // Log what we're doing
-          console.log(`Updating property ${propertyId} with ${allImages.length} unique images out of ${existingImages.length} existing and ${fileUrls.length} new`);
-          
-          // Update property with deduplicated images
-          const updatedProperty = await dbStorage.updateProperty(propertyId, {
-            images: allImages
-          });
-          
-          return res.status(200).json({
-            message: "Upload successful",
-            success: true,
-            imageUrls: fileUrls,
-            count: fileUrls.length,
-            property: updatedProperty
-          });
-        } catch (dbError) {
-          console.error('Error updating property:', dbError);
-          
-          // Still return partial success since files were uploaded
-          return res.status(207).json({
-            message: "Images uploaded but property update failed",
-            success: false,
-            imageUrls: fileUrls,
-            count: fileUrls.length,
-            error: dbError instanceof Error ? dbError.message : 'Unknown database error'
-          });
-        }
-      });
+      res.status(500).json({ message: `This api/upload/windows is deprecated` });
     } catch (error) {
       console.error('Unexpected error in Windows upload endpoint:', error);
       return res.status(500).json({ 
@@ -2497,303 +1165,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
   
   // Simplified iOS-optimized upload endpoint - NO AUTH REQUIRED
-  app.post("/api/upload/property-images-simple", finalUpload.array('images', 10), async (req: Request, res: Response) => {
-    console.log("==== iOS UPLOAD ENDPOINT CALLED ====");
-    console.log("User agent:", req.headers['user-agent']);
-    
+  app.post("/api/upload/property-images-simple",  (req: Request, res: Response) => {
     try {
-      // Completely bypassing auth check to ensure iOS uploads always work
-      console.log("Authentication check disabled for iOS uploads");
-
-      // Get property ID from request with minimal overhead
-      let propertyId: number;
-      
-      if (req.body && req.body.propertyId) {
-        propertyId = parseInt(req.body.propertyId);
-      } else if (req.query && req.query.propertyId) {
-        propertyId = parseInt(req.query.propertyId as string);
-      } else {
-        const propIdHeader = req.get('X-Property-Id');
-        if (propIdHeader) {
-          propertyId = parseInt(propIdHeader);
-        } else {
-          console.error("No property ID found in request");
-          return res.status(400).json({ message: "Missing property ID" });
-        }
-      }
-      
-      if (isNaN(propertyId) || propertyId <= 0) {
-        console.error(`Invalid property ID: ${propertyId}`);
-        return res.status(400).json({ message: "Invalid property ID" });
-      }
-      
-      console.log(`Processing images for property ID: ${propertyId}`);
-
-      // Thoroughly check for files with enhanced debugging
-      if (!req.files) {
-        console.error("req.files is undefined or null");
-        return res.status(400).json({ message: "No files received in request" });
-      }
-      
-      if (Array.isArray(req.files) && req.files.length === 0) {
-        console.error("req.files is an empty array");
-        return res.status(400).json({ message: "No files uploaded (empty array)" });
-      }
-      
-      // Log detailed file info regardless of structure
-      if (Array.isArray(req.files)) {
-        console.log(`Received ${req.files.length} files as array`);
-      } else {
-        console.log("Received files as non-array object");
-        console.log("Files object keys:", Object.keys(req.files));
-      }
-
-      // Enhanced handling for multer file types with better error recovery
-      let files: Express.Multer.File[] = [];
-      
-      try {
-        if (Array.isArray(req.files)) {
-          files = req.files as Express.Multer.File[];
-        } else {
-          // Handle potential object form (from Windows/non-standard clients)
-          const fileObj = req.files as Record<string, Express.Multer.File[]>;
-          // Try to extract files from potential nested structure
-          if (fileObj.images && Array.isArray(fileObj.images)) {
-            files = fileObj.images;
-          } else {
-            // Last resort - try to collect all file objects
-            Object.values(fileObj).forEach(fieldFiles => {
-              if (Array.isArray(fieldFiles)) {
-                files.push(...fieldFiles);
-              }
-            });
-          }
-        }
-      } catch (fileParseError) {
-        console.error("Error parsing file structure:", fileParseError);
-        // Try one more desperate attempt to save the files
-        files = Array.isArray(req.files) 
-          ? req.files 
-          : [req.files as unknown as Express.Multer.File];
-      }
-      
-      console.log(`Will process ${files.length} files after structure normalization`);
-
-      // Ensure BOTH upload directories exist with proper permissions
-      const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-      const tempUploadsDir = path.join(process.cwd(), 'uploads', 'properties');
-      
-      [publicUploadsDir, tempUploadsDir].forEach(dir => {
-        try {
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true, mode: 0o777 });
-            console.log(`Created directory: ${dir} with full permissions`);
-          } else {
-            // Update permissions on existing directory
-            fs.chmodSync(dir, 0o777);
-            console.log(`Updated permissions for existing directory: ${dir}`);
-          }
-        } catch (dirError) {
-          console.error(`Error creating/updating directory ${dir}:`, dirError);
-        }
-      });
-
-      // Process the files with enhanced error handling
-      const fileUrls: string[] = [];
-
-      for (const file of files) {
-        try {
-          console.log(`Processing file: ${file.originalname}, size: ${(file.size / 1024).toFixed(2)}KB`);
-          console.log(`File object properties:`, Object.keys(file));
-          
-          // Enhanced Windows compatibility - ensure filename is set
-          if (!file.filename) {
-            // Generate a filename if missing (common on Windows)
-            const timestamp = Date.now();
-            const random = Math.floor(Math.random() * 1000000000);
-            const originalExt = path.extname(file.originalname) || '.jpg';
-            file.filename = `images-${timestamp}-${random}${originalExt}`;
-            console.log(`Generated filename for Windows upload: ${file.filename}`);
-          }
-
-          const destPath = path.join(publicUploadsDir, file.filename);
-          
-          // Multiple strategies to ensure file is saved correctly
-          let fileSaved = false;
-          
-          // Strategy 1: Direct buffer writing (works on most platforms)
-          if (file.buffer && file.buffer.length > 0) {
-            try {
-              fs.writeFileSync(destPath, file.buffer);
-              console.log(`Strategy 1: Wrote file directly from buffer to ${destPath}`);
-              fileSaved = true;
-            } catch (bufferWriteError) {
-              console.error(`Strategy 1 failed:`, bufferWriteError);
-            }
-          }
-          
-          // Strategy 2: File path copying (works on standard setups)
-          if (!fileSaved && file.path && fs.existsSync(file.path)) {
-            try {
-              fs.copyFileSync(file.path, destPath);
-              console.log(`Strategy 2: Copied file from ${file.path} to ${destPath}`);
-              fileSaved = true;
-            } catch (copyError) {
-              console.error(`Strategy 2 failed:`, copyError);
-            }
-          }
-          
-          // Strategy 3: Recovery from temp location
-          if (!fileSaved) {
-            const tempPath = path.join(tempUploadsDir, file.filename);
-            if (fs.existsSync(tempPath)) {
-              try {
-                fs.copyFileSync(tempPath, destPath);
-                console.log(`Strategy 3: Recovered file from ${tempPath} to ${destPath}`);
-                fileSaved = true;
-              } catch (recoveryError) {
-                console.error(`Strategy 3 failed:`, recoveryError);
-              }
-            }
-          }
-          
-          // Strategy 4: Direct streaming for Windows (for some older Windows browsers)
-          if (!fileSaved && file.stream) {
-            try {
-              const writeStream = fs.createWriteStream(destPath);
-              await new Promise<void>((resolve, reject) => {
-                file.stream.pipe(writeStream)
-                  .on('finish', () => {
-                    console.log(`Strategy 4: Streamed file to ${destPath}`);
-                    resolve();
-                  })
-                  .on('error', (err) => {
-                    console.error(`Strategy 4 streaming error:`, err);
-                    reject(err);
-                  });
-              });
-              fileSaved = true;
-            } catch (streamError) {
-              console.error(`Strategy 4 failed:`, streamError);
-            }
-          }
-
-          // Verify file was successfully saved
-          if (fs.existsSync(destPath)) {
-            const stats = fs.statSync(destPath);
-            if (stats.size > 0) {
-              console.log(`File successfully saved at ${destPath} (${stats.size} bytes)`);
-              
-              // Fix permissions to ensure readability
-              fs.chmodSync(destPath, 0o666);
-              
-              // Add URL to results
-              const fileUrl = `/uploads/properties/${file.filename}`;
-              fileUrls.push(fileUrl);
-            } else {
-              console.error(`File saved but has zero size: ${destPath}`);
-              throw new Error(`File saved but has zero size: ${file.originalname}`);
-            }
-          } else {
-            console.error(`Failed to save file ${file.originalname} to ${destPath}`);
-            throw new Error(`Failed to save file ${file.originalname}`);
-          }
-
-          // Touch the session to keep it alive
-          if (req.session) {
-            req.session.touch();
-          }
-        } catch (fileError) {
-          console.error(`Error processing file ${file.originalname || 'unknown'}:`, fileError);
-          // Continue processing other files instead of failing the entire request
-          console.log("Continuing with other files despite error");
-        }
-      }
-
-      if (fileUrls.length === 0) {
-        return res.status(500).json({ message: "No files were successfully processed" });
-      }
-
-      // Now update the property with the new images
-      try {
-        console.log(`Fetching property with ID ${propertyId} from database`);
-        const property = await dbStorage.getPropertyById(propertyId);
-        
-        if (!property) {
-          console.error(`Property not found: ${propertyId}`);
-          return res.status(404).json({ message: "Property not found" });
-        }
-        
-        console.log(`Found property: ${property.title}`);
-
-        // Check permission - owner and admin can update any property, regular users only their own
-        if (user.role === 'user' && property.createdBy !== user.id) {
-          console.error(`Permission denied: User ${user.username} attempted to upload images for property ${propertyId} created by user ${property.createdBy}`);
-          return res.status(403).json({ message: "You do not have permission to update this property" });
-        }
-
-        // Get existing images from the property
-        const existingImages = Array.isArray(property.images) ? property.images : [];
-        console.log("Existing images:", JSON.stringify(existingImages));
-        console.log("Existing images length:", existingImages.length);
-        console.log("Existing images type:", typeof property.images);
-        
-        // Debug the actual property.images field
-        console.log("Raw property.images value:", property.images);
-        
-        // Log property info for debugging
-        console.log("Property info:", {
-          id: property.id,
-          title: property.title,
-          imagesField: property.images ? 'present' : 'missing',
-          imagesType: typeof property.images,
-          imagesIsArray: Array.isArray(property.images),
-          imagesLength: Array.isArray(property.images) ? property.images.length : 'not an array'
-        });
-
-        // Ensure fileUrls is properly formatted
-        console.log("New image URLs:", JSON.stringify(fileUrls));
-        console.log("New images length:", fileUrls.length);
-
-        // Combine existing images with new ones
-        const updatedImages = [...existingImages, ...fileUrls];
-        console.log(`Combining ${existingImages.length} existing images with ${fileUrls.length} new images`);
-        console.log(`Final image count should be ${updatedImages.length} images`);
-        console.log("Updated images array:", JSON.stringify(updatedImages));
-
-        // Update the property with the new images
-        console.log(`Calling updateProperty for ID ${propertyId} with ${updatedImages.length} images`);
-        
-        // Only update the images field, not references or other fields
-        const updatedProperty = await dbStorage.updateProperty(propertyId, {
-          images: updatedImages
-        });
-
-        if (!updatedProperty) {
-          console.error(`Failed to update property ${propertyId} with new images`);
-          return res.status(500).json({ message: "Failed to update property with new images" });
-        }
-
-        console.log(`Successfully added ${fileUrls.length} images to property ${propertyId}`);
-        console.log(`Updated property now has ${updatedProperty.images ? updatedProperty.images.length : 0} images`);
-        
-        return res.status(200).json({
-          message: "Property images uploaded successfully", 
-          imageUrls: fileUrls,
-          count: fileUrls.length,
-          property: updatedProperty
-        });
-      } catch (dbError) {
-        console.error(`Error updating property ${propertyId} with new images:`, dbError);
-        if (dbError instanceof Error) {
-          console.error(`Error name: ${dbError.name}, message: ${dbError.message}`);
-          console.error(`Error stack: ${dbError.stack}`);
-        }
-        return res.status(500).json({ 
-          message: "Error updating property with new images",
-          error: dbError instanceof Error ? dbError.message : 'Unknown error'
-        });
-      }
+       res.status(500).json({ message: `This  api/upload/property-images-simple is deprecated` });
     } catch (error) {
       console.error('Error in cross-platform upload endpoint:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -2802,36 +1176,33 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // EMERGENCY: Property 60 specific upload endpoint
-  app.post("/api/property-60-upload", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+  app.post("/api/property-60-upload",  (req: Request, res: Response) => {
     try {
-      console.log("=== EMERGENCY UPLOAD FOR PROPERTY 60 ===");
-      
-      const files = req.files as Express.Multer.File[];
-      if (!files || files.length === 0) {
-        return res.status(400).json({ success: false, message: "No files uploaded" });
-      }
+     res.status(500).json({ message: `This api/property-60-upload is deprecated` });
 
-      console.log(`Processing ${files.length} files for property 60`);
+    } catch (error) {
+      console.error('Property 60 upload error:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: "Upload failed", 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 
-      // Create image URLs
-      const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
-      
-      // Get property 60
-      const property = await dbStorage.getPropertyById(60);
-      if (!property) {
-        return res.status(404).json({ success: false, message: "Property 60 not found" });
-      }
+  // FIXED: Simple property image upload endpoint
+  app.post("/api/properties/:id/upload-images",  (req: Request, res: Response) => {
+    try {
+       res.status(500).json({ message: `This api/properties/:id/upload-images is deprecated` });
 
-      // Get current images safely
-      let currentImages: string[] = [];
-      try {
-        if (Array.isArray(property.images)) {
-          currentImages = property.images;
-        } else if (typeof property.images === 'string') {
-          currentImages = JSON.parse(property.images);
-        }
-      } catch (e) {
-        currentImages = [];
+    } catch (error) {
+      console.error('Fixed upload error:', error);
+      return res.status(500).json({ 
+        message: "Upload failed", 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 
   // UUID Image Management Routes
   
@@ -3104,488 +1475,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-      }
-
-      // Add new images
-      const updatedImages = [...currentImages, ...imageUrls];
-      
-      // Update property 60
-      await dbStorage.updateProperty(60, { images: updatedImages });
-
-      console.log(`Successfully updated property 60 with ${files.length} new images`);
-
-      return res.json({
-        success: true,
-        message: "Images uploaded successfully to property 60",
-        imageUrls: imageUrls,
-        totalImages: updatedImages.length
-      });
-
-    } catch (error) {
-      console.error('Property 60 upload error:', error);
-      return res.status(500).json({ 
-        success: false,
-        message: "Upload failed", 
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // FIXED: Simple property image upload endpoint
-  app.post("/api/properties/:id/upload-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
-    try {
-      console.log(`=== FIXED UPLOAD for Property ID ${req.params.id} ===`);
-      
-      // Check authentication
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const propertyId = parseInt(req.params.id);
-      if (isNaN(propertyId)) {
-        return res.status(400).json({ message: "Invalid property ID" });
-      }
-
-      const files = req.files as Express.Multer.File[];
-      if (!files || files.length === 0) {
-        return res.status(400).json({ message: "No files uploaded" });
-      }
-
-      console.log(`Processing ${files.length} files for property ${propertyId}`);
-
-      // Create image URLs
-      const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
-      
-      // Get current property
-      const property = await dbStorage.getPropertyById(propertyId);
-      if (!property) {
-        return res.status(404).json({ message: "Property not found" });
-      }
-
-      // Get current images safely
-      let currentImages: string[] = [];
-      try {
-        if (Array.isArray(property.images)) {
-          currentImages = property.images;
-        } else if (typeof property.images === 'string') {
-          currentImages = JSON.parse(property.images);
-        }
-      } catch (e) {
-        currentImages = [];
-      }
-
-      // Add new images
-      const updatedImages = [...currentImages, ...imageUrls];
-      
-      // Update property
-      await dbStorage.updateProperty(propertyId, { images: updatedImages });
-
-      console.log(`Successfully updated property ${propertyId} with ${files.length} new images`);
-
-      return res.json({
-        success: true,
-        message: "Images uploaded successfully",
-        imageUrls: imageUrls,
-        totalImages: updatedImages.length
-      });
-
-    } catch (error) {
-      console.error('Fixed upload error:', error);
-      return res.status(500).json({ 
-        message: "Upload failed", 
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // Primary uploads serving - from public/uploads directory
-  app.use('/uploads', (req, res, next) => {
-    // Logging to track static file requests for debugging
-    console.log(`Static file request: ${req.url}`);
-
-    // Set cache headers
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
-    next();
-  }, express.static(path.join(process.cwd(), 'public', 'uploads')));
-
-  // Secondary uploads serving - fallback for direct uploads directory
-  app.use('/uploads', (req, res, next) => {
-    // Only reach here if the file wasn't found in public/uploads
-    console.log(`Fallback static file request: ${req.url}`);
-
-    // Set cache headers
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
-    next();
-  }, express.static(path.join(process.cwd(), 'uploads')));
-
-  // Special bypass endpoint - NO AUTHENTICATION, write directly to disk
-  app.post('/api/upload/bypass', async (req: Request, res: Response) => {
-    try {
-      console.log("==== BYPASS UPLOAD ENDPOINT ACCESSED ====");
-      console.log("Content-Type:", req.headers['content-type']);
-      console.log("Accept:", req.headers['accept']);
-
-      // Create upload directory if it doesn't exist
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
-        console.log(`Created upload directory: ${uploadDir}`);
-      }
-
-      // Force directory permissions
-      fs.chmodSync(uploadDir, 0o777);
-
-      // Create a basic upload handler with minimal options
-      const basicUpload = multer({
-        dest: uploadDir,
-        limits: { fileSize: 25 * 1024 * 1024 } // 25MB
-      }).array('files', 10);
-
-      // Process the upload
-      basicUpload(req, res, function(err) {
-        if (err) {
-          console.error("Basic upload error:", err);
-
-          // Check if this is a direct form submission
-          const wantsHtml = req.headers['accept']?.includes('text/html');
-
-          if (wantsHtml) {
-            // Check referer to determine which uploader was used
-            const referer = req.headers['referer'] || '';
-            let backLink = '/basic-uploader.html';
-
-            if (referer.includes('windows-uploader.html')) {
-              backLink = '/windows-uploader.html';
-            } else if (referer.includes('cross-platform-uploader.html')) {
-              backLink = '/cross-platform-uploader.html';
-            }
-
-            return res.status(500).send(`
-              <html><head><title>Upload Error</title>
-              <style>
-                body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
-                .error { color: red; background: #ffebee; padding: 15px; border-radius: 4px; }
-                a { color: #964B00; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-                h1 { color: #964B00; }
-              </style>
-              </head><body>
-                <h1>Upload Error</h1>
-                <p class="error">${err.message}</p>
-                <p><a href="${backLink}">← Back to uploader</a></p>
-              </body></html>
-            `);
-          } else {
-            return res.status(500).json({
-              success: false,
-              message: "Upload failed with error",
-              error: err.message
-            });
-          }
-        }
-
-        // Check if we have files
-        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-          console.log("No files found in bypass upload request");
-
-          // Check if this is a direct form submission
-          const wantsHtml = req.headers['accept']?.includes('text/html');
-
-          if (wantsHtml) {
-            // Check referer to determine which uploader was used
-            const referer = req.headers['referer'] || '';
-            let backLink = '/basic-uploader.html';
-
-            if (referer.includes('windows-uploader.html')) {
-              backLink = '/windows-uploader.html';
-            } else if (referer.includes('cross-platform-uploader.html')) {
-              backLink = '/cross-platform-uploader.html';
-            }
-
-            return res.status(400).send(`
-              <html><head><title>Upload Error</title>
-              <style>
-                body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
-                .error { color: red; background: #ffebee; padding: 15px; border-radius: 4px; }
-                a { color: #964B00; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-                h1 { color: #964B00; }
-              </style>
-              </head><body>
-                <h1>Upload Error</h1>
-                <p class="error">No files were received. Please select at least one file.</p>
-                <p><a href="${backLink}">← Back to uploader</a></p>
-              </body></html>
-            `);
-          } else {
-            return res.status(400).json({
-              success: false,
-              message: "No files were received"
-            });
-          }
-        }
-
-        const files = req.files as Express.Multer.File[];
-        console.log(`Received ${files.length} files in bypass upload`);
-
-        // Create URLs for client response
-        const imageUrls = files.map(file => `/uploads/properties/${path.basename(file.path)}`);
-
-        // Check if this is a direct form submission that expects HTML
-        const wantsHtml = req.headers['accept']?.includes('text/html');
-
-        if (wantsHtml) {
-          // Check referer to determine which uploader was used
-          const referer = req.headers['referer'] || '';
-
-          // Special handling for cross-platform uploader - redirect back with params
-          if (referer.includes('cross-platform-uploader.html')) {
-            // Redirect back to the cross-platform uploader with the URLs as parameters
-            return res.redirect(`/cross-platform-uploader.html?success=true&urls=${imageUrls.join(',')}`);
-          }
-
-          // Special handling for Windows uploader
-          if (referer.includes('windows-uploader.html')) {
-            return res.status(200).send(`
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <title>Upload Success</title>
-                <style>
-                  body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-                  .success { color: #2e7d32; background: #e8f5e9; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
-                  .url-box { background: #f5f5f5; padding: 10px; border-radius: 4px; margin-bottom: 10px; word-break: break-all; }
-                  .copy-btn { background: #964B00; color: white; border: none; padding: 5px 10px; cursor: pointer; margin-top: 5px; }
-                  .image-preview { margin-top: 10px; border: 1px solid #ddd; padding: 5px; max-width: 150px; max-height: 150px; }
-                  a { color: #964B00; text-decoration: none; }
-                  a:hover { text-decoration: underline; }
-                  .divider { margin: 20px 0; border-top: 1px solid #eee; }
-                  h1, h2 { color: #964B00; }
-                  .url-list { width: 100%; height: 100px; margin-top: 20px; font-family: monospace; }
-                </style>
-              </head>
-              <body>
-                <h1>Upload Successful!</h1>
-                <div class="success">Successfully uploaded ${files.length} images.</div>
-
-                <div class="instructions" style="background-color: #fffde7; border-left: 4px solid #ffeb3b; padding: 15px; margin: 20px 0;">
-                  <h3>Next Steps:</h3>
-                  <ol>
-                    <li>Copy all image URLs from the text box below</li>
-                    <li>Go back to the property form</li>
-                    <li>Paste the URLs into the "Image URLs" field</li>
-                  </ol>
-                </div>
-
-                <h2>Copy All URLs</h2>
-                <textarea class="url-list" onclick="this.select()">${imageUrls.join(', ')}</textarea>
-                <button class="copy-btn" onclick="navigator.clipboard.writeText(document.querySelector('.url-list').value)">
-                  Copy All URLs
-                </button>
-
-                <h2>Individual Image URLs</h2>
-                ${imageUrls.map((url, index) => `
-                  <div>
-                    <div class="url-box">${url}</div>
-                    <button class="copy-btn" onclick="navigator.clipboard.writeText('${url}')">Copy URL</button>
-                    <img src="${url}" alt="Uploaded image ${index+1}" class="image-preview">
-                    <div class="divider"></div>
-                  </div>
-                `).join('')}
-
-                <p style="margin-top: 20px;"><a href="/windows-uploader.html">← Upload More Images</a></p>
-                <p><a href="/">← Back to Main Site</a></p>
-              </body>
-              </html>
-            `);
-          }
-
-          // Standard HTML response for other uploaders
-          const imagesHtml = imageUrls.map(url => `
-            <div class="img-container">
-              <img src="${url}" class="preview" alt="Uploaded image">
-              <div class="url">${url}</div>
-            </div>
-          `).join('');
-
-          return res.status(200).send(`
-            <html><head><title>Upload Successful</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
-              .success { color: green; }
-              .images { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; }
-              .img-container { border: 1px solid #ddd; padding: 10px; border-radius: 5px; max-width: 220px; }
-              .preview { max-width: 200px; max-height: 200px; }
-              .url { font-size: 12px; word-break: break-all; margin-top: 5px; padding: 5px; background: #f5f5f5; }
-              .url-list { width: 100%; height: 100px; margin-top: 20px; font-family: monospace; }
-              a { color: #B87333; text-decoration: none; }
-              a:hover { text-decoration: underline; }
-              .instructions { background-color: #fffde7; border-left: 4px solid #ffeb3b; padding: 15px; margin: 20px 0; }
-            </style>
-            </head><body>
-              <h1>Upload Successful!</h1>
-              <p class="success">Successfully uploaded ${files.length} file(s).</p>
-
-              <div class="instructions">
-                <h3>Next Steps:</h3>
-                <ol>
-                  <li>Copy all image URLs from the text box below</li>
-                  <li>Go back to the property form</li>
-                  <li>Paste the URLs into the "Image URLs" field</li>
-                </ol>
-              </div>
-
-              <h2>Image URLs</h2>
-              <textarea class="url-list" onclick="this.select()">${imageUrls.join(', ')}</textarea>
-
-              <h2>Image Previews</h2>
-              <div class="images">${imagesHtml}</div>
-
-              <p>
-                <a href="/basic-uploader.html">← Upload more images</a> | 
-                <a href="/">Return to main website</a>
-              </p>
-            </body></html>
-          `);
-        } else {
-          // Return JSON response for API clients
-          return res.status(200).json({
-            success: true,
-            message: `Successfully uploaded ${files.length} files`,
-            imageUrls: imageUrls,
-            urls: imageUrls // Include both names for broader compatibility
-          });
-        }
-      });
-    } catch (error) {
-      console.error("Fatal error in bypass upload:", error);
-
-      // Check if this is a direct form submission
-      const wantsHtml = req.headers['accept']?.includes('text/html');
-
-      if (wantsHtml) {
-        // Check referer to determine which uploader was used
-        const referer = req.headers['referer'] || '';
-        let backLink = '/basic-uploader.html';
-
-        if (referer.includes('windows-uploader.html')) {
-          backLink = '/windows-uploader.html';
-        } else if (referer.includes('cross-platform-uploader.html')) {
-          // Redirect back to the cross-platform uploader with error message
-          return res.redirect(`/cross-platform-uploader.html?error=true&message=${encodeURIComponent(error instanceof Error ? error.message : "Unknown error")}`);
-        }
-
-        return res.status(500).send(`
-          <html><head><title>Server Error</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
-            .error { color: red; background: #ffebee; padding: 15px; border-radius: 4px; }
-            a { color: #964B00; text-decoration: none; }
-            a:hover { text-decoration: underline; }
-            h1 { color: #964B00; }
-          </style>
-          </head><body>
-            <h1>Server Error</h1>
-            <p class="error">A server error occurred during upload: ${error instanceof Error ? error.message : "Unknown error"}</p>
-            <p><a href="${backLink}">← Back to uploader</a></p>
-          </body></html>
-        `);
-      } else {
-        return res.status(500).json({
-          success: false,
-          message: "A server error occurred during upload",
-          error: error instanceof Error ? error.message : "Unknown error"
-        });
-      }
-    }
-  });
-
-  // SIMPLIFIED: Direct property image upload endpoint
-  app.post('/api/upload/property-images-direct', finalUpload.array('images', 10), async (req: Request, res: Response) => {
-    try {
-      console.log("==== DIRECT PROPERTY IMAGE UPLOAD ====");
-      
-      // Get property ID from form data
-      let propertyId: number;
-      if (req.body && req.body.propertyId) {
-        propertyId = parseInt(req.body.propertyId);
-      } else {
-        console.error("No property ID in form data");
-        return res.status(400).json({ 
-          success: false, 
-          message: "Property ID is required" 
-        });
-      }
-      
-      if (isNaN(propertyId) || propertyId <= 0) {
-        console.error(`Invalid property ID: ${propertyId}`);
-        return res.status(400).json({ 
-          success: false, 
-          message: "Invalid property ID" 
-        });
-      }
-      
-      console.log(`Processing images for property ID: ${propertyId}`);
-      
-      // Check for uploaded files
-      const files = req.files as Express.Multer.File[];
-      if (!files || files.length === 0) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "No files uploaded" 
-        });
-      }
-      
-      console.log(`Found ${files.length} files to process`);
-      
-      // Create image URLs
-      const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
-      
-      // Get current property
-      const property = await dbStorage.getPropertyById(propertyId);
-      if (!property) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Property not found" 
-        });
-      }
-      
-      // Get existing images safely
-      let currentImages: string[] = [];
-      try {
-        if (Array.isArray(property.images)) {
-          currentImages = property.images;
-        } else if (typeof property.images === 'string') {
-          currentImages = JSON.parse(property.images);
-        }
-      } catch (e) {
-        currentImages = [];
-      }
-      
-      // Add new images to existing ones
-      const updatedImages = [...currentImages, ...imageUrls];
-      
-      // Update property in database
-      await dbStorage.updateProperty(propertyId, { images: updatedImages });
-      
-      console.log(`Successfully added ${files.length} images to property ${propertyId}`);
-      
-      return res.json({
-        success: true,
-        message: "Images uploaded successfully",
-        imageUrls: imageUrls,
-        totalImages: updatedImages.length
-      });
-      
-    } catch (error) {
-      console.error('Direct upload error:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: "Upload failed", 
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+  // UUID Image Management Routes
 
   // Enhanced photo upload endpoint with backup integration
   app.post('/api/photos/upload/:propertyId?', async (req: Request, res: Response) => {
@@ -3804,7 +1694,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   }, cleanupOrphanedFiles);
 
   // Legacy endpoint - keeping for compatibility
-  app.post('/api/upload/property-images-direct-old', async (req: Request, res: Response) => {
+  app.post('/api/upload/property-images-direct-old', (req: Request, res: Response) => {
     try {
       console.log("==== UNIVERSAL PROPERTY IMAGE UPLOAD CALLED ====");
       console.log("Cross-platform upload endpoint - authenticated or public");
@@ -4421,7 +2311,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
   });
 
   // Project image upload route
-  app.post("/api/upload/project-images", finalUpload.array('images', 10), async (req: Request, res: Response) => {
+  app.post("/api/upload/project-images", (req: Request, res: Response) => {
     try {
       // Check if user is authenticated
       if (!req.isAuthenticated()) {
@@ -4446,7 +2336,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       console.log(`Received ${req.files.length} project image files`);
 
       // Process uploaded files
-      const imageUrls = req.files.map(file => {
+      const imageUrls = (req.files as Express.Multer.File[]).map(file => {
         // Create both public and internal URLs
         const publicUrl = `/uploads/projects/${file.filename}`;
         
@@ -4457,7 +2347,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
 
         console.log(`Successfully processed project image: ${file.originalname} -> ${publicUrl}`);
-        return publicUrl;icUrl;
+        return publicUrl;
       });
 
       res.json({ 
@@ -4737,7 +2627,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       return res.sendFile(placeholderPath);
     }
 
-    // Last resort, return 404).send('File not found');
+    // Last resort, return 404
+    res.status(404).send('File not found');
   });
   
   // Universal cross-platform upload endpoint

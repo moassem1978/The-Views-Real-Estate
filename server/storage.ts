@@ -18,7 +18,6 @@ import type {
   PaginatedResult,
   SiteSettings
 } from "../shared/schema";
-import { FileValidator } from './utils/fileValidator';
 
 interface IStorage {
   // User operations
@@ -185,21 +184,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   private mapPropertyFromDb(row: any): Property {
+    // Parse images safely
+    let images: string[] = [];
+    try {
+      if (row.images) {
+        if (typeof row.images === 'string') {
+          images = JSON.parse(row.images);
+        } else if (Array.isArray(row.images)) {
+          images = row.images;
+        }
+      }
+    } catch (e) {
+      console.warn(`Failed to parse images for property ${row.id}:`, e);
+      images = [];
+    }
+
     return {
       id: row.id,
       createdBy: row.created_by,
       createdAt: row.created_at,
-      status: row.status,
-      title: row.title,
-      description: row.description,
+      updatedAt: row.updated_at,
+      status: row.status || 'active',
+      title: row.title || '',
+      description: row.description || '',
       references: row.reference_number || row.references || '',
-      address: row.address,
-      city: row.city,
-      state: row.state,
-      zipCode: row.zip_code || '',
+      address: row.address || '',
+      city: row.city || 'Unknown',
+      state: row.state || '',
+      zipCode: row.zip_code || '00000',
       country: row.country || 'Egypt',
-      propertyType: row.property_type,
-      listingType: row.listing_type,
+      propertyType: row.property_type || 'apartment',
+      listingType: row.listing_type || 'Primary',
       price: parseInt(row.price) || 0,
       downPayment: parseInt(row.down_payment) || 0,
       installmentAmount: parseInt(row.installment_amount) || 0,
@@ -221,11 +236,8 @@ export class DatabaseStorage implements IStorage {
       developerName: row.developer_name || '',
       latitude: parseFloat(row.latitude) || null,
       longitude: parseFloat(row.longitude) || null,
-      // Support both legacy images and new structured photos
-    images: Array.isArray(row.images) ? row.images : 
-            (typeof row.images === 'string' && row.images ? JSON.parse(row.images) : []),
-    photos: Array.isArray(row.photos) ? row.photos : 
-            (typeof row.photos === 'string' && row.photos ? JSON.parse(row.photos) : []),
+      images: images,
+      photos: images, // Map images to photos for compatibility
       amenities: Array.isArray(row.amenities) ? row.amenities : [],
       agentId: parseInt(row.agent_id) || 1
     };
@@ -328,28 +340,38 @@ export class DatabaseStorage implements IStorage {
 
   async createProperty(insertProperty: InsertProperty): Promise<Property> {
     try {
-      const [property] = await db.insert(properties).values(insertProperty).returning();
-      return property;
+      console.log(`Creating property: ${insertProperty.title}`);
+
+      // Ensure images are properly formatted as JSON
+      const images = Array.isArray(insertProperty.images) ? insertProperty.images : [];
+      const propertyData = {
+        ...insertProperty,
+        images: JSON.stringify(images)
+      };
+
+      const [property] = await db.insert(properties).values(propertyData).returning();
+
+      console.log(`✅ Property created with ID: ${property.id}`);
+      return this.mapPropertyFromDb(property);
     } catch (error) {
       console.error('Error creating property:', error);
       throw error;
     }
   }
 
-  async updateProperty(id: number, updates: any): Promise<any> {
-    console.log(`Updating property ${id} with:`, updates);
-
+  async updateProperty(id: number, updates: any): Promise<Property | undefined> {
     try {
-      // Clean the updates object to only include valid property fields
+      console.log(`Updating property ${id}`);
+
+      // Clean the updates object
       const cleanUpdates: any = {};
-      
-      // Only include fields that exist in the database schema
+
       const validFields = [
         'title', 'description', 'references', 'address', 'city', 'state', 'zipCode', 'country',
         'price', 'downPayment', 'installmentAmount', 'installmentPeriod', 'isFullCash',
         'listingType', 'projectName', 'developerName', 'bedrooms', 'bathrooms', 'builtUpArea',
         'plotSize', 'gardenSize', 'floor', 'isGroundUnit', 'propertyType', 'isFeatured',
-        'isNewListing', 'isHighlighted', 'yearBuilt', 'views', 'amenities', 'photos',
+        'isNewListing', 'isHighlighted', 'yearBuilt', 'views', 'amenities',
         'latitude', 'longitude', 'status', 'approvedBy', 'updatedAt', 'agentId'
       ];
 
@@ -359,30 +381,15 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Handle images specifically - convert to photos array
-      if ('images' in updates && Array.isArray(updates.images)) {
-        const imageArray = updates.images.filter((img: any) => img && typeof img === 'string');
-        cleanUpdates.photos = imageArray.map((img: string) => ({
-          filename: img,
-          altText: `Property image`,
-          uploadedAt: new Date().toISOString()
-        }));
-        console.log(`✅ Property ${id}: Converting ${imageArray.length} images to photos`);
-        
-        // Remove images field from cleanUpdates to avoid conflicts
-        delete cleanUpdates.images;
+      // Handle images specifically
+      if ('images' in updates) {
+        const imageArray = Array.isArray(updates.images) ? updates.images : [];
+        cleanUpdates.images = JSON.stringify(imageArray);
+        console.log(`Setting ${imageArray.length} images for property ${id}`);
       }
 
-      console.log(`Executing database update for property ${id} with clean data:`, cleanUpdates);
-      
-      // Add updatedAt timestamp
       cleanUpdates.updatedAt = new Date();
-      
-      // Convert photos array to JSON string for database storage
-      if (cleanUpdates.photos && Array.isArray(cleanUpdates.photos)) {
-        cleanUpdates.photos = JSON.stringify(cleanUpdates.photos);
-      }
-      
+
       const result = await db.update(properties).set(cleanUpdates).where(eq(properties.id, id)).returning();
 
       if (!result || result.length === 0) {
@@ -390,31 +397,12 @@ export class DatabaseStorage implements IStorage {
         return undefined;
       }
 
-      const property = result[0];
+      const property = this.mapPropertyFromDb(result[0]);
       console.log(`✅ Property ${id} updated successfully`);
-
       return property;
     } catch (error) {
       console.error(`Error updating property ${id}:`, error);
-
-      // Log more details about the error
-      if (error instanceof Error) {
-        console.error(`Error message: ${error.message}`);
-        console.error(`Error stack: ${error.stack}`);
-      }
-
-      // Return undefined instead of throwing to prevent 500 errors
       return undefined;
-    }
-  }
-
-  // Remove the old createImageBackup method since we're using the new manager
-  private async createImageBackup(propertyId: number, images: string[]): Promise<void> {
-    try {
-      const { ImageBackupManager } = await import('./utils/imageBackupManager');
-      await ImageBackupManager.createImageBackup(propertyId, images);
-    } catch (error) {
-      console.error(`Error creating image backup for property ${propertyId}:`, error);
     }
   }
 
@@ -510,7 +498,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Basic implementations for other required methods
+  // Minimal implementations for other required methods
   async getAllProjects(page = 1, pageSize = 24): Promise<PaginatedResult<Project>> {
     return { data: [], totalCount: 0, pageCount: 0, page, pageSize };
   }
@@ -663,23 +651,7 @@ export async function createPropertyInDB(propertyData: any, imageFiles?: Express
       };
     }
 
-    // Process images first if provided
-    let imageUrls: string[] = [];
-    if (imageFiles && imageFiles.length > 0) {
-      console.log('Processing images...');
-      for (const file of imageFiles) {
-        try {
-          const processedImage = await strictImageProcessor.processImage(file);
-          if (processedImage.success && processedImage.url) {
-            imageUrls.push(processedImage.url);
-            console.log('Processed image successfully:', processedImage.url);
-          }
-        } catch (imageError) {
-          console.error('Error processing image:', imageError);
-          // Continue with other images
-        }
-      }
-    }
+    // No image processing here
 
     // Insert property into database
     const query = `
@@ -710,7 +682,7 @@ export async function createPropertyInDB(propertyData: any, imageFiles?: Express
       propertyData.reference || '',
       propertyData.status || 'draft',
       propertyData.createdBy,
-      JSON.stringify(imageUrls),
+      JSON.stringify([]), // images
       propertyData.isHighlighted === true || propertyData.isHighlighted === 'true',
       propertyData.isFeatured === true || propertyData.isFeatured === 'true'
     ];
