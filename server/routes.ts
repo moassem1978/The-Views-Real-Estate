@@ -1081,22 +1081,26 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
       }
 
-      // Handle images - merge new processed images with existing ones
-      if (processedImagePaths.length > 0) {
-        const existingImages = Array.isArray(originalProperty.images) ? originalProperty.images : [];
-        updateData.images = [...existingImages, ...processedImagePaths];
-        console.log(`📸 Combined ${existingImages.length} existing + ${processedImagePaths.length} new = ${updateData.images.length} total images`);
-      } else if (req.body.hasOwnProperty('images')) {
-        // Handle images from request body
+      // Handle images - prioritize body images for deletions/updates
+      if (req.body.hasOwnProperty('images')) {
+        // Handle images from request body (including deletions)
         if (Array.isArray(req.body.images)) {
           updateData.images = req.body.images;
+          console.log(`📸 Setting images from array: ${req.body.images.length} images`);
         } else if (typeof req.body.images === 'string') {
           try {
             updateData.images = JSON.parse(req.body.images);
+            console.log(`📸 Setting images from JSON string: ${updateData.images.length} images`);
           } catch {
             updateData.images = req.body.images.split(',').map((url: string) => url.trim());
+            console.log(`📸 Setting images from CSV: ${updateData.images.length} images`);
           }
         }
+      } else if (processedImagePaths.length > 0) {
+        // Only merge with existing if no images in body (pure upload case)
+        const existingImages = Array.isArray(originalProperty.images) ? originalProperty.images : [];
+        updateData.images = [...existingImages, ...processedImagePaths];
+        console.log(`📸 Combined ${existingImages.length} existing + ${processedImagePaths.length} new = ${updateData.images.length} total images`);
       }
 
       // ✅ Step 7: Update property in database
