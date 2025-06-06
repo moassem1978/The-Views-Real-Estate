@@ -276,7 +276,160 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
     }
   });
 
-  // UPDATE PROPERTY with image upload
+  // UPDATE PROPERTY with image upload - Production Grade
+  app.patch("/api/properties/:id", upload.array('images', 20), async (req: Request, res: Response) => {
+    const propertyId = parseInt(req.params.id);
+    
+    try {
+      console.log(`=== UPDATING PROPERTY ${propertyId} ===`);
+
+      // Authentication check
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      if (isNaN(propertyId)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      const user = req.user as Express.User;
+
+      // Get existing property
+      const existingProperty = await dbStorage.getPropertyById(propertyId);
+      if (!existingProperty) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Permission check
+      if (user.role === 'user' && existingProperty.createdBy !== user.id) {
+        return res.status(403).json({ message: "Permission denied" });
+      }
+
+      // Process new images if uploaded
+      let newImageUrls: string[] = [];
+      const files = req.files as Express.Multer.File[];
+
+      if (files && files.length > 0) {
+        console.log(`Processing ${files.length} new images for property ${propertyId}`);
+
+        for (const file of files) {
+          try {
+            // Generate unique filename
+            const uniqueId = uuidv4().split('-')[0];
+            const timestamp = Date.now();
+            const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+            const newFileName = `property-${timestamp}-${uniqueId}${ext}`;
+            const outputPath = path.join(uploadsDir, newFileName);
+
+            // Process image with Sharp
+            await processImage(file.path);
+            
+            // Move processed file to final location
+            if (fs.existsSync(file.path)) {
+              fs.renameSync(file.path, outputPath);
+              newImageUrls.push(`/uploads/properties/${newFileName}`);
+              console.log(`✅ Processed image: ${newFileName}`);
+            }
+          } catch (imageError) {
+            console.error(`Failed to process image ${file.originalname}:`, imageError);
+            // Continue with other images
+          }
+        }
+      }
+
+      // Handle existing images
+      let finalImages: string[] = [];
+      
+      try {
+        if (req.body.existingImages) {
+          const existingImages = typeof req.body.existingImages === 'string' 
+            ? JSON.parse(req.body.existingImages)
+            : req.body.existingImages;
+
+          if (Array.isArray(existingImages)) {
+            finalImages = existingImages.filter((img: string) => img && typeof img === 'string');
+          }
+        } else if (req.body.replaceImages !== 'true') {
+          // Keep existing images unless explicitly replacing
+          finalImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+        }
+      } catch (e) {
+        console.warn("Error parsing existing images, keeping originals");
+        finalImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+      }
+
+      // Add new images to existing ones
+      finalImages = [...finalImages, ...newImageUrls];
+
+      // Prepare update data
+      const updateData: any = { updatedAt: new Date() };
+
+      // Valid fields that can be updated
+      const validFields = [
+        'title', 'description', 'city', 'state', 'country', 'propertyType', 
+        'listingType', 'price', 'downPayment', 'installmentAmount', 'installmentPeriod',
+        'isFullCash', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize',
+        'floor', 'isGroundUnit', 'isFeatured', 'isHighlighted', 'isNewListing',
+        'projectName', 'developerName', 'yearBuilt', 'status', 'references', 'address', 'zipCode'
+      ];
+
+      // Only update fields that are provided
+      for (const field of validFields) {
+        if (req.body.hasOwnProperty(field) && req.body[field] !== undefined && req.body[field] !== '') {
+          updateData[field] = req.body[field];
+        }
+      }
+
+      // Convert boolean fields
+      ['isFullCash', 'isGroundUnit', 'isFeatured', 'isNewListing', 'isHighlighted'].forEach(field => {
+        if (updateData[field] !== undefined) {
+          updateData[field] = updateData[field] === true || updateData[field] === 'true';
+        }
+      });
+
+      // Convert numeric fields
+      ['price', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize', 'downPayment', 'installmentAmount', 'yearBuilt'].forEach(field => {
+        if (updateData[field] !== undefined && updateData[field] !== '') {
+          const num = parseFloat(updateData[field]);
+          if (!isNaN(num)) {
+            updateData[field] = num;
+          }
+        }
+      });
+
+      // Always update images array
+      updateData.images = finalImages;
+
+      // Update property in database
+      const updatedProperty = await dbStorage.updateProperty(propertyId, updateData);
+
+      if (!updatedProperty) {
+        return res.status(500).json({ message: "Failed to update property in database" });
+      }
+
+      console.log(`✅ Property ${propertyId} updated successfully with ${finalImages.length} total images`);
+
+      res.status(200).json({
+        success: true,
+        message: "Property updated successfully",
+        property: updatedProperty,
+        imageCount: finalImages.length,
+        newImagesAdded: newImageUrls.length,
+        totalImages: finalImages.length
+      });
+
+    } catch (error) {
+      console.error(`❌ Error updating property ${propertyId}:`, error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Property update failed', 
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        propertyId
+      });
+    }
+  });
+
+  // Keep the original PUT endpoint for backward compatibility
   app.put("/api/properties/:id", upload.array('images', 20), async (req: Request, res: Response) => {
     try {
       console.log(`=== UPDATING PROPERTY ${req.params.id} ===`);

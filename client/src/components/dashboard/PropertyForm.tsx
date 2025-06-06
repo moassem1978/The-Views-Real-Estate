@@ -152,7 +152,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
         ? `/api/properties/${property.id}`
         : '/api/properties';
 
-      const method = property?.id ? 'PUT' : 'POST';
+      const method = property?.id ? 'PATCH' : 'POST';
 
       const response = await fetch(url, {
         method,
