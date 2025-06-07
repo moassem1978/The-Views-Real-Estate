@@ -353,11 +353,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         } else if (req.body.replaceImages !== 'true') {
           // Keep existing images unless explicitly replacing
-          finalImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+          finalImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
         }
       } catch (e) {
         console.warn("Error parsing existing images, keeping originals");
-        finalImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+        finalImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
       }
 
       // Add new images to existing ones
@@ -403,8 +403,8 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
       });
 
-      // Always update images array
-      updateData.images = finalImages;
+      // Always update photos array
+      updateData.photos = finalImages;
 
       // Update property in database
       const updatedProperty = await dbStorage.updateProperty(propertyId, updateData);
@@ -493,11 +493,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         } catch (e) {
           console.warn("Failed to parse existing images, keeping original");
-          finalImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+          finalImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
         }
       } else {
         // Keep all existing images if not specified
-        finalImages = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+        finalImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
       }
 
       // Add new images
@@ -521,7 +521,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         }
       }
 
-      updateData.images = finalImages;
+      updateData.photos = finalImages;
       updateData.updatedAt = new Date();
 
       // Update property
@@ -596,11 +596,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       // Add to existing images
-      const existingImages = Array.isArray(property.images) ? property.images : [];
+      const existingImages = Array.isArray(property.photos) ? property.photos : [];
       const updatedImages = [...existingImages, ...newImageUrls];
 
       // Update property
-      await dbStorage.updateProperty(propertyId, { images: updatedImages });
+      await dbStorage.updateProperty(propertyId, { photos: updatedImages });
 
       console.log(`✅ Added ${newImageUrls.length} images to property ${propertyId}`);
 
@@ -651,9 +651,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       }
 
       // Delete associated images from filesystem
-      if (existingProperty.images && Array.isArray(existingProperty.images)) {
-        console.log(`Deleting ${existingProperty.images.length} associated images`);
-        for (const imagePath of existingProperty.images) {
+      if (existingProperty.photos && Array.isArray(existingProperty.photos)) {
+        console.log(`Deleting ${existingProperty.photos.length} associated images`);
+        for (const imagePath of existingProperty.photos) {
           try {
             const filename = imagePath.split('/').pop();
             if (filename) {
@@ -716,7 +716,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           title: property.title,
           description: property.description,
           price: property.price,
-          photos: property.images || [], // Map images to photos for compatibility
+          photos: property.photos || [], // Map images to photos for compatibility
           city: property.city,
           state: property.state,
           bedrooms: property.bedrooms,
@@ -1526,19 +1526,19 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         });
       }
 
-      console.log(`Current images for property ${propertyId}:`, property.images);
+      console.log(`Current images for property ${propertyId}:`, property.photos);
 
       // Get current images and filter out the one to delete
       let currentImages: string[] = [];
       
-      if (Array.isArray(property.images)) {
-        currentImages = property.images;
-      } else if (typeof property.images === 'string') {
+      if (Array.isArray(property.photos)) {
+        currentImages = property.photos;
+      } else if (typeof property.photos === 'string') {
         try {
-          const parsed = JSON.parse(property.images);
-          currentImages = Array.isArray(parsed) ? parsed : [property.images];
+          const parsed = JSON.parse(property.photos);
+          currentImages = Array.isArray(parsed) ? parsed : [property.photos];
         } catch {
-          currentImages = property.images ? [property.images] : [];
+          currentImages = property.photos ? [property.photos] : [];
         }
       }
 
@@ -1667,7 +1667,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       try {
         // Get existing images
-        const legacyImages = Array.isArray(property.images) ? property.images : [];
+        const legacyImages = Array.isArray(property.photos) ? property.photos : [];
         
         if (legacyImages.length === 0) {
           return res.json({
@@ -2203,37 +2203,37 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           
           if (property) {
             // CRITICAL FIX: Handle ALL possible image formats
-            console.log("IMAGES FIELD FIX: Processing raw property.images:", property.images);
+            console.log("IMAGES FIELD FIX: Processing raw property.photos:", property.photos);
             
             let currentImages: string[] = [];
             
             // Try to handle all possible image formats
-            if (Array.isArray(property.images)) {
+            if (Array.isArray(property.photos)) {
               // Already an array (ideal)
-              currentImages = property.images;
+              currentImages = property.photos;
               console.log("Image format: Array of strings");
-            } else if (typeof property.images === 'string') {
+            } else if (typeof property.photos === 'string') {
               try {
                 // Try to parse JSON string - common pattern
-                const parsed = JSON.parse(property.images);
+                const parsed = JSON.parse(property.photos);
                 if (Array.isArray(parsed)) {
                   currentImages = parsed;
                   console.log("Image format: JSON string of array");
                 } else {
                   // String but not a valid JSON array, treat as single image
-                  currentImages = [property.images];
+                  currentImages = [property.photos];
                   console.log("Image format: Single string (not JSON)");
                 }
               } catch (e) {
                 // Not valid JSON, assume it's a single image URL
-                currentImages = [property.images];
+                currentImages = [property.photos];
                 console.log("Image format: Single string URL");
               }
-            } else if (property.images && typeof property.images === 'object') {
+            } else if (property.photos && typeof property.photos === 'object') {
               // Handle strange object formats by extracting values
               console.log("Image format: Object (not array)");
-              currentImages = Object.values(property.images).filter(v => typeof v === 'string');
-            } else if (!property.images) {
+              currentImages = Object.values(property.photos).filter(v => typeof v === 'string');
+            } else if (!property.photos) {
               // No images
               console.log("Image format: No images (empty)");
               currentImages = [];
@@ -3133,10 +3133,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
             console.log(`Found property #${propertyId}: ${property.title}`);
             
             // Update the property with new images
-            const existingImages = Array.isArray(property.images) ? property.images : [];
+            const existingImages = Array.isArray(property.photos) ? property.photos : [];
             const updatedImages = [...existingImages, ...urls];
             
-            await dbStorage.updateProperty(propertyId, { images: updatedImages });
+            await dbStorage.updateProperty(propertyId, { photos: updatedImages });
             
             console.log(`Updated property #${propertyId} with ${urls.length} new images`);
             
