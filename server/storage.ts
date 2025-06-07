@@ -408,11 +408,14 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProperty(id: number): Promise<boolean> {
     try {
-      await db.delete(properties).where(eq(properties.id, id));
-      return true;
+      console.log(`Attempting to delete property with ID: ${id}`);
+      const result = await pool.query('DELETE FROM properties WHERE id = $1 RETURNING id', [id]);
+      const success = result.rowCount > 0;
+      console.log(`Delete query result: ${success ? 'Success' : 'Failed'}, rowCount: ${result.rowCount}`);
+      return success;
     } catch (error) {
-      console.error(`Error deleting property ${id}:`, error);
-      return false;
+      console.error('Error deleting property from database:', error);
+      throw error; // Re-throw to let caller handle
     }
   }
 

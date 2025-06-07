@@ -628,38 +628,67 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       
       if (!req.isAuthenticated()) {
         console.error("Property deletion failed: User not authenticated");
-        return res.status(401).json({ message: "Authentication required" });
+        return res.status(401).json({ success: false, message: "Authentication required" });
       }
 
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid property ID" });
+        return res.status(400).json({ success: false, message: "Invalid property ID" });
       }
 
       const user = req.user as Express.User;
       console.log(`User deleting property: ${user.username} (${user.role})`);
       
+      // Get property first to check if it exists and get image info
       const existingProperty = await dbStorage.getPropertyById(id);
-
       if (!existingProperty) {
-        return res.status(404).json({ message: "Property not found" });
+        return res.status(404).json({ success: false, message: "Property not found" });
       }
 
-      // Allow admin and owner to delete any property
-      if (user.role === 'user' && existingProperty.createdBy !== user.id) {
-        return res.status(403).json({ message: "Permission denied" });
+      // Check permissions - admin, owner, or creator can delete
+      if (user.role !== 'admin' && user.role !== 'owner' && existingProperty.createdBy !== user.id) {
+        return res.status(403).json({ success: false, message: "Permission denied" });
       }
 
+      // Delete associated images from filesystem
+      if (existingProperty.images && Array.isArray(existingProperty.images)) {
+        console.log(`Deleting ${existingProperty.images.length} associated images`);
+        for (const imagePath of existingProperty.images) {
+          try {
+            const filename = imagePath.split('/').pop();
+            if (filename) {
+              const fullPath = path.join(uploadsDir, filename);
+              if (fs.existsSync(fullPath)) {
+                fs.unlinkSync(fullPath);
+                console.log(`Deleted image file: ${filename}`);
+              }
+            }
+          } catch (imgError) {
+            console.warn(`Failed to delete image file: ${imagePath}`, imgError);
+          }
+        }
+      }
+
+      // Delete from database
       const success = await dbStorage.deleteProperty(id);
       if (!success) {
-        return res.status(500).json({ message: "Failed to delete property from database" });
+        console.error(`Failed to delete property ${id} from database`);
+        return res.status(500).json({ success: false, message: "Failed to delete property from database" });
       }
 
       console.log(`✅ Property ${id} deleted successfully`);
-      res.status(200).json({ message: "Property deleted successfully" });
+      res.json({ 
+        success: true, 
+        message: "Property deleted successfully",
+        deletedId: id 
+      });
     } catch (error) {
       console.error("Error deleting property:", error);
-      res.status(500).json({ message: "Failed to delete property" });
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to delete property",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

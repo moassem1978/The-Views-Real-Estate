@@ -179,6 +179,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
 
     setIsSubmitting(true);
     setError("");
+    setSuccess("");
 
     try {
       // Validate required fields
@@ -195,6 +196,38 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
         throw new Error("City is required");
       }
 
+      // Handle file uploads first if there are any
+      let uploadedImageUrls: string[] = [];
+      if (selectedFiles.length > 0) {
+        const formData = new FormData();
+        selectedFiles.forEach(file => {
+          formData.append('images', file);
+        });
+
+        if (property?.id) {
+          formData.append('propertyId', property.id.toString());
+        }
+
+        const uploadResponse = await fetch('/api/universal-upload', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload images');
+        }
+
+        const uploadResult = await uploadResponse.json();
+        if (uploadResult.success && uploadResult.urls) {
+          uploadedImageUrls = uploadResult.urls;
+          console.log(`Uploaded ${uploadedImageUrls.length} new images`);
+        }
+      }
+
+      // Combine existing and new images
+      const allImages = [...uploadedImages, ...uploadedImageUrls];
+
       const processedData = {
         ...formData,
         price: Number(formData.price),
@@ -205,7 +238,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
         downPayment: formData.downPayment ? Number(formData.downPayment) : undefined,
         installmentAmount: formData.installmentAmount ? Number(formData.installmentAmount) : undefined,
         yearBuilt: formData.yearBuilt ? Number(formData.yearBuilt) : undefined,
-        images: uploadedImages,
+        images: allImages,
         zipCode: formData.zipCode || '00000',
       };
 
@@ -220,6 +253,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
 
       const result = await onSubmit(processedData as Property);
       console.log("Form submission result:", result);
+
+      if (result) {
+        setSuccess(property?.id ? "Property updated successfully!" : "Property created successfully!");
+        setSelectedFiles([]); // Clear selected files after successful submission
+        setUploadedImages(allImages); // Update uploaded images state
+      }
 
     } catch (error) {
       console.error("Form submission error:", error);

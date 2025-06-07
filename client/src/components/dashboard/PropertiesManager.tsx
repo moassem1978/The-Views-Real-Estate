@@ -97,11 +97,11 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
           'Content-Type': 'application/json',
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch properties: ${response.status}`);
       }
-      
+
       const result = await response.json();
       console.log("Dashboard API Response:", result);
       return result;
@@ -121,12 +121,12 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
           'Content-Type': 'application/json',
         }
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `Failed to delete property: ${response.statusText}`);
       }
-      
+
       // Handle both 200 and 204 responses
       if (response.status === 204) {
         return { success: true };
@@ -213,7 +213,7 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
       });
       return;
     }
-    
+
     // Use the callback from the Dashboard component
     onEditProperty(id);
   };
