@@ -211,7 +211,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       // Prepare property data
       const propertyData = {
         ...req.body,
-        images: imageUrls,
+        photos: imageUrls,
         createdBy: user.id,
         createdAt: new Date().toISOString(),
         agentId: user.id,
