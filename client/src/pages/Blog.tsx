@@ -93,7 +93,7 @@ export default function Blog() {
     if (!blogSchemaScript) {
       blogSchemaScript = document.createElement('script');
       blogSchemaScript.id = 'blog-schema';
-      blogSchemaScript.type = 'application/ld+json';
+      (blogSchemaScript as HTMLScriptElement).type = 'application/ld+json';
       document.head.appendChild(blogSchemaScript);
     }
     blogSchemaScript.textContent = JSON.stringify(blogSchema);
