@@ -101,6 +101,14 @@ export default function Blog() {
 
   const blogPosts = [
     {
+      title: "Marassi North Coast by EMAAR Misr: Complete Development Guide 2025",
+      excerpt: "Comprehensive review of Egypt's premier luxury Mediterranean resort spanning 1,544 acres with 6.5km private beaches, championship golf course, and world-class amenities by EMAAR Misr.",
+      date: "2025-02-01",
+      slug: "marassi-north-coast-emaar-complete-guide",
+      category: "Project Reviews",
+      readTime: "15 min read"
+    },
+    {
       title: "Dubai Marina vs Business Bay: Investment Comparison 2025",
       excerpt: "Comprehensive analysis of Dubai's top investment locations comparing rental yields, capital appreciation, and lifestyle amenities.",
       date: "2025-01-15",

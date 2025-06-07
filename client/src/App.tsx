@@ -20,6 +20,7 @@ import Contact from "@/pages/Contact";
 import Services from "@/pages/Services";
 import Blog from "@/pages/Blog";
 import ArticlePage from "@/pages/ArticlePage";
+import MarassiNorthCoastGuide from "@/pages/blog/MarassiNorthCoastGuide";
 import Dashboard from "@/pages/Dashboard";
 import SignIn from "@/pages/SignIn";
 import OTPLogin from "@/pages/OTPLogin";
@@ -114,6 +115,7 @@ function AppContent() {
               <Route path="/contact" component={Contact} />
               <Route path="/services" component={Services} />
               <Route path="/blog" component={Blog} />
+              <Route path="/blog/marassi-north-coast-emaar-complete-guide" component={MarassiNorthCoastGuide} />
               <Route path="/blog/:slug" component={ArticlePage} />
               <Route path="/announcements" component={Announcements} />
               <Route path="/announcements/:id" component={AnnouncementDetails} />
