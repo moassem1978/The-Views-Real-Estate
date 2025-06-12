@@ -85,16 +85,42 @@ class OptimizedStorage {
 
   async updateProperty(id: number, updateData: any) {
     try {
+      // Prepare the update object, filtering out undefined values
+      const updateObject: any = {};
+      
+      if (updateData.title !== undefined) updateObject.title = updateData.title;
+      if (updateData.description !== undefined) updateObject.description = updateData.description;
+      if (updateData.price !== undefined) updateObject.price = updateData.price;
+      if (updateData.city !== undefined) updateObject.city = updateData.city;
+      if (updateData.state !== undefined) updateObject.state = updateData.state;
+      if (updateData.country !== undefined) updateObject.country = updateData.country;
+      if (updateData.propertyType !== undefined) updateObject.propertyType = updateData.propertyType;
+      if (updateData.listingType !== undefined) updateObject.listingType = updateData.listingType;
+      if (updateData.bedrooms !== undefined) updateObject.bedrooms = updateData.bedrooms;
+      if (updateData.bathrooms !== undefined) updateObject.bathrooms = updateData.bathrooms;
+      if (updateData.builtUpArea !== undefined) updateObject.builtUpArea = updateData.builtUpArea;
+      if (updateData.isFeatured !== undefined) updateObject.isFeatured = updateData.isFeatured;
+      if (updateData.status !== undefined) updateObject.status = updateData.status;
+      if (updateData.photos !== undefined) updateObject.photos = JSON.stringify(updateData.photos);
+      
+      updateObject.updatedAt = new Date();
+
+      console.log(`📝 Updating property ${id} with:`, updateObject);
+
       const result = await db.update(properties)
-        .set({
-          ...updateData,
-          photos: updateData.photos ? JSON.stringify(updateData.photos) : undefined,
-          updatedAt: new Date()
-        })
+        .set(updateObject)
         .where(eq(properties.id, id))
         .returning();
 
-      return result[0] ? this.mapPropertyFromDb(result[0]) : null;
+      if (!result || result.length === 0) {
+        console.error(`❌ No property found with id ${id} to update`);
+        return null;
+      }
+
+      const updatedProperty = this.mapPropertyFromDb(result[0]);
+      console.log(`✅ Property ${id} updated successfully:`, updatedProperty.title);
+      
+      return updatedProperty;
     } catch (error) {
       console.error('Error in updateProperty:', error);
       throw error;

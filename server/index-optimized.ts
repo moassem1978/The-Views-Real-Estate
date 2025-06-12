@@ -40,6 +40,12 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Enable property updates
+app.use('/api', (req, res, next) => {
+  console.log(`🔄 API Request: ${req.method} ${req.path}`);
+  next();
+});
+
 // Minimal error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Server error:', err.message);

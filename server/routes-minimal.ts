@@ -124,21 +124,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Permission denied" });
       }
 
-      // Handle new images
-      const newImages = files ? files.map(file => `/uploads/properties/${file.filename}`) : [];
-      const existingImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
+      // Handle image updates properly
+      let updatedPhotos = [];
       
+      if (req.body.removeImages) {
+        const imagesToRemove = Array.isArray(req.body.removeImages) ? req.body.removeImages : [req.body.removeImages];
+        const existingImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
+        updatedPhotos = existingImages.filter(img => !imagesToRemove.includes(img));
+      } else {
+        updatedPhotos = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
+      }
+
+      // Add new images
+      if (files && files.length > 0) {
+        const newImages = files.map(file => `/uploads/properties/${file.filename}`);
+        updatedPhotos = [...updatedPhotos, ...newImages];
+      }
+
+      // Prepare update data
       const updateData = {
-        ...req.body,
-        photos: [...existingImages, ...newImages],
+        title: req.body.title || existingProperty.title,
+        description: req.body.description || existingProperty.description,
+        price: parseFloat(req.body.price) || existingProperty.price,
+        city: req.body.city || existingProperty.city,
+        state: req.body.state || existingProperty.state,
+        country: req.body.country || existingProperty.country,
+        propertyType: req.body.propertyType || existingProperty.propertyType,
+        listingType: req.body.listingType || existingProperty.listingType,
+        bedrooms: parseInt(req.body.bedrooms) || existingProperty.bedrooms,
+        bathrooms: parseFloat(req.body.bathrooms) || existingProperty.bathrooms,
+        builtUpArea: parseFloat(req.body.builtUpArea) || existingProperty.builtUpArea,
+        photos: updatedPhotos,
+        isFeatured: req.body.isFeatured === 'true' || req.body.isFeatured === true,
+        status: req.body.status || existingProperty.status,
         updatedAt: new Date()
       };
 
+      console.log(`🔄 Updating property ${id} with data:`, updateData);
+
       const updatedProperty = await dbStorage.updateProperty(id, updateData);
+      
+      if (!updatedProperty) {
+        return res.status(500).json({ message: "Failed to update property in database" });
+      }
+
+      console.log(`✅ Property ${id} updated successfully`);
       res.json({ success: true, property: updatedProperty });
     } catch (error) {
       console.error('Error updating property:', error);
-      res.status(500).json({ message: "Failed to update property" });
+      res.status(500).json({ message: error.message || "Failed to update property" });
     }
   });
 
