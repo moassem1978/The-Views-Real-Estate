@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Views Real Estate - Loading...</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { text-align: center; max-width: 600px; }
+        .logo { font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem; }
+        .loading { margin: 2rem 0; }
+        .spinner { 
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .status { margin: 1rem 0; opacity: 0.9; }
+        .feature-list { text-align: left; margin: 2rem 0; }
+        .feature-item { margin: 0.5rem 0; padding-left: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">The Views Real Estate</div>
+        <p>Premium Real Estate Platform for Egypt & Dubai</p>
+        
+        <div class="loading">
+            <div class="spinner"></div>
+            <p class="status" id="status">Initializing application...</p>
+        </div>
+
+        <div class="feature-list">
+            <h3>Platform Features:</h3>
+            <div class="feature-item">✓ 78+ Property Listings</div>
+            <div class="feature-item">✓ Marassi North Coast Blog</div>
+            <div class="feature-item">✓ New Capital & Dubai Properties</div>
+            <div class="feature-item">✓ Advanced Search & Filtering</div>
+            <div class="feature-item">✓ Mobile-Responsive Design</div>
+            <div class="feature-item">✓ Contact & Lead Generation</div>
+        </div>
+
+        <p style="font-size: 0.9rem; opacity: 0.8;">
+            If the application doesn't load automatically, 
+            <a href="/" style="color: white; text-decoration: underline;">click here to reload</a>
+        </p>
+    </div>
+
+    <script>
+        let statusIndex = 0;
+        const statuses = [
+            'Initializing application...',
+            'Loading property database...',
+            'Setting up user interface...',
+            'Connecting to services...',
+            'Almost ready...'
+        ];
+
+        function updateStatus() {
+            document.getElementById('status').textContent = statuses[statusIndex];
+            statusIndex = (statusIndex + 1) % statuses.length;
+        }
+
+        setInterval(updateStatus, 2000);
+
+        // Try to redirect to the main application after 5 seconds
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 5000);
+    </script>
+</body>
+</html>

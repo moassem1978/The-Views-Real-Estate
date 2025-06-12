@@ -1,0 +1,63 @@
+
+import { Request, Response, NextFunction } from 'express';
+import { BackupService } from './backup-service';
+
+export const protectionMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  // Only protect truly destructive operations
+  const isDangerous = req.method === 'DELETE' && (
+    req.path.includes('/properties/') ||
+    req.path.includes('/announcements/') ||
+    req.path.includes('/projects/') ||
+    req.path.includes('/users/')
+  );
+
+  if (isDangerous) {
+    try {
+      try {
+        // Create automatic backup before any dangerous operation
+        const backupService = BackupService.getInstance();
+        const userId = req.user ? (req.user as any).id : null;
+        // Sanitize the operation name to prevent file path issues
+        const rawOperation = `${req.method}-${req.path}`;
+        const operation = rawOperation.replace(/[^a-zA-Z0-9-_]/g, '_').replace(/_{2,}/g, '_').replace(/^_+|_+$/g, '') || 'unknown_operation';
+        
+        await backupService.createBackup(operation, userId);
+      } catch (backupError) {
+        console.warn('⚠️ PROTECTION: Backup failed but allowing operation to continue:', backupError);
+        // Continue with the operation even if backup fails
+      }
+      console.log(`🔒 PROTECTION: Backup created before ${operation}`);
+      
+      // Add warning headers
+      res.setHeader('X-Backup-Created', 'true');
+      res.setHeader('X-Operation-Warning', 'Backup created before this operation');
+      
+    } catch (error) {
+      console.error('❌ PROTECTION: Backup failed, blocking operation:', error);
+      return res.status(500).json({ 
+        error: 'Safety backup failed. Operation blocked for data protection.',
+        message: 'Please contact administrator'
+      });
+    }
+  }
+
+  next();
+};
+
+export const ownerOnlyMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+
+  const user = req.user as any;
+  if (!user || user.role !== 'owner') {
+    console.log(`🚫 BLOCKED: Non-owner ${user?.username} attempted dangerous operation: ${req.method} ${req.path}`);
+    return res.status(403).json({ 
+      message: "Only the owner can perform this operation",
+      blocked: true,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  next();
+};
