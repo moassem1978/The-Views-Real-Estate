@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Listing Form Documentation</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #B87333;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #B87333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section h2 {
+            color: #B87333;
+            font-size: 20px;
+            border-bottom: 2px solid #B87333;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .section h3 {
+            color: #444;
+            font-size: 16px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            padding: 8px 12px;
+            border-left: 4px solid #B87333;
+        }
+        
+        .field-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .field-table th,
+        .field-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .field-table th {
+            background-color: #B87333;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .field-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .required {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .optional {
+            color: #7f8c8d;
+        }
+        
+        .form-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .column {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .column h4 {
+            margin-top: 0;
+            color: #B87333;
+            text-align: center;
+            border-bottom: 1px solid #B87333;
+            padding-bottom: 8px;
+        }
+        
+        .field-group {
+            margin-bottom: 15px;
+        }
+        
+        .field-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .field-type {
+            color: #666;
+            font-style: italic;
+            font-size: 12px;
+        }
+        
+        .field-description {
+            color: #777;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        
+        .select-options {
+            background-color: #f8f9fa;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .flags-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .flag-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 8px;
+            border-radius: 3px;
+            background-color: white;
+        }
+        
+        .flag-name {
+            font-weight: bold;
+        }
+        
+        .flag-description {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .switch {
+            width: 40px;
+            height: 20px;
+            background-color: #ccc;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .image-section {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #4a90e2;
+        }
+        
+        .note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        
+        .note-title {
+            font-weight: bold;
+            color: #856404;
+        }
+        
+        .validation-rules {
+            background-color: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 5px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Property Listing Form Documentation</h1>
+        <p>The Views Real Estate Platform</p>
+        <p>Comprehensive Form Structure and Field Reference</p>
+        <p>Generated: June 2025</p>
+    </div>
+
+    <div class="section">
+        <h2>1. Form Overview</h2>
+        <p>The property listing form is a comprehensive two-column layout designed for creating and editing real estate properties in the Egyptian market. The form supports both primary (new development) and resale properties with specialized fields for different property types.</p>
+        
+        <div class="note">
+            <div class="note-title">Key Features:</div>
+            <ul>
+                <li>Dual-mode operation: Create new properties or edit existing ones</li>
+                <li>Advanced image management with preview, replace, and delete capabilities</li>
+                <li>Dynamic field visibility based on property type and listing type</li>
+                <li>Real-time validation and error handling</li>
+                <li>Responsive design supporting mobile and desktop interfaces</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>2. Form Layout Structure</h2>
+        
+        <div class="form-layout">
+            <div class="column">
+                <h4>Left Column - Basic Information</h4>
+                <div class="field-group">
+                    <div class="field-name">Title <span class="required">*</span></div>
+                    <div class="field-type">Text Input</div>
+                    <div class="field-description">Property title for listings</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Description <span class="required">*</span></div>
+                    <div class="field-type">Textarea (120px minimum height)</div>
+                    <div class="field-description">Detailed property description</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">City <span class="required">*</span></div>
+                    <div class="field-type">Select Dropdown</div>
+                    <div class="select-options">
+                        Options: Cairo, Zayed/6th October, North Coast, Red Sea, Dubai, London, Other
+                    </div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Country <span class="optional">(Optional)</span></div>
+                    <div class="field-type">Select Dropdown</div>
+                    <div class="select-options">
+                        Options: Egypt (default), UAE, UK, Other
+                    </div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Project Name <span class="required">*</span></div>
+                    <div class="field-type">Text Input</div>
+                    <div class="field-description">Name of the development project</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Developer Name <span class="optional">(Optional)</span></div>
+                    <div class="field-type">Text Input</div>
+                    <div class="field-description">Company developing the project</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Property Type <span class="required">*</span></div>
+                    <div class="field-type">Select Dropdown</div>
+                    <div class="select-options">
+                        Options: Apartment, Penthouse, Villa, Twinhouse, Townhouse, Chalet, Office
+                    </div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Listing Type <span class="required">*</span></div>
+                    <div class="field-type">Select Dropdown</div>
+                    <div class="select-options">
+                        Options: Primary (new development), Resale (existing property)
+                    </div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Bedrooms <span class="required">*</span></div>
+                    <div class="field-type">Number Input</div>
+                    <div class="field-description">Number of bedrooms</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Bathrooms <span class="required">*</span></div>
+                    <div class="field-type">Number Input</div>
+                    <div class="field-description">Number of bathrooms</div>
+                </div>
+            </div>
+            
+            <div class="column">
+                <h4>Right Column - Pricing & Details</h4>
+                
+                <div class="field-group">
+                    <div class="field-name">Price (L.E) <span class="required">*</span></div>
+                    <div class="field-type">Number Input</div>
+                    <div class="field-description">Property price in Egyptian Pounds</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Built-up Area (m²) <span class="required">*</span></div>
+                    <div class="field-type">Number Input</div>
+                    <div class="field-description">Interior living space in square meters</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Down Payment (L.E) <span class="optional">(Optional)</span></div>
+                    <div class="field-type">Number Input</div>
+                    <div class="field-description">Initial payment required (for primary listings)</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Installment Period (months) <span class="optional">(Optional)</span></div>
+                    <div class="field-type">Number Input</div>
+                    <div class="field-description">Payment plan duration (for primary listings)</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Plot Size (m²) <span class="optional">(Optional)</span></div>
+                    <div class="field-type">Number Input</div>
+                    <div class="field-description">Total land area (for villas and townhouses)</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Garden Size (m²) <span class="optional">(Optional)</span></div>
+                    <div class="field-type">Number Input</div>
+                    <div class="field-description">Garden area (for ground floor units)</div>
+                </div>
+                
+                <div class="field-group">
+                    <div class="field-name">Floor Number <span class="optional">(Optional)</span></div>
+                    <div class="field-type">Number Input</div>
+                    <div class="field-description">Floor level (for apartments)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>3. Property Flags and Features</h2>
+        
+        <div class="flags-section">
+            <h3>Boolean Switches (Toggle On/Off)</h3>
+            
+            <div class="flag-item">
+                <div>
+                    <div class="flag-name">Featured Property</div>
+                    <div class="flag-description">Show on homepage</div>
+                </div>
+                <div class="switch"></div>
+            </div>
+            
+            <div class="flag-item">
+                <div>
+                    <div class="flag-name">New Listing</div>
+                    <div class="flag-description">Mark as newly added</div>
+                </div>
+                <div class="switch"></div>
+            </div>
+            
+            <div class="flag-item">
+                <div>
+                    <div class="flag-name">Highlighted</div>
+                    <div class="flag-description">Priority in listings</div>
+                </div>
+                <div class="switch"></div>
+            </div>
+            
+            <div class="flag-item">
+                <div>
+                    <div class="flag-name">Ground Unit</div>
+                    <div class="flag-description">Has garden access</div>
+                </div>
+                <div class="switch"></div>
+            </div>
+            
+            <div class="flag-item">
+                <div>
+                    <div class="flag-name">Full Cash</div>
+                    <div class="flag-description">No installments available</div>
+                </div>
+                <div class="switch"></div>
+            </div>
+        </div>
+        
+        <div class="note">
+            <div class="note-title">Flag Usage Guidelines:</div>
+            <ul>
+                <li><strong>Featured Property:</strong> Limited to key properties for homepage display</li>
+                <li><strong>New Listing:</strong> Automatically set for new properties, manually controllable</li>
+                <li><strong>Highlighted:</strong> Gives priority sorting in search results</li>
+                <li><strong>Ground Unit:</strong> Important for properties with garden access</li>
+                <li><strong>Full Cash:</strong> Indicates no financing options available</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>4. Image Management System</h2>
+        
+        <div class="image-section">
+            <h3>Advanced Image Upload and Management</h3>
+            
+            <table class="field-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Description</th>
+                        <th>Limitations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Image Upload</strong></td>
+                        <td>Drag & drop or click to upload multiple images</td>
+                        <td>Maximum 10 images, 25MB each</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Image Preview</strong></td>
+                        <td>Click any image to view in full-screen modal</td>
+                        <td>Navigation between all images</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Image Replacement</strong></td>
+                        <td>Replace existing images without losing order</td>
+                        <td>One-to-one replacement only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Image Deletion</strong></td>
+                        <td>Mark images for deletion with undo option</td>
+                        <td>Changes applied on form submission</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Change Tracking</strong></td>
+                        <td>Visual indicators for pending changes</td>
+                        <td>Summary of all pending operations</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="validation-rules">
+                <div class="note-title">Image Processing Rules:</div>
+                <ul>
+                    <li>Images are processed sequentially: deletions, replacements, then additions</li>
+                    <li>All images are validated for format and size before upload</li>
+                    <li>Image paths are automatically normalized for consistency</li>
+                    <li>Failed uploads are reported with specific error messages</li>
+                    <li>Changes are transactional - all succeed or all fail</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>5. Form Validation Rules</h2>
+        
+        <table class="field-table">
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Validation Rule</th>
+                    <th>Error Handling</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Title</td>
+                    <td>Required, non-empty string</td>
+                    <td>Inline error message</td>
+                </tr>
+                <tr>
+                    <td>Description</td>
+                    <td>Required, minimum content expected</td>
+                    <td>Character count guidance</td>
+                </tr>
+                <tr>
+                    <td>City</td>
+                    <td>Must select from predefined list</td>
+                    <td>Dropdown validation</td>
+                </tr>
+                <tr>
+                    <td>Property Type</td>
+                    <td>Required, normalized to lowercase</td>
+                    <td>Auto-correction to valid types</td>
+                </tr>
+                <tr>
+                    <td>Price</td>
+                    <td>Required, positive number</td>
+                    <td>Numeric validation</td>
+                </tr>
+                <tr>
+                    <td>Built-up Area</td>
+                    <td>Required, positive number</td>
+                    <td>Numeric validation</td>
+                </tr>
+                <tr>
+                    <td>Bedrooms/Bathrooms</td>
+                    <td>Required, positive integers</td>
+                    <td>Integer validation</td>
+                </tr>
+                <tr>
+                    <td>Payment Fields</td>
+                    <td>Optional, positive numbers if provided</td>
+                    <td>Conditional validation</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="validation-rules">
+            <div class="note-title">Special Validation Logic:</div>
+            <ul>
+                <li><strong>Property Type Normalization:</strong> All property types are converted to lowercase and validated against a whitelist</li>
+                <li><strong>State Auto-Population:</strong> State field is automatically populated to match city if not explicitly set</li>
+                <li><strong>Address Fallback:</strong> Project name is used as address if no address is provided</li>
+                <li><strong>Placeholder Handling:</strong> "none" values are converted to empty strings during submission</li>
+                <li><strong>Default Values:</strong> Listing type defaults to "Primary" if not specified</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>6. Form Submission Process</h2>
+        
+        <div class="note">
+            <div class="note-title">Multi-Step Submission Process:</div>
+            <ol>
+                <li><strong>Data Validation:</strong> All form fields are validated against business rules</li>
+                <li><strong>Property Creation/Update:</strong> Core property data is saved to database</li>
+                <li><strong>Image Processing:</strong> Images are uploaded and processed in order:
+                    <ul>
+                        <li>Existing images marked for deletion are removed</li>
+                        <li>Existing images marked for replacement are updated</li>
+                        <li>New images are uploaded and added to the property</li>
+                    </ul>
+                </li>
+                <li><strong>Final Update:</strong> Property record is updated with final image list</li>
+                <li><strong>Cache Invalidation:</strong> Related queries are invalidated and refetched</li>
+                <li><strong>Success Notification:</strong> User receives confirmation and form closes</li>
+            </ol>
+        </div>
+        
+        <div class="validation-rules">
+            <div class="note-title">Error Recovery:</div>
+            <ul>
+                <li>Form submission errors are reported with specific messages</li>
+                <li>Image upload failures don't prevent property saving</li>
+                <li>Partial failures are rolled back to maintain data integrity</li>
+                <li>Users can retry operations without losing form data</li>
+                <li>Loading states prevent duplicate submissions</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>7. Technical Implementation Details</h2>
+        
+        <table class="field-table">
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>Technology</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Form Framework</td>
+                    <td>React Hook Form with Zod validation</td>
+                    <td>Type-safe form handling and validation</td>
+                </tr>
+                <tr>
+                    <td>UI Components</td>
+                    <td>Shadcn/UI with Tailwind CSS</td>
+                    <td>Consistent, accessible interface components</td>
+                </tr>
+                <tr>
+                    <td>Data Management</td>
+                    <td>TanStack Query (React Query)</td>
+                    <td>Server state management and caching</td>
+                </tr>
+                <tr>
+                    <td>Image Upload</td>
+                    <td>FormData with fetch API</td>
+                    <td>Direct file upload to server endpoints</td>
+                </tr>
+                <tr>
+                    <td>Notifications</td>
+                    <td>Custom toast system</td>
+                    <td>User feedback for operations</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>8. Usage Guidelines</h2>
+        
+        <div class="note">
+            <div class="note-title">Best Practices for Users:</div>
+            <ul>
+                <li><strong>Required Fields:</strong> Complete all fields marked with red asterisks (*) before submission</li>
+                <li><strong>Image Quality:</strong> Use high-resolution images (minimum 800x600) for best presentation</li>
+                <li><strong>Property Types:</strong> Select the most specific property type available for accurate categorization</li>
+                <li><strong>Pricing Information:</strong> Include payment terms for primary listings to help buyers understand financing options</li>
+                <li><strong>Descriptions:</strong> Write detailed descriptions focusing on unique selling points and amenities</li>
+                <li><strong>Location Data:</strong> Ensure city and project name are accurate for mapping and search functionality</li>
+            </ul>
+        </div>
+        
+        <div class="validation-rules">
+            <div class="note-title">Troubleshooting:</div>
+            <ul>
+                <li><strong>Form Won't Submit:</strong> Check for validation errors highlighted in red</li>
+                <li><strong>Image Upload Issues:</strong> Verify file sizes are under 25MB and formats are supported</li>
+                <li><strong>Missing Fields:</strong> Scroll through entire form to ensure all required fields are completed</li>
+                <li><strong>Save Button Disabled:</strong> Wait for any ongoing uploads or validations to complete</li>
+                <li><strong>Data Loss:</strong> Form data is preserved during validation errors - no need to re-enter</li>
+            </ul>
+        </div>
+    </div>
+
+</body>
+</html>
