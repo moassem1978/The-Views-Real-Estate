@@ -134,15 +134,16 @@ const ListingEditor: React.FC<ListingEditorProps> = ({
     try {
       const payload = {
         ...formData,
-        photos: photos.map(photo => ({
+        photos: JSON.stringify(photos.map(photo => ({
           filename: photo.filename,
           altText: photo.altText,
-          order: photo.order
-        }))
+          order: photo.order,
+          url: photo.url
+        })))
       };
 
       const response = await fetch(`/api/properties/${listing.id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },

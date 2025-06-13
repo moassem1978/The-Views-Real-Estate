@@ -53,7 +53,7 @@ interface PropertiesManagerProps {
   onEditProperty?: (propertyId: number) => void;
 }
 
-export default function PropertiesManager({ onEditProperty }: PropertiesManagerProps) {
+function PropertiesManager({ onEditProperty }: PropertiesManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
@@ -628,3 +628,5 @@ export default function PropertiesManager({ onEditProperty }: PropertiesManagerP
     </div>
   );
 }
+
+export default PropertiesManager;

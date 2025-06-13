@@ -212,10 +212,11 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       const propertyData = {
         ...req.body,
         photos: imageUrls,
+        images: imageUrls, // Also set legacy images field
         createdBy: user.id,
         createdAt: new Date().toISOString(),
         agentId: user.id,
-        status: 'published',
+        status: req.body.status || 'published',
         zipCode: req.body.zipCode || '00000'
       };
 
@@ -316,22 +317,10 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
         for (const file of files) {
           try {
-            // Generate unique filename
-            const uniqueId = uuidv4().split('-')[0];
-            const timestamp = Date.now();
-            const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-            const newFileName = `property-${timestamp}-${uniqueId}${ext}`;
-            const outputPath = path.join(uploadsDir, newFileName);
-
             // Process image with Sharp
             await processImage(file.path);
-            
-            // Move processed file to final location
-            if (fs.existsSync(file.path)) {
-              fs.renameSync(file.path, outputPath);
-              newImageUrls.push(`/uploads/properties/${newFileName}`);
-              console.log(`✅ Processed image: ${newFileName}`);
-            }
+            newImageUrls.push(`/uploads/properties/${file.filename}`);
+            console.log(`✅ Processed image: ${file.filename}`);
           } catch (imageError) {
             console.error(`Failed to process image ${file.originalname}:`, imageError);
             // Continue with other images
@@ -343,20 +332,31 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       let finalImages: string[] = [];
       
       try {
-        if (req.body.existingImages) {
-          const existingImages = typeof req.body.existingImages === 'string' 
-            ? JSON.parse(req.body.existingImages)
-            : req.body.existingImages;
-
-          if (Array.isArray(existingImages)) {
-            finalImages = existingImages.filter((img: string) => img && typeof img === 'string');
+        if (req.body.photos && typeof req.body.photos === 'string') {
+          // Handle JSON string of photos
+          const photosData = JSON.parse(req.body.photos);
+          if (Array.isArray(photosData)) {
+            finalImages = photosData.map((photo: any) => {
+              if (typeof photo === 'string') return photo;
+              if (photo && photo.url) return photo.url;
+              if (photo && photo.filename) return `/uploads/properties/${photo.filename}`;
+              return null;
+            }).filter(Boolean);
           }
-        } else if (req.body.replaceImages !== 'true') {
+        } else if (Array.isArray(req.body.photos)) {
+          // Handle array of photos
+          finalImages = req.body.photos.map((photo: any) => {
+            if (typeof photo === 'string') return photo;
+            if (photo && photo.url) return photo.url;
+            if (photo && photo.filename) return `/uploads/properties/${photo.filename}`;
+            return null;
+          }).filter(Boolean);
+        } else if (!req.body.replaceImages || req.body.replaceImages !== 'true') {
           // Keep existing images unless explicitly replacing
           finalImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
         }
       } catch (e) {
-        console.warn("Error parsing existing images, keeping originals");
+        console.warn("Error parsing photos, keeping originals");
         finalImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
       }
 
@@ -375,13 +375,9 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
         'projectName', 'developerName', 'yearBuilt', 'status', 'references', 'address', 'zipCode'
       ];
 
-      // Only update fields that are provided (allow empty strings for some fields)
+      // Only update fields that are provided
       for (const field of validFields) {
-        if (req.body.hasOwnProperty(field) && req.body[field] !== undefined) {
-          // For required fields like title, don't allow empty
-          if (['title', 'description'].includes(field) && req.body[field] === '') {
-            continue;
-          }
+        if (req.body.hasOwnProperty(field)) {
           updateData[field] = req.body[field];
         }
       }
@@ -647,6 +643,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
 
       // Check permissions - admin, owner, or creator can delete
       if (user.role !== 'admin' && user.role !== 'owner' && existingProperty.createdBy !== user.id) {
+        console.error(`Permission denied: User ${user.id} (${user.role}) cannot delete property ${id} owned by ${existingProperty.createdBy}`);
         return res.status(403).json({ success: false, message: "Permission denied" });
       }
 
