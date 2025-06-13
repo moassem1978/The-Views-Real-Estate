@@ -26,11 +26,21 @@ export class HealthMonitor {
     }, 60000);
   }
 
-  private updateHealthStatus(): void {
+  private async updateHealthStatus(): Promise<void> {
     try {
+      let dbStatus = 'connected';
+      try {
+        // Try to import and test database connection
+        const { pool } = await import('./db');
+        await pool.query('SELECT 1');
+      } catch (dbError) {
+        console.error('Database health check failed:', dbError);
+        dbStatus = 'disconnected';
+      }
+
       this.healthStatus = {
         server: 'running',
-        database: 'connected',
+        database: dbStatus,
         memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
         uptime: Math.round(process.uptime()),
         lastCheck: new Date()

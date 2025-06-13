@@ -47,6 +47,9 @@ class ErrorLogger {
         if (err) console.error('Failed to write to error log:', err);
       });
       
+      // Check if log rotation is needed
+      this.checkRotation();
+      
       console.error(`Error in ${context}:`, errorMessage);
     } catch (loggingError) {
       console.error('Error while logging error:', loggingError);

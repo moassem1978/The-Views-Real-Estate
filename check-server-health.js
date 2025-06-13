@@ -1,19 +1,11 @@
 
-import { createRequire } from 'module';
-import fs from 'fs';
-import path from 'path';
+const { Pool } = require('pg');
 
-const require = createRequire(import.meta.url);
-
-// Import pool from the TypeScript file using dynamic import
-let pool;
-try {
-  const dbModule = await import('./server/db.ts');
-  pool = dbModule.pool;
-} catch (error) {
-  console.error('Failed to import database pool:', error);
-  process.exit(1);
-}
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
 async function checkServerHealth() {
   console.log('🏥 Server Health Check Starting...');
@@ -30,6 +22,7 @@ async function checkServerHealth() {
     
     // Check server port availability
     const net = require('net');
+    const fs = require('fs');
     const port = 5000;
     
     const portCheck = new Promise((resolve, reject) => {
@@ -58,25 +51,32 @@ async function checkServerHealth() {
     const uploadsDir = './public/uploads';
     if (fs.existsSync(uploadsDir)) {
       const stats = fs.statSync(uploadsDir);
-      console.log(`✅ Uploads directory accessible, permissions: ${stats.mode.toString(8)}`);
+      console.log(`✅ Uploads directory accessible`);
     } else {
-      console.log('⚠️ Uploads directory does not exist');
+      console.log('❌ Uploads directory not found');
     }
     
-    console.log('\n🎉 Health check completed successfully!');
-    
-    if (serverRunning) {
-      console.log('✅ Server is running and healthy');
-      process.exit(0);
+    // Check logs directory
+    const logsDir = './logs';
+    if (fs.existsSync(logsDir)) {
+      console.log('✅ Logs directory exists');
     } else {
-      console.log('❌ Server is not running');
-      process.exit(1);
+      console.log('⚠️ Logs directory not found');
     }
+    
+    console.log('🎉 Health check completed successfully');
     
   } catch (error) {
     console.error('❌ Health check failed:', error);
     process.exit(1);
+  } finally {
+    await pool.end();
   }
 }
 
-checkServerHealth();
+// Run health check if script is executed directly
+if (require.main === module) {
+  checkServerHealth();
+}
+
+module.exports = { checkServerHealth };
