@@ -137,14 +137,25 @@ function App() {
 
   useEffect(() => {
     // Initialize monitoring and other services
-    try {
-      FrontendMonitoring.initialize();
-      console.log("✅ Frontend monitoring initialized successfully");
-    } catch (error) {
-      console.warn("⚠️ Frontend monitoring initialization failed:", error);
-    }
+    const initTimer = setTimeout(() => {
+      try {
+        FrontendMonitoring.initialize();
+        console.log("✅ Frontend monitoring initialized successfully");
+      } catch (error) {
+        console.warn("⚠️ Frontend monitoring initialization failed:", error);
+      }
+      setIsInitialized(true);
+    }, 100);
 
-    setIsInitialized(true);
+    // Fallback initialization after 3 seconds
+    const fallbackTimer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 3000);
+
+    return () => {
+      clearTimeout(initTimer);
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 
   if (!isInitialized) {

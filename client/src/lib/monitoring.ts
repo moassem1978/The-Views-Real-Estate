@@ -7,37 +7,36 @@ class FrontendMonitoring {
   static initialize() {
     if (this.initialized) return;
 
-    const sentryDsn = import.meta.env.VITE_SENTRY_DSN || import.meta.env.VITE_PUBLIC_SENTRY_DSN;
-    
-    if (sentryDsn) {
-      Sentry.init({
-        dsn: sentryDsn,
-        environment: import.meta.env.MODE || 'development',
-        integrations: [
-          Sentry.browserTracingIntegration(),
-          Sentry.replayIntegration({
-            maskAllText: true,
-            blockAllMedia: true,
-          }),
-        ],
-        tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
-        replaysSessionSampleRate: 0.1,
-        replaysOnErrorSampleRate: 1.0,
-        beforeSend(event) {
-          // Filter out non-critical errors
-          if (event.exception?.values?.[0]?.value?.includes('Non-Error promise rejection')) {
-            return null;
-          }
-          if (event.exception?.values?.[0]?.value?.includes('Failed to fetch')) {
-            return null;
-          }
-          return event;
-        }
-      });
+    // Simple initialization without blocking
+    try {
+      const sentryDsn = import.meta.env.VITE_SENTRY_DSN || import.meta.env.VITE_PUBLIC_SENTRY_DSN;
       
-      console.log('✅ Frontend Sentry monitoring initialized');
-    } else {
-      console.log('⚠️ Frontend Sentry DSN not found, monitoring disabled');
+      if (sentryDsn) {
+        // Async initialization to prevent blocking
+        setTimeout(() => {
+          try {
+            Sentry.init({
+              dsn: sentryDsn,
+              environment: import.meta.env.MODE || 'development',
+              integrations: [
+                Sentry.browserTracingIntegration(),
+              ],
+              tracesSampleRate: 0.1,
+              beforeSend(event) {
+                if (event.exception?.values?.[0]?.value?.includes('Non-Error promise rejection')) {
+                  return null;
+                }
+                return event;
+              }
+            });
+            console.log('Frontend monitoring initialized');
+          } catch (e) {
+            console.warn('Monitoring init failed:', e);
+          }
+        }, 50);
+      }
+    } catch (error) {
+      console.warn('Monitoring setup failed:', error);
     }
 
     this.initialized = true;
