@@ -472,72 +472,43 @@ app.use((req, res, next) => {
     });
   });
 
-  // Find available port with better error handling
-  const findAvailablePort = (startPort: number): Promise<number> => {
+  // Simplified port handling - use environment port or find available port
+  const PORT = process.env.PORT || 5000;
+  
+  const startServer = (port: number): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const net = require('net');
-      const server = net.createServer();
-
-      server.listen(startPort, "0.0.0.0", () => {
-        const port = server.address()?.port || startPort;
-        server.close(() => {
-          console.log(`✅ Port ${port} is available`);
-          resolve(port);
-        });
+      const serverInstance = server.listen(port, '0.0.0.0', () => {
+        console.log(`✅ Server running on port ${port}`);
+        console.log(`🌐 Access at: http://0.0.0.0:${port}`);
+        if (process.env.NODE_ENV === 'production') {
+          console.log(`🚀 Production deployment ready`);
+        } else {
+          console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
+        }
+        resolve();
       });
 
-      server.on('error', (err: any) => {
+      serverInstance.on('error', (err: any) => {
         if (err.code === 'EADDRINUSE') {
-          console.log(`⚠️ Port ${startPort} is busy, trying ${startPort + 1}`);
-          findAvailablePort(startPort + 1).then(resolve).catch(reject);
+          console.log(`Port ${port} failed, trying next...`);
+          // Try next port
+          const nextPorts = [3000, 8000, 8080, 4000, 9000];
+          const nextPort = nextPorts.find(p => p > port) || port + 1000;
+          startServer(nextPort).then(resolve).catch(reject);
         } else {
-          console.error('Port detection error:', err);
+          console.error('Server error:', err);
           reject(err);
         }
       });
     });
   };
 
-  // Start with port 5000 but allow fallback to other ports
-  const preferredPorts = [5000, 3000, 8000, 8080, 4000];
-  let port = 5000;
-
   try {
-    // Try preferred ports first, then find any available port
-    for (const preferredPort of preferredPorts) {
-      try {
-        port = await findAvailablePort(preferredPort);
-        break;
-      } catch (err) {
-        console.log(`Port ${preferredPort} failed, trying next...`);
-        continue;
-      }
-    }
+    await startServer(Number(PORT));
   } catch (err) {
-    console.error('Could not find available port, using default 5000');
-    port = 5000;
+    console.error('Failed to start server:', err);
+    process.exit(1);
   }
-
-  // Use port from environment or default to 5000
-  const PORT = process.env.PORT || 5000;
-  server.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server running on port ${PORT}`);
-    console.log(`🌐 Access at: http://0.0.0.0:${PORT}`);
-    if (process.env.NODE_ENV === 'production') {
-      console.log(`🚀 Production deployment ready`);
-    } else {
-      console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
-    }
-  });
-
-  server.on('error', (err: any) => {
-    console.error('Server error:', err);
-    if (err.code === 'EADDRINUSE') {
-      console.log(`❌ Port ${port} still in use after detection. This may indicate a zombie process.`);
-      console.log('💡 Try running the "Robust Server Start" workflow to kill existing processes.');
-      process.exit(1);
-    }
-  });
 
   // Restore endpoints
   const { addRestoreEndpoints } = await import('./restore-endpoint');
