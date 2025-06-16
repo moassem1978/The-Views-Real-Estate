@@ -420,7 +420,8 @@ app.use((req, res, next) => {
 
   // Add simplified health check endpoints
   app.get('/health', (req, res) => {
-    const actualPort = server.address()?.port || port;
+    const address = server.address();
+    const actualPort = typeof address === 'string' ? PORT : address?.port || PORT;
     res.status(200).json({ 
       status: 'ok',
       port: actualPort,
@@ -463,7 +464,8 @@ app.use((req, res, next) => {
   });
 
   app.get('/mobile-health', (req, res) => {
-    const actualPort = server.address()?.port || port;
+    const address = server.address();
+    const actualPort = typeof address === 'string' ? PORT : address?.port || PORT;
     res.status(200).json({ 
       status: 'mobile-ready',
       timestamp: new Date().toISOString(),

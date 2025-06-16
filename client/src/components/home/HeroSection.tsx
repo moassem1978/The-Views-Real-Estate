@@ -1,38 +1,94 @@
 import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, MapPin, Phone, Mail } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="relative bg-gray-800 h-[70vh] overflow-hidden">
+    <section className="relative h-[90vh] overflow-hidden">
+      {/* Background Image with Overlay */}
       <div className="absolute inset-0">
-        <img 
-          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2075&q=80" 
-          alt="Luxury waterfront property" 
-          className="w-full h-full object-cover opacity-80"
-          loading="eager"
+        <div 
+          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('/api/placeholder/1920/1080')`
+          }}
         />
       </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-gray-800 via-gray-800/50 to-transparent"></div>
-      
-      <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
-        <div className="max-w-2xl animate-in fade-in duration-700">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-semibold text-white leading-tight">
-            Discover Exceptional <span className="text-[#D4AF37]">Luxury Properties</span>
-          </h1>
-          <p className="mt-4 text-lg text-white/90 max-w-xl">
-            Curated selection of the world's most extraordinary homes and estates, 
-            tailored to the discerning tastes of our clientele.
-          </p>
-          <div className="mt-8 flex flex-col sm:flex-row gap-4">
-            <Link href="/properties" className="px-6 py-3 bg-[#D4AF37] hover:bg-[#BF9B30] text-white font-medium rounded-md transition-colors shadow-lg transform hover:scale-[1.02] inline-flex items-center justify-center">
-              Browse Properties
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </Link>
-            <Link href="/services" className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-md transition-colors backdrop-blur-sm inline-flex items-center justify-center">
-              Our Services
-            </Link>
+
+      {/* Hero Content */}
+      <div className="relative z-10 flex items-center justify-center h-full">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center text-white">
+            {/* Brand Logo/Name */}
+            <div className="mb-8">
+              <h1 className="text-5xl md:text-7xl font-serif font-bold mb-4 tracking-tight">
+                The <span className="text-[#B87333]">Views</span>
+              </h1>
+              <div className="w-32 h-1 bg-[#B87333] mx-auto mb-6"></div>
+              <p className="text-xl md:text-2xl font-light opacity-90 tracking-wide">
+                Real Estate Consultancy
+              </p>
+            </div>
+
+            {/* Main Tagline */}
+            <div className="mb-10">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-semibold mb-6 leading-tight">
+                Discover Extraordinary Properties<br />
+                <span className="text-[#B87333]">Beyond Expectations</span>
+              </h2>
+              <p className="text-lg md:text-xl opacity-90 max-w-3xl mx-auto leading-relaxed">
+                Experience luxury real estate with Egypt's premier consultancy. 
+                From exclusive Cairo compounds to Dubai's finest developments, 
+                we bring you properties that define sophisticated living.
+              </p>
+            </div>
+
+            {/* Call-to-Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+              <Link href="/properties">
+                <Button 
+                  size="lg"
+                  className="bg-[#B87333] hover:bg-[#964B00] text-white px-8 py-4 text-lg font-semibold rounded-md shadow-lg transition-all duration-300 transform hover:scale-105 min-w-[200px]"
+                >
+                  Browse Properties
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/contact">
+                <Button 
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-4 text-lg font-semibold rounded-md transition-all duration-300 min-w-[200px]"
+                >
+                  <Phone className="w-5 h-5 mr-2" />
+                  Contact Us
+                </Button>
+              </Link>
+            </div>
+
+            {/* Quick Contact Info */}
+            <div className="flex flex-col md:flex-row justify-center items-center gap-6 text-sm opacity-80">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4" />
+                <span>+20 106 311 1136</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                <span>Sales@theviewsconsultancy.com</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                <span>Cairo • Dubai • North Coast</span>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Scroll Indicator */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
+          <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
         </div>
       </div>
     </section>

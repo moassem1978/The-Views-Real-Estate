@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import PropertySearch from "@/components/home/PropertySearch";
+import HeroSection from "@/components/home/HeroSection";
+import HighlightsCarousel from "@/components/home/HighlightsCarousel";
+import BrowsePropertiesSection from "@/components/home/BrowsePropertiesSection";
 import Services from "@/components/home/Services";
 import Testimonials from "@/components/home/Testimonials";
 import ContactCTA from "@/components/home/ContactCTA";
-import OptimizedHeroCarousel from "@/components/home/OptimizedHeroCarousel";
 import AnnouncementsSection from "@/components/home/AnnouncementsSection";
 import PropertiesByType from "@/components/home/PropertiesByType";
 import SEOHead from "@/components/common/SEOHead";
