@@ -111,8 +111,8 @@ export default function HighlightsCarousel() {
               <div className="absolute inset-0">
                 <img
                   src={currentItem.type === 'property' 
-                    ? ((currentItem.data as Property).images && (currentItem.data as Property).images!.length > 0 
-                        ? getResizedImageUrl((currentItem.data as Property).images![0], 'large')
+                    ? ((currentItem.data as Property).images && (currentItem.data as Property).images.length > 0 
+                        ? getResizedImageUrl((currentItem.data as Property).images[0], 'large')
                         : "/placeholder-property.svg")
                     : (getResizedImageUrl((currentItem.data as Announcement).imageUrl || '', 'large') || "/placeholder-announcement.svg")
                   }
@@ -243,7 +243,7 @@ export default function HighlightsCarousel() {
                       ? ((item.data as Property).images && (item.data as Property).images.length > 0 
                           ? getResizedImageUrl((item.data as Property).images[0], 'small')
                           : "/placeholder-property.svg")
-                      : (getResizedImageUrl((item.data as Announcement).imageUrl, 'small') || "/placeholder-announcement.svg")
+                      : (getResizedImageUrl((item.data as Announcement).imageUrl || '', 'small') || "/placeholder-announcement.svg")
                     }
                     alt={item.data.title}
                     className="w-full h-full object-cover"

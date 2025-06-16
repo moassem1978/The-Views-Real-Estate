@@ -121,10 +121,11 @@ function HomeSEO() {
   return null;
 }
 
-// Home component using the optimized carousel for better performance
+// Enhanced homepage with final hero section and integrated property browsing
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
+      <HomeSEO />
       <SEOHead pageName="home" />
       <Header />
 
@@ -133,21 +134,28 @@ export default function Home() {
         {/* H1 for homepage - hidden but SEO important */}
         <h1 className="sr-only">Premium Real Estate Consultant Egypt Dubai - The Views Consultancy</h1>
 
-        <OptimizedHeroCarousel />
+        {/* Hero Section with Brand Identity */}
+        <HeroSection />
 
-        <section aria-labelledby="property-search-heading">
-          <h2 id="property-search-heading" className="sr-only">Find Your Dream Property</h2>
-          <PropertySearch />
-        </section>
+        {/* Featured Highlights Carousel */}
+        <HighlightsCarousel />
 
+        {/* Browse All Properties Section */}
+        <BrowsePropertiesSection />
+
+        {/* Properties by Type */}
         <PropertiesByType />
 
+        {/* Latest Announcements */}
         <AnnouncementsSection />
 
+        {/* Services Overview */}
         <Services />
 
+        {/* Client Testimonials */}
         <Testimonials />
 
+        {/* Contact Call-to-Action */}
         <ContactCTA />
       </main>
       <Footer />
