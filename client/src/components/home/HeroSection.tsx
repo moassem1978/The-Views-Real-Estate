@@ -53,11 +53,12 @@ export default function HeroSection() {
             </div>
 
             {/* Call-to-Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12" role="group" aria-label="Primary actions">
               <Link href="/properties">
                 <Button 
                   size="lg"
-                  className="bg-[#B87333] hover:bg-[#964B00] text-white px-8 py-4 text-lg font-semibold rounded-md shadow-lg transition-all duration-300 transform hover:scale-105 min-w-[200px]"
+                  className="bg-[#B87333] hover:bg-[#964B00] focus:bg-[#964B00] focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent text-white px-8 py-4 text-lg font-semibold rounded-md shadow-lg transition-all duration-300 transform hover:scale-105 focus:scale-105 min-w-[200px]"
+                  aria-describedby="browse-properties-desc"
                 >
                   Browse Properties
                   <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
@@ -67,7 +68,8 @@ export default function HeroSection() {
                 <Button 
                   size="lg"
                   variant="outline"
-                  className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-4 text-lg font-semibold rounded-md transition-all duration-300 min-w-[200px]"
+                  className="border-2 border-white text-white hover:bg-white hover:text-black focus:bg-white focus:text-black focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent px-8 py-4 text-lg font-semibold rounded-md transition-all duration-300 min-w-[200px]"
+                  aria-describedby="contact-us-desc"
                 >
                   <Phone className="w-5 h-5 mr-2" aria-hidden="true" />
                   Contact Us
@@ -75,27 +77,50 @@ export default function HeroSection() {
               </Link>
             </div>
 
+            {/* Hidden descriptions for screen readers */}
+            <div className="sr-only">
+              <p id="browse-properties-desc">View our complete collection of luxury properties for sale and rent</p>
+              <p id="contact-us-desc">Get in touch with our real estate consultants for personalized assistance</p>
+            </div>
+
             {/* Quick Contact Info */}
-            <div className="flex flex-col md:flex-row justify-center items-center gap-6 text-sm opacity-80">
+            <address className="flex flex-col md:flex-row justify-center items-center gap-6 text-sm opacity-80 not-italic">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" aria-hidden="true" />
-                <span>+20 106 311 1136</span>
+                <a href="tel:+201063111136" className="hover:text-[#B87333] transition-colors focus:text-[#B87333] focus:outline-none focus:underline">
+                  +20 106 311 1136
+                </a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" aria-hidden="true" />
-                <span>Sales@theviewsconsultancy.com</span>
+                <a href="mailto:Sales@theviewsconsultancy.com" className="hover:text-[#B87333] transition-colors focus:text-[#B87333] focus:outline-none focus:underline">
+                  Sales@theviewsconsultancy.com
+                </a>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" aria-hidden="true" />
                 <span>Cairo • Dubai • North Coast</span>
               </div>
-            </div>
+            </address>
           </div>
         </div>
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+      <div 
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce"
+        role="button"
+        tabIndex={0}
+        aria-label="Scroll down to view more content"
+        onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+          }
+        }}
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent rounded-full p-2"
+      >
         <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
           <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
         </div>
