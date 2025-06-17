@@ -1,165 +1,206 @@
-import { Property, SearchFilters } from "../../types";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import PropertyCard from "./PropertyCard";
-import { useEffect, useState } from "react";
+import PropertyForm from "../dashboard/PropertyForm";
+import { Property } from "../../types";
 
 interface PropertyListProps {
-  properties: Property[];
-  filters: SearchFilters;
+  showDeleteButton?: boolean;
+  showAddButton?: boolean;
+  maxItems?: number;
 }
 
-export default function PropertyList({ properties, filters }: PropertyListProps) {
-  const [sortOption, setSortOption] = useState("default");
-  const [sortedProperties, setSortedProperties] = useState<Property[]>([]);
+export default function PropertyList({ 
+  showDeleteButton = false, 
+  showAddButton = false,
+  maxItems 
+}: PropertyListProps) {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+
+  // Fetch properties
+  const fetchProperties = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/properties");
+      if (!response.ok) throw new Error("Failed to fetch properties");
+      
+      const data = await response.json();
+      const propertiesData = data.data || data;
+      setProperties(Array.isArray(propertiesData) ? propertiesData : []);
+    } catch (error) {
+      console.error("Error fetching properties:", error);
+      toast.error("Failed to load properties");
+      setProperties([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Ensure properties is an array before spreading
-    if (!properties || !Array.isArray(properties)) {
-      setSortedProperties([]);
-      return;
+    fetchProperties();
+  }, []);
+
+  // Handle property deletion
+  const handleDelete = async (propertyId: number) => {
+    if (!confirm("Are you sure you want to delete this property?")) return;
+
+    try {
+      const res = await fetch(`/api/properties/${propertyId}`, { method: "DELETE" });
+
+      if (!res.ok) throw new Error("Deletion failed");
+
+      toast.success("Property deleted successfully");
+      // Remove from local state
+      setProperties(prev => prev.filter(p => p.id !== propertyId));
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Failed to delete property");
     }
-
-    let sorted = properties.slice(); // Use slice() instead of spread for safety
-
-    // Apply sorting
-    switch (sortOption) {
-      case "price-asc":
-        sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
-        break;
-      case "price-desc":
-        sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
-        break;
-      case "newest":
-        sorted.sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateB - dateA;
-        });
-        break;
-      case "bedrooms":
-        sorted.sort((a, b) => (b.bedrooms || 0) - (a.bedrooms || 0));
-        break;
-      case "sqft":
-        sorted.sort((a, b) => b.builtUpArea - a.builtUpArea);
-        break;
-      // Default shows featured properties first
-      default:
-        sorted.sort((a, b) => {
-          if (a.isFeatured && !b.isFeatured) return -1;
-          if (!a.isFeatured && b.isFeatured) return 1;
-          if (a.isNewListing && !b.isNewListing) return -1;
-          if (!a.isNewListing && b.isNewListing) return 1;
-          return 0;
-        });
-    }
-
-    setSortedProperties(sorted);
-  }, [properties, sortOption]);
-
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortOption(e.target.value);
   };
 
-  // Get active filters count for display
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (filters.location) count++;
-    if (filters.propertyType) count++;
-    if (filters.listingType) count++;
-    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) count++; // Count price range as one filter
-    if (filters.minBedrooms !== undefined) count++;
-    if (filters.minBathrooms !== undefined) count++;
-    if (filters.projectName) count++;
-    if (filters.developerName) count++;
-    return count;
+  // Handle property form submission
+  const handlePropertySubmit = (property: Property) => {
+    if (editingProperty) {
+      // Update existing property
+      setProperties(prev => 
+        prev.map(p => p.id === property.id ? property : p)
+      );
+      toast.success("Property updated successfully");
+    } else {
+      // Add new property
+      setProperties(prev => [property, ...prev]);
+      toast.success("Property added successfully");
+    }
+    
+    setShowForm(false);
+    setEditingProperty(null);
   };
 
-  // Format for display
-  const formatFilterSummary = () => {
-    const parts = [];
+  // Filter properties based on search
+  const filteredProperties = properties.filter(property =>
+    property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.propertyType.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    if (filters.location) {
-      parts.push(`Location: ${filters.location}`);
-    }
+  // Apply max items limit if specified
+  const displayProperties = maxItems 
+    ? filteredProperties.slice(0, maxItems)
+    : filteredProperties;
 
-    if (filters.propertyType) {
-      parts.push(`Type: ${filters.propertyType}`);
-    }
-
-    if (filters.minBedrooms !== undefined) {
-      parts.push(`${filters.minBedrooms}+ Beds`);
-    }
-
-    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-      let priceText = "Price: ";
-      if (filters.minPrice !== undefined) {
-        priceText += `${filters.minPrice.toLocaleString()} L.E`;
-      }
-
-      if (filters.minPrice !== undefined && filters.maxPrice !== undefined) {
-        priceText += " - ";
-      }
-
-      if (filters.maxPrice !== undefined) {
-        priceText += `${filters.maxPrice.toLocaleString()} L.E`;
-      }
-
-      parts.push(priceText);
-    }
-
-    return parts.join(" • ");
-  };
-
-  const activeFilterCount = getActiveFilterCount();
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="animate-pulse">
+            <div className="bg-gray-300 h-64 rounded-lg mb-4"></div>
+            <div className="h-4 bg-gray-300 rounded mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-serif font-semibold text-gray-800 mb-2">
-            {properties.length} Properties
-            {activeFilterCount > 0 && ` (${activeFilterCount} Filters Applied)`}
-          </h1>
-          {activeFilterCount > 0 && (
-            <p className="text-gray-600 text-sm">
-              {formatFilterSummary()}
-            </p>
-          )}
+    <div className="space-y-6">
+      {/* Header with search and add button */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="flex-1 max-w-md">
+          <Input
+            placeholder="Search properties..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+          />
         </div>
-
-        <div className="mt-4 md:mt-0 flex items-center">
-          <label htmlFor="sort" className="text-sm text-gray-600 mr-2">Sort By:</label>
-          <select 
-            id="sort"
-            value={sortOption}
-            onChange={handleSortChange}
-            className="p-2 border border-[#E8DACB] rounded-md focus:outline-none focus:border-[#D4AF37] transition-colors"
+        
+        {showAddButton && (
+          <Button 
+            onClick={() => {
+              setEditingProperty(null);
+              setShowForm(true);
+            }}
+            className="bg-[#B87333] hover:bg-[#964B00] text-white"
           >
-            <option value="default">Featured</option>
-            <option value="price-asc">Price (Low to High)</option>
-            <option value="price-desc">Price (High to Low)</option>
-            <option value="newest">Newest</option>
-            <option value="bedrooms">Most Bedrooms</option>
-            <option value="sqft">Largest Size</option>
-          </select>
-        </div>
+            Add Property
+          </Button>
+        )}
       </div>
 
-      {sortedProperties.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {sortedProperties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
+      {/* Property Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">
+                {editingProperty ? "Edit Property" : "Add New Property"}
+              </h2>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingProperty(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+            
+            <PropertyForm
+              property={editingProperty}
+              onSubmit={handlePropertySubmit}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Properties Grid */}
+      {displayProperties.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 mb-4">
+            {searchTerm ? "No properties match your search." : "No properties found."}
+          </p>
+          {showAddButton && !searchTerm && (
+            <Button 
+              onClick={() => {
+                setEditingProperty(null);
+                setShowForm(true);
+              }}
+              className="bg-[#B87333] hover:bg-[#964B00] text-white"
+            >
+              Add Your First Property
+            </Button>
+          )}
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="text-xl font-serif font-semibold text-gray-800 mb-2">No Properties Found</h3>
-          <p className="text-gray-600">
-            We couldn't find any properties matching your criteria. Try adjusting your filters.
-          </p>
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayProperties.map((property) => (
+              <PropertyCard
+                key={property.id}
+                property={property}
+                onDelete={handleDelete}
+                showDeleteButton={showDeleteButton}
+              />
+            ))}
+          </div>
+
+          {/* Show load more info if maxItems limit is applied */}
+          {maxItems && filteredProperties.length > maxItems && (
+            <div className="text-center py-4">
+              <p className="text-gray-600">
+                Showing {maxItems} of {filteredProperties.length} properties
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

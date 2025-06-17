@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
+import { toast } from "sonner";
 import { Property } from "../../types";
 import { formatPrice, parseJsonArray, getImageUrl } from "@/lib/utils";
 import PropertyImage from "@/components/properties/PropertyImage";
@@ -7,9 +8,11 @@ import path from 'path'; // Import the 'path' module
 
 interface PropertyCardProps {
   property: Property;
+  onDelete?: (propertyId: number) => void;
+  showDeleteButton?: boolean;
 }
 
-export default function PropertyCard({ property }: PropertyCardProps) {
+export default function PropertyCard({ property, onDelete, showDeleteButton = false }: PropertyCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [mainImage, setMainImage] = useState<string>('/placeholder-property.svg');
   const [imageError, setImageError] = useState(false);
@@ -86,6 +89,25 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     e.preventDefault();
     e.stopPropagation();
     setIsFavorite(!isFavorite);
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!confirm("Are you sure you want to delete this property?")) return;
+
+    try {
+      const res = await fetch(`/api/properties/${property.id}`, { method: "DELETE" });
+
+      if (!res.ok) throw new Error("Deletion failed");
+
+      toast.success("Property deleted successfully");
+      if (onDelete) onDelete(property.id!);
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Failed to delete property");
+    }
   };
 
   // Parse images from JSON string if necessary
@@ -178,21 +200,38 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           </button>
         </div>
 
-        {/* Favorite button */}
-        <button 
-          className="absolute top-4 right-4 h-9 w-9 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-white text-gray-800 hover:text-[#D4AF37] rounded-full transition-colors shadow-md z-10"
-          onClick={toggleFavorite}
-        >
-          {isFavorite ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#D4AF37]" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-            </svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
+        {/* Action buttons */}
+        <div className="absolute top-4 right-4 flex gap-2 z-10">
+          {/* Delete button - only show when enabled */}
+          {showDeleteButton && (
+            <button 
+              className="h-9 w-9 flex items-center justify-center bg-red-500/90 backdrop-blur-sm hover:bg-red-600 text-white rounded-full transition-colors shadow-md"
+              onClick={handleDelete}
+              title="Delete property"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           )}
-        </button>
+
+          {/* Favorite button */}
+          <button 
+            className="h-9 w-9 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-white text-gray-800 hover:text-[#D4AF37] rounded-full transition-colors shadow-md"
+            onClick={toggleFavorite}
+            title="Add to favorites"
+          >
+            {isFavorite ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#D4AF37]" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            )}
+          </button>
+        </div>
       </Link>
       <div className="p-6">
         <div className="flex justify-between items-start">
