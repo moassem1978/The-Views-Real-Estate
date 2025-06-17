@@ -7,25 +7,51 @@ interface ImageUploadManagerProps {
   existingImages?: string[];
   onImagesChange: (images: string[], imagesToRemove: string[]) => void;
   maxImages?: number;
+  propertyId?: number;
 }
 
 export default function ImageUploadManager({ 
   existingImages = [], 
   onImagesChange, 
-  maxImages = 20 
+  maxImages = 20,
+  propertyId 
 }: ImageUploadManagerProps) {
   const [images, setImages] = useState<string[]>(existingImages);
   const [imagesToRemove, setImagesToRemove] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const handleRemoveImage = useCallback((urlToRemove: string) => {
-    const newImages = images.filter(url => url !== urlToRemove);
-    const newImagesToRemove = [...imagesToRemove, urlToRemove];
-    
+  const handleDeleteImage = useCallback(async (imageUrl: string) => {
+    // Immediately remove from state (optimistic update)
+    const newImages = images.filter(img => img !== imageUrl);
     setImages(newImages);
-    setImagesToRemove(newImagesToRemove);
-    onImagesChange(newImages, newImagesToRemove);
-  }, [images, imagesToRemove, onImagesChange]);
+    onImagesChange(newImages, imagesToRemove);
+
+    // Make API call if property exists
+    if (propertyId) {
+      try {
+        const encodedUrl = encodeURIComponent(imageUrl);
+        await fetch(`/api/properties/${propertyId}/images/${encodedUrl}`, {
+          method: "DELETE",
+        });
+        toast.success("Image deleted successfully");
+      } catch (error) {
+        console.error("Failed to delete image:", error);
+        // Revert on failure
+        setImages(images);
+        onImagesChange(images, imagesToRemove);
+        toast.error("Failed to delete image");
+      }
+    } else {
+      // For new properties, just track for removal
+      const newImagesToRemove = [...imagesToRemove, imageUrl];
+      setImagesToRemove(newImagesToRemove);
+      onImagesChange(newImages, newImagesToRemove);
+    }
+  }, [images, imagesToRemove, onImagesChange, propertyId]);
+
+  const handleRemoveImage = useCallback((urlToRemove: string) => {
+    handleDeleteImage(urlToRemove);
+  }, [handleDeleteImage]);
 
   const handleFileUpload = useCallback(async (files: FileList) => {
     if (images.length + files.length > maxImages) {
@@ -70,6 +96,47 @@ export default function ImageUploadManager({
       handleFileUpload(files);
     }
   }, [handleFileUpload]);
+
+  const handleReplaceImage = useCallback((index: number, newFile: File) => {
+    const previewUrl = URL.createObjectURL(newFile);
+    
+    const updatedImages = [...images];
+    const oldImageUrl = updatedImages[index];
+    updatedImages[index] = previewUrl;
+    
+    setImages(updatedImages);
+    onImagesChange(updatedImages, imagesToRemove);
+    
+    // Add old image to removal list if it exists
+    if (oldImageUrl && !oldImageUrl.startsWith('blob:')) {
+      const newImagesToRemove = [...imagesToRemove, oldImageUrl];
+      setImagesToRemove(newImagesToRemove);
+      onImagesChange(updatedImages, newImagesToRemove);
+    }
+    
+    // Upload the new file
+    const formData = new FormData();
+    formData.append('images', newFile);
+    
+    fetch('/api/upload/images', {
+      method: 'POST',
+      body: formData,
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.imageUrls && result.imageUrls[0]) {
+        const finalImages = [...updatedImages];
+        finalImages[index] = result.imageUrls[0];
+        setImages(finalImages);
+        onImagesChange(finalImages, imagesToRemove);
+        URL.revokeObjectURL(previewUrl); // Clean up
+      }
+    })
+    .catch(error => {
+      console.error('Replace upload failed:', error);
+      toast.error('Failed to replace image');
+    });
+  }, [images, imagesToRemove, onImagesChange]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

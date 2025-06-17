@@ -180,6 +180,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete specific image from property
+  app.delete("/api/properties/:propertyId/images/:imageUrl", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const propertyId = parseInt(req.params.propertyId);
+      const imageUrl = decodeURIComponent(req.params.imageUrl);
+      const user = req.user as any;
+
+      // Get existing property
+      const existingProperty = await dbStorage.getPropertyById(propertyId);
+      if (!existingProperty) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Check permissions
+      if (user.role !== 'admin' && user.role !== 'owner' && existingProperty.createdBy !== user.id) {
+        return res.status(403).json({ message: "Permission denied" });
+      }
+
+      // Remove image from file system
+      try {
+        const filePath = path.join(__dirname, "../public/uploads/", path.basename(imageUrl));
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log(`Deleted image: ${filePath}`);
+        }
+      } catch (deleteError) {
+        console.error("File deletion failed", deleteError);
+      }
+
+      // Update property photos array
+      const currentPhotos = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
+      const updatedPhotos = currentPhotos.filter(photo => photo !== imageUrl);
+
+      const updatedProperty = await dbStorage.updateProperty(propertyId, {
+        photos: updatedPhotos,
+        updatedAt: new Date()
+      });
+
+      res.status(200).json({ success: true, property: updatedProperty });
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      res.status(500).json({ message: "Failed to delete image" });
+    }
+  });
+
   // Delete property
   app.delete("/api/properties/:id", async (req: Request, res: Response) => {
     try {

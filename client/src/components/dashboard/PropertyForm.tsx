@@ -90,6 +90,7 @@ export default function PropertyForm({ property, onSubmit }: PropertyFormProps) 
         existingImages={images}
         onImagesChange={handleImagesChange}
         maxImages={20}
+        propertyId={property?.id}
       />
       
       <Button type="submit" className="bg-[#B87333] text-white">Save Property</Button>
