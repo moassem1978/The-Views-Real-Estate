@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Search } from "lucide-react";
 import { Link } from "wouter";
-import { getResizedImageUrl } from "@/lib/image-utils";
+import { getResizedImageUrl } from "@/lib/utils";
 
 // Define types for property data
 interface Property {
