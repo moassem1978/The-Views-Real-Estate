@@ -12,9 +12,12 @@ export default function HeroSection() {
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <div 
-          className="w-full h-full bg-cover bg-center bg-no-repeat bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
+          className="w-full h-full"
           style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('/uploads/hero-luxury-property.svg')`
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/hero-background.svg')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
           }}
           role="img"
           aria-label="Luxury waterfront property with marina and high-rise buildings"
@@ -108,7 +111,7 @@ export default function HeroSection() {
 
       {/* Scroll Indicator */}
       <div 
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce"
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent rounded-full p-2"
         role="button"
         tabIndex={0}
         aria-label="Scroll down to view more content"
@@ -119,7 +122,6 @@ export default function HeroSection() {
             window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
           }
         }}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent rounded-full p-2"
       >
         <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
           <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>

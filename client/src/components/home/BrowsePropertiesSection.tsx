@@ -30,7 +30,7 @@ export default function BrowsePropertiesSection() {
   const [selectedType, setSelectedType] = useState<string>("");
   
   // Fetch featured properties
-  const { data: propertiesResponse, isLoading } = useQuery({
+  const { data: propertiesResponse, isLoading } = useQuery<{data: Property[]}>({
     queryKey: ['/api/properties'],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

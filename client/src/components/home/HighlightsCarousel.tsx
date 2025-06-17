@@ -19,12 +19,12 @@ export default function HighlightsCarousel() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch highlighted properties and announcements
-  const { data: propertiesResponse } = useQuery({
+  const { data: propertiesResponse } = useQuery<{data: Property[]}>({
     queryKey: ['/api/properties/highlighted'],
     staleTime: 1000 * 60 * 10,
   });
 
-  const { data: announcementsResponse } = useQuery({
+  const { data: announcementsResponse } = useQuery<{data: Announcement[]}>({
     queryKey: ['/api/announcements/highlighted'],
     staleTime: 1000 * 60 * 10,
   });
@@ -35,12 +35,12 @@ export default function HighlightsCarousel() {
 
   // Combine and create highlight items
   const highlights: HighlightItem[] = [
-    ...properties.map(property => ({
+    ...properties.map((property: Property) => ({
       id: property.id,
       type: 'property' as const,
       data: property
     })),
-    ...announcements.map(announcement => ({
+    ...announcements.map((announcement: Announcement) => ({
       id: announcement.id,
       type: 'announcement' as const,
       data: announcement
@@ -137,7 +137,7 @@ export default function HighlightsCarousel() {
                     : "/placeholder-property.svg")
                 : (getResizedImageUrl((currentItem.data as Announcement).imageUrl || '', 'large') || "/placeholder-announcement.svg")
               }
-              alt={currentItem.data.title}
+              alt={currentItem.data?.title || 'Property listing'}
               className="w-full h-full object-cover"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
