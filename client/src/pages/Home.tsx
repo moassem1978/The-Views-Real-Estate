@@ -138,6 +138,9 @@ export default function Home() {
         {/* Hero Section with dark background */}
         <HeroSection />
 
+        {/* Featured Highlights Carousel */}
+        <HighlightsCarousel />
+
         {/* Browse All Properties Section */}
         <BrowsePropertiesSection />
 
@@ -157,9 +160,6 @@ export default function Home() {
             <PropertiesByType />
           </div>
         </section>
-
-        {/* Featured Highlights Carousel */}
-        <HighlightsCarousel />
 
         {/* Latest Announcements */}
         <AnnouncementsSection />

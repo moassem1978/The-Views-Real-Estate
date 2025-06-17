@@ -50,14 +50,14 @@ export default function BrowsePropertiesSection() {
             Browse our exclusive collection of extraordinary homes and estates, each carefully selected to meet the highest standards of luxury living.
           </p>
           
-          {/* Main Browse Button */}
+          {/* Main Browse Button - Bigger and Centered */}
           <div className="flex justify-center mb-8">
             <Button 
               onClick={handleBrowseAll}
               size="lg"
-              className="bg-[#B87333] hover:bg-[#964B00] text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg transition-all duration-300"
+              className="bg-[#B87333] hover:bg-[#964B00] text-white px-12 py-6 text-xl font-semibold rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105"
             >
-              <Search className="w-5 h-5 mr-2" />
+              <Search className="w-6 h-6 mr-3" />
               Browse All Properties
             </Button>
           </div>
@@ -148,7 +148,7 @@ export default function BrowsePropertiesSection() {
                 size="lg"
                 className="border-2 border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white px-8 py-3 text-lg font-semibold transition-all duration-300"
               >
-                View All Properties
+                Browse All Properties
               </Button>
             </div>
           </>
@@ -163,7 +163,7 @@ export default function BrowsePropertiesSection() {
               size="lg"
               className="border-2 border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white px-8 py-3 text-lg font-semibold transition-all duration-300"
             >
-              Browse Properties
+              Browse All Properties
             </Button>
           </div>
         )}
