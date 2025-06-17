@@ -86,7 +86,7 @@ export default function PropertyList({
   const filteredProperties = properties.filter(property =>
     property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     property.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.propertyType.toLowerCase().includes(searchTerm.toLowerCase())
+    (property.propertyType && property.propertyType.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Apply max items limit if specified
@@ -154,7 +154,7 @@ export default function PropertyList({
             </div>
             
             <PropertyForm
-              property={editingProperty}
+              property={editingProperty || undefined}
               onSubmit={handlePropertySubmit}
             />
           </div>

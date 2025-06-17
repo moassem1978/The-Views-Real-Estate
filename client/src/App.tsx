@@ -1,6 +1,9 @@
 import { Suspense, useState, useEffect } from "react";
 import { Router, Route, Switch } from "wouter";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -98,37 +101,40 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetError
 
 function AppContent() {
   return (
-    <AuthProvider>
-      <Router>
-        <AnalyticsTracker />
-        <div className="min-h-screen bg-background">
-          <OfflineIndicator />
-          <Suspense fallback={<LoadingSpinner />}>
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/properties" component={Properties} />
-              <Route path="/properties/:id" component={PropertyDetails} />
-              <Route path="/listing/:id" component={ListingDetail} />
-              <Route path="/projects" component={Projects} />
-              <Route path="/projects/:slug" component={ProjectDetail} />
-              <Route path="/about" component={About} />
-              <Route path="/contact" component={Contact} />
-              <Route path="/services" component={Services} />
-              <Route path="/blog" component={Blog} />
-              <Route path="/blog/marassi-north-coast-emaar-complete-guide" component={MarassiNorthCoastGuide} />
-              <Route path="/blog/:slug" component={ArticlePage} />
-              <Route path="/announcements" component={Announcements} />
-              <Route path="/announcements/:id" component={AnnouncementDetails} />
-              <Route path="/signin" component={SignIn} />
-              <Route path="/otp-login" component={OTPLogin} />
-              <ProtectedRoute path="/dashboard" component={Dashboard} />
-              <Route component={NotFound} />
-            </Switch>
-          </Suspense>
-          <Toaster />
-        </div>
-      </Router>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <AnalyticsTracker />
+          <div className="min-h-screen bg-background">
+            <OfflineIndicator />
+            <Suspense fallback={<LoadingSpinner />}>
+              <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/properties" component={Properties} />
+                <Route path="/properties/:id" component={PropertyDetails} />
+                <Route path="/listing/:id" component={ListingDetail} />
+                <Route path="/projects" component={Projects} />
+                <Route path="/projects/:slug" component={ProjectDetail} />
+                <Route path="/about" component={About} />
+                <Route path="/contact" component={Contact} />
+                <Route path="/services" component={Services} />
+                <Route path="/blog" component={Blog} />
+                <Route path="/blog/marassi-north-coast-emaar-complete-guide" component={MarassiNorthCoastGuide} />
+                <Route path="/blog/:slug" component={ArticlePage} />
+                <Route path="/announcements" component={Announcements} />
+                <Route path="/announcements/:id" component={AnnouncementDetails} />
+                <Route path="/signin" component={SignIn} />
+                <Route path="/otp-login" component={OTPLogin} />
+                <ProtectedRoute path="/dashboard" component={Dashboard} />
+                <Route component={NotFound} />
+              </Switch>
+            </Suspense>
+            <Toaster />
+            <SonnerToaster position="top-right" />
+          </div>
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
