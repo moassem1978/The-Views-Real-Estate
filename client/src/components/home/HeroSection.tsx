@@ -34,7 +34,7 @@ export default function HeroSection() {
               </Button>
             </Link>
             <Link href="/contact">
-              <Button variant="outline" className="border-white text-white text-lg px-8 py-4 rounded-md hover:bg-white hover:text-black">
+              <Button className="bg-[#B87333] hover:bg-[#964B00] text-white text-lg px-8 py-4 rounded-md border-2 border-[#B87333]">
                 Contact Us
               </Button>
             </Link>
