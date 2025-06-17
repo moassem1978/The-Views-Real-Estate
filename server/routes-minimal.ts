@@ -17,9 +17,9 @@ const upload = multer({
   storage: multer.diskStorage({
     destination: uploadsDir,
     filename: (req, file, cb) => {
-      const timestamp = Date.now();
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
       const ext = path.extname(file.originalname) || '.jpg';
-      cb(null, `property-${timestamp}${ext}`);
+      cb(null, uniqueSuffix + "-" + file.originalname);
     }
   }),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
@@ -112,6 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const user = req.user as any;
       const files = req.files as Express.Multer.File[];
+      const { imagesToRemove = [], ...rest } = req.body;
 
       // Get existing property
       const existingProperty = await dbStorage.getPropertyById(id);
@@ -124,18 +125,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Permission denied" });
       }
 
-      // Handle image updates properly
-      let updatedPhotos = [];
-      
-      if (req.body.removeImages) {
-        const imagesToRemove = Array.isArray(req.body.removeImages) ? req.body.removeImages : [req.body.removeImages];
-        const existingImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
-        updatedPhotos = existingImages.filter(img => !imagesToRemove.includes(img));
-      } else {
-        updatedPhotos = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
+      // Handle image deletion
+      if (imagesToRemove.length > 0) {
+        const fs = require('fs');
+        const path = require('path');
+        
+        for (const imageUrl of imagesToRemove) {
+          try {
+            // Convert URL to file path
+            const filePath = path.join(process.cwd(), 'public', imageUrl);
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+              console.log(`Deleted image: ${filePath}`);
+            }
+          } catch (deleteError) {
+            console.error(`Failed to delete image ${imageUrl}:`, deleteError);
+          }
+        }
       }
 
-      // Add new images
+      // Process existing images (remove deleted ones)
+      const existingImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
+      let updatedPhotos = existingImages.filter(img => !imagesToRemove.includes(img));
+
+      // Add new uploaded images
       if (files && files.length > 0) {
         const newImages = files.map(file => `/uploads/properties/${file.filename}`);
         updatedPhotos = [...updatedPhotos, ...newImages];
@@ -172,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, property: updatedProperty });
     } catch (error) {
       console.error('Error updating property:', error);
-      res.status(500).json({ message: error.message || "Failed to update property" });
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to update property" });
     }
   });
 

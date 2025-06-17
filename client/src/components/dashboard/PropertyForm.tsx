@@ -3,12 +3,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import ImageUploadManager from "./ImageUploadManager";
 
 interface Property {
   id?: number;
   title: string;
   description: string;
   price: number;
+  photos?: string[];
 }
 
 interface PropertyFormProps {
@@ -21,12 +23,19 @@ export default function PropertyForm({ property, onSubmit }: PropertyFormProps) 
     title: property?.title || "",
     description: property?.description || "",
     price: property?.price?.toString() || "",
-    // Extend with other fields as needed
   });
+
+  const [images, setImages] = useState<string[]>(property?.photos || []);
+  const [imagesToRemove, setImagesToRemove] = useState<string[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImagesChange = (updatedImages: string[], imagesToRemove: string[]) => {
+    setImages(updatedImages);
+    setImagesToRemove(imagesToRemove);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -35,15 +44,17 @@ export default function PropertyForm({ property, onSubmit }: PropertyFormProps) 
       const method = property ? "PUT" : "POST";
       const endpoint = property ? `/api/properties/${property.id}` : "/api/properties";
 
-      const submitData = {
+      const payload = {
         ...formData,
-        price: parseInt(formData.price) || 0
+        price: parseFloat(formData.price) || 0,
+        images,
+        imagesToRemove,
       };
 
       const response = await fetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submitData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error("Failed to save property");
