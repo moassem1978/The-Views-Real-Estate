@@ -122,7 +122,7 @@ app.use((req, res, next) => {
   ].filter(Boolean);
 
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  if (origin && allowedOrigins.includes(origin as string)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   
@@ -426,7 +426,7 @@ app.use((req, res, next) => {
     console.log('Starting session monitoring and cleanup...');
     console.log('✅ Session monitoring started');
   } catch (error) {
-    console.warn('⚠️ Session monitoring failed to start:', error.message);
+    console.warn('⚠️ Session monitoring failed to start:', (error as Error)?.message || String(error));
   }
 
   try {
@@ -436,7 +436,7 @@ app.use((req, res, next) => {
     console.log('Auto backup scheduling initialized successfully');
     console.log('✅ Auto-restore service started');
   } catch (error) {
-    console.warn('⚠️ Auto-restore service failed to start:', error.message);
+    console.warn('⚠️ Auto-restore service failed to start:', (error as Error)?.message || String(error));
   }
 
   // Request timeout middleware (30 seconds)
@@ -508,36 +508,23 @@ app.use((req, res, next) => {
   // Simplified port handling - use environment port or find available port
   const PORT = process.env.PORT || 5000;
   
-  const startServer = (port: number): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const serverInstance = server.listen(port, '0.0.0.0', () => {
-        console.log(`✅ Server running on port ${port}`);
-        console.log(`🌐 Access at: http://0.0.0.0:${port}`);
-        if (process.env.NODE_ENV === 'production') {
-          console.log(`🚀 Production deployment ready`);
-        } else {
-          console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
-        }
-        resolve();
-      });
-
-      serverInstance.on('error', (err: any) => {
-        if (err.code === 'EADDRINUSE') {
-          console.log(`Port ${port} failed, trying next...`);
-          // Try next port
-          const nextPorts = [3000, 8000, 8080, 4000, 9000];
-          const nextPort = nextPorts.find(p => p > port) || port + 1000;
-          startServer(nextPort).then(resolve).catch(reject);
-        } else {
-          console.error('Server error:', err);
-          reject(err);
-        }
-      });
-    });
-  };
-
   try {
-    await startServer(Number(PORT));
+    const serverInstance = server.listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`🌐 Access at: http://0.0.0.0:${PORT}`);
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🚀 Production deployment ready`);
+      } else {
+        console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
+      }
+    });
+
+    serverInstance.on('error', (err: any) => {
+      console.error('Server error:', err);
+      if (err.code === 'EADDRINUSE') {
+        console.log(`Port ${PORT} is in use, server may be running elsewhere`);
+      }
+    });
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);
