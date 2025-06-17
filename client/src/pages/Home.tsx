@@ -144,22 +144,8 @@ export default function Home() {
         {/* Browse All Properties Section */}
         <BrowsePropertiesSection />
 
-        {/* OUR FEATURED COLLECTION heading */}
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-8">
-              <p className="text-[#B87333] text-sm font-medium tracking-wide uppercase mb-2">
-                OUR FEATURED COLLECTION
-              </p>
-              <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-8">
-                Exclusive Properties
-              </h2>
-            </div>
-
-            {/* Properties by Type with Primary Projects and Resale Units */}
-            <PropertiesByType />
-          </div>
-        </section>
+        {/* Properties by Type with Primary Projects and Resale Units - Only tabs, no property cards */}
+        <PropertiesByType />
 
         {/* Latest Announcements */}
         <AnnouncementsSection />

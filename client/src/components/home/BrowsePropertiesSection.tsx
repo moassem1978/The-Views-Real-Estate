@@ -144,9 +144,8 @@ export default function BrowsePropertiesSection() {
             <div className="text-center">
               <Button 
                 onClick={handleBrowseAll}
-                variant="outline"
                 size="lg"
-                className="border-2 border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white px-8 py-3 text-lg font-semibold transition-all duration-300"
+                className="bg-[#B87333] hover:bg-[#964B00] text-white px-8 py-3 text-lg font-semibold rounded-lg shadow-lg transition-all duration-300"
               >
                 Browse All Properties
               </Button>
@@ -159,9 +158,8 @@ export default function BrowsePropertiesSection() {
             </p>
             <Button 
               onClick={handleBrowseAll}
-              variant="outline"
               size="lg"
-              className="border-2 border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white px-8 py-3 text-lg font-semibold transition-all duration-300"
+              className="bg-[#B87333] hover:bg-[#964B00] text-white px-8 py-3 text-lg font-semibold rounded-lg shadow-lg transition-all duration-300"
             >
               Browse All Properties
             </Button>

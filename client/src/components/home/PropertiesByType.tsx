@@ -276,12 +276,12 @@ export default function PropertiesByType() {
   const defaultTab = primaryProperties.length > 0 ? "primary" : "resale";
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="mb-8">
           <div className="text-center">
             <h2 className="text-sm uppercase tracking-wider text-[#B87333] font-semibold mb-2">
-              Our Featured Collection
+              OUR FEATURED COLLECTION
             </h2>
             <h3 className="text-3xl font-serif font-semibold text-gray-900">
               Exclusive Properties
@@ -293,14 +293,12 @@ export default function PropertiesByType() {
           <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 mb-8">
             <TabsTrigger 
               value="primary"
-              disabled={primaryProperties.length === 0}
               className="data-[state=active]:bg-[#B87333] data-[state=active]:text-white"
             >
               Primary Projects
             </TabsTrigger>
             <TabsTrigger 
               value="resale"
-              disabled={resaleProperties.length === 0}
               className="data-[state=active]:bg-[#B87333] data-[state=active]:text-white"
             >
               Resale Units
@@ -308,19 +306,35 @@ export default function PropertiesByType() {
           </TabsList>
 
           <TabsContent value="primary" className="mt-0">
-            <PropertyTabContent 
-              properties={primaryProperties} 
-              displayCount={displayCount} 
-              loadMore={loadMore} 
-            />
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-6">
+                Discover our exclusive primary development projects
+              </p>
+              <Button 
+                asChild
+                className="bg-[#B87333] hover:bg-[#964B00] text-white px-8 py-3 text-lg font-semibold"
+              >
+                <Link href="/properties?type=primary">
+                  Browse Primary Projects
+                </Link>
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="resale" className="mt-0">
-            <PropertyTabContent 
-              properties={resaleProperties} 
-              displayCount={displayCount} 
-              loadMore={loadMore} 
-            />
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-6">
+                Explore our curated selection of resale properties
+              </p>
+              <Button 
+                asChild
+                className="bg-[#B87333] hover:bg-[#964B00] text-white px-8 py-3 text-lg font-semibold"
+              >
+                <Link href="/properties?type=resale">
+                  Browse Resale Units
+                </Link>
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
