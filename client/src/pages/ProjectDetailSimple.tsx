@@ -85,7 +85,7 @@ export default function ProjectDetailSimple() {
             <div className="space-y-4">
               {project.images && project.images.length > 0 && (
                 <div className="aspect-video rounded-lg overflow-hidden">
-                  <img
+                  <img loading="lazy"
                     src={project.images[0]}
                     alt={project.projectName}
                     className="w-full h-full object-cover"
@@ -96,7 +96,7 @@ export default function ProjectDetailSimple() {
                 <div className="grid grid-cols-2 gap-4">
                   {project.images.slice(1, 5).map((image: string, index: number) => (
                     <div key={index} className="aspect-video rounded-lg overflow-hidden">
-                      <img
+                      <img loading="lazy"
                         src={image}
                         alt={`${project.projectName} - Image ${index + 2}`}
                         className="w-full h-full object-cover"

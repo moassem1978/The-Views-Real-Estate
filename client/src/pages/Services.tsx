@@ -51,7 +51,7 @@ export default function Services() {
         {/* Hero Section */}
         <section className="bg-[#333333] py-16 relative">
           <div className="absolute inset-0 opacity-20">
-            <img 
+            <img loading="lazy" 
               src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
               alt="Luxury real estate services" 
               className="w-full h-full object-cover"

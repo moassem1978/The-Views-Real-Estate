@@ -135,7 +135,7 @@ export default function NewsCarousel() {
                     {properties.map((property, index) => (
                       <CarouselItem key={property.id}>
                         <div className="relative aspect-video rounded-lg overflow-hidden shadow-lg">
-                          <img 
+                          <img loading="lazy" 
                             src={property.images[0]} 
                             alt={property.title}
                             className="w-full h-full object-cover"
@@ -234,7 +234,7 @@ export default function NewsCarousel() {
                     {announcements.map((announcement, index) => (
                       <CarouselItem key={announcement.id}>
                         <div className="relative aspect-video rounded-lg overflow-hidden shadow-lg">
-                          <img 
+                          <img loading="lazy" 
                             src={getImageUrl(announcement.imageUrl)} 
                             alt={announcement.title}
                             className="w-full h-full object-cover"

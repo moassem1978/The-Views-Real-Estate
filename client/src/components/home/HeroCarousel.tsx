@@ -120,7 +120,7 @@ export default function HeroCarousel() {
               <div className="relative h-full">
                 {/* Background Image */}
                 <div className="absolute inset-0">
-                  <img 
+                  <img loading="lazy" 
                     src={item.type === 'property' 
                       ? ((item.data as Property).images?.[0] || "/default-property.svg")
                       : ((item.data as Announcement).imageUrl || "/default-announcement.svg")

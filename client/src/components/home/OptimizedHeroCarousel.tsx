@@ -18,7 +18,7 @@ type SlideItem = {
 const PropertySlide = memo(({ property, onClick }: { property: Property, onClick: () => void }) => (
   <Link href={`/properties/${property.id}`}>
     <div className="block h-full cursor-pointer" onClick={onClick}>
-      <img 
+      <img loading="lazy" 
         src={property.images && property.images.length > 0 
           ? getResizedImageUrl(property.images[0], 'large') 
           : "/default-property.svg"} 

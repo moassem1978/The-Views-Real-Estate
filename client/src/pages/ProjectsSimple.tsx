@@ -56,7 +56,7 @@ export default function ProjectsSimple() {
                   <div key={project.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
                     {project.images && project.images[0] && (
                       <div className="aspect-video overflow-hidden">
-                        <img
+                        <img loading="lazy"
                           src={project.images[0]}
                           alt={project.projectName}
                           className="w-full h-full object-cover"

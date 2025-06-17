@@ -69,7 +69,7 @@ export default function HeatMap() {
         {/* Hero Section */}
         <section className="bg-[#333333] py-16 relative">
           <div className="absolute inset-0 opacity-20">
-            <img 
+            <img loading="lazy" 
               src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
               alt="Property analytics and data visualization" 
               className="w-full h-full object-cover"

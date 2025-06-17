@@ -1098,7 +1098,7 @@ export default function PropertyForm({
                     {existingImages.map((image, index) => (
                       <div key={`existing-${index}`} className="relative group">
                         <div className={`relative ${imagesToDelete.includes(index) ? 'opacity-50' : ''}`}>
-                          <img 
+                          <img loading="lazy" 
                             src={image} 
                             alt={`Property image ${index + 1}`} 
                             className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
@@ -1196,7 +1196,7 @@ export default function PropertyForm({
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {images.map((image, index) => (
                       <div key={`new-${index}`} className="relative group">
-                        <img 
+                        <img loading="lazy" 
                           src={URL.createObjectURL(image)} 
                           alt={`New image ${index + 1}`} 
                           className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
@@ -1254,7 +1254,7 @@ export default function PropertyForm({
                     </div>
                     
                     <div className="relative">
-                      <img 
+                      <img loading="lazy" 
                         src={previewImage} 
                         alt="Preview" 
                         className="max-w-full max-h-96 mx-auto block"

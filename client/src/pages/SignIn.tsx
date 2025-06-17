@@ -52,7 +52,7 @@ export default function SignIn() {
           <div className="bg-white rounded-lg shadow-xl overflow-hidden">
             <div className="bg-[#333333] px-6 py-8 text-center relative">
               <div className="absolute inset-0 opacity-20">
-                <img 
+                <img loading="lazy" 
                   src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
                   alt="Luxury property" 
                   className="w-full h-full object-cover"

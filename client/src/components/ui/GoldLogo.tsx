@@ -22,7 +22,7 @@ export default function GoldLogo({ className = "", height = "40px", width = "aut
   
   return (
     <div className={`overflow-hidden ${className}`} style={{ height, width }}>
-      <img 
+      <img loading="lazy" 
         src={goldLogoImport} 
         alt="The Views Real Estate"
         className="h-full w-auto object-contain"

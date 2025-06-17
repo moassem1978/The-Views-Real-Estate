@@ -83,7 +83,7 @@ export default function LogoDisplay({
   // Show the logo
   return (
     <div className={`overflow-hidden ${className}`}>
-      <img 
+      <img loading="lazy" 
         src={formattedUrl} 
         alt={companyName}
         className="h-full w-full object-contain"

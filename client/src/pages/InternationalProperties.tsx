@@ -114,7 +114,7 @@ export default function InternationalProperties() {
         {/* Hero Section with International Theme */}
         <section className="bg-[#333333] py-16 relative">
           <div className="absolute inset-0 opacity-20">
-            <img 
+            <img loading="lazy" 
               src="https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
               alt="International luxury properties background" 
               className="w-full h-full object-cover"

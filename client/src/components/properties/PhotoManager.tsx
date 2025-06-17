@@ -351,7 +351,7 @@ export default function PhotoManager({
               >
                 {/* Photo */}
                 <div className="aspect-square bg-gray-100">
-                  <img
+                  <img loading="lazy"
                     src={photo.url || `/uploads/properties/${photo.filename}`}
                     alt={photo.altText}
                     className="w-full h-full object-cover"

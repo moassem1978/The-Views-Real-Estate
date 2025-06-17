@@ -296,7 +296,7 @@ export default function ServiceDetails() {
         {/* Hero Section */}
         <section className="bg-[#333333] py-16 relative">
           <div className="absolute inset-0 opacity-20">
-            <img 
+            <img loading="lazy" 
               src={service.bgImage} 
               alt={service.title} 
               className="w-full h-full object-cover"
@@ -405,7 +405,7 @@ export default function ServiceDetails() {
                 .map(([key, otherService]) => (
                   <div key={key} className="bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="h-48 overflow-hidden">
-                      <img 
+                      <img loading="lazy" 
                         src={otherService.bgImage} 
                         alt={otherService.title} 
                         className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"

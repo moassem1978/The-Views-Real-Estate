@@ -51,7 +51,7 @@ const SimplePropertyCard: React.FC<SimplePropertyCardProps> = ({ property }) => 
   return (
     <Card className="overflow-hidden h-full flex flex-col hover:shadow-lg transition-shadow">
       <div className="relative h-48">
-        <img
+        <img loading="lazy"
           src={mainImage}
           alt={property.title}
           className="w-full h-full object-cover"

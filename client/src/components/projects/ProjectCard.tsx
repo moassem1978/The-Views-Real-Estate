@@ -57,7 +57,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   return (
     <Card className="overflow-hidden flex flex-col h-full hover:shadow-lg transition-shadow duration-300">
       <div className="relative h-52">
-        <img
+        <img loading="lazy"
           src={mainImage}
           alt={project.projectName}
           className="w-full h-full object-cover"

@@ -108,7 +108,7 @@ export default function PropertyCarousel() {
                   <div className="flex flex-col">
                     {/* Property Image with ONLY type tag and title/location */}
                     <div className="relative aspect-[16/9] overflow-hidden rounded-lg shadow-lg">
-                      <img 
+                      <img loading="lazy" 
                         src={(() => {
                           try {
                             const images = typeof property.images === 'string' 

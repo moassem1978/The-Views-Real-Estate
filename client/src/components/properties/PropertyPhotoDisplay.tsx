@@ -55,7 +55,7 @@ export default function PropertyPhotoDisplay({
     <Card className={className}>
       <CardContent className="p-0 relative">
         <div className="aspect-video relative overflow-hidden rounded-lg">
-          <img
+          <img loading="lazy"
             src={photoUrl}
             alt={currentPhoto.altText || `${propertyTitle} - Image ${currentIndex + 1}`}
             className="w-full h-full object-cover"
@@ -111,7 +111,7 @@ export default function PropertyPhotoDisplay({
                     ${index === currentIndex ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'}
                   `}
                 >
-                  <img
+                  <img loading="lazy"
                     src={photo.url || `/uploads/properties/${photo.filename}`}
                     alt={photo.altText || `Thumbnail ${index + 1}`}
                     className="w-full h-full object-cover"

@@ -85,7 +85,7 @@ export default function ProjectDetailFixed() {
             <div className="space-y-4">
               {projectData.images && projectData.images.length > 0 && (
                 <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
-                  <img
+                  <img loading="lazy"
                     src={projectData.images[0]}
                     alt={projectData.projectName}
                     className="w-full h-full object-cover"
@@ -104,7 +104,7 @@ export default function ProjectDetailFixed() {
                 <div className="grid grid-cols-2 gap-4">
                   {projectData.images.slice(1, 5).map((image: string, index: number) => (
                     <div key={index} className="aspect-video rounded-lg overflow-hidden bg-gray-100">
-                      <img
+                      <img loading="lazy"
                         src={image}
                         alt={`${projectData.projectName} - Image ${index + 2}`}
                         className="w-full h-full object-cover"

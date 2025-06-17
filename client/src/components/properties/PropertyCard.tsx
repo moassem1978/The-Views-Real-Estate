@@ -136,7 +136,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             alt={property.title}
             className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
           />
-          <img
+          <img loading="lazy"
               src={firstImage?.src || '/placeholder-property.svg'}
               alt={firstImage?.alt || property.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"

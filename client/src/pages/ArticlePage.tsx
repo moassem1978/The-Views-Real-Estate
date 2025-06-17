@@ -165,7 +165,7 @@ export default function ArticlePage() {
           {/* Featured Image */}
           {article.featured_image && (
             <div className="mb-12">
-              <img
+              <img loading="lazy"
                 src={article.featured_image}
                 alt={article.title}
                 className="w-full h-96 object-cover rounded-lg shadow-lg"

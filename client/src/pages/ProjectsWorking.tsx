@@ -23,7 +23,7 @@ function ProjectCard({ project }: { project: Project }) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="aspect-video overflow-hidden">
-        <img
+        <img loading="lazy"
           src={imageUrl}
           alt={project.projectName}
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"

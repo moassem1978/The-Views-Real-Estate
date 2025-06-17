@@ -184,7 +184,7 @@ export default function Contact() {
         {/* Hero Section */}
         <section className="bg-[#333333] py-16 relative">
           <div className="absolute inset-0 opacity-20">
-            <img 
+            <img loading="lazy" 
               src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
               alt="Luxury property background" 
               className="w-full h-full object-cover"

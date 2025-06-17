@@ -78,7 +78,7 @@ export function RobustImage({
           </svg>
         </div>
       )}
-      <img
+      <img loading="lazy"
         src={currentSrc}
         alt={alt}
         onError={handleError}

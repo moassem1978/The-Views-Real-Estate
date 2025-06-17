@@ -99,7 +99,7 @@ export default function ProjectDetailWorking() {
               </div>
               
               <div className="relative">
-                <img
+                <img loading="lazy"
                   src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'%3E%3Crect width='600' height='400' fill='%23f5f5dc'/%3E%3Ctext x='300' y='200' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='24' fill='%23d4af37'%3EMarassi North Coast%3C/text%3E%3C/svg%3E"
                   alt={project.projectName}
                   className="w-full h-96 object-cover rounded-lg shadow-lg"

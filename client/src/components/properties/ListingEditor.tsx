@@ -356,7 +356,7 @@ const ListingEditor: React.FC<ListingEditorProps> = ({
                       className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => openImagePreview(photo.url || `/uploads/properties/${photo.filename}`)}
                     >
-                      <img
+                      <img loading="lazy"
                         src={photo.url || `/uploads/properties/${photo.filename}`}
                         alt={photo.altText}
                         className="w-full h-full object-cover"
@@ -433,7 +433,7 @@ const ListingEditor: React.FC<ListingEditorProps> = ({
             >
               <X className="h-4 w-4" />
             </Button>
-            <img
+            <img loading="lazy"
               src={previewImage}
               alt="Preview"
               className="max-w-full max-h-full object-contain rounded-lg"

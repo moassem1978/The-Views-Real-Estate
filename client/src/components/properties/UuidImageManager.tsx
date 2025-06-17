@@ -262,7 +262,7 @@ export function UuidImageManager({ propertyId, onImagesChange }: UuidImageManage
             >
               <GripVertical className="h-5 w-5 text-gray-400" />
               
-              <img
+              <img loading="lazy"
                 src={getImageUrl(mapping)}
                 alt={mapping.altText}
                 className="w-16 h-16 object-cover rounded"

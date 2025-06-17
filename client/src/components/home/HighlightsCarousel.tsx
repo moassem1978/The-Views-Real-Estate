@@ -126,7 +126,7 @@ export default function HighlightsCarousel() {
 
           {/* Main Slide */}
           <div className="relative overflow-hidden rounded-2xl shadow-2xl h-[500px] md:h-[600px]">
-            <img
+            <img loading="lazy"
               src={currentItem.type === 'property' 
                 ? ((currentItem.data as Property).images && (currentItem.data as Property).images.length > 0 
                     ? getResizedImageUrl((currentItem.data as Property).images[0], 'large')
@@ -218,7 +218,7 @@ export default function HighlightsCarousel() {
                       : 'border-gray-300 hover:border-gray-400 opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <img
+                  <img loading="lazy"
                     src={item.type === 'property' 
                       ? ((item.data as Property).images && (item.data as Property).images.length > 0 
                           ? getResizedImageUrl((item.data as Property).images[0], 'small')

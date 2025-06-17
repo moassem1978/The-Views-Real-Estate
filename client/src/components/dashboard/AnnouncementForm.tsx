@@ -391,7 +391,7 @@ export default function AnnouncementForm({ announcementId, onClose }: Announceme
                   {/* Image preview */}
                   {imagePreview && (
                     <div className="relative inline-block">
-                      <img
+                      <img loading="lazy"
                         src={imagePreview.startsWith('data:') ? imagePreview : `/uploads/announcements/${imagePreview}`}
                         alt="Announcement image preview"
                         className="max-h-[200px] rounded-md object-cover"

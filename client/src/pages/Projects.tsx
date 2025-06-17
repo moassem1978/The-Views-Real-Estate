@@ -100,7 +100,7 @@ export default function Projects() {
                     <Card key={project.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                       {displayImage && (
                         <div className="aspect-video bg-gray-200 overflow-hidden">
-                          <img
+                          <img loading="lazy"
                             src={displayImage}
                             alt={project.projectName}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"

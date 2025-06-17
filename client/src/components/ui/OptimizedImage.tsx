@@ -64,7 +64,7 @@ export default function OptimizedImage({
 
   if (hasError) {
     return (
-      <img 
+      <img loading="lazy" 
         src="/placeholder-property.svg"
         alt={alt} 
         className={className}

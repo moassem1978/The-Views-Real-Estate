@@ -144,7 +144,7 @@ const ProjectDetails: React.FC = () => {
         <div className="lg:col-span-4">
           <div className="relative h-[400px] mb-2 bg-gray-100 rounded-md overflow-hidden">
             {selectedImage ? (
-              <img
+              <img loading="lazy"
                 src={selectedImage}
                 alt={project.projectName}
                 className="w-full h-full object-cover"
@@ -171,7 +171,7 @@ const ProjectDetails: React.FC = () => {
                   }`}
                   onClick={() => handleImageClick(image)}
                 >
-                  <img
+                  <img loading="lazy"
                     src={image}
                     alt={`Thumbnail ${index + 1}`}
                     className="w-full h-full object-cover rounded-sm"

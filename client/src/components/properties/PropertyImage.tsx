@@ -88,7 +88,7 @@ export default function PropertyImage({ src, alt, className = "", index = 0 }: P
 
   if (error || !imageSrc) {
     return (
-      <img 
+      <img loading="lazy" 
         src="/placeholder-property.svg"
         alt={alt || "Property"} 
         className={className}

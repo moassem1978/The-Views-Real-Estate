@@ -214,7 +214,7 @@ export default function ProjectDetail({}: ProjectDetailProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {displayImages.map((image, index) => (
                       <div key={index} className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-                        <img
+                        <img loading="lazy"
                           src={image}
                           alt={`${project.projectName} - Image ${index + 1}`}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"

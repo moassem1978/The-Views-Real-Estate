@@ -135,7 +135,7 @@ export default function About() {
         {/* Hero Section */}
         <section className="bg-[#333333] py-16 relative">
           <div className="absolute inset-0 opacity-20">
-            <img 
+            <img loading="lazy" 
               src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
               alt="Luxury real estate company office" 
               className="w-full h-full object-cover"
@@ -253,7 +253,7 @@ export default function About() {
               <div className="max-w-3xl mx-auto bg-gray-25 rounded-2xl p-8 md:p-12" style={{backgroundColor: '#fafafa'}}>
                 <div className="text-center mb-8">
                   <div className="w-64 h-80 mx-auto mb-6 rounded-xl overflow-hidden shadow-xl">
-                    <img 
+                    <img loading="lazy" 
                       src="/uploads/founder/mohamed-assem-cropped.jpeg" 
                       alt="Mohamed Assem - Founder & CEO"
                       className="w-full h-full object-cover object-center"

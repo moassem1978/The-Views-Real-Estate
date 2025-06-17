@@ -125,7 +125,7 @@ export default function BrowsePropertiesSection() {
                 <Link key={property.id} href={`/properties/${property.id}`}>
                   <Card className="group cursor-pointer overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                     <div className="relative overflow-hidden">
-                      <img
+                      <img loading="lazy"
                         src={property.images && property.images.length > 0 
                           ? getResizedImageUrl(property.images[0], 'medium') 
                           : "/placeholder-property.svg"}

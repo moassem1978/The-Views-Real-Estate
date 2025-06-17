@@ -547,7 +547,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
 
                   return (
                     <div key={`${image}-${index}`} className="relative group">
-                      <img
+                      <img loading="lazy"
                         src={imageUrl}
                         alt={`Property image ${index + 1}`}
                         className={`w-full h-20 object-cover rounded border ${isBeingDeleted ? 'opacity-50' : ''}`}
@@ -656,7 +656,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSubmit, onCance
 
                     return (
                       <div key={`${imageUrl}-${index}`} className="relative group">
-                        <img 
+                        <img loading="lazy" 
                           src={displayUrl} 
                           alt={`Property ${index + 1}`}
                           className="w-full h-24 object-cover rounded border"

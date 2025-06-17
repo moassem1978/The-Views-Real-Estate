@@ -330,7 +330,7 @@ export default function SiteSettingsForm() {
           <div className="flex items-center space-x-4">
             <div className="relative h-28 w-28 rounded-md border overflow-hidden bg-muted">
               {settings?.companyLogo ? (
-                <img 
+                <img loading="lazy" 
                   src={getImageUrl(settings.companyLogo)}
                   alt="Company Logo" 
                   className="h-full w-full object-contain"
