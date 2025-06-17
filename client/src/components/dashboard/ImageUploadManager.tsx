@@ -90,28 +90,24 @@ export default function ImageUploadManager({
       {/* Image Grid */}
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {images.map((imageUrl, index) => (
-            <div key={imageUrl} className="relative group">
-              <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                <img
-                  src={imageUrl}
-                  alt={`Property image ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-image.jpg';
-                  }}
-                />
-              </div>
-              <Button
+          {images.map((img) => (
+            <div key={img} className="relative">
+              <img 
+                src={img} 
+                className="w-full h-48 object-cover rounded-md" 
+                alt="Property image"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+              <button
                 type="button"
-                variant="destructive"
-                size="sm"
-                className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleRemoveImage(imageUrl)}
+                onClick={() => handleRemoveImage(img)}
+                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
               >
-                <X className="h-3 w-3" />
-              </Button>
+                ✕
+              </button>
             </div>
           ))}
         </div>

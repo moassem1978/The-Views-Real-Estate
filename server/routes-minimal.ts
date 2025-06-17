@@ -16,10 +16,10 @@ if (!fs.existsSync(uploadsDir)) {
 const upload = multer({
   storage: multer.diskStorage({
     destination: uploadsDir,
-    filename: (req, file, cb) => {
+    filename: (_, file, cb) => {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const ext = path.extname(file.originalname) || '.jpg';
-      cb(null, uniqueSuffix + "-" + file.originalname);
+      const ext = path.extname(file.originalname);
+      cb(null, `${uniqueSuffix}${ext}`);
     }
   }),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
@@ -112,7 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const user = req.user as any;
       const files = req.files as Express.Multer.File[];
-      const { imagesToRemove = [], ...rest } = req.body;
+      const { imagesToRemove = [], images = [], ...rest } = req.body;
 
       // Get existing property
       const existingProperty = await dbStorage.getPropertyById(id);
@@ -125,33 +125,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Permission denied" });
       }
 
-      // Handle image deletion
-      if (imagesToRemove.length > 0) {
-        const fs = require('fs');
-        const path = require('path');
-        
-        for (const imageUrl of imagesToRemove) {
-          try {
-            // Convert URL to file path
-            const filePath = path.join(process.cwd(), 'public', imageUrl);
-            if (fs.existsSync(filePath)) {
-              fs.unlinkSync(filePath);
-              console.log(`Deleted image: ${filePath}`);
-            }
-          } catch (deleteError) {
-            console.error(`Failed to delete image ${imageUrl}:`, deleteError);
+      // Delete requested images from filesystem
+      for (const url of imagesToRemove) {
+        try {
+          const filePath = path.join(__dirname, "../public/uploads/", path.basename(url));
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`Deleted image: ${filePath}`);
           }
+        } catch (deleteError) {
+          console.error(`Failed to delete image ${url}:`, deleteError);
         }
       }
 
-      // Process existing images (remove deleted ones)
-      const existingImages = Array.isArray(existingProperty.photos) ? existingProperty.photos : [];
-      let updatedPhotos = existingImages.filter(img => !imagesToRemove.includes(img));
-
-      // Add new uploaded images
+      // Handle new file uploads
+      let finalImages = images;
       if (files && files.length > 0) {
         const newImages = files.map(file => `/uploads/properties/${file.filename}`);
-        updatedPhotos = [...updatedPhotos, ...newImages];
+        finalImages = [...images, ...newImages];
       }
 
       // Prepare update data
@@ -167,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bedrooms: parseInt(req.body.bedrooms) || existingProperty.bedrooms,
         bathrooms: parseFloat(req.body.bathrooms) || existingProperty.bathrooms,
         builtUpArea: parseFloat(req.body.builtUpArea) || existingProperty.builtUpArea,
-        photos: updatedPhotos,
+        photos: finalImages,
         isFeatured: req.body.isFeatured === 'true' || req.body.isFeatured === true,
         status: req.body.status || existingProperty.status,
         updatedAt: new Date()
