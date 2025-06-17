@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import HeroSection from "@/components/home/HeroSection";
+// Removed HeroSection to match approved design
 import HighlightsCarousel from "@/components/home/HighlightsCarousel";
 import BrowsePropertiesSection from "@/components/home/BrowsePropertiesSection";
 import Services from "@/components/home/Services";
@@ -135,8 +135,7 @@ export default function Home() {
         {/* H1 for homepage - hidden but SEO important */}
         <h1 className="sr-only">Premium Real Estate Consultant Egypt Dubai - The Views Consultancy</h1>
 
-        {/* Hero Section with Brand Identity */}
-        <HeroSection />
+        {/* Removed black hero section to match approved white design */}
 
         {/* Featured Highlights Carousel */}
         <HighlightsCarousel />
