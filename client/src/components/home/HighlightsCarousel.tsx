@@ -18,20 +18,24 @@ export default function HighlightsCarousel() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch highlighted properties and announcements
+  // Fetch featured properties (fallback to regular properties if no highlighted ones)
   const { data: propertiesResponse } = useQuery<{data: Property[]}>({
-    queryKey: ['/api/properties/highlighted'],
+    queryKey: ['/api/properties'],
     staleTime: 1000 * 60 * 10,
   });
 
   const { data: announcementsResponse } = useQuery<{data: Announcement[]}>({
-    queryKey: ['/api/announcements/highlighted'],
+    queryKey: ['/api/announcements'],
     staleTime: 1000 * 60 * 10,
   });
 
-  // Extract arrays from API responses
-  const properties = propertiesResponse?.data || [];
-  const announcements = announcementsResponse?.data || [];
+  // Extract arrays from API responses and get featured items
+  const allProperties = propertiesResponse?.data || [];
+  const allAnnouncements = announcementsResponse?.data || [];
+  
+  // Get first 4 featured properties for carousel
+  const properties = allProperties.slice(0, 4);
+  const announcements = allAnnouncements.slice(0, 2);
 
   // Combine and create highlight items
   const highlights: HighlightItem[] = [
