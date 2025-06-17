@@ -132,8 +132,8 @@ export default function HighlightsCarousel() {
           <div className="relative overflow-hidden rounded-2xl shadow-2xl h-[500px] md:h-[600px]">
             <img loading="lazy"
               src={currentItem.type === 'property' 
-                ? ((currentItem.data as Property).images && (currentItem.data as Property).images.length > 0 
-                    ? getResizedImageUrl((currentItem.data as Property).images[0], 'large')
+                ? (((currentItem.data as Property).images?.length || 0) > 0 
+                    ? getResizedImageUrl((currentItem.data as Property).images![0], 'large')
                     : "/placeholder-property.svg")
                 : (getResizedImageUrl((currentItem.data as Announcement).imageUrl || '', 'large') || "/placeholder-announcement.svg")
               }
@@ -224,12 +224,12 @@ export default function HighlightsCarousel() {
                 >
                   <img loading="lazy"
                     src={item.type === 'property' 
-                      ? ((item.data as Property).images && (item.data as Property).images.length > 0 
-                          ? getResizedImageUrl((item.data as Property).images[0], 'small')
+                      ? (((item.data as Property).images?.length || 0) > 0 
+                          ? getResizedImageUrl((item.data as Property).images![0], 'small')
                           : "/placeholder-property.svg")
                       : (getResizedImageUrl((item.data as Announcement).imageUrl || '', 'small') || "/placeholder-announcement.svg")
                     }
-                    alt={item.data.title}
+                    alt={item.data?.title || 'Property listing'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
