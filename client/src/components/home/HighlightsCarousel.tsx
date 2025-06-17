@@ -19,15 +19,19 @@ export default function HighlightsCarousel() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch highlighted properties and announcements
-  const { data: properties = [] } = useQuery<Property[]>({
+  const { data: propertiesResponse } = useQuery({
     queryKey: ['/api/properties/highlighted'],
     staleTime: 1000 * 60 * 10,
   });
 
-  const { data: announcements = [] } = useQuery<Announcement[]>({
+  const { data: announcementsResponse } = useQuery({
     queryKey: ['/api/announcements/highlighted'],
     staleTime: 1000 * 60 * 10,
   });
+
+  // Extract arrays from API responses
+  const properties = propertiesResponse?.data || [];
+  const announcements = announcementsResponse?.data || [];
 
   // Combine and create highlight items
   const highlights: HighlightItem[] = [

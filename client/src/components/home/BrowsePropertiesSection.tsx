@@ -30,13 +30,16 @@ export default function BrowsePropertiesSection() {
   const [selectedType, setSelectedType] = useState<string>("");
   
   // Fetch featured properties
-  const { data: properties = [], isLoading } = useQuery<Property[]>({
+  const { data: propertiesResponse, isLoading } = useQuery({
     queryKey: ['/api/properties'],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  // Extract properties array from API response
+  const properties = propertiesResponse?.data || [];
+  
   // Get featured properties (limit to 6)
-  const featuredProperties = properties.slice(0, 6);
+  const featuredProperties = Array.isArray(properties) ? properties.slice(0, 6) : [];
 
   const handleSearchWithFilters = () => {
     const searchParams = new URLSearchParams();
