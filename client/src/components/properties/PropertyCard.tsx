@@ -132,10 +132,13 @@ export default function PropertyCard({ property, onDelete, showDeleteButton = fa
   // Get the first image for the card display - prefer photos over legacy images
   const getFirstImage = () => {
     if (property.photos && property.photos.length > 0) {
-      return {
-        src: property.photos[0].filename,
-        alt: property.photos[0].altText
-      };
+      const firstPhoto = property.photos[0];
+      if (typeof firstPhoto === 'object' && firstPhoto !== null) {
+        return {
+          src: firstPhoto.filename || firstPhoto.src || '',
+          alt: firstPhoto.altText || firstPhoto.alt || `${property.title} - Property Image`
+        };
+      }
     }
     if (property.images && property.images.length > 0) {
       return {
