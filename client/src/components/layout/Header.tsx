@@ -156,12 +156,10 @@ export default function Header() {
           <div className="mr-10">
             <Link href="/" className="flex items-center">
               <div className="flex-shrink-0">
-                <LogoDisplay 
-                  logoUrl={settings?.companyLogo} 
-                  companyName={settings?.companyName || "The Views Real Estate"}
-                  className="h-14 w-14 shadow-sm"
-                  fallbackClassName="h-14 w-14 rounded-full bg-copper flex items-center justify-center shadow-sm border-2 border-cream-dark"
-                  fallbackInitials="TV"
+                <img 
+                  src="/uploads/logos/the-views-logo.png" 
+                  alt="The Views Real Estate"
+                  className="h-14 w-14 rounded-full shadow-sm object-cover"
                 />
               </div>
               <div className="ml-3 flex flex-col">
