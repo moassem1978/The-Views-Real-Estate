@@ -146,16 +146,10 @@ export function setupAuth(app: Express) {
     // Don't create empty sessions
     saveUninitialized: false,
     cookie: {
-      // Disabled secure for development - important for Replit environment
-      secure: false,
-      // Short-lived session (1 hour) but renewable
-      maxAge: 60 * 60 * 1000, // 1 hour
-      // Prevent client-side JS from accessing cookies
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      // Using lax for better user experience
-      sameSite: 'lax',
-      // Enforce path to prevent conflicts
-      path: '/'
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: "lax"
     },
     // Enable rolling sessions to extend the session timeout on any activity
     rolling: true,

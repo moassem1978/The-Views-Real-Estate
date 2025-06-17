@@ -13,6 +13,54 @@ import util from "util";
 import { setupAuth } from "./auth";
 import { v4 as uuidv4 } from 'uuid';
 
+
+// Enhanced authentication helper
+function requireAuth(req, res, next) {
+  if (!req.isAuthenticated()) {
+    console.log('Authentication failed - user not logged in');
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Authentication required',
+      isAuthenticated: false 
+    });
+  }
+  
+  const user = req.user;
+  if (!user) {
+    console.log('Authentication failed - no user object');
+    return res.status(401).json({ 
+      success: false, 
+      message: 'User session invalid',
+      isAuthenticated: false 
+    });
+  }
+  
+  console.log(`User authenticated: ${user.username} (${user.role})`);
+  next();
+}
+
+// Admin-only middleware
+function requireAdmin(req, res, next) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Authentication required' 
+    });
+  }
+  
+  const user = req.user;
+  if (user.role !== 'admin' && user.role !== 'owner') {
+    console.log(`Access denied: User ${user.username} (${user.role}) attempted admin action`);
+    return res.status(403).json({ 
+      success: false, 
+      message: 'Admin access required' 
+    });
+  }
+  
+  next();
+}
+
+
 const searchFiltersSchema = z.object({
   location: z.string().optional(),
   propertyType: z.string().optional(),
@@ -58,6 +106,31 @@ const storage = multer.diskStorage({
     cb(null, filename);
   }
 });
+
+
+// Multer error handling middleware
+function handleMulterError(err, req, res, next) {
+  if (err instanceof multer.MulterError) {
+    console.error('Multer error:', err);
+    return res.status(400).json({
+      success: false,
+      message: `File upload error: ${err.message}`,
+      error: err.code
+    });
+  }
+  
+  if (err) {
+    console.error('Upload error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'File upload failed',
+      error: err.message
+    });
+  }
+  
+  next();
+}
+
 
 const upload = multer({
   storage: storage,
