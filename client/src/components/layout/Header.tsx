@@ -157,9 +157,9 @@ export default function Header() {
             <Link href="/" className="flex items-center">
               <div className="flex-shrink-0">
                 <img 
-                  src="/uploads/logos/the-views-logo.png" 
+                  src="/attached_assets/IMG_5944_1750190057895.png" 
                   alt="The Views Real Estate"
-                  className="h-14 w-14 rounded-full shadow-sm object-cover"
+                  className="h-16 w-auto shadow-sm object-contain"
                 />
               </div>
               <div className="ml-3 flex flex-col">
