@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupDefaultAdmin } from "./auth";
+// Import auth functions are handled in registerRoutes
 import { setupVite, serveStatic, log } from "./vite";
 import multer from "multer";
 import path from "path";
@@ -423,18 +423,20 @@ app.use((req, res, next) => {
     const { SessionMonitor } = await import('./session-monitor');
     const sessionMonitor = SessionMonitor.getInstance();
     sessionMonitor.startMonitoring();
+    console.log('Starting session monitoring and cleanup...');
     console.log('✅ Session monitoring started');
   } catch (error) {
-    console.warn('⚠️ Session monitoring failed to start:', error);
+    console.warn('⚠️ Session monitoring failed to start:', error.message);
   }
 
   try {
     const { AutoRestoreService } = await import('./auto-restore-service');
     const autoRestoreService = AutoRestoreService.getInstance();
     await autoRestoreService.scheduleAutoBackups();
+    console.log('Auto backup scheduling initialized successfully');
     console.log('✅ Auto-restore service started');
   } catch (error) {
-    console.warn('⚠️ Auto-restore service failed to start:', error);
+    console.warn('⚠️ Auto-restore service failed to start:', error.message);
   }
 
   // Request timeout middleware (30 seconds)
