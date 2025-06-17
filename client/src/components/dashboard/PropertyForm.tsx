@@ -84,8 +84,14 @@ export default function PropertyForm({ property, onSubmit }: PropertyFormProps) 
         <Label htmlFor="price">Price</Label>
         <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} />
       </div>
+
+      {/* Image Upload Manager */}
+      <ImageUploadManager
+        existingImages={images}
+        onImagesChange={handleImagesChange}
+        maxImages={20}
+      />
       
-      {/* Add more fields as needed */}
       <Button type="submit" className="bg-[#B87333] text-white">Save Property</Button>
     </form>
   );
