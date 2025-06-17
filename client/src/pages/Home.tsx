@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-// Removed HeroSection to match approved design
+import HeroSection from "@/components/home/HeroSection";
 import HighlightsCarousel from "@/components/home/HighlightsCarousel";
 import BrowsePropertiesSection from "@/components/home/BrowsePropertiesSection";
 import Services from "@/components/home/Services";
@@ -135,16 +135,31 @@ export default function Home() {
         {/* H1 for homepage - hidden but SEO important */}
         <h1 className="sr-only">Premium Real Estate Consultant Egypt Dubai - The Views Consultancy</h1>
 
-        {/* Removed black hero section to match approved white design */}
-
-        {/* Featured Highlights Carousel */}
-        <HighlightsCarousel />
+        {/* Hero Section with dark background */}
+        <HeroSection />
 
         {/* Browse All Properties Section */}
         <BrowsePropertiesSection />
 
-        {/* Properties by Type */}
-        <PropertiesByType />
+        {/* OUR FEATURED COLLECTION heading */}
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-8">
+              <p className="text-[#B87333] text-sm font-medium tracking-wide uppercase mb-2">
+                OUR FEATURED COLLECTION
+              </p>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-8">
+                Exclusive Properties
+              </h2>
+            </div>
+
+            {/* Properties by Type with Primary Projects and Resale Units */}
+            <PropertiesByType />
+          </div>
+        </section>
+
+        {/* Featured Highlights Carousel */}
+        <HighlightsCarousel />
 
         {/* Latest Announcements */}
         <AnnouncementsSection />

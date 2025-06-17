@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme Override - Clean styling */
+@import './theme-override.css';
+
 /* Performance optimizations */
 .line-clamp-2 {
   display: -webkit-box;
