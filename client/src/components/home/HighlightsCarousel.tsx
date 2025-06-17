@@ -104,112 +104,92 @@ export default function HighlightsCarousel() {
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="relative overflow-hidden rounded-2xl shadow-2xl">
-            {/* Main Slide */}
-            <div className="relative h-[500px] md:h-[600px]">
-              {/* Background Image */}
-              <div className="absolute inset-0">
-                <img
-                  src={currentItem.type === 'property' 
-                    ? ((currentItem.data as Property).images && (currentItem.data as Property).images.length > 0 
-                        ? getResizedImageUrl((currentItem.data as Property).images[0], 'large')
-                        : "/placeholder-property.svg")
-                    : (getResizedImageUrl((currentItem.data as Announcement).imageUrl || '', 'large') || "/placeholder-announcement.svg")
-                  }
-                  alt={currentItem.data.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = currentItem.type === 'property' ? "/placeholder-property.svg" : "/placeholder-announcement.svg";
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          {/* Navigation Arrows */}
+          {highlights.length > 1 && (
+            <>
+              <button
+                onClick={goToPrevious}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white text-black rounded-full shadow-lg p-3 z-20 hover:bg-[#B87333] hover:text-white transition-all duration-300"
+                aria-label="Previous highlight"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={goToNext}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white text-black rounded-full shadow-lg p-3 z-20 hover:bg-[#B87333] hover:text-white transition-all duration-300"
+                aria-label="Next highlight"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          {/* Main Slide */}
+          <div className="relative overflow-hidden rounded-2xl shadow-2xl h-[500px] md:h-[600px]">
+            <img
+              src={currentItem.type === 'property' 
+                ? ((currentItem.data as Property).images && (currentItem.data as Property).images.length > 0 
+                    ? getResizedImageUrl((currentItem.data as Property).images[0], 'large')
+                    : "/placeholder-property.svg")
+                : (getResizedImageUrl((currentItem.data as Announcement).imageUrl || '', 'large') || "/placeholder-announcement.svg")
+              }
+              alt={currentItem.data.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = currentItem.type === 'property' ? "/placeholder-property.svg" : "/placeholder-announcement.svg";
+              }}
+            />
+
+            {/* Content Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 md:p-8 text-white">
+              {/* Type Badge */}
+              <div className="mb-3">
+                <Badge className={currentItem.type === 'property' ? "bg-[#B87333] text-white" : "bg-blue-600 text-white"}>
+                  {currentItem.type === 'property' ? 'Featured Property' : 'Latest News'}
+                </Badge>
               </div>
 
-              {/* Content Overlay */}
-              <div className="absolute inset-0 flex items-end">
-                <div className="p-8 md:p-12 text-white max-w-2xl">
-                  {/* Type Badge */}
-                  <div className="mb-4">
-                    <Badge className={currentItem.type === 'property' ? "bg-[#B87333]" : "bg-blue-600"}>
-                      {currentItem.type === 'property' ? 'Featured Property' : 'Latest News'}
-                    </Badge>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-3xl md:text-4xl font-serif font-bold mb-4 leading-tight">
-                    {currentItem.data.title}
+              {currentItem.type === 'property' ? (
+                <>
+                  <h3 className="text-2xl md:text-3xl font-serif font-bold mb-3">
+                    {(currentItem.data as Property).title}
                   </h3>
-
-                  {/* Property Details */}
-                  {currentItem.type === 'property' ? (
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center text-lg">
-                        <MapPin className="w-5 h-5 mr-2" />
-                        <span>{(currentItem.data as Property).city}</span>
-                      </div>
-                      <div className="text-2xl font-bold text-[#B87333]">
-                        {formatPrice((currentItem.data as Property).price)}
-                      </div>
-                      {(currentItem.data as Property).description && (
-                        <p className="text-gray-200 text-lg leading-relaxed line-clamp-2">
-                          {(currentItem.data as Property).description}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center text-lg">
-                        <Calendar className="w-5 h-5 mr-2" />
-                        <span>{formatDate((currentItem.data as Announcement).startDate)}</span>
-                      </div>
-                      <p className="text-gray-200 text-lg leading-relaxed line-clamp-2">
-                        {(currentItem.data as Announcement).content || "Latest announcement from our team"}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Action Button */}
-                  <Link href={currentItem.type === 'property' 
-                    ? `/properties/${currentItem.data.id}` 
-                    : `/announcements/${currentItem.data.id}`
-                  }>
-                    <Button 
-                      size="lg"
-                      className="bg-[#B87333] hover:bg-[#964B00] text-white px-8 py-3 font-semibold shadow-lg transition-all duration-300"
-                    >
-                      {currentItem.type === 'property' ? 'View Property' : 'Read More'}
-                      <ArrowRight className="w-5 h-5 ml-2" />
+                  <div className="flex items-center gap-2 mb-2 text-sm opacity-90">
+                    <MapPin className="w-4 h-4" />
+                    <span>{(currentItem.data as Property).city}</span>
+                  </div>
+                  <div className="text-xl font-bold text-[#B87333] mb-4">
+                    {formatPrice((currentItem.data as Property).price)}
+                  </div>
+                  <Link href={`/properties/${(currentItem.data as Property).id}`}>
+                    <Button className="bg-[#B87333] hover:bg-[#964B00] text-white shadow-lg transition-all duration-300">
+                      View Property <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </Link>
-                </div>
-              </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-2xl md:text-3xl font-serif font-bold mb-3">
+                    {(currentItem.data as Announcement).title}
+                  </h3>
+                  <div className="flex items-center gap-2 mb-4 text-sm opacity-90">
+                    <Calendar className="w-4 h-4" />
+                    <span>{formatDate((currentItem.data as Announcement).startDate)}</span>
+                  </div>
+                  <Link href={`/announcements/${(currentItem.data as Announcement).id}`}>
+                    <Button className="bg-[#B87333] hover:bg-[#964B00] text-white shadow-lg transition-all duration-300">
+                      Read More <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
-
-            {/* Navigation Arrows */}
-            {highlights.length > 1 && (
-              <>
-                <button
-                  onClick={goToPrevious}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-300 backdrop-blur-sm"
-                  aria-label="Previous highlight"
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={goToNext}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-300 backdrop-blur-sm"
-                  aria-label="Next highlight"
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-              </>
-            )}
           </div>
 
-          {/* Dots Indicator */}
+          {/* Dot Navigation */}
           {highlights.length > 1 && (
-            <div className="flex justify-center mt-6 space-x-2">
+            <div className="flex justify-center mt-6 gap-2">
               {highlights.map((_, index) => (
                 <button
                   key={index}
