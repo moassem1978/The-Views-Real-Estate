@@ -94,7 +94,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 bg-white/95 backdrop-blur-sm z-50 shadow-md border-b border-copper/10">
+    <header className="sticky top-0 bg-white z-50 shadow-md border-b border-copper/10">
       {/* Top bar with contact info */}
       <div className="hidden lg:block bg-white py-1">
         <div className="container mx-auto px-4 flex justify-between items-center">
