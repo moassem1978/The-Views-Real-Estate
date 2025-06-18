@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ContactCTA from "@/components/home/ContactCTA";
-import { Helmet } from "react-helmet-async";
+import SEO from "@/components/SEO";
 
 // SEO optimization for About page
 function AboutSEO() {
@@ -127,26 +127,61 @@ function AboutSEO() {
 }
 
 export default function About() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "The Views Real Estate",
+    "description": "Premium real estate consultant specializing in luxury properties in Egypt and Dubai",
+    "url": "https://theviewsconsultancy.com",
+    "logo": "https://theviewsconsultancy.com/logo.png",
+    "foundingDate": "2020",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "New Cairo",
+      "addressLocality": "Cairo",
+      "addressCountry": "EG"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+20-106-311-1136",
+      "contactType": "customer service",
+      "email": "Sales@theviewsrealestate.com"
+    },
+    "areaServed": [
+      {
+        "@type": "City",
+        "name": "Cairo"
+      },
+      {
+        "@type": "City",
+        "name": "Dubai"
+      },
+      {
+        "@type": "City",
+        "name": "New Administrative Capital"
+      },
+      {
+        "@type": "City",
+        "name": "North Coast"
+      }
+    ],
+    "knowsAbout": [
+      "Luxury Real Estate",
+      "Property Investment",
+      "International Real Estate",
+      "Property Management"
+    ]
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Helmet>
-        <title>About Us | The Views Real Estate - Expert Property Consultants</title>
-        <meta name="description" content="Learn about The Views Real Estate team. Expert property consultants specializing in luxury real estate in Egypt and Dubai with years of market experience." />
-        <meta name="keywords" content="about real estate company, property consultants Egypt, Dubai real estate experts, luxury property specialists, real estate team" />
-        
-        <meta property="og:title" content="About Us | The Views Real Estate" />
-        <meta property="og:description" content="Expert property consultants specializing in luxury real estate in Egypt and Dubai." />
-        <meta property="og:image" content="/og-image.jpg" />
-        <meta property="og:url" content="https://theviewsconsultancy.com/about" />
-        <meta property="og:type" content="website" />
-        
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="About Us | The Views Real Estate" />
-        <meta name="twitter:description" content="Expert property consultants specializing in luxury real estate in Egypt and Dubai." />
-        
-        <link rel="canonical" href="https://theviewsconsultancy.com/about" />
-      </Helmet>
+      <SEO
+        title="About Us | Expert Property Consultants"
+        description="Learn about The Views Real Estate team. Expert property consultants specializing in luxury real estate in Egypt and Dubai with years of market experience."
+        url="/about"
+        keywords="about real estate company, property consultants Egypt, Dubai real estate experts, luxury property specialists, real estate team"
+        structuredData={structuredData}
+      />
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}
