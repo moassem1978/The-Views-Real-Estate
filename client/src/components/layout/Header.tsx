@@ -18,7 +18,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-3">
-          <img src="/logo.png" alt="The Views Logo" className="h-10 w-auto object-contain" />
+          <img src="/logo.png" alt="The Views Logo" className="h-12 w-auto object-contain" />
           <div>
             <h1 className="text-xl font-serif font-bold text-[#B87333] leading-none">The Views</h1>
             <p className="text-xs text-gray-700 tracking-wide">REAL ESTATE</p>
@@ -51,7 +51,7 @@ export default function Header() {
           {/* Header with Logo and Close Button */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <div className="flex items-center space-x-3">
-              <img src="/logo.png" alt="The Views Logo" className="h-8 w-auto object-contain" />
+              <img src="/logo.png" alt="The Views Logo" className="h-12 w-auto object-contain" />
               <div>
                 <h1 className="text-lg font-serif font-bold text-[#B87333] leading-none">The Views</h1>
                 <p className="text-xs text-gray-700 tracking-wide">REAL ESTATE</p>
