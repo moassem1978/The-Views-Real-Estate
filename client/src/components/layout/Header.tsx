@@ -94,7 +94,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 bg-white z-50 shadow-md border-b border-copper/10">
+    <header className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
       {/* Top bar with contact info */}
       <div className="hidden lg:block bg-white py-1">
         <div className="container mx-auto px-4 flex justify-between items-center">
@@ -157,16 +157,16 @@ export default function Header() {
             <Link href="/" className="flex items-center">
               <div className="flex-shrink-0">
                 <img 
-                  src="/attached_assets/IMG_5944_1750190057895.png" 
+                  src="/logo.png" 
                   alt="The Views Real Estate"
                   className="h-16 w-auto shadow-sm object-contain"
                 />
               </div>
               <div className="ml-3 flex flex-col">
-                <span className="font-serif text-rich-black-light text-xl font-semibold">
-                  The <span className="text-copper">Views</span>
+                <span className="font-serif text-gray-900 text-xl font-semibold">
+                  The <span className="text-[#B87333]">Views</span>
                 </span>
-                <span className="text-sm text-rich-black-light/80 font-sans tracking-wide">
+                <span className="text-sm text-gray-700 font-sans tracking-wide">
                   REAL ESTATE
                 </span>
               </div>
@@ -178,71 +178,70 @@ export default function Header() {
             <Link 
               href="/" 
               className={`py-2 font-medium ${location === "/" 
-                ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
-                : "text-rich-black hover:text-copper"} transition-colors`}
+                ? "text-[#B87333] relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-[#B87333]" 
+                : "text-gray-900 hover:text-[#B87333]"} transition-colors`}
             >
               Home
             </Link>
             <div className="relative group">
-              <button className="py-2 font-medium text-rich-black group-hover:text-copper transition-colors flex items-center">
+              <button className="py-2 font-medium text-gray-900 group-hover:text-[#B87333] transition-colors flex items-center">
                 Properties
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 transition-transform group-hover:rotate-180" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </button>
-              <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden transform scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 origin-top-left z-50 gold-border">
-                <Link href="/properties?type=Primary" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+              <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden transform scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 origin-top-left z-50 border border-gray-200">
+                <Link href="/properties?type=Primary" className="block px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 hover:text-[#B87333] transition-colors border-b border-gray-100">
                   Primary
                 </Link>
-                <Link href="/properties?type=Resale" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+                <Link href="/properties?type=Resale" className="block px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 hover:text-[#B87333] transition-colors border-b border-gray-100">
                   Resale
                 </Link>
-                <Link href="/international" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors">
+                <Link href="/international" className="block px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 hover:text-[#B87333] transition-colors">
                   International
                 </Link>
               </div>
             </div>
             <div className="relative group">
-              <button className="py-2 font-medium text-rich-black group-hover:text-copper transition-colors flex items-center">
+              <button className="py-2 font-medium text-gray-900 group-hover:text-[#B87333] transition-colors flex items-center">
                 Services
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 transition-transform group-hover:rotate-180" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </button>
-              <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden transform scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 origin-top-left z-50 gold-border">
-                <Link href="/services/buyer-representation" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+              <div className="absolute left-0 mt-1 w-52 bg-white shadow-lg rounded-md overflow-hidden transform scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 origin-top-left z-50 border border-gray-200">
+                <Link href="/services/buyer-representation" className="block px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 hover:text-[#B87333] transition-colors border-b border-gray-100">
                   Buyer Representation
                 </Link>
-                <Link href="/services/seller-representation" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+                <Link href="/services/seller-representation" className="block px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 hover:text-[#B87333] transition-colors border-b border-gray-100">
                   Seller Representation
                 </Link>
-                <Link href="/services/investment" className="block px-4 py-3 text-sm text-rich-black hover:bg-cream hover:text-copper transition-colors border-b border-copper/10">
+                <Link href="/services/investment" className="block px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 hover:text-[#B87333] transition-colors border-b border-gray-100">
                   Investment
                 </Link>
-
               </div>
             </div>
             <Link 
               href="/projects" 
               className={`py-2 font-medium ${location === "/projects" || location.startsWith("/projects/") 
-                ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
-                : "text-rich-black hover:text-copper"} transition-colors`}
+                ? "text-[#B87333] relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-[#B87333]" 
+                : "text-gray-900 hover:text-[#B87333]"} transition-colors`}
             >
               Projects
             </Link>
             <Link 
               href="/about" 
               className={`py-2 font-medium ${location === "/about" 
-                ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
-                : "text-rich-black hover:text-copper"} transition-colors`}
+                ? "text-[#B87333] relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-[#B87333]" 
+                : "text-gray-900 hover:text-[#B87333]"} transition-colors`}
             >
               About
             </Link>
             <Link 
               href="/contact" 
               className={`py-2 font-medium ${location === "/contact" 
-                ? "text-copper relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-copper" 
-                : "text-rich-black hover:text-copper"} transition-colors`}
+                ? "text-[#B87333] relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1/2 after:h-0.5 after:bg-[#B87333]" 
+                : "text-gray-900 hover:text-[#B87333]"} transition-colors`}
             >
               Contact
             </Link>
