@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ImageUploader from './ImageUploader';
 import { Switch } from '@/components/ui/switch';
 
 export default function PropertyForm() {
@@ -57,14 +59,13 @@ export default function PropertyForm() {
     try {
       const submitData = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        submitData.append(key, String(value));
+        submitData.append(key, value);
       });
       images.forEach((img) => submitData.append("images", img));
 
       const response = await fetch("/api/properties", {
         method: "POST",
         body: submitData,
-        credentials: "include",
       });
 
       if (response.ok) {
@@ -158,40 +159,7 @@ export default function PropertyForm() {
           )}
         </div>
         <div><Label>Description</Label><Textarea value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} /></div>
-        
-        <div>
-          <Label>Upload Images *</Label>
-          <Input 
-            type="file" 
-            multiple 
-            accept="image/*"
-            onChange={(e) => {
-              const files = e.target.files;
-              if (files) {
-                handleImageUpload(Array.from(files));
-              }
-            }}
-          />
-          <div className="grid grid-cols-3 gap-3 mt-3">
-            {images.map((img, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={URL.createObjectURL(img)}
-                  alt={`preview-${index}`}
-                  className="rounded-lg object-cover h-32 w-full"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleImageDelete(index)}
-                  className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 py-1 rounded hidden group-hover:block"
-                >
-                  Delete
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-        
+        <ImageUploader images={images} onUpload={handleImageUpload} onDelete={handleImageDelete} />
         <div className="flex items-center gap-4">
           <Label>Highlight</Label><Switch checked={formData.highlight} onCheckedChange={(v) => handleInputChange('highlight', v ? 'true' : 'false')} />
           <Label>Featured</Label><Switch checked={formData.featured} onCheckedChange={(v) => handleInputChange('featured', v ? 'true' : 'false')} />
