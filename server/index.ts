@@ -505,30 +505,53 @@ app.use((req, res, next) => {
     });
   });
 
-  // Simplified port handling - use environment port or find available port
-  const PORT = process.env.PORT || 5000;
-  
-  try {
-    const serverInstance = server.listen(PORT, '0.0.0.0', () => {
-      console.log(`✅ Server running on port ${PORT}`);
-      console.log(`🌐 Access at: http://0.0.0.0:${PORT}`);
-      if (process.env.NODE_ENV === 'production') {
-        console.log(`🚀 Production deployment ready`);
-      } else {
-        console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
-      }
+  // Enhanced port handling with automatic port finding
+  const findAvailablePort = async (startPort: number): Promise<number> => {
+    const { createServer } = await import('net');
+    return new Promise((resolve, reject) => {
+      const testServer = createServer();
+      
+      testServer.listen(startPort, '0.0.0.0', () => {
+        const port = testServer.address()?.port;
+        testServer.close(() => {
+          resolve(port);
+        });
+      });
+      
+      testServer.on('error', async (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          try {
+            const nextPort = await findAvailablePort(startPort + 1);
+            resolve(nextPort);
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject(err);
+        }
+      });
     });
+  };
 
-    serverInstance.on('error', (err: any) => {
-      console.error('Server error:', err);
-      if (err.code === 'EADDRINUSE') {
-        console.log(`Port ${PORT} is in use, server may be running elsewhere`);
-      }
-    });
-  } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  }
+  const PORT = await findAvailablePort(parseInt(process.env.PORT as string) || 5000);
+  
+  const serverInstance = server.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`🌐 Access at: http://0.0.0.0:${PORT}`);
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`🚀 Production deployment ready`);
+    } else {
+      console.log(`🔗 External access: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPLIT_DEV_DOMAIN || 'replit.dev'}`);
+    }
+  });
+
+  serverInstance.on('error', (err: any) => {
+    console.error('Server error:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${PORT} is in use, attempting to find alternative port...`);
+      process.exit(1);
+    }
+  });
 
   // Restore endpoints
   const { addRestoreEndpoints } = await import('./restore-endpoint');
