@@ -104,7 +104,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-blue-600">
-                    {Array.isArray(properties) ? properties.filter((p: any) => p.listingType === 'Primary').length : 0}
+                    {Array.isArray(properties) && properties.filter((p: any) => p.listingType === 'Primary').length}
                   </div>
                   <p className="text-sm text-gray-600">New developments</p>
                 </CardContent>
@@ -116,7 +116,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-green-600">
-                    {Array.isArray(properties) ? properties.filter((p: any) => p.listingType === 'Resale').length : 0}
+                    {Array.isArray(properties) && properties.filter((p: any) => p.listingType === 'Resale').length}
                   </div>
                   <p className="text-sm text-gray-600">Resale properties</p>
                 </CardContent>
