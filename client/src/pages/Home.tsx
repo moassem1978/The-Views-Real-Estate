@@ -1,6 +1,5 @@
 
 import { useEffect } from "react";
-import { Helmet } from "react-helmet-async";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
@@ -11,7 +10,7 @@ import Testimonials from "@/components/home/Testimonials";
 import ContactCTA from "@/components/home/ContactCTA";
 import AnnouncementsSection from "@/components/home/AnnouncementsSection";
 import PropertiesByType from "@/components/home/PropertiesByType";
-import SEOHead from "@/components/common/SEOHead";
+import SEO from "@/components/SEO";
 
 // SEO optimization for homepage
 function HomeSEO() {
@@ -125,66 +124,61 @@ function HomeSEO() {
 
 // Enhanced homepage with final hero section and integrated property browsing
 export default function Home() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateAgent",
+    "name": "The Views Real Estate",
+    "description": "Premium real estate consultant specializing in luxury properties in Egypt and Dubai",
+    "url": "https://theviewsconsultancy.com",
+    "logo": "https://theviewsconsultancy.com/logo.png",
+    "telephone": "+20-106-311-1136",
+    "email": "Sales@theviewsrealestate.com",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "New Cairo",
+      "addressLocality": "Cairo",
+      "addressCountry": "EG"
+    },
+    "areaServed": [
+      {
+        "@type": "City",
+        "name": "Cairo",
+        "sameAs": "https://en.wikipedia.org/wiki/Cairo"
+      },
+      {
+        "@type": "City", 
+        "name": "North Coast",
+        "sameAs": "https://en.wikipedia.org/wiki/North_Coast_(Egypt)"
+      },
+      {
+        "@type": "City",
+        "name": "New Administrative Capital",
+        "sameAs": "https://en.wikipedia.org/wiki/New_Administrative_Capital"
+      },
+      {
+        "@type": "City",
+        "name": "Dubai",
+        "sameAs": "https://en.wikipedia.org/wiki/Dubai"
+      }
+    ],
+    "serviceType": [
+      "Luxury property sales",
+      "Property investment consultation",
+      "Real estate portfolio management",
+      "International property services"
+    ],
+    "priceRange": "Premium"
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Helmet>
-        <title>The Views Real Estate | Luxury Properties in Cairo & Dubai</title>
-        <meta name="description" content="Find luxury properties in Cairo and Dubai. Buy, sell, and invest with The Views Real Estate. Expert consultation for New Capital, North Coast, and Dubai Marina properties." />
-        <meta name="keywords" content="luxury real estate Egypt, Dubai properties, Cairo apartments, New Capital villas, North Coast chalets, Dubai Marina, property investment, real estate consultant" />
-        
-        <meta property="og:title" content="The Views Real Estate | Luxury Properties in Cairo & Dubai" />
-        <meta property="og:description" content="Explore exclusive real estate listings in Cairo and Dubai with expert consultation and investment guidance." />
-        <meta property="og:image" content="/og-image.jpg" />
-        <meta property="og:url" content="https://theviewsconsultancy.com" />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="The Views Real Estate" />
-        
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="The Views Real Estate | Luxury Properties in Cairo & Dubai" />
-        <meta name="twitter:description" content="Explore exclusive real estate listings in Cairo and Dubai with expert consultation." />
-        <meta name="twitter:image" content="/og-image.jpg" />
-        
-        <link rel="canonical" href="https://theviewsconsultancy.com/" />
-        
-        <script type="application/ld+json">
-          {`
-          {
-            "@context": "https://schema.org",
-            "@type": "RealEstateAgent",
-            "name": "The Views Real Estate",
-            "description": "Premium real estate consultant specializing in luxury properties in Egypt and Dubai",
-            "url": "https://theviewsconsultancy.com",
-            "logo": "https://theviewsconsultancy.com/logo.png",
-            "telephone": "+20 106 311 1136",
-            "email": "Sales@theviewsrealestate.com",
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": "New Cairo",
-              "addressLocality": "Cairo",
-              "addressCountry": "Egypt"
-            },
-            "areaServed": [
-              {
-                "@type": "City",
-                "name": "Cairo"
-              },
-              {
-                "@type": "City", 
-                "name": "North Coast"
-              },
-              {
-                "@type": "City",
-                "name": "New Administrative Capital"
-              },
-              {
-                "@type": "City",
-                "name": "Dubai"
-              }
-            ]
-          }
-          `}
-        </script>
-      </Helmet>
+      <SEO
+        title="Luxury Properties in Cairo & Dubai"
+        description="Find luxury properties in Cairo and Dubai. Expert real estate consultation for Marassi, New Capital, North Coast, and Dubai Marina investments."
+        url="/"
+        keywords="luxury villas in Marassi, Emaar properties Egypt, off-plan investments Dubai, sea view chalets North Coast, Katameya Coast resale listings, Sodic Zayed townhouses for sale, high-end properties Sheikh Zayed, real estate investment Egypt Dubai"
+        structuredData={structuredData}
+      />
       <Header />
 
       {/* Main content with proper heading structure */}

@@ -1,10 +1,9 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ContactCTA from "@/components/home/ContactCTA";
-import { Service } from "@/types";
 import { useEffect } from "react";
 import { Link } from "wouter";
-import { Helmet } from "react-helmet-async";
+import SEO from "@/components/SEO";
 
 export default function Services() {
   // Scroll to top when component mounts
@@ -45,25 +44,54 @@ export default function Services() {
     }
   ];
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "Real Estate Services",
+    "description": "Comprehensive real estate services including buying, selling, investment consultation, and property management",
+    "provider": {
+      "@type": "RealEstateAgent",
+      "name": "The Views Real Estate",
+      "telephone": "+20-106-311-1136",
+      "email": "Sales@theviewsrealestate.com"
+    },
+    "serviceType": [
+      "Property Buying Services",
+      "Property Selling Services", 
+      "Investment Consultation",
+      "Property Management",
+      "Market Analysis",
+      "Legal Advisory"
+    ],
+    "areaServed": [
+      {
+        "@type": "City",
+        "name": "Cairo"
+      },
+      {
+        "@type": "City",
+        "name": "Dubai"
+      },
+      {
+        "@type": "City",
+        "name": "New Administrative Capital"
+      },
+      {
+        "@type": "City",
+        "name": "North Coast"
+      }
+    ]
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Helmet>
-        <title>Real Estate Services | Buying, Selling & Investment | The Views Real Estate</title>
-        <meta name="description" content="Expert real estate services in Egypt and Dubai. Property buying, selling, investment consultation, and management services with professional guidance." />
-        <meta name="keywords" content="real estate services Egypt, property buying services, selling services Dubai, investment consultation, property management" />
-        
-        <meta property="og:title" content="Real Estate Services | The Views Real Estate" />
-        <meta property="og:description" content="Expert real estate services in Egypt and Dubai including buying, selling, and investment consultation." />
-        <meta property="og:image" content="/og-image.jpg" />
-        <meta property="og:url" content="https://theviewsconsultancy.com/services" />
-        <meta property="og:type" content="website" />
-        
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Real Estate Services | The Views Real Estate" />
-        <meta name="twitter:description" content="Expert real estate services in Egypt and Dubai." />
-        
-        <link rel="canonical" href="https://theviewsconsultancy.com/services" />
-      </Helmet>
+      <SEO
+        title="Real Estate Services | Buying, Selling & Investment"
+        description="Expert real estate services in Egypt and Dubai. Property buying, selling, investment consultation, and management services with professional guidance."
+        url="/services"
+        keywords="real estate services Egypt, property buying services, selling services Dubai, investment consultation, property management, luxury property services"
+        structuredData={structuredData}
+      />
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Helmet } from "react-helmet-async";
 import { Property, SearchFilters } from "../types";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -9,6 +8,7 @@ import PropertyList from "@/components/properties/PropertyList";
 import PropertyFilter from "@/components/properties/PropertyFilter";
 import ContactCTA from "@/components/home/ContactCTA";
 import { Skeleton } from "@/components/ui/skeleton";
+import SEO from "@/components/SEO";
 
 export default function Properties() {
   const [location] = useLocation();
@@ -136,25 +136,68 @@ export default function Properties() {
     );
   }
 
+  // Dynamic SEO based on filters
+  const getTitle = () => {
+    if (filters.location && filters.propertyType) {
+      return `${filters.propertyType}s for Sale in ${filters.location}`;
+    }
+    if (filters.location) {
+      return `Properties for Sale in ${filters.location}`;
+    }
+    if (filters.propertyType) {
+      return `${filters.propertyType}s for Sale in Egypt & Dubai`;
+    }
+    return "Luxury Properties for Sale in Egypt & Dubai";
+  };
+
+  const getDescription = () => {
+    if (filters.location) {
+      return `Discover luxury properties in ${filters.location}. Expert real estate consultation and investment guidance from The Views Real Estate.`;
+    }
+    return "Browse luxury properties for sale in Cairo, New Capital, North Coast, and Dubai. Expert real estate consultation and investment guidance.";
+  };
+
+  const getKeywords = () => {
+    const baseKeywords = "luxury villas in Marassi, Emaar properties Egypt, sea view chalets North Coast, Katameya Coast resale listings, Sodic Zayed townhouses for sale";
+    if (filters.location) {
+      return `${baseKeywords}, properties for sale ${filters.location}, luxury real estate ${filters.location}`;
+    }
+    return `${baseKeywords}, properties for sale Egypt, Dubai real estate, Cairo apartments, New Capital villas`;
+  };
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Properties for Sale",
+    "description": getDescription(),
+    "numberOfItems": totalCount,
+    "itemListElement": Array.isArray(properties) ? properties.slice(0, 5).map((property, index) => ({
+      "@type": "RealEstate",
+      "position": index + 1,
+      "name": property.title,
+      "description": property.description,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": property.city,
+        "addressCountry": "EG"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": property.price,
+        "priceCurrency": "EGP"
+      }
+    })) : []
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Helmet>
-        <title>Properties for Sale in Egypt & Dubai | The Views Real Estate</title>
-        <meta name="description" content="Browse luxury properties for sale in Cairo, New Capital, North Coast, and Dubai. Expert real estate consultation and investment guidance." />
-        <meta name="keywords" content="properties for sale Egypt, Dubai real estate, Cairo apartments, New Capital villas, North Coast properties, luxury real estate" />
-        
-        <meta property="og:title" content="Properties for Sale in Egypt & Dubai | The Views Real Estate" />
-        <meta property="og:description" content="Browse luxury properties for sale in Cairo, New Capital, North Coast, and Dubai." />
-        <meta property="og:image" content="/og-image.jpg" />
-        <meta property="og:url" content="https://theviewsconsultancy.com/properties" />
-        <meta property="og:type" content="website" />
-        
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Properties for Sale in Egypt & Dubai" />
-        <meta name="twitter:description" content="Browse luxury properties for sale in Cairo, New Capital, North Coast, and Dubai." />
-        
-        <link rel="canonical" href="https://theviewsconsultancy.com/properties" />
-      </Helmet>
+      <SEO
+        title={getTitle()}
+        description={getDescription()}
+        url="/properties"
+        keywords={getKeywords()}
+        structuredData={structuredData}
+      />
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}
