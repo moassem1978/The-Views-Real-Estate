@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import enhancedPropertyRoutes from "./enhanced-property-routes";
 // Import auth functions are handled in registerRoutes
 import { setupVite, serveStatic, log } from "./vite";
 import multer from "multer";
@@ -273,6 +274,9 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app, upload, uploadsDir);
+  
+  // Add enhanced property submission routes
+  app.use(enhancedPropertyRoutes);
 
   // Add error logging endpoint (admin/owner only)
   app.get("/api/error-logs", (req: Request, res: Response) => {

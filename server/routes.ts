@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
       };
 
       // Convert numeric fields
-      ['price', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize', 'floor', 'yearBuilt'].forEach(field => {
+      ['price', 'bedrooms', 'bathrooms', 'builtUpArea', 'plotSize', 'gardenSize', 'floor', 'yearBuilt', 'downPaymentPercent', 'quarterlyInstallments'].forEach(field => {
         if (propertyData[field] !== undefined && propertyData[field] !== '') {
           const val = parseFloat(propertyData[field]);
           if (!isNaN(val)) {
@@ -302,6 +302,23 @@ export async function registerRoutes(app: Express, customUpload?: any, customUpl
           }
         }
       });
+
+      // Calculate down payment if percentage is provided
+      if (propertyData.downPaymentPercent && propertyData.price) {
+        const downPaymentPercent = parseFloat(propertyData.downPaymentPercent);
+        const price = parseFloat(propertyData.price);
+        if (!isNaN(downPaymentPercent) && !isNaN(price)) {
+          propertyData.downPayment = (price * downPaymentPercent) / 100;
+          console.log(`Calculated down payment: ${propertyData.downPayment} (${downPaymentPercent}% of ${price})`);
+        }
+      }
+
+      // Set installment amount from quarterly installments if provided
+      if (propertyData.quarterlyInstallments) {
+        propertyData.installmentAmount = parseFloat(propertyData.quarterlyInstallments);
+        propertyData.installmentPeriod = 3; // Quarterly = 3 months
+        console.log(`Set quarterly installments: ${propertyData.installmentAmount} every 3 months`);
+      }
 
       // Convert boolean fields
       ['isFullCash', 'isGroundUnit', 'isFeatured', 'isNewListing', 'isHighlighted'].forEach(field => {
