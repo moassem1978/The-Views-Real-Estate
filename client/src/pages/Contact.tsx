@@ -213,8 +213,6 @@ export default function Contact() {
         title="Contact Us | Expert Property Consultation"
         description="Contact The Views Real Estate for expert property consultation in Egypt and Dubai. Phone: 01063111136, Email: Sales@theviewsrealestate.com"
         url="/contact"
-        keywords="contact real estate agent, property consultation Egypt, Dubai real estate contact, luxury property advisor, real estate consultation"
-        structuredData={structuredData}
       />
       <Header />
       <main className="flex-grow">

@@ -179,8 +179,6 @@ export default function About() {
         title="About Us | Expert Property Consultants"
         description="Learn about The Views Real Estate team. Expert property consultants specializing in luxury real estate in Egypt and Dubai with years of market experience."
         url="/about"
-        keywords="about real estate company, property consultants Egypt, Dubai real estate experts, luxury property specialists, real estate team"
-        structuredData={structuredData}
       />
       <Header />
       <main className="flex-grow">

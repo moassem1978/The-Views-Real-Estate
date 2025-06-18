@@ -10,7 +10,7 @@ interface SEOProps {
 export default function SEO({
   title = "The Views Consultancy – Luxury Real Estate Egypt & Dubai",
   description = "Bespoke high-end property advisory for prime locations in Egypt and Dubai. Resale and primary listings by top developers like Emaar, Sodic, and more.",
-  image = "/og-default.jpg",
+  image = "/og-default.svg",
   url = "https://theviewsconsultancy.com",
 }: SEOProps) {
   const fullUrl = url.startsWith('http') ? url : `https://theviewsconsultancy.com${url}`;

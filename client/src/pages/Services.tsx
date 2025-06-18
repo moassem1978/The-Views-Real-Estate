@@ -89,8 +89,6 @@ export default function Services() {
         title="Real Estate Services | Buying, Selling & Investment"
         description="Expert real estate services in Egypt and Dubai. Property buying, selling, investment consultation, and management services with professional guidance."
         url="/services"
-        keywords="real estate services Egypt, property buying services, selling services Dubai, investment consultation, property management, luxury property services"
-        structuredData={structuredData}
       />
       <Header />
       <main className="flex-grow">
