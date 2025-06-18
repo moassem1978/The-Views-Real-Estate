@@ -105,7 +105,7 @@ export default function PropertyForm() {
               placeholder="Enter property title"
             />
           </div>
-          
+
           <div>
             <Label htmlFor="price">Price *</Label>
             <Input
@@ -115,7 +115,7 @@ export default function PropertyForm() {
               placeholder="Enter price"
             />
           </div>
-          
+
           <div>
             <Label htmlFor="location">Location *</Label>
             <Select onValueChange={(value) => handleInputChange('location', value)}>
