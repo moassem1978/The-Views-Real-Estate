@@ -5,60 +5,66 @@ interface SEOProps {
   description?: string;
   image?: string;
   url?: string;
+  type?: string;
+  noIndex?: boolean;
+  structuredData?: object;
 }
 
 export default function SEO({
-  title = "The Views Consultancy – Luxury Real Estate Egypt & Dubai",
-  description = "Bespoke high-end property advisory for prime locations in Egypt and Dubai. Resale and primary listings by top developers like Emaar, Sodic, and more.",
-  image = "/og-default.svg",
-  url = "https://theviewsconsultancy.com",
+  title = "The Views Real Estate | Luxury Homes in Egypt, Dubai & London",
+  description = "Discover premium properties with The Views Real Estate – specializing in Egypt, North Coast, Dubai, and London. Explore villas, penthouses, and investment opportunities.",
+  image = "https://theviewsconsultancy.com/og-image.jpg",
+  url = "https://theviewsconsultancy.com/",
+  type = "website",
+  noIndex = false,
+  structuredData
 }: SEOProps) {
-  const fullUrl = url.startsWith('http') ? url : `https://theviewsconsultancy.com${url}`;
-  const fullImage = image.startsWith('http') ? image : `https://theviewsconsultancy.com${image}`;
+  const baseStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateAgent",
+    "name": "The Views Real Estate",
+    "url": "https://theviewsconsultancy.com",
+    "logo": "https://theviewsconsultancy.com/logo.png",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Cairo",
+      "addressCountry": "EG"
+    },
+    "sameAs": [
+      "https://www.facebook.com/theviewsrealestate",
+      "https://www.instagram.com/theviewsrealestate"
+    ]
+  };
+
+  const finalStructuredData = structuredData || baseStructuredData;
 
   return (
     <Helmet>
-      {/* Primary Meta Tags */}
+      {/* Basic Meta Tags */}
       <title>{title}</title>
-      <meta name="title" content={title} />
       <meta name="description" content={description} />
-      <link rel="canonical" href={fullUrl} />
-      <meta name="robots" content="index, follow" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <meta charSet="UTF-8" />
-
+      <meta name="robots" content={noIndex ? "noindex, nofollow" : "index, follow"} />
+      
+      {/* Canonical URL */}
+      <link rel="canonical" href={url} />
+      
       {/* Open Graph / Facebook */}
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={fullUrl} />
+      <meta property="og:type" content={type} />
+      <meta property="og:url" content={url} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
-      <meta property="og:image" content={fullImage} />
-
+      <meta property="og:image" content={image} />
+      
       {/* Twitter */}
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={fullUrl} />
-      <meta property="twitter:title" content={title} />
-      <meta property="twitter:description" content={description} />
-      <meta property="twitter:image" content={fullImage} />
-
-      {/* Language & Branding */}
-      <html lang="en" />
-      <link rel="icon" href="/favicon.ico" />
-
-      {/* Company Schema Markup */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:url" content={url} />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={image} />
+      
+      {/* Structured Data */}
       <script type="application/ld+json">
-        {`{
-          "@context": "https://schema.org",
-          "@type": "RealEstateAgent",
-          "name": "The Views Consultancy",
-          "url": "https://theviewsconsultancy.com",
-          "logo": "https://theviewsconsultancy.com/logo.png",
-          "email": "Sales@theviewsconsultancy.com",
-          "telephone": "+201063111136",
-          "sameAs": [
-            "https://www.facebook.com/theviewsconsultancy"
-          ]
-        }`}
+        {JSON.stringify(finalStructuredData)}
       </script>
     </Helmet>
   );
