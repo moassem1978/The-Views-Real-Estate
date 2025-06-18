@@ -130,7 +130,23 @@ export default function About() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <AboutSEO />
+      <Helmet>
+        <title>About Us | The Views Real Estate - Expert Property Consultants</title>
+        <meta name="description" content="Learn about The Views Real Estate team. Expert property consultants specializing in luxury real estate in Egypt and Dubai with years of market experience." />
+        <meta name="keywords" content="about real estate company, property consultants Egypt, Dubai real estate experts, luxury property specialists, real estate team" />
+        
+        <meta property="og:title" content="About Us | The Views Real Estate" />
+        <meta property="og:description" content="Expert property consultants specializing in luxury real estate in Egypt and Dubai." />
+        <meta property="og:image" content="/og-image.jpg" />
+        <meta property="og:url" content="https://theviewsconsultancy.com/about" />
+        <meta property="og:type" content="website" />
+        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="About Us | The Views Real Estate" />
+        <meta name="twitter:description" content="Expert property consultants specializing in luxury real estate in Egypt and Dubai." />
+        
+        <link rel="canonical" href="https://theviewsconsultancy.com/about" />
+      </Helmet>
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}

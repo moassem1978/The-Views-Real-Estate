@@ -12,7 +12,7 @@ export default function Services() {
     window.scrollTo(0, 0);
   }, []);
   
-  const services: Service[] = [
+  const services = [
     {
       icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
       title: "Buying Services",
@@ -47,6 +47,23 @@ export default function Services() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <Helmet>
+        <title>Real Estate Services | Buying, Selling & Investment | The Views Real Estate</title>
+        <meta name="description" content="Expert real estate services in Egypt and Dubai. Property buying, selling, investment consultation, and management services with professional guidance." />
+        <meta name="keywords" content="real estate services Egypt, property buying services, selling services Dubai, investment consultation, property management" />
+        
+        <meta property="og:title" content="Real Estate Services | The Views Real Estate" />
+        <meta property="og:description" content="Expert real estate services in Egypt and Dubai including buying, selling, and investment consultation." />
+        <meta property="og:image" content="/og-image.jpg" />
+        <meta property="og:url" content="https://theviewsconsultancy.com/services" />
+        <meta property="og:type" content="website" />
+        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Real Estate Services | The Views Real Estate" />
+        <meta name="twitter:description" content="Expert real estate services in Egypt and Dubai." />
+        
+        <link rel="canonical" href="https://theviewsconsultancy.com/services" />
+      </Helmet>
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}
