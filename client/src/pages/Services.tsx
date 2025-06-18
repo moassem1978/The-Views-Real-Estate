@@ -4,6 +4,7 @@ import ContactCTA from "@/components/home/ContactCTA";
 import { Service } from "@/types";
 import { useEffect } from "react";
 import { Link } from "wouter";
+import { Helmet } from "react-helmet-async";
 
 export default function Services() {
   // Scroll to top when component mounts

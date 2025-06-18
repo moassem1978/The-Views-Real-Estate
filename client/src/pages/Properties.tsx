@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { Helmet } from "react-helmet-async";
 import { Property, SearchFilters } from "../types";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -137,6 +138,23 @@ export default function Properties() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <Helmet>
+        <title>Properties for Sale in Egypt & Dubai | The Views Real Estate</title>
+        <meta name="description" content="Browse luxury properties for sale in Cairo, New Capital, North Coast, and Dubai. Expert real estate consultation and investment guidance." />
+        <meta name="keywords" content="properties for sale Egypt, Dubai real estate, Cairo apartments, New Capital villas, North Coast properties, luxury real estate" />
+        
+        <meta property="og:title" content="Properties for Sale in Egypt & Dubai | The Views Real Estate" />
+        <meta property="og:description" content="Browse luxury properties for sale in Cairo, New Capital, North Coast, and Dubai." />
+        <meta property="og:image" content="/og-image.jpg" />
+        <meta property="og:url" content="https://theviewsconsultancy.com/properties" />
+        <meta property="og:type" content="website" />
+        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Properties for Sale in Egypt & Dubai" />
+        <meta name="twitter:description" content="Browse luxury properties for sale in Cairo, New Capital, North Coast, and Dubai." />
+        
+        <link rel="canonical" href="https://theviewsconsultancy.com/properties" />
+      </Helmet>
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}

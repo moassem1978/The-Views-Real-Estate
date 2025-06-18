@@ -3,6 +3,7 @@ import Footer from "@/components/layout/Footer";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 
 interface SiteSettings {
   companyName: string;
@@ -179,6 +180,23 @@ export default function Contact() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <Helmet>
+        <title>Contact Us | The Views Real Estate - Expert Property Consultation</title>
+        <meta name="description" content="Contact The Views Real Estate for expert property consultation in Egypt and Dubai. Phone: 01063111136, Email: Sales@theviewsrealestate.com" />
+        <meta name="keywords" content="contact real estate agent, property consultation Egypt, Dubai real estate contact, luxury property advisor" />
+        
+        <meta property="og:title" content="Contact Us | The Views Real Estate" />
+        <meta property="og:description" content="Contact The Views Real Estate for expert property consultation in Egypt and Dubai." />
+        <meta property="og:image" content="/og-image.jpg" />
+        <meta property="og:url" content="https://theviewsconsultancy.com/contact" />
+        <meta property="og:type" content="website" />
+        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Contact Us | The Views Real Estate" />
+        <meta name="twitter:description" content="Contact The Views Real Estate for expert property consultation." />
+        
+        <link rel="canonical" href="https://theviewsconsultancy.com/contact" />
+      </Helmet>
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}

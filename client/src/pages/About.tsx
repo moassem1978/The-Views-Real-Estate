@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ContactCTA from "@/components/home/ContactCTA";
+import { Helmet } from "react-helmet-async";
 
 // SEO optimization for About page
 function AboutSEO() {
