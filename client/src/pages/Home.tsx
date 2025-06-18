@@ -172,13 +172,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <SEO
-        title="Luxury Properties in Cairo & Dubai"
-        description="Find luxury properties in Cairo and Dubai. Expert real estate consultation for Marassi, New Capital, North Coast, and Dubai Marina investments."
-        url="/"
-        keywords="luxury villas in Marassi, Emaar properties Egypt, off-plan investments Dubai, sea view chalets North Coast, Katameya Coast resale listings, Sodic Zayed townhouses for sale, high-end properties Sheikh Zayed, real estate investment Egypt Dubai"
-        structuredData={structuredData}
-      />
+      <SEO />
       <Header />
 
       {/* Main content with proper heading structure */}

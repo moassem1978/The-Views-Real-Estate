@@ -192,11 +192,10 @@ export default function Properties() {
   return (
     <div className="flex flex-col min-h-screen">
       <SEO
-        title={getTitle()}
-        description={getDescription()}
+        title="Marassi North Coast by Emaar | The Views Real Estate"
+        description="Discover Marassi, Egypt's leading luxury beachside destination. Villas, chalets, and townhouses by Emaar Misr."
         url="/properties"
-        keywords={getKeywords()}
-        structuredData={structuredData}
+        image="/images/marassi-og.jpg"
       />
       <Header />
       <main className="flex-grow">
