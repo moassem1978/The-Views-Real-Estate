@@ -13,6 +13,7 @@ interface Property {
   location: string;
   images: string[];
   createdAt: string;
+  listingType?: string;
 }
 
 export default function Dashboard() {
@@ -103,7 +104,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-blue-600">
-                    {properties.filter((p: Property) => p.listingType === 'Primary').length}
+                    {Array.isArray(properties) ? properties.filter((p: any) => p.listingType === 'Primary').length : 0}
                   </div>
                   <p className="text-sm text-gray-600">New developments</p>
                 </CardContent>
@@ -115,7 +116,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-green-600">
-                    {properties.filter((p: Property) => p.listingType === 'Resale').length}
+                    {Array.isArray(properties) ? properties.filter((p: any) => p.listingType === 'Resale').length : 0}
                   </div>
                   <p className="text-sm text-gray-600">Resale properties</p>
                 </CardContent>
@@ -128,7 +129,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {properties.slice(0, 5).map((property: Property) => (
+                  {Array.isArray(properties) && properties.slice(0, 5).map((property: Property) => (
                     <div key={property.id} className="flex items-center justify-between py-2 border-b">
                       <div>
                         <p className="font-medium">{property.title}</p>
@@ -142,11 +143,11 @@ export default function Dashboard() {
                       </div>
                     </div>
                   ))}
-                  {properties.length === 0 && (
+                  {!Array.isArray(properties) || properties.length === 0 ? (
                     <p className="text-center text-gray-500 py-8">
                       No properties yet. Add your first property to get started.
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </CardContent>
             </Card>

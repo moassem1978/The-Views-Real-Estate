@@ -82,12 +82,14 @@ export default function PropertyList({
     setEditingProperty(null);
   };
 
-  // Filter properties based on search
-  const filteredProperties = properties.filter(property =>
-    property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (property.propertyType && property.propertyType.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter properties based on search with defensive array check
+  const filteredProperties = Array.isArray(properties) 
+    ? properties.filter(property =>
+        property.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        property.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (property.propertyType && property.propertyType.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : [];
 
   // Apply max items limit if specified
   const displayProperties = maxItems 
