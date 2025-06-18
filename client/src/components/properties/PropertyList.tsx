@@ -155,10 +155,7 @@ export default function PropertyList({
               </Button>
             </div>
             
-            <PropertyForm
-              property={editingProperty || undefined}
-              onSubmit={handlePropertySubmit}
-            />
+            <PropertyForm />
           </div>
         </div>
       )}

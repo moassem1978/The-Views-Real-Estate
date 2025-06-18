@@ -92,7 +92,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-amber-700">
-                    {properties.length}
+                    {Array.isArray(properties) ? properties.length : 0}
                   </div>
                   <p className="text-sm text-gray-600">Active listings</p>
                 </CardContent>
@@ -129,25 +129,26 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {Array.isArray(properties) && properties.slice(0, 5).map((property: Property) => (
-                    <div key={property.id} className="flex items-center justify-between py-2 border-b">
-                      <div>
-                        <p className="font-medium">{property.title}</p>
-                        <p className="text-sm text-gray-600">{property.location}</p>
+                  {Array.isArray(properties) && properties.length > 0 ? (
+                    properties.slice(0, 5).map((property: Property) => (
+                      <div key={property.id} className="flex items-center justify-between py-2 border-b">
+                        <div>
+                          <p className="font-medium">{property.title}</p>
+                          <p className="text-sm text-gray-600">{property.location}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-amber-700">{property.price}</p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(property.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-amber-700">{property.price}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(property.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  {!Array.isArray(properties) || properties.length === 0 ? (
+                    ))
+                  ) : (
                     <p className="text-center text-gray-500 py-8">
                       No properties yet. Add your first property to get started.
                     </p>
-                  ) : null}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -161,7 +162,7 @@ export default function Dashboard() {
               <CardContent>
                 {isLoading ? (
                   <div className="text-center py-8">Loading properties...</div>
-                ) : properties.length === 0 ? (
+                ) : !Array.isArray(properties) || properties.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-gray-500 mb-4">No properties found.</p>
                     <Button onClick={() => setActiveTab('add-property')} className="bg-amber-700 hover:bg-amber-800">
