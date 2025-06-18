@@ -4,6 +4,7 @@ import App from "./App";
 import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
+import { HelmetProvider } from "react-helmet-async";
 
 // Lightweight error handling
 function initializeApp() {
@@ -31,9 +32,11 @@ if (!container) {
 try {
   const root = createRoot(container);
   root.render(
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </HelmetProvider>
   );
   console.log("✅ React app rendered successfully");
 } catch (error) {
