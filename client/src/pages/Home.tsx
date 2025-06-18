@@ -1,5 +1,3 @@
-
-import { useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
@@ -17,7 +15,6 @@ export default function Home() {
     "@context": "https://schema.org",
     "@type": "RealEstateAgent",
     "name": "The Views Real Estate",
-    "description": "Premium real estate consultant specializing in luxury properties in Egypt and Dubai",
     "url": "https://theviewsconsultancy.com",
     "logo": "https://theviewsconsultancy.com/logo.png",
     "telephone": "+20-106-311-1136",
@@ -61,38 +58,26 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <SEO />
+      <SEO 
+        title="شقق للبيع في القاهرة الجديدة | Dubai Marina Luxury Apartments | Hassan Allam Properties | Mohamed Assem"
+        description="شقق للبيع في القاهرة الجديدة, فيلات كمبوند للبيع, Dubai Marina luxury apartments for sale, Hassan Allam Swan Lake Resort properties, Binghatti Stars Business Bay. Expert real estate consultant Egypt Dubai with 30+ years experience."
+        url="https://theviewsconsultancy.com/"
+        structuredData={structuredData}
+      />
       <Header />
 
-      {/* Main content with proper heading structure */}
       <main className="flex-grow">
-        {/* H1 for homepage - hidden but SEO important */}
         <h1 className="sr-only">Premium Real Estate Consultant Egypt Dubai - The Views Consultancy</h1>
-
-        {/* Hero Section with dark background */}
         <HeroSection />
-
-        {/* Featured Highlights Carousel */}
         <HighlightsCarousel />
-
-        {/* Browse All Properties Section */}
         <BrowsePropertiesSection />
-
-        {/* Properties by Type with Primary Projects and Resale Units - Only tabs, no property cards */}
         <PropertiesByType />
-
-        {/* Latest Announcements */}
         <AnnouncementsSection />
-
-        {/* Services Overview */}
         <Services />
-
-        {/* Client Testimonials */}
         <Testimonials />
-
-        {/* Contact Call-to-Action */}
         <ContactCTA />
       </main>
+
       <Footer />
     </div>
   );
