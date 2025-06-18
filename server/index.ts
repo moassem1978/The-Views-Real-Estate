@@ -145,16 +145,22 @@ app.use(express.urlencoded({ extended: false }));
 // Add protection middleware BEFORE other routes
 app.use(protectionMiddleware);
 
-// Basic request middleware
+// Basic request middleware with improved session handling
 app.use((req, res, next) => {
   // Set basic headers for all requests
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
   // Add mobile-friendly headers only for mobile requests
   const userAgent = req.headers['user-agent'] || '';
   if (userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android')) {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
+  }
+
+  // Fix session persistence issues
+  if (req.session && req.isAuthenticated()) {
+    req.session.touch();
   }
 
   next();
@@ -258,19 +264,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Security middleware only - no redirects in development
-  app.use((req, res, next) => {
-    // Add basic security headers
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-
-    // Add CORS headers for development
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    next();
-  });
+// Note: Security headers are now handled in the basic request middleware above
 
 (async () => {
   const server = await registerRoutes(app, upload, uploadsDir);

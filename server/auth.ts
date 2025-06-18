@@ -101,26 +101,45 @@ async function ensureOwnerAccount() {
   }
 }
 
-// Authentication middleware (BYPASSED FOR DEVELOPMENT)
+// Authentication middleware
 export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
-  console.log('=== AUTHENTICATION BYPASSED FOR DEVELOPMENT ===');
-  console.log(`🔓 Bypassing auth check for: ${req.method} ${req.path}`);
+  // For development, only bypass for public endpoints
+  const publicEndpoints = [
+    '/api/properties',
+    '/api/announcements', 
+    '/api/testimonials',
+    '/api/site-settings',
+    '/health',
+    '/mobile-health'
+  ];
   
-  // BYPASS: Always allow access for development
-  console.log('✅ Authentication bypass - proceeding without auth check');
-  return next();
+  const isPublicEndpoint = publicEndpoints.some(endpoint => req.path.startsWith(endpoint));
+  
+  if (isPublicEndpoint && req.method === 'GET') {
+    return next();
+  }
+  
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  
+  next();
 }
 
-// Middleware for role-based access control (BYPASSED FOR DEVELOPMENT)
+// Middleware for role-based access control
 export function requireRole(roles: string | string[]) {
   const allowedRoles = Array.isArray(roles) ? roles : [roles];
   
   return (req: Request, res: Response, next: NextFunction) => {
-    console.log('=== ROLE CHECK BYPASSED FOR DEVELOPMENT ===');
-    console.log('Required roles:', allowedRoles);
-    console.log('Bypassing role check - allowing access');
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
     
-    // BYPASS: Always allow access for development
+    const user = req.user as SelectUser;
+    if (!allowedRoles.includes(user.role)) {
+      return res.status(403).json({ message: "Insufficient permissions" });
+    }
+    
     next();
   };
 }
